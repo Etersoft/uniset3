@@ -100,8 +100,7 @@ std::ostream& ObjectIndex_idXML::printMap( std::ostream& os ) const noexcept
             continue;
 
         os  << setw(5) << it->second.id << "  "
-            //            << setw(45) << ORepHelpers::getShortName(it->repName,'/')
-            << setw(45) << it->second.repName
+            << setw(45) << it->second.name
             << "  " << it->second.textName << endl;
     }
 
@@ -176,23 +175,16 @@ void ObjectIndex_idXML::read_section( const std::shared_ptr<UniXML>& xml, const 
             throw NameNotFound(msg.str());
         }
 
-        inf.secName = secname;
-
         // name
+        inf.name = it.getProp("name");
         ostringstream n;
-        n << secname << it.getProp("name");
-        const string name(n.str());
-        inf.repName = name;
+        n << secname << inf.name;
+        inf.repName = n.str();
 
-        string textname(xml->getProp(it, "textname"));
-
-        if( textname.empty() )
-            textname = xml->getProp(it, "name");
-
-        inf.textName = textname;
+        inf.textName = xml->getProp(it, "textname");
         inf.xmlnode = it;
 
-        mok.emplace(name, inf.id);
+        mok.emplace(inf.repName, inf.id);
         omap.emplace(inf.id, std::move(inf));
     }
 }
@@ -232,21 +224,13 @@ void ObjectIndex_idXML::read_nodes( const std::shared_ptr<UniXML>& xml, const st
             throw NameNotFound(msg.str());
         }
 
-        string name(it.getProp("name"));
-        inf.repName = name;
-        inf.secName = "nodes";
-
-        // textname
-        string textname(xml->getProp(it, "textname"));
-
-        if( textname.empty() )
-            textname = name;
-
-        inf.textName = textname;
+        inf.name = it.getProp("name");
+        inf.repName = inf.name;
+        inf.textName = xml->getProp(it, "textname");
         inf.xmlnode = it;
 
-        omap.emplace(inf.id, inf);
-        mok.emplace(name, inf.id);
+        mok.emplace(inf.repName, inf.id);
+        omap.emplace(inf.id, std::move(inf));
     }
 }
 // ------------------------------------------------------------------------------------------

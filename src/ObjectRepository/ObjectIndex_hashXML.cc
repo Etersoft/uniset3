@@ -187,7 +187,7 @@ namespace uniset3
             }
 
             inf.id = uniset3::hash32(nm);
-//            inf.name = nm;
+            inf.name = nm;
 
             // name
             ostringstream n;
@@ -218,7 +218,7 @@ namespace uniset3
             {
                 auto coll = omap[inf.id];
                 ostringstream err;
-                err << "ID '" << nm << "' has collision with '" << coll.repName << "'";
+                err << "ID '" << nm << "' has collision with '" << coll.name << "'";
                 throw uniset3::SystemError(err.str());
             }
         }
@@ -259,7 +259,7 @@ namespace uniset3
 
             const string name(it.getProp("name"));
             inf.id = uniset3::hash32(name);
-//            inf.name = name;
+            inf.name = name;
             inf.repName = name;
 
             // textname
@@ -277,7 +277,7 @@ namespace uniset3
             {
                 auto coll = omap[inf.id];
                 ostringstream err;
-                err << "NodeID '" << name << "' has collision with '" << coll.repName << "'";
+                err << "NodeID '" << name << "' has collision with '" << coll.name << "'";
                 throw uniset3::SystemError(err.str());
             }
 
