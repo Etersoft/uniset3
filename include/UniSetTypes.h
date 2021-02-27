@@ -162,6 +162,7 @@ namespace uniset3
         std::string repName = { "" };      /*!< текстовое имя для регистрации в репозитории */
         std::string textName = { "" };     /*!< текстовое имя */
         std::string secName = { "" };      /*!< имя секции */
+        std::string name = { "" };     /*!< имя */
         xmlNode* xmlnode = { nullptr };
 
         inline bool operator < ( const ObjectInfo& o ) const

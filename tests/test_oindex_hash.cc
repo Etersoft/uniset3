@@ -19,7 +19,7 @@ TEST_CASE("ObjectIndexHash", "[oindex_hash][basic]" )
 
     auto oinf = oi.getObjectInfo(uniset3::hash32("Input1_S"));
     REQUIRE( oinf != nullptr );
-//    REQUIRE( oinf->name == "Input1_S");
+    REQUIRE( oinf->name == "Input1_S");
     REQUIRE( oi.getMapName(uniset3::hash32("Input1_S")) == "UNISET_PLC/Sensors/Input1_S" );
     REQUIRE( oi.getTextName(uniset3::hash32("Input1_S")) == "Команда 1" );
 }
