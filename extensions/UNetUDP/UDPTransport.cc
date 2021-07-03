@@ -144,6 +144,11 @@ int UDPReceiveTransport::available()
     return udp->available();
 }
 // -------------------------------------------------------------------------
+int UDPReceiveTransport::available()
+{
+    return udp->available();
+}
+// -------------------------------------------------------------------------
 std::unique_ptr<UDPSendTransport> UDPSendTransport::createFromXml( UniXML::iterator it, const std::string& defaultIP, int numChan )
 {
     ostringstream fieldIp;

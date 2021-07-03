@@ -299,6 +299,11 @@ int MulticastReceiveTransport::available()
     return udp->available();
 }
 // -------------------------------------------------------------------------
+int MulticastReceiveTransport::available()
+{
+    return udp->available();
+}
+// -------------------------------------------------------------------------
 std::vector<Poco::Net::IPAddress> MulticastReceiveTransport::getGroups()
 {
     return groups;
