@@ -23,7 +23,7 @@
 using namespace std;
 using namespace Poco::Net;
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	using namespace UHttp;
 
@@ -179,9 +179,9 @@ namespace uniset
 	{
 		std::ostringstream err;
 		err << "(IHttpRequest::Request): " << req << " not supported";
-		throw uniset::SystemError(err.str());
+		throw uniset3::SystemError(err.str());
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif

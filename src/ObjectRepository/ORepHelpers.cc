@@ -29,7 +29,7 @@
 using namespace omni;
 using namespace std;
 
-namespace uniset
+namespace uniset3
 {
 	namespace ORepHelpers
 	{

@@ -20,7 +20,7 @@
 #include "Configuration.h"
 #include "ObjectIndex_idXML.h"
 // -----------------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------------------
 ObjectIndex_idXML::ObjectIndex_idXML( const string& xmlfile )

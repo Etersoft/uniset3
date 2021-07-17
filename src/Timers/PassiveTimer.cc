@@ -21,7 +21,7 @@
 #include <cstdio>
 #include "PassiveTimer.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -----------------------------------------------------------------------------
 	PassiveTimer::PassiveTimer( ) noexcept:
@@ -135,4 +135,4 @@ namespace uniset
 		return Poco::Timespan( long(usec / 1000000), long(usec % 1000000) );
 	}
 	//------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -10,8 +10,8 @@
 #include "MBTCPMultiMaster.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 std::shared_ptr<MBTCPMultiMaster> mbmm;
 // --------------------------------------------------------------------------
@@ -78,7 +78,7 @@ int main(int argc, const char* argv[] )
     {
         cerr << "(tests_mbtcpmultimaster): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(tests_mbtcpmultimaster): " << ex << endl;
     }

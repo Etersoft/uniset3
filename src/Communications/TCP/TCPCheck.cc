@@ -24,17 +24,17 @@
 // -----------------------------------------------------------------------------
 using namespace std;
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     bool TCPCheck::check( const std::string& _iaddr, timeout_t tout ) noexcept
     {
-        auto v = uniset::explode_str(_iaddr, ':');
+        auto v = uniset3::explode_str(_iaddr, ':');
 
         if( v.size() < 2 )
             return false;
 
-        return check( v[0], uniset::uni_atoi(v[1]), tout );
+        return check( v[0], uniset3::uni_atoi(v[1]), tout );
     }
     // -----------------------------------------------------------------------------
     bool TCPCheck::check( const std::string& ip, int port, timeout_t tout_msec ) noexcept
@@ -116,4 +116,4 @@ namespace uniset
         return false;
     }
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

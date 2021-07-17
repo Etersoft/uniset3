@@ -3,9 +3,9 @@
 #include "LostTestProc.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-LostTestProc::LostTestProc( uniset::ObjectId id, xmlNode* confnode ):
+LostTestProc::LostTestProc( uniset3::ObjectId id, xmlNode* confnode ):
     LostPassiveTestProc( id, confnode )
 {
     vmonit(ncycle);
@@ -24,10 +24,10 @@ void LostTestProc::setChildPassiveProc( const std::shared_ptr<LostPassiveTestPro
 LostTestProc::LostTestProc()
 {
     cerr << ": init failed!!!!!!!!!!!!!!!" << endl;
-    throw uniset::Exception(myname + "(init): FAILED..");
+    throw uniset3::Exception(myname + "(init): FAILED..");
 }
 // -----------------------------------------------------------------------------
-void LostTestProc::sysCommand( const uniset::SystemMessage* sm )
+void LostTestProc::sysCommand( const uniset3::SystemMessage* sm )
 {
     LostTestProc_SK::sysCommand(sm);
 
@@ -88,7 +88,7 @@ void LostTestProc::timerInfo( const TimerMessage* tm )
                 if( smValue != s.second )
                 {
                     cerr << myname << "(check): ERROR!! sid=" << s.first << " smValue=" << smValue << " != " << s.second << endl;
-                    uniset::SimpleInfo_var i = getInfo("");
+                    uniset3::SimpleInfo_var i = getInfo("");
                     cerr << i->info << endl;
                     std::abort();
                 }
@@ -103,11 +103,11 @@ void LostTestProc::timerInfo( const TimerMessage* tm )
                              << " FOR CHILD: " << child->getName()
                              << endl;
 
-                        uniset::SimpleInfo_var i = getInfo("");
+                        uniset3::SimpleInfo_var i = getInfo("");
                         cerr << i->info << endl;
 
                         cerr << "=============== CHILD INFO: ==============" << endl;
-                        uniset::SimpleInfo_var i2 = child->getInfo("");
+                        uniset3::SimpleInfo_var i2 = child->getInfo("");
                         cerr << i2->info << endl;
 
 
@@ -145,7 +145,7 @@ void LostTestProc::timerInfo( const TimerMessage* tm )
                 {
                     cerr << myname << "(check): SAVE TO SM ERROR!! sid=" << s.first
                          << " value=" << smValue << " != " << (s.second + 1) << endl;
-                    uniset::SimpleInfo_var i = getInfo("");
+                    uniset3::SimpleInfo_var i = getInfo("");
                     cerr << i->info << endl;
                     std::abort();
                 }

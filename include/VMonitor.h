@@ -28,7 +28,7 @@
 #include <Poco/Types.h>
 #include "UniSetTypes.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
 #ifndef VMON_DEF_FUNC

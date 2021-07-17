@@ -39,7 +39,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -219,12 +219,12 @@ namespace uniset
         public UniSetObject
     {
         public:
-            UNetExchange( uniset::ObjectId objId, uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr, const std::string& prefix = "unet" );
+            UNetExchange( uniset3::ObjectId objId, uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr, const std::string& prefix = "unet" );
             virtual ~UNetExchange();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<UNetExchange> init_unetexchange( int argc, const char* const argv[],
-                    uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = 0, const std::string& prefix = "unet" );
+                    uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = 0, const std::string& prefix = "unet" );
 
             /*! глобальная функция для вывода help-а */
             static void help_print( int argc, const char* argv[] ) noexcept;
@@ -240,7 +240,7 @@ namespace uniset
                 return unetlog;
             }
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
         protected:
 
@@ -251,10 +251,10 @@ namespace uniset
             std::shared_ptr<SMInterface> shm;
             void step() noexcept;
 
-            void sysCommand( const uniset::SystemMessage* msg ) override;
-            void sensorInfo( const uniset::SensorMessage* sm ) override;
-            void timerInfo( const uniset::TimerMessage* tm ) override;
-            void askSensors( UniversalIO::UIOCommand cmd );
+            void sysCommand( const uniset3::SystemMessage* msg ) override;
+            void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            void timerInfo( const uniset3::TimerMessage* tm ) override;
+            void askSensors( uniset3::UIOCommand cmd );
             bool waitSMReady();
             void receiverEvent( const std::shared_ptr<UNetReceiver>& r, UNetReceiver::Event ev ) noexcept;
 
@@ -280,13 +280,13 @@ namespace uniset
         private:
             UNetExchange();
             timeout_t initPause = { 0 };
-            uniset::uniset_rwmutex mutex_start;
+            uniset3::uniset_rwmutex mutex_start;
 
             PassiveTimer ptHeartBeat;
-            uniset::ObjectId sidHeartBeat = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidHeartBeat = { uniset3::DefaultObjectId };
             timeout_t maxHeartBeat = { 10 };
             IOController::IOStateList::iterator itHeartBeat;
-            uniset::ObjectId test_id = { uniset::DefaultObjectId };
+            uniset3::ObjectId test_id = { uniset3::DefaultObjectId };
 
             timeout_t steptime = { 1000 };    /*!< периодичность вызова step, [мсек] */
 
@@ -297,18 +297,18 @@ namespace uniset
             struct ReceiverInfo
             {
                 ReceiverInfo() noexcept: r1(nullptr), r2(nullptr),
-                    sidRespond(uniset::DefaultObjectId),
+                    sidRespond(uniset3::DefaultObjectId),
                     respondInvert(false),
-                    sidLostPackets(uniset::DefaultObjectId),
-                    sidChannelNum(uniset::DefaultObjectId)
+                    sidLostPackets(uniset3::DefaultObjectId),
+                    sidChannelNum(uniset3::DefaultObjectId)
                 {}
 
                 ReceiverInfo( const std::shared_ptr<UNetReceiver>& _r1, const std::shared_ptr<UNetReceiver>& _r2 ) noexcept:
                     r1(_r1), r2(_r2),
-                    sidRespond(uniset::DefaultObjectId),
+                    sidRespond(uniset3::DefaultObjectId),
                     respondInvert(false),
-                    sidLostPackets(uniset::DefaultObjectId),
-                    sidChannelNum(uniset::DefaultObjectId)
+                    sidLostPackets(uniset3::DefaultObjectId),
+                    sidChannelNum(uniset3::DefaultObjectId)
                 {}
 
                 std::shared_ptr<UNetReceiver> r1;    /*!< приём по первому каналу */
@@ -316,21 +316,21 @@ namespace uniset
 
                 void step(const std::shared_ptr<SMInterface>& shm, const std::string& myname, std::shared_ptr<DebugStream>& log ) noexcept;
 
-                inline void setRespondID( uniset::ObjectId id, bool invert = false ) noexcept
+                inline void setRespondID( uniset3::ObjectId id, bool invert = false ) noexcept
                 {
                     sidRespond = id;
                     respondInvert = invert;
                 }
-                inline void setLostPacketsID( uniset::ObjectId id ) noexcept
+                inline void setLostPacketsID( uniset3::ObjectId id ) noexcept
                 {
                     sidLostPackets = id;
                 }
-                inline void setChannelNumID( uniset::ObjectId id ) noexcept
+                inline void setChannelNumID( uniset3::ObjectId id ) noexcept
                 {
                     sidChannelNum = id;
                 }
 
-                inline void setChannelSwitchCountID( uniset::ObjectId id ) noexcept
+                inline void setChannelSwitchCountID( uniset3::ObjectId id ) noexcept
                 {
                     sidChannelSwitchCount = id;
                 }
@@ -348,16 +348,16 @@ namespace uniset
                 // хотя бы по одному каналу, номер рабочего канала
                 // количество переключений с канала на канал
                 // ( реализацию см. ReceiverInfo::step() )
-                uniset::ObjectId sidRespond;
+                uniset3::ObjectId sidRespond;
                 IOController::IOStateList::iterator itRespond;
                 bool respondInvert = { false };
-                uniset::ObjectId sidLostPackets;
+                uniset3::ObjectId sidLostPackets;
                 IOController::IOStateList::iterator itLostPackets;
-                uniset::ObjectId sidChannelNum;
+                uniset3::ObjectId sidChannelNum;
                 IOController::IOStateList::iterator itChannelNum;
 
                 long channelSwitchCount = { 0 }; /*!< счётчик переключений с канала на канал */
-                uniset::ObjectId sidChannelSwitchCount = { uniset::DefaultObjectId };
+                uniset3::ObjectId sidChannelSwitchCount = { uniset3::DefaultObjectId };
                 IOController::IOStateList::iterator itChannelSwitchCount;
             };
 
@@ -377,7 +377,7 @@ namespace uniset
             VMonitor vmon;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // UNetExchange_H_
 // -----------------------------------------------------------------------------

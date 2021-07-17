@@ -11,8 +11,8 @@
 #include "TestObject.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 std::shared_ptr<TestObject> obj;
 // --------------------------------------------------------------------------
@@ -97,7 +97,7 @@ int main(int argc, const char* argv[] )
     {
         cerr << "(tests): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(tests): " << ex << endl;
     }

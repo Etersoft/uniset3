@@ -24,7 +24,7 @@
 #include "modbus/ModbusTypes.h"
 #include "UniSetTypes.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     class ModbusRTUMaster;
@@ -79,13 +79,13 @@ namespace uniset
             static RTUJack s2j( const std::string& jack );
             static std::string j2s( RTUJack j );
 
-            long getInt( RTUJack jack, uint16_t channel, UniversalIO::IOType t );
-            float getFloat( RTUJack jack, uint16_t channel, UniversalIO::IOType t );
-            bool getState( RTUJack jack, uint16_t channel, UniversalIO::IOType t );
+            long getInt( RTUJack jack, uint16_t channel, uniset3::IOType t );
+            float getFloat( RTUJack jack, uint16_t channel, uniset3::IOType t );
+            bool getState( RTUJack jack, uint16_t channel, uniset3::IOType t );
 
-            static ModbusRTU::ModbusData getRegister( RTUJack jack, uint16_t channel, UniversalIO::IOType t );
+            static ModbusRTU::ModbusData getRegister( RTUJack jack, uint16_t channel, uniset3::IOType t );
 
-            static ModbusRTU::SlaveFunctionCode getFunction( RTUJack jack, uint16_t channel, UniversalIO::IOType t );
+            static ModbusRTU::SlaveFunctionCode getFunction( RTUJack jack, uint16_t channel, uniset3::IOType t );
 
             // ДОДЕЛАТЬ: setState, setValue
             void print();
@@ -115,7 +115,7 @@ namespace uniset
             float unio_ao[24];     // Порт UNIO48 AO
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // --------------------------------------------------------------------------
 #endif // _RTUSTORAGE_H_
 // -----------------------------------------------------------------------------

@@ -21,10 +21,10 @@
 #include "modbus/MBLogSugar.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-RTUExchange::RTUExchange(uniset::ObjectId objId, uniset::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
+RTUExchange::RTUExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                          const std::string& prefix_ ):
     MBExchange(objId, shmId, ic, prefix_),
     mbrtu(0),
@@ -34,7 +34,7 @@ RTUExchange::RTUExchange(uniset::ObjectId objId, uniset::ObjectId shmId, const s
     rs_pre_clean(false)
 {
     if( objId == DefaultObjectId )
-        throw uniset::SystemError("(RTUExchange): objId=-1?!! Use --" + mbconf->prefix + "-name" );
+        throw uniset3::SystemError("(RTUExchange): objId=-1?!! Use --" + mbconf->prefix + "-name" );
 
     auto conf = uniset_conf();
 
@@ -66,7 +66,7 @@ RTUExchange::RTUExchange(uniset::ObjectId objId, uniset::ObjectId shmId, const s
     devname    = conf->getArgParam("--" + mbconf->prefix + "-dev", it.getProp("device"));
 
     if( devname.empty() )
-        throw uniset::SystemError(myname + "(RTUExchange): Unknown device..." );
+        throw uniset3::SystemError(myname + "(RTUExchange): Unknown device..." );
 
     string speed = conf->getArgParam("--" + mbconf->prefix + "-speed", it.getProp("speed"));
 
@@ -155,7 +155,7 @@ std::shared_ptr<ModbusClient> RTUExchange::initMB( bool reopen )
 
         mbinfo << myname << "(init): dev=" << devname << " speed=" << ComPort::getSpeed( mbrtu->getSpeed() ) << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         //if( mbrtu )
         //    delete mbrtu;
@@ -344,7 +344,7 @@ bool RTUExchange::poll()
     return !allNotRespond;
 }
 // -----------------------------------------------------------------------------
-std::shared_ptr<RTUExchange> RTUExchange::init_rtuexchange(int argc, const char* const* argv, uniset::ObjectId icID,
+std::shared_ptr<RTUExchange> RTUExchange::init_rtuexchange(int argc, const char* const* argv, uniset3::ObjectId icID,
         const std::shared_ptr<SharedMemory>& ic, const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -359,7 +359,7 @@ std::shared_ptr<RTUExchange> RTUExchange::init_rtuexchange(int argc, const char*
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         cerr << "(rtuexchange): Not found ID for '" << name
              << "'!"

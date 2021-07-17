@@ -27,12 +27,12 @@
 // glibc..
 #include <netinet/tcp.h>
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
 	using namespace ModbusRTU;
-	using namespace uniset;
+	using namespace uniset3;
 	// -------------------------------------------------------------------------
 	ModbusTCPSession::~ModbusTCPSession()
 	{
@@ -276,7 +276,7 @@ namespace uniset
 			// processing message...
 			res = processing(buf);
 		}
-		catch( uniset::CommFailed& ex )
+		catch( uniset3::CommFailed& ex )
 		{
 			cancelled = true;
 			return erSessionClosed;
@@ -315,7 +315,7 @@ namespace uniset
 				return 0;
 			}
 		}
-		catch( const uniset::CommFailed& ex ){}
+		catch( const uniset3::CommFailed& ex ){}
 
 		if( !cancelled && dlog->is_info() )
 			dlog->info() << peername << "(getNextData): client disconnected" << endl;
@@ -384,7 +384,7 @@ namespace uniset
 			}
 			while( len == 0 && !pt.checkTime() );
 		}
-		catch( const uniset::CommFailed& ex ){}
+		catch( const uniset3::CommFailed& ex ){}
 
 		if( len < mhead.len )
 		{
@@ -592,4 +592,4 @@ namespace uniset
 		return caddr;
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -1,6 +1,6 @@
 #include "DBInterface.h"
 // ------------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// ------------------------------------------------------------------------------------------
 	bool DBNetInterface::connect( const std::string& param )
@@ -142,7 +142,7 @@ namespace uniset
 	// ----------------------------------------------------------------------------
 	int DBResult::as_int( const DBResult::COL::iterator& it )
 	{
-		return uniset::uni_atoi( (*it) );
+		return uniset3::uni_atoi( (*it) );
 	}
 	// ----------------------------------------------------------------------------
 	double DBResult::as_double(const  DBResult::COL::iterator& it )
@@ -254,7 +254,7 @@ namespace uniset
 
 	int DBRowIterator::as_int( int col ) const
 	{
-		return uniset::uni_atoi( (*it)[col] );
+		return uniset3::uni_atoi( (*it)[col] );
 	}
 
 	double DBRowIterator::as_double( int col ) const
@@ -277,4 +277,4 @@ namespace uniset
 		return (*it);
 	}
 	// ----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -26,7 +26,7 @@
 #include <string>
 #include "Exceptions.h"
 // -----------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*!
      * \namespace ORepHelpers
@@ -44,12 +44,12 @@ namespace uniset
          * \param argc  - argv
          * \param nsName  - параметры инициализации ORB
          *
-         * throw uniset::ORepFailed
+         * throw uniset3::ORepFailed
         */
         CosNaming::NamingContext_ptr getContext(const std::string& cname, int argc,
                                                 const char* const* argv, const std::string& nsName);
 
-        // throw uniset::ORepFailed
+        // throw uniset3::ORepFailed
         CosNaming::NamingContext_ptr getContext(const CORBA::ORB_ptr orb, const std::string& cname,
                                                 const std::string& nsName);
 

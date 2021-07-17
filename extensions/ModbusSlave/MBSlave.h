@@ -47,7 +47,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -272,7 +272,7 @@ namespace uniset
 
 
     \section sec_MBSlave_DIAG Диагностические функции (0x08)
-       В процесс встроена поддержка диагностических функций. См. \ref uniset::ModbusRTU::DiagnosticsSubFunction
+       В процесс встроена поддержка диагностических функций. См. \ref uniset3::ModbusRTU::DiagnosticsSubFunction
 
     \section sec_MBSlave_TCP  Настройка TCPServer
     \code
@@ -313,12 +313,12 @@ namespace uniset
         public UniSetObject
     {
         public:
-            MBSlave( uniset::ObjectId objId, uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr, const std::string& prefix = "mbs" );
+            MBSlave( uniset3::ObjectId objId, uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr, const std::string& prefix = "mbs" );
             virtual ~MBSlave();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<MBSlave> init_mbslave(int argc, const char* const* argv,
-                    uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "mbs" );
 
             static void help_print( int argc, const char* const* argv );
@@ -370,7 +370,7 @@ namespace uniset
                 BitRegProperty(): mbreg(0), bvec(ModbusRTU::BitsPerData) {}
 
                 /*! проверка привязан ли данный датчик, к какому-либо биту в этом слове */
-                bool check( const IOController_i::SensorInfo& si );
+                bool check( const uniset3::SensorInfo& si );
 
                 friend std::ostream& operator<<( std::ostream& os, BitRegProperty& p );
                 friend std::ostream& operator<<( std::ostream& os, BitRegProperty* p );
@@ -390,7 +390,7 @@ namespace uniset
                 return mblog;
             }
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
 #ifndef DISABLE_REST_API
             // http API
@@ -477,10 +477,10 @@ namespace uniset
 
             std::shared_ptr<SMInterface> shm;
 
-            virtual void sysCommand( const uniset::SystemMessage* msg ) override;
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset::TimerMessage* tm ) override;
-            void askSensors( UniversalIO::UIOCommand cmd );
+            virtual void sysCommand( const uniset3::SystemMessage* msg ) override;
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+            void askSensors( uniset3::UIOCommand cmd );
             bool waitSMReady();
             virtual void execute_rtu();
             virtual void execute_tcp();
@@ -501,7 +501,7 @@ namespace uniset
                 tmCheckExchange
             };
 
-            uniset::timeout_t checkExchangeTime = { 10000 }; // контроль "живости" потока обмена, мсек
+            uniset3::timeout_t checkExchangeTime = { 10000 }; // контроль "живости" потока обмена, мсек
 
             virtual void initIterators();
             bool initItem( UniXML::iterator& it );
@@ -532,23 +532,23 @@ namespace uniset
 #endif
             MBSlave();
             timeout_t initPause = { 3000 };
-            uniset::uniset_rwmutex mutex_start;
+            uniset3::uniset_rwmutex mutex_start;
             std::unique_ptr< ThreadCreator<MBSlave> > thr;
 
             std::mutex mutexStartNotify;
             std::condition_variable startNotifyEvent;
 
             PassiveTimer ptHeartBeat;
-            uniset::ObjectId sidHeartBeat = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidHeartBeat = { uniset3::DefaultObjectId };
             long maxHeartBeat = { 10 };
             IOController::IOStateList::iterator itHeartBeat;
-            uniset::ObjectId test_id = { uniset::DefaultObjectId };
+            uniset3::ObjectId test_id = { uniset3::DefaultObjectId };
 
             IOController::IOStateList::iterator itAskCount;
-            uniset::ObjectId askcount_id = { uniset::DefaultObjectId };
+            uniset3::ObjectId askcount_id = { uniset3::DefaultObjectId };
 
             IOController::IOStateList::iterator itRespond;
-            uniset::ObjectId respond_id = { uniset::DefaultObjectId };
+            uniset3::ObjectId respond_id = { uniset3::DefaultObjectId };
             bool respond_invert = { false };
 
             PassiveTimer ptTimeout;
@@ -605,22 +605,22 @@ namespace uniset
 
             struct ClientInfo
             {
-                ClientInfo(): iaddr(""), respond_s(uniset::DefaultObjectId), invert(false),
-                    askCount(0), askcount_s(uniset::DefaultObjectId)
+                ClientInfo(): iaddr(""), respond_s(uniset3::DefaultObjectId), invert(false),
+                    askCount(0), askcount_s(uniset3::DefaultObjectId)
                 {
                     ptTimeout.setTiming(0);
                 }
 
                 std::string iaddr = { "" };
 
-                uniset::ObjectId respond_s = { uniset::DefaultObjectId };
+                uniset3::ObjectId respond_s = { uniset3::DefaultObjectId };
                 IOController::IOStateList::iterator respond_it;
                 bool invert = { false };
                 PassiveTimer ptTimeout;
                 timeout_t tout = { 2000 };
 
                 long askCount = { 0 };
-                uniset::ObjectId askcount_s = { uniset::DefaultObjectId };
+                uniset3::ObjectId askcount_s = { uniset3::DefaultObjectId };
                 IOController::IOStateList::iterator askcount_it;
 
                 inline void initIterators( const std::shared_ptr<SMInterface>& shm )
@@ -635,7 +635,7 @@ namespace uniset
             typedef std::unordered_map<std::string, ClientInfo> ClientsMap;
             ClientsMap cmap;
 
-            uniset::ObjectId sesscount_id = { uniset::DefaultObjectId };
+            uniset3::ObjectId sesscount_id = { uniset3::DefaultObjectId };
             IOController::IOStateList::iterator sesscount_it;
 
             std::atomic_bool tcpCancelled = { true };
@@ -644,7 +644,7 @@ namespace uniset
             timeout_t tcpRepeatCreateSocketPause = { 30000 }; /*! пауза между попытками открыть сокет */
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // _MBSlave_H_
 // -----------------------------------------------------------------------------

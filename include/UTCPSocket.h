@@ -6,7 +6,7 @@
 #include <Poco/Net/ServerSocket.h>
 #include "PassiveTimer.h" // for timeout_t
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     class UTCPSocket:

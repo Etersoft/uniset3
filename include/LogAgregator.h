@@ -26,7 +26,7 @@
 #include "DebugStream.h"
 #include "LogServerTypes.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*!
         \page page_LogAgregator Агрегатор логов (LogAgregator)

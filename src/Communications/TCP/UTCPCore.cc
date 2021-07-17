@@ -4,7 +4,7 @@
 // -------------------------------------------------------------------------
 using namespace std;
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     bool UTCPCore::setKeepAliveParams( int fd, timeout_t timeout_sec, int keepcnt, int keepintvl ) noexcept
@@ -66,4 +66,4 @@ namespace uniset
         return len - pos;
     }
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

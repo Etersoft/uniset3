@@ -6,10 +6,10 @@
 #include "IONotifyController.h"
 // --------------------------------------------------------------------------
 class NullController:
-    public uniset::IONotifyController
+    public uniset3::IONotifyController
 {
     public:
-        NullController(uniset::ObjectId id, const std::string& ioconfile,
+        NullController(uniset3::ObjectId id, const std::string& ioconfile,
                        const std::string& s_filterField = "",
                        const std::string& s_filterValue = "",
                        const std::string& c_filterField = "",

@@ -7,7 +7,7 @@
 #include "proto/unet.pb.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 TEST_CASE("[UNetUDP]: protobuf UNetPacket", "[unetudp][protobuf][packet]")
 {
@@ -31,7 +31,7 @@ TEST_CASE("[UNetUDP]: protobuf UNetPacket", "[unetudp][protobuf][packet]")
 
     //    cerr << pack.ByteSizeLong() << endl;
 
-    //    uniset::UniSetUDP::UDPMessage p1;
+    //    uniset3::UniSetUDP::UDPMessage p1;
     //    p1.procID = 100;
     //    p1.nodeID = 100;
     //    p1.num = 1;
@@ -76,7 +76,7 @@ TEST_CASE("[UNetUDP]: protobuf UDPMessage", "[unetudp][protobuf][message]")
 // -----------------------------------------------------------------------------
 TEST_CASE("[UNetUDP]: crc", "[unetudp][protobuf][crc]")
 {
-    uint8_t buf[uniset::UniSetUDP::MessageBufSize];
+    uint8_t buf[uniset3::UniSetUDP::MessageBufSize];
 
     UniSetUDP::UDPMessage pack;
     REQUIRE(pack.isOk());

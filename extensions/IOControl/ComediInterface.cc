@@ -19,7 +19,7 @@
 #include <cstring>
 #include "ComediInterface.h"
 // -----------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------
 ComediInterface::ComediInterface( const std::string& dev, const std::string& cname ):
@@ -54,7 +54,7 @@ int ComediInterface::getAnalogChannel( int subdev, int channel, int range, int a
             << " channel=" << channel << " range=" << range << " aref=" << aref
             << " dev=" << dname
             << " err: " << ret << " (" << strerror(ret) << ")";
-        throw uniset::Exception(err.str());
+        throw uniset3::Exception(err.str());
     }
 
     return data;

@@ -21,8 +21,8 @@
 #include "Extensions.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 int main(int argc, const char** argv)
 {
@@ -34,7 +34,7 @@ int main(int argc, const char** argv)
         cout << "Usage: uniset2-smemory args1 args2" << endl;
         cout << endl;
         SharedMemory::help_print(argc, argv);
-        cout << uniset::Configuration::help() << endl;
+        cout << uniset3::Configuration::help() << endl;
         return 0;
     }
 
@@ -59,7 +59,7 @@ int main(int argc, const char** argv)
     {
         dcrit << "(smemory): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dcrit << "(smemory): " << ex << endl;
     }

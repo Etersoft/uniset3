@@ -291,14 +291,14 @@ class stringsigbuf : public streambuf
 		///
 		virtual int sync()
 		{
-			uniset::uniset_rwmutex_wrlock l(mut);
+			uniset3::uniset_rwmutex_wrlock l(mut);
 			return sb->pubsync();
 		}
 
 		///
 		virtual streamsize xsputn(char_type const* p, streamsize n)
 		{
-			uniset::uniset_rwmutex_wrlock l(mut);
+			uniset3::uniset_rwmutex_wrlock l(mut);
 			streamsize r = sb->sputn(p, n);
 			s_overflow.emit( sb->str() );
 			sb->str("");
@@ -311,7 +311,7 @@ class stringsigbuf : public streambuf
 
 			if( r == '\n' )
 			{
-				uniset::uniset_rwmutex_wrlock l(mut);
+				uniset3::uniset_rwmutex_wrlock l(mut);
 				s_overflow.emit( sb->str() );
 				sb->str("");
 			}
@@ -338,7 +338,7 @@ class stringsigbuf : public streambuf
 
 			if( r == '\n' )
 			{
-				uniset::uniset_rwmutex_wrlock l(mut);
+				uniset3::uniset_rwmutex_wrlock l(mut);
 				s_overflow.emit( sb->str() );
 				sb->str("");
 			}
@@ -350,7 +350,7 @@ class stringsigbuf : public streambuf
 		///
 		StrBufOverflow_Signal s_overflow;
 		stringbuf* sb;
-		uniset::uniset_rwmutex mut;
+		uniset3::uniset_rwmutex mut;
 };
 //--------------------------------------------------------------------------
 /// So that public parts of DebugStream does not need to know about filebuf

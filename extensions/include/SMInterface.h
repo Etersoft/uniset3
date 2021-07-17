@@ -25,41 +25,41 @@
 #include "IONotifyController.h"
 #include "UInterface.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // --------------------------------------------------------------------------
     class SMInterface
     {
         public:
 
-            SMInterface( uniset::ObjectId _shmID, const std::shared_ptr<UInterface>& ui,
-                         uniset::ObjectId myid, const std::shared_ptr<IONotifyController> ic = nullptr );
+            SMInterface( uniset3::ObjectId _shmID, const std::shared_ptr<UInterface>& ui,
+                         uniset3::ObjectId myid, const std::shared_ptr<IONotifyController> ic = nullptr );
             ~SMInterface();
 
-            void setValue ( uniset::ObjectId, long value );
-            void setUndefinedState( const IOController_i::SensorInfo& si, bool undefined, uniset::ObjectId supplier );
+            void setValue ( uniset3::ObjectId, long value );
+            void setUndefinedState( const uniset3::SensorInfo& si, bool undefined, uniset3::ObjectId supplier );
 
-            long getValue ( uniset::ObjectId id );
+            long getValue ( uniset3::ObjectId id );
 
-            void askSensor( uniset::ObjectId id, UniversalIO::UIOCommand cmd,
-                            uniset::ObjectId backid = uniset::DefaultObjectId );
+            void askSensor( uniset3::ObjectId id, uniset3::UIOCommand cmd,
+                            uniset3::ObjectId backid = uniset3::DefaultObjectId );
 
-            IOController_i::SensorInfoSeq* getSensorsMap();
-            IONotifyController_i::ThresholdsListSeq* getThresholdsList();
+            uniset3::SensorInfoSeq* getSensorsMap();
+            uniset3::ThresholdsListSeq* getThresholdsList();
 
             void localSetValue( IOController::IOStateList::iterator& it,
-                                uniset::ObjectId sid,
-                                CORBA::Long newvalue, uniset::ObjectId sup_id );
+                                uniset3::ObjectId sid,
+                                CORBA::Long newvalue, uniset3::ObjectId sup_id );
 
             long localGetValue( IOController::IOStateList::iterator& it,
-                                uniset::ObjectId sid );
+                                uniset3::ObjectId sid );
 
             /*! функция выставления признака неопределённого состояния для аналоговых датчиков
                 // для дискретных датчиков необходимости для подобной функции нет.
                 // см. логику выставления в функции localSaveState
             */
             void localSetUndefinedState( IOController::IOStateList::iterator& it,
-                                         bool undefined, uniset::ObjectId sid );
+                                         bool undefined, uniset3::ObjectId sid );
 
             // специальные функции
             IOController::IOStateList::iterator ioEnd();
@@ -67,14 +67,14 @@ namespace uniset
 
             bool exist();
             bool waitSMready( int msec, int pause = 5000 );
-            bool waitSMworking( uniset::ObjectId, int msec, int pause = 3000 );
+            bool waitSMworking( uniset3::ObjectId, int msec, int pause = 3000 );
             bool waitSMreadyWithCancellation( int msec, std::atomic_bool& cancelFlag, int pause = 5000 );
 
             inline bool isLocalwork() const noexcept
             {
                 return (ic == NULL);
             }
-            inline uniset::ObjectId ID() const noexcept
+            inline uniset3::ObjectId ID() const noexcept
             {
                 return myid;
             }
@@ -82,7 +82,7 @@ namespace uniset
             {
                 return ic;
             }
-            inline uniset::ObjectId getSMID() const noexcept
+            inline uniset3::ObjectId getSMID() const noexcept
             {
                 return shmID;
             }
@@ -95,11 +95,11 @@ namespace uniset
             const std::shared_ptr<IONotifyController> ic;
             const std::shared_ptr<UInterface> ui;
             CORBA::Object_var oref;
-            uniset::ObjectId shmID;
-            uniset::ObjectId myid;
-            uniset::uniset_rwmutex shmMutex;
+            uniset3::ObjectId shmID;
+            uniset3::ObjectId myid;
+            uniset3::uniset_rwmutex shmMutex;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 //--------------------------------------------------------------------------
 #endif

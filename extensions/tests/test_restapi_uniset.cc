@@ -10,11 +10,11 @@
 
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 static std::shared_ptr<SMInterface> shm;
-static uniset::ObjectId testOID = DefaultObjectId;
+static uniset3::ObjectId testOID = DefaultObjectId;
 static ObjectId aid = DefaultObjectId;
 static const std::string aidName = "AI_AS";
 // -----------------------------------------------------------------------------
@@ -255,7 +255,7 @@ TEST_CASE("[REST API: /consumers]", "[restapi][consumers]")
 {
     init_test();
 
-    REQUIRE_NOTHROW( shm->askSensor(aid, UniversalIO::UIONotify, testOID) );
+    REQUIRE_NOTHROW( shm->askSensor(aid, uniset3::UIONotify, testOID) );
 
     // QUERY: /consumers
     // Ожидаемый формат ответа:
@@ -311,7 +311,7 @@ TEST_CASE("[REST API: /lost]", "[restapi][lost]")
     const ObjectId myID = 6013; // TestProc2
     const ObjectId sid = 122; // test sensor
 
-    shm->askSensor(sid, UniversalIO::UIONotify, myID );
+    shm->askSensor(sid, uniset3::UIONotify, myID );
 
     // имитируем изменения
     for( size_t i = 200; i < 220; i++ )

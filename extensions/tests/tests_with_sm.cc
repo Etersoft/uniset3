@@ -11,8 +11,8 @@
 #include "Extensions.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 static shared_ptr<SMInterface> smi;
 static shared_ptr<SharedMemory> shm;
@@ -92,11 +92,11 @@ int main(int argc, const char* argv[] )
 
         return session.run();
     }
-    catch( const uniset::SystemError& err )
+    catch( const uniset3::SystemError& err )
     {
         cerr << "(tests_with_sm): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(tests_with_sm): " << ex << endl;
     }

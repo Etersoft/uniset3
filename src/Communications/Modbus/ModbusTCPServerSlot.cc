@@ -16,7 +16,7 @@
 // -------------------------------------------------------------------------
 #include "modbus/ModbusTCPServerSlot.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace ModbusRTU;
@@ -177,4 +177,4 @@ namespace uniset
 		catch( std::exception& ex ) {}
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -27,7 +27,7 @@
 #include "DebugStream.h"
 #include "LogAgregator.h"
 //------------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! Прототип реализации сервиса ведения БД
         Предназначен для работы с БД.
@@ -38,25 +38,25 @@ namespace uniset
             - при помощи UInterface::send()
 
             Сервис является системным, поэтому его идентификатор можно получить при помощи
-        uniset::Configuration::getDBServer() объекта uniset::conf.
+        uniset3::Configuration::getDBServer() объекта uniset3::conf.
     */
     class DBServer:
         public UniSetObject
     {
         public:
-            DBServer( uniset::ObjectId id, const std::string& prefix = "db" );
+            DBServer( uniset3::ObjectId id, const std::string& prefix = "db" );
             DBServer( const std::string& prefix = "db" );
             ~DBServer();
 
             static std::string help_print();
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = "" ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = "" ) override;
 
         protected:
 
-            virtual void processingMessage( const uniset::VoidMessage* msg ) override;
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
-            virtual void confirmInfo( const uniset::ConfirmMessage* cmsg ) {}
+            virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void confirmInfo( const uniset3::ConfirmMessage* cmsg ) {}
 
             virtual bool activateObject() override;
             virtual void initDBServer() {}

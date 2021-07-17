@@ -23,7 +23,7 @@
 #include "DebugStream.h"
 #include "PassiveTimer.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     namespace UHttp
     {
@@ -39,10 +39,10 @@ namespace uniset
                 // \return "" if fail
                 std::string get( const std::string& host, int port, const std::string& request );
 
-                void setTimeout( uniset::timeout_t usec );
+                void setTimeout( uniset3::timeout_t usec );
 
                 // in microseconds
-                uniset::timeout_t getTimeout();
+                uniset3::timeout_t getTimeout();
 
             protected:
                 Poco::Net::HTTPClientSession session;

@@ -24,16 +24,16 @@
 #include "modbus/MBLogSugar.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-MBTCPMaster::MBTCPMaster(uniset::ObjectId objId, uniset::ObjectId shmId,
+MBTCPMaster::MBTCPMaster(uniset3::ObjectId objId, uniset3::ObjectId shmId,
                          const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
     MBExchange(objId, shmId, ic, prefix),
     force_disconnect(true)
 {
     if( objId == DefaultObjectId )
-        throw uniset::SystemError("(MBTCPMaster): objId=-1?!! Use --" + prefix + "-name" );
+        throw uniset3::SystemError("(MBTCPMaster): objId=-1?!! Use --" + prefix + "-name" );
 
     auto conf = uniset_conf();
 
@@ -48,13 +48,13 @@ MBTCPMaster::MBTCPMaster(uniset::ObjectId objId, uniset::ObjectId shmId,
     iaddr    = conf->getArgParam(pname, it.getProp("gateway_iaddr"));
 
     if( iaddr.empty() )
-        throw uniset::SystemError(myname + "(MBMaster): Unknown inet addr...(Use: " + pname + ")" );
+        throw uniset3::SystemError(myname + "(MBMaster): Unknown inet addr...(Use: " + pname + ")" );
 
     string tmp("--" + prefix + "-gateway-port");
     port = conf->getArgInt(tmp, it.getProp("gateway_port"));
 
     if( port <= 0 )
-        throw uniset::SystemError(myname + "(MBMaster): Unknown inet port...(Use: " + tmp + ")" );
+        throw uniset3::SystemError(myname + "(MBMaster): Unknown inet port...(Use: " + tmp + ")" );
 
     mbinfo << myname << "(init): gateway " << iaddr << ":" << port << endl;
 
@@ -124,7 +124,7 @@ std::shared_ptr<ModbusClient> MBTCPMaster::initMB( bool reopen )
     return mbtcp;
 }
 // -----------------------------------------------------------------------------
-void MBTCPMaster::sysCommand( const uniset::SystemMessage* sm )
+void MBTCPMaster::sysCommand( const uniset3::SystemMessage* sm )
 {
     MBExchange::sysCommand(sm);
 
@@ -143,7 +143,7 @@ void MBTCPMaster::poll_thread()
     // ждём начала работы..(см. MBExchange::activateObject)
     while( !isProcActive() && !canceled )
     {
-        uniset::uniset_rwmutex_rlock l(mutex_start);
+        uniset3::uniset_rwmutex_rlock l(mutex_start);
     }
 
     //  if( canceled )
@@ -208,7 +208,7 @@ void MBTCPMaster::help_print( int argc, const char* const* argv )
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<MBTCPMaster> MBTCPMaster::init_mbmaster(int argc, const char* const* argv,
-        uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+        uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
         const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -222,7 +222,7 @@ std::shared_ptr<MBTCPMaster> MBTCPMaster::init_mbmaster(int argc, const char* co
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         dcrit << "(MBTCPMaster): идентификатор '" << name
               << "' не найден в конф. файле!"
@@ -234,9 +234,9 @@ std::shared_ptr<MBTCPMaster> MBTCPMaster::init_mbmaster(int argc, const char* co
     return make_shared<MBTCPMaster>(ID, icID, ic, prefix);
 }
 // -----------------------------------------------------------------------------
-uniset::SimpleInfo* MBTCPMaster::getInfo( const char* userparam )
+uniset3::SimpleInfo* MBTCPMaster::getInfo( const char* userparam )
 {
-    uniset::SimpleInfo_var i = MBExchange::getInfo(userparam);
+    uniset3::SimpleInfo_var i = MBExchange::getInfo(userparam);
 
     ostringstream inf;
 
@@ -247,7 +247,7 @@ uniset::SimpleInfo* MBTCPMaster::getInfo( const char* userparam )
     return i._retn();
 }
 // ----------------------------------------------------------------------------
-bool MBTCPMaster::reconfigure( const std::shared_ptr<uniset::UniXML>& xml, const std::shared_ptr<uniset::MBConfig>& newConf )
+bool MBTCPMaster::reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& newConf )
 {
     newConf->prop_prefix = initPropPrefix(newConf->s_field, "tcp_");
 

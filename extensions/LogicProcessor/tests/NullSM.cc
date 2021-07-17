@@ -3,7 +3,7 @@
 #include "IOConfig_XML.h"
 #include "NullSM.h"
 // --------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------------
 

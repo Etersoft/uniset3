@@ -5,7 +5,7 @@
 #include "UniSetTypes.h"
 // ---------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // ---------------------------------------------------------------
 TEST_CASE("Message", "[basic][message types][Message]" )
 {
@@ -55,14 +55,14 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         //        CHECK( sm.sm_tv_sec == );
         //        CHECK( sm.sm_tv_usec == );
 
-        CHECK( sm.sensor_type == UniversalIO::DI ); // UnknownIOType
+        CHECK( sm.sensor_type == uniset3::DI ); // UnknownIOType
         CHECK( sm.ci.precision == 0 );
         CHECK( sm.ci.minRaw == 0 );
         CHECK( sm.ci.maxRaw == 0 );
         CHECK( sm.ci.minCal == 0 );
         CHECK( sm.ci.maxCal == 0 );
         CHECK( sm.threshold == 0 );
-        CHECK( sm.tid == uniset::DefaultThresholdId );
+        CHECK( sm.tid == uniset3::DefaultThresholdId );
     }
 
     SECTION("Default SensorMessage")
@@ -72,7 +72,7 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         SensorMessage sm(sid, val);
         REQUIRE( sm.id == sid );
         REQUIRE( sm.value == val );
-        REQUIRE( sm.sensor_type == UniversalIO::AI );
+        REQUIRE( sm.sensor_type == uniset3::AI );
     }
 
     SECTION("Transport SensorMessage")
@@ -82,7 +82,7 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         SensorMessage sm(sid, val);
         REQUIRE( sm.id == sid );
         REQUIRE( sm.value == val );
-        REQUIRE( sm.sensor_type == UniversalIO::AI );
+        REQUIRE( sm.sensor_type == uniset3::AI );
 
         auto tm = sm.transport_msg();
 
@@ -93,7 +93,7 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         REQUIRE( sm2.type == Message::SensorInfo );
         REQUIRE( sm2.id == sid );
         REQUIRE( sm2.value == val );
-        REQUIRE( sm2.sensor_type == UniversalIO::AI );
+        REQUIRE( sm2.sensor_type == uniset3::AI );
     }
 }
 // ---------------------------------------------------------------
@@ -156,7 +156,7 @@ TEST_CASE("TimerMessage", "[basic][message types][TimerMessage]" )
         CHECK( tm.node == conf->getLocalNode() );
         CHECK( tm.supplier == DefaultObjectId );
         CHECK( tm.consumer == DefaultObjectId );
-        CHECK( tm.id == uniset::DefaultTimerId );
+        CHECK( tm.id == uniset3::DefaultTimerId );
     }
 
     SECTION("Default TimerMessage")
@@ -250,17 +250,17 @@ TEST_CASE("TextMessage", "[basic][message types][TextMessage]" )
     {
         std::string txt = "Hello world";
 
-        ::uniset::Timespec tspec;
+        ::uniset3::Timespec tspec;
         tspec.sec = 10;
         tspec.nsec = 100;
 
-        ::uniset::ProducerInfo pi;
+        ::uniset3::ProducerInfo pi;
         pi.id = 30;
         pi.node = conf->getLocalNode();
 
         ObjectId consumer = 40;
 
-        TextMessage tm(txt.c_str(), 3, tspec, pi, uniset::Message::High, consumer );
+        TextMessage tm(txt.c_str(), 3, tspec, pi, uniset3::Message::High, consumer );
         REQUIRE( tm.consumer == consumer );
         REQUIRE( tm.node == pi.node );
         REQUIRE( tm.supplier == pi.id );

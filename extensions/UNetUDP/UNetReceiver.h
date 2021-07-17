@@ -33,7 +33,7 @@
 #include "CommonEventLoop.h"
 #include "UNetTransport.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*  Основная идея: сделать проверку очерёдности пакетов, но при этом использовать UDP.
@@ -131,8 +131,8 @@ namespace uniset
             void setBufferSize( size_t sz ) noexcept;
             void setMaxReceiveAtTime( size_t sz ) noexcept;
 
-            void setRespondID( uniset::ObjectId id, bool invert = false ) noexcept;
-            void setLostPacketsID( uniset::ObjectId id ) noexcept;
+            void setRespondID( uniset3::ObjectId id, bool invert = false ) noexcept;
+            void setLostPacketsID( uniset3::ObjectId id ) noexcept;
 
             void forceUpdate() noexcept; // пересохранить очередной пакет в SM даже если данные не менялись
 
@@ -234,10 +234,10 @@ namespace uniset
             PassiveTimer ptLostTimeout;
             size_t lostPackets = { 0 }; /*!< счётчик потерянных пакетов */
 
-            uniset::ObjectId sidRespond = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidRespond = { uniset3::DefaultObjectId };
             IOController::IOStateList::iterator itRespond;
             bool respondInvert = { false };
-            uniset::ObjectId sidLostPackets = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidLostPackets = { uniset3::DefaultObjectId };
             IOController::IOStateList::iterator itLostPackets;
 
             std::atomic_bool activated = { false };
@@ -246,7 +246,7 @@ namespace uniset
             std::vector<UniSetUDP::UDPMessage> cbuf; // circular buffer
             size_t wnum = { 1 }; /*!< номер следующего ожидаемого пакета */
             size_t rnum = { 0 }; /*!< номер последнего обработанного пакета */
-            uint8_t rbuf[uniset::UniSetUDP::MessageBufSize]; // буфер для очередных данных
+            uint8_t rbuf[uniset3::UniSetUDP::MessageBufSize]; // буфер для очередных данных
             UniSetUDP::UDPMessage* pack; // текущий обрабатываемый пакет
 
             /*! максимальная разница между номерами пакетов, при которой считается, что счётчик пакетов
@@ -262,11 +262,11 @@ namespace uniset
 
             struct CacheItem
             {
-                long id = { uniset::DefaultObjectId };
+                long id = { uniset3::DefaultObjectId };
                 IOController::IOStateList::iterator ioit;
 
                 CacheItem():
-                    id(uniset::DefaultObjectId) {}
+                    id(uniset3::DefaultObjectId) {}
             };
 
             typedef std::vector<CacheItem> CacheVec;
@@ -280,7 +280,7 @@ namespace uniset
             CacheVec* getACache( UniSetUDP::UDPMessage* pack ) noexcept;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // UNetReceiver_H_
 // -----------------------------------------------------------------------------

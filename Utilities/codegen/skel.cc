@@ -2,9 +2,9 @@
 #include "Skel.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-Skel::Skel( uniset::ObjectId id, xmlNode* confnode ):
+Skel::Skel( uniset3::ObjectId id, xmlNode* confnode ):
     Skel_SK( id, confnode )
 {
 }
@@ -31,7 +31,7 @@ void Skel::timerInfo( const TimerMessage* tm )
 {
 }
 // -----------------------------------------------------------------------------
-void Skel::askSensors( UniversalIO::UIOCommand cmd )
+void Skel::askSensors( uniset3::UIOCommand cmd )
 {
 
 }

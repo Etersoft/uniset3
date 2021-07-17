@@ -162,7 +162,7 @@ std::ostream& DebugStream::debug(Debug::type t) noexcept
 {
 	if( (dt & t) && (vv <= verb) )
 	{
-		uniset::ios_fmt_restorer ifs(*this);
+		uniset3::ios_fmt_restorer ifs(*this);
 
 		if( show_datetime )
 			printDateTime(t);
@@ -207,7 +207,7 @@ std::ostream& DebugStream::printDate(Debug::type t, char brk) noexcept
 {
 	if( (dt & t) && (vv <= verb) )
 	{
-		uniset::ios_fmt_restorer ifs(*this);
+		uniset3::ios_fmt_restorer ifs(*this);
 
 		std::time_t tv = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 		std::tm tms;
@@ -231,9 +231,9 @@ std::ostream& DebugStream::printTime(Debug::type t, char brk) noexcept
 {
 	if( (dt & t) && (vv <= verb) )
 	{
-		uniset::ios_fmt_restorer ifs(*this);
+		uniset3::ios_fmt_restorer ifs(*this);
 
-		timespec tv = uniset::now_to_timespec(); // gettimeofday(tv,0);
+		timespec tv = uniset3::now_to_timespec(); // gettimeofday(tv,0);
 		std::tm tms;
 		gmtime_r(&tv.tv_sec, &tms);
 
@@ -262,9 +262,9 @@ std::ostream& DebugStream::printDateTime(Debug::type t) noexcept
 {
 	if( (dt & t) && (vv <= verb) )
 	{
-		uniset::ios_fmt_restorer ifs(*this);
+		uniset3::ios_fmt_restorer ifs(*this);
 
-		timespec tv = uniset::now_to_timespec(); // gettimeofday(tv,0);
+		timespec tv = uniset3::now_to_timespec(); // gettimeofday(tv,0);
 		std::tm tms;
 		gmtime_r(&tv.tv_sec, &tms);
 

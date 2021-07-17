@@ -11,8 +11,8 @@
 #include "Extensions.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 static shared_ptr<SMInterface> smi;
 static shared_ptr<UInterface> ui;
@@ -191,8 +191,8 @@ int main(int argc, char* argv[] )
     {
         auto conf = uniset_init(argc, argv);
 
-        int n = uniset::getArgInt("--num", argc, argv, "1");
-        int dataCount = uniset::getArgInt("--count", argc, argv, "1000");
+        int n = uniset3::getArgInt("--num", argc, argv, "1");
+        int dataCount = uniset3::getArgInt("--count", argc, argv, "1000");
 
         if( n <= 0 )
         {
@@ -218,7 +218,7 @@ int main(int argc, char* argv[] )
     {
         cerr << "(urecv-perf-test): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(urecv-perf-test): " << ex << endl;
     }

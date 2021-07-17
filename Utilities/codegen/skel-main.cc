@@ -3,7 +3,7 @@
 #include <UniSetActivator.h>
 #include "Skel.h"
 // -----------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------
 int main( int argc, const char** argv )

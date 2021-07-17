@@ -6,8 +6,8 @@
 #include "Extensions.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
@@ -24,7 +24,7 @@ int main( int argc, const char** argv )
         MBTCPMaster::help_print(argc, argv);
         cout << endl;
         cout << " Global options:" << endl;
-        cout << uniset::Configuration::help() << endl;
+        cout << uniset3::Configuration::help() << endl;
         return 0;
     }
 
@@ -67,7 +67,7 @@ int main( int argc, const char** argv )
         act->run(false);
         return 0;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(mbtcpmaster): " << ex << std::endl;
     }

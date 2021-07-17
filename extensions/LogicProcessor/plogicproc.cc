@@ -22,8 +22,8 @@
 
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 int main(int argc, const char** argv)
 {
@@ -41,7 +41,7 @@ int main(int argc, const char** argv)
         PassiveLProcessor::help_print(argc, argv);
         cout << endl;
         cout << "Global options:" << endl;
-        cout << uniset::Configuration::help() << endl;
+        cout << uniset3::Configuration::help() << endl;
         return 0;
     }
 
@@ -101,7 +101,7 @@ int main(int argc, const char** argv)
     {
         cerr << ex << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << ex << endl;
     }

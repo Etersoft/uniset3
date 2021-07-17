@@ -37,8 +37,8 @@
 		<xsl:if test="normalize-space(@name)=$OID">
 		<xsl:choose>
 		<xsl:when test="$GENTYPE='H'">
-		<xsl:if test="normalize-space(@vartype)!='io'">const uniset::ObjectId <xsl:value-of select="../../@name"/>; 		/*!&lt; <xsl:value-of select="../../@textname"/> */
-		const uniset::ObjectId node_<xsl:value-of select="../../@name"/>;
+		<xsl:if test="normalize-space(@vartype)!='io'">const uniset3::ObjectId <xsl:value-of select="../../@name"/>; 		/*!&lt; <xsl:value-of select="../../@textname"/> */
+		const uniset3::ObjectId node_<xsl:value-of select="../../@name"/>;
 		<xsl:if test="normalize-space(@vartype)='in'">const long&amp; </xsl:if>
 		<xsl:if test="normalize-space(@vartype)!='in'">long </xsl:if>
 		<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>; /*!&lt; текущее значение '<xsl:value-of select="../../@name"/>' */
@@ -61,7 +61,7 @@
 				node_<xsl:value-of select="../../@name"/>(uniset_conf()->getNodeID("<xsl:value-of select="../../@node"/>")),
 			</xsl:if>
 			<xsl:if test="normalize-space(../../@node)=''">
-				node_<xsl:value-of select="../../@name"/>(uniset::uniset_conf()->getLocalNode()),
+				node_<xsl:value-of select="../../@name"/>(uniset3::uniset_conf()->getLocalNode()),
 			</xsl:if>
 			<xsl:if test="normalize-space(../../@default)=''">
 				<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>(0),
@@ -73,7 +73,7 @@
 		</xsl:when>
 		<xsl:when test="$GENTYPE='CHECK'">
 		<xsl:if test="normalize-space(@vartype)!='io'">
-			<xsl:if test="normalize-space(../../@id)=''">throw uniset::SystemError("Not Found ID for <xsl:value-of select="../../@name"/>");</xsl:if>
+			<xsl:if test="normalize-space(../../@id)=''">throw uniset3::SystemError("Not Found ID for <xsl:value-of select="../../@name"/>");</xsl:if>
 		</xsl:if>
 		</xsl:when>
 		</xsl:choose>
@@ -88,7 +88,7 @@
 	<xsl:for-each select="./consumers/consumer">
 		<xsl:if test="normalize-space(@name)=$OID">
 			<xsl:choose>
-			<xsl:when test="$GENTYPE='H'">const uniset::ObjectId mid_<xsl:value-of select="normalize-space(../../@name)"/>; 	/*!&lt; <xsl:value-of select="normalize-space(../../@text)"/> */
+			<xsl:when test="$GENTYPE='H'">const uniset3::ObjectId mid_<xsl:value-of select="normalize-space(../../@name)"/>; 	/*!&lt; <xsl:value-of select="normalize-space(../../@text)"/> */
 			bool m_<xsl:value-of select="normalize-space(../../@name)"/>; 	/*!&lt; текущее состояние (сообщения) */
 			</xsl:when>
 			<xsl:when test="$GENTYPE='H-PRIVATE'">bool prev_m_<xsl:value-of select="normalize-space(../../@name)"/>; 	/*!&lt; предыдущее состояние (сообщения) */
@@ -128,14 +128,14 @@
 			</xsl:when>		
 			<xsl:when test="$GENTYPE='R'">
 				m_<xsl:value-of select="../../@name"/> = 0;
-				if( mid_<xsl:value-of select="../../@name"/> != uniset::DefaultObjectId )
+				if( mid_<xsl:value-of select="../../@name"/> != uniset3::DefaultObjectId )
 				{
 				 	try
 					{
 						si.id = mid_<xsl:value-of select="../../@name"/>;
 						ui->setValue( si,0,getId() );
 					}
-					catch( const uniset::Exception&amp; ex )
+					catch( const uniset3::Exception&amp; ex )
 					{
                         mywarn &lt;&lt; getName() &lt;&lt; ex &lt;&lt; endl;
 					}
@@ -168,17 +168,17 @@
 </xsl:template>
 
 <xsl:template name="COMMON-HEAD-PUBLIC">
-		long getValue( uniset::ObjectId sid );
-		void setValue( uniset::ObjectId sid, long value );
-		void askSensor( uniset::ObjectId sid, UniversalIO::UIOCommand, uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() );
+		long getValue( uniset3::ObjectId sid );
+		void setValue( uniset3::ObjectId sid, long value );
+		void askSensor( uniset3::ObjectId sid, uniset3::UIOCommand, uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
 		void updateValues();
 
-		virtual uniset::SimpleInfo* getInfo( const char* userparam ) override;
+		virtual uniset3::SimpleInfo* getInfo( const char* userparam ) override;
 
-		virtual bool setMsg( uniset::ObjectId code, bool state = true ) noexcept;
+		virtual bool setMsg( uniset3::ObjectId code, bool state = true ) noexcept;
 
 		inline std::shared_ptr&lt;DebugStream&gt; log() noexcept { return mylog; }
-		inline std::shared_ptr&lt;uniset::LogAgregator&gt; logAgregator() noexcept { return loga; }
+		inline std::shared_ptr&lt;uniset3::LogAgregator&gt; logAgregator() noexcept { return loga; }
 
 		void init_dlog( std::shared_ptr&lt;DebugStream&gt; d ) noexcept;
 
@@ -241,19 +241,19 @@
            \param id           - идентификатор датчика
            \param showLinkName - TRUE - выводить SensorName, FALSE - не выводить
         */
-        std::string str( uniset::ObjectId id, bool showLinkName=true ) const;
+        std::string str( uniset3::ObjectId id, bool showLinkName=true ) const;
         
         /*! Вывод значения входа/выхода в формате: in_xxx(SensorName)=val 
            \param id           - идентификатор датчика
            \param showLinkName - TRUE - выводить SensorName, FALSE - не выводить
         */
-        std::string strval( uniset::ObjectId id, bool showLinkName=true ) const;        
+        std::string strval( uniset3::ObjectId id, bool showLinkName=true ) const;        
 
         /*! Вывод в строку названия датчика-сообщения: xxx(SensorName) 
            \param id           - идентификатор датчика
            \param showLinkName - TRUE - выводить SensorName, FALSE - не выводить
         */
-        std::string msgstr( uniset::ObjectId id, bool showLinkName=true ) const;
+        std::string msgstr( uniset3::ObjectId id, bool showLinkName=true ) const;
 
         
         /*! Вывод состояния внутренних переменных */
@@ -273,15 +273,15 @@
 
 <xsl:template name="COMMON-HEAD-PROTECTED">
 		virtual void callback() noexcept override;
-		virtual void processingMessage( const uniset::VoidMessage* msg ) override;
-		virtual void sysCommand( const uniset::SystemMessage* sm ) override {}
-		virtual void askSensors( UniversalIO::UIOCommand cmd ) {}
-		virtual void sensorInfo( const uniset::SensorMessage* sm ) override {}
-		virtual void timerInfo( const uniset::TimerMessage* tm ) override {}
+		virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
+		virtual void sysCommand( const uniset3::SystemMessage* sm ) override {}
+		virtual void askSensors( uniset3::UIOCommand cmd ) {}
+		virtual void sensorInfo( const uniset3::SensorMessage* sm ) override {}
+		virtual void timerInfo( const uniset3::TimerMessage* tm ) override {}
 		virtual bool activateObject() override;
 		virtual bool deactivateObject() override;
 		virtual std::string getMonitInfo() const { return ""; } /*!&lt; пользовательская информация выводимая в getInfo() */
-		virtual std::string getTypeOfMessage( int t ) const { return uniset::strTypeOfMessage(t); } /*!&lt; получение названия типа сообщения. Используется в getInfo() */
+		virtual std::string getTypeOfMessage( int t ) const { return uniset3::strTypeOfMessage(t); } /*!&lt; получение названия типа сообщения. Используется в getInfo() */
 <xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
 #ifndef DISABLE_REST_API
 		virtual void httpGetUserData( Poco::JSON::Object::Ptr&amp; jdata ){} /*!&lt;  для пользовательских данных в httpGet() */
@@ -294,90 +294,90 @@
         // Выполнение очередного шага программы
 		virtual void step(){}
 
-		void preAskSensors( UniversalIO::UIOCommand cmd );
-		void preSysCommand( const uniset::SystemMessage* sm );
+		void preAskSensors( uniset3::UIOCommand cmd );
+		void preSysCommand( const uniset3::SystemMessage* sm );
 		
 		virtual void testMode( bool state );
 		void updateOutputs( bool force );
 <xsl:if test="normalize-space($TESTMODE)!=''">
 		bool checkTestMode() const noexcept;
 </xsl:if>
-		bool waitSM( int wait_msec, uniset::ObjectId testID = uniset::DefaultObjectId );
-		uniset::ObjectId getSMTestID() const;
+		bool waitSM( int wait_msec, uniset3::ObjectId testID = uniset3::DefaultObjectId );
+		uniset3::ObjectId getSMTestID() const;
 
 		void resetMsg();
-		uniset::Trigger trResetMsg;
-		uniset::PassiveTimer ptResetMsg;
+		uniset3::Trigger trResetMsg;
+		uniset3::PassiveTimer ptResetMsg;
 		int resetMsgTime;
 
 		int sleep_msec; /*!&lt; пауза между итерациями */
 		bool active;
 <xsl:if test="normalize-space($TESTMODE)!=''">
 		bool isTestMode;
-		uniset::Trigger trTestMode;
-		const uniset::ObjectId idTestMode_S;		/*!&lt; идентификатор для флага тестовго режима (для всех) */
-		const uniset::ObjectId idLocalTestMode_S;	/*!&lt; идентификатор для флага тестовго режима (для данного узла) */
+		uniset3::Trigger trTestMode;
+		const uniset3::ObjectId idTestMode_S;		/*!&lt; идентификатор для флага тестовго режима (для всех) */
+		const uniset3::ObjectId idLocalTestMode_S;	/*!&lt; идентификатор для флага тестовго режима (для данного узла) */
 		bool in_TestMode_S;
 		bool in_LocalTestMode_S;
 </xsl:if>
 		const std::string argprefix;
-		uniset::ObjectId smTestID; /*!&lt; идентификатор датчика для тестирования готовности SM */
+		uniset3::ObjectId smTestID; /*!&lt; идентификатор датчика для тестирования готовности SM */
 
 		// управление датчиком "сердцебиения"
-		uniset::PassiveTimer ptHeartBeat;				/*! &lt; период "сердцебиения" */
-		uniset::ObjectId idHeartBeat;		/*! &lt; идентификатор датчика (AI) "сердцебиения" */
+		uniset3::PassiveTimer ptHeartBeat;				/*! &lt; период "сердцебиения" */
+		uniset3::ObjectId idHeartBeat;		/*! &lt; идентификатор датчика (AI) "сердцебиения" */
 		long maxHeartBeat;						/*! &lt; сохраняемое значение */
 		
 		xmlNode* confnode;
 		/*! получить числовое свойство из конф. файла по привязанной confnode */
-		int getIntProp(const std::string&amp; name) { return uniset::uniset_conf()->getIntProp(confnode, name); }
+		int getIntProp(const std::string&amp; name) { return uniset3::uniset_conf()->getIntProp(confnode, name); }
 		/*! получить текстовое свойство из конф. файла по привязанной confnode */
-		inline const std::string getProp(const std::string&amp; name) { return uniset::uniset_conf()->getProp(confnode, name); }
+		inline const std::string getProp(const std::string&amp; name) { return uniset3::uniset_conf()->getProp(confnode, name); }
 
-		uniset::timeout_t smReadyTimeout; 	/*!&lt; время ожидания готовности SM */
+		uniset3::timeout_t smReadyTimeout; 	/*!&lt; время ожидания готовности SM */
 		std::atomic_bool activated = { false };
 		std::atomic_bool cancelled = { false };
-		uniset::timeout_t activateTimeout;	/*!&lt; время ожидания готовности UniSetObject к работе */
-		uniset::PassiveTimer ptStartUpTimeout;	/*!&lt; время на блокировку обработки WatchDog, если недавно был StartUp */
+		uniset3::timeout_t activateTimeout;	/*!&lt; время ожидания готовности UniSetObject к работе */
+		uniset3::PassiveTimer ptStartUpTimeout;	/*!&lt; время на блокировку обработки WatchDog, если недавно был StartUp */
 		int askPause; /*!&lt; пауза между неудачными попытками заказать датчики */
 		
-		IOController_i::SensorInfo si;
+		uniset3::SensorInfo si;
 		bool forceOut; /*!&lt; флаг принудительного обнуления "выходов" */
 		
-		std::shared_ptr&lt;uniset::LogAgregator&gt; loga;
+		std::shared_ptr&lt;uniset3::LogAgregator&gt; loga;
 		std::shared_ptr&lt;DebugStream&gt; mylog;
-		std::shared_ptr&lt;uniset::LogServer&gt; logserv;
+		std::shared_ptr&lt;uniset3::LogServer&gt; logserv;
 		std::string logserv_host = {""};
 		int logserv_port = {0};
 
-		uniset::VMonitor vmon;
+		uniset3::VMonitor vmon;
 
 		<xsl:if test="normalize-space($VARMAP)='1'">
 		/*! Получить указатель на in_переменную храняющую значение, по идентификатору 
 		 * \return nullptr если элемент не найден
 		*/
-		const long* valptr( const uniset::ObjectId&amp; id ) noexcept;
+		const long* valptr( const uniset3::ObjectId&amp; id ) noexcept;
 		
 		/*! Получить указатель на out_переменную храняющую значение, по идентификатору 
 		 * \return nullptr если элемент не найден
 		*/
-		long* outptr( const uniset::ObjectId&amp; id ) noexcept;
+		long* outptr( const uniset3::ObjectId&amp; id ) noexcept;
 
 		/*! Получить id по переменной храняющей значение
 		 * \return DefaultObjectId элемент не найден или если нет привязки
 		*/
-		uniset::ObjectId idval( const long* vptr ) const noexcept; // работа по const указателю
-		uniset::ObjectId idval( const long&amp; vptr ) const noexcept; // работа const по ссылке..
-		uniset::ObjectId idval( long* vptr ) const noexcept; // работа по указателю
-		uniset::ObjectId idval( long&amp; vptr ) const noexcept; // работа по ссылке..
+		uniset3::ObjectId idval( const long* vptr ) const noexcept; // работа по const указателю
+		uniset3::ObjectId idval( const long&amp; vptr ) const noexcept; // работа const по ссылке..
+		uniset3::ObjectId idval( long* vptr ) const noexcept; // работа по указателю
+		uniset3::ObjectId idval( long&amp; vptr ) const noexcept; // работа по ссылке..
 		</xsl:if>
 </xsl:template>
 
 <xsl:template name="COMMON-HEAD-PRIVATE">
 		// ------------ private функции ---------------
 		void updatePreviousValues() noexcept;
-		void preSensorInfo( const uniset::SensorMessage* sm );
-		void preTimerInfo( const uniset::TimerMessage* tm );
+		void preSensorInfo( const uniset3::SensorMessage* sm );
+		void preTimerInfo( const uniset3::TimerMessage* tm );
 		void initFromSM();
 		void checkSensors();
 		// --------------------------------------------
@@ -403,29 +403,29 @@
 		class VMapHashFn
 		{
 			public:
-			size_t operator() (const uniset::ObjectId&amp; key) const
+			size_t operator() (const uniset3::ObjectId&amp; key) const
 			{
 				return std::hash&lt;long&gt;()(key);
 			}
 		};
 
-		std::unordered_map&lt;const uniset::ObjectId, const long*,VMapHashFn&gt; vmap;
-		std::unordered_map&lt;const uniset::ObjectId, long*, VMapHashFn&gt; outvmap;
-		std::unordered_map&lt;const long*, const uniset::ObjectId*, PtrMapHashFn, PtrMapEqualFn&gt; ptrmap;
-		std::unordered_map&lt;long*,const uniset::ObjectId*, PtrMapHashFn,PtrMapEqualFn&gt; outptrmap;
+		std::unordered_map&lt;const uniset3::ObjectId, const long*,VMapHashFn&gt; vmap;
+		std::unordered_map&lt;const uniset3::ObjectId, long*, VMapHashFn&gt; outvmap;
+		std::unordered_map&lt;const long*, const uniset3::ObjectId*, PtrMapHashFn, PtrMapEqualFn&gt; ptrmap;
+		std::unordered_map&lt;long*,const uniset3::ObjectId*, PtrMapHashFn,PtrMapEqualFn&gt; outptrmap;
 		</xsl:if>
 		
 		<xsl:if test="normalize-space($STAT)='1'">
 		class StatHashFn
 		{
 			public:
-			size_t operator() (const uniset::ObjectId&amp; key) const
+			size_t operator() (const uniset3::ObjectId&amp; key) const
 			{
 				return std::hash&lt;long&gt;()(key);
 			}
 		};
 		
-		std::unordered_map&lt;const uniset::ObjectId,size_t, StatHashFn&gt; smStat; /*!&lt; количество сообщений по датчикам */
+		std::unordered_map&lt;const uniset3::ObjectId,size_t, StatHashFn&gt; smStat; /*!&lt; количество сообщений по датчикам */
 		size_t processingMessageCatchCount = { 0 }; /*!&lt; количество исключений пойманных в processingMessage */
 
 		std::unordered_map&lt;long,size_t&gt; msgTypeStat; /*!&lt; количество сообщений по типам */
@@ -441,7 +441,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::init_dlog( std::shared_ptr&lt;Debug
 	<xsl:value-of select="$CLASSNAME"/>_SK::mylog = d;
 }
 // ------------------------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset::VoidMessage* _msg )
+void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::VoidMessage* _msg )
 {
 	try
 	{
@@ -537,9 +537,9 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preSysCommand( const SystemMessage*
 			ostate = "StartUp: update outputs..";
 			updateOutputs(true); // а потом уже выходы (принудительное обновление)
 			ostate = "StartUp: pre ask sensors..";
-			preAskSensors(UniversalIO::UIONotify);
+			preAskSensors(uniset3::UIONotify);
 			ostate = "StartUp: ask sensors..";
-			askSensors(UniversalIO::UIONotify);
+			askSensors(uniset3::UIONotify);
 			active = true;
 			ostate = "StartUp: [OK]";
 			break;
@@ -547,8 +547,8 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preSysCommand( const SystemMessage*
 		
 		case SystemMessage::FoldUp:
 		case SystemMessage::Finish:
-			preAskSensors(UniversalIO::UIODontNotify);
-			askSensors(UniversalIO::UIODontNotify);
+			preAskSensors(uniset3::UIODontNotify);
+			askSensors(uniset3::UIODontNotify);
 			break;
 		
 		case SystemMessage::LogRotate:
@@ -597,10 +597,10 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preSysCommand( const SystemMessage*
 }
 // -----------------------------------------------------------------------------
 
-uniset::SimpleInfo* <xsl:value-of select="$CLASSNAME"/>_SK::getInfo( const char* userparam )
+uniset3::SimpleInfo* <xsl:value-of select="$CLASSNAME"/>_SK::getInfo( const char* userparam )
 {
-	<xsl:if test="not(normalize-space($BASECLASS)='')">uniset::SimpleInfo_var i = <xsl:value-of select="$BASECLASS"/>::getInfo(userparam);</xsl:if>
-	<xsl:if test="normalize-space($BASECLASS)=''">uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);</xsl:if>
+	<xsl:if test="not(normalize-space($BASECLASS)='')">uniset3::SimpleInfo_var i = <xsl:value-of select="$BASECLASS"/>::getInfo(userparam);</xsl:if>
+	<xsl:if test="normalize-space($BASECLASS)=''">uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);</xsl:if>
 	
 	ostringstream inf;
 	
@@ -658,9 +658,9 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpGet( const P
 	
 	Poco::JSON::Object::Ptr jdata = json->getObject(myname);
 	if( !jdata )
-		jdata = uniset::json::make_child(json,myname);
+		jdata = uniset3::json::make_child(json,myname);
 
-	Poco::JSON::Object::Ptr jserv = uniset::json::make_child(jdata,"LogServer");
+	Poco::JSON::Object::Ptr jserv = uniset3::json::make_child(jdata,"LogServer");
 	if( logserv )
 	{
 		jserv->set("host",logserv_host);
@@ -672,12 +672,12 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpGet( const P
 	jdata->set("io", httpDumpIO());
 	
 	auto timers = getTimersList();
-	auto jtm = uniset::json::make_child(jdata,"Timers");
+	auto jtm = uniset3::json::make_child(jdata,"Timers");
 
 	jtm->set("count",timers.size());
 	for( const auto&amp; t: timers )
 	{
-		auto jt = uniset::json::make_child(jtm,to_string(t.id));
+		auto jt = uniset3::json::make_child(jtm,to_string(t.id));
 		jt->set("id", t.id);
 		jt->set("name", getTimerName(t.id));
 		jt->set("msec", t.tmr.getInterval());
@@ -686,20 +686,20 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpGet( const P
 	}
 
 	auto vlist = vmon.getList();
-	auto jvmon = uniset::json::make_child(jdata,"Variables");
+	auto jvmon = uniset3::json::make_child(jdata,"Variables");
 	
 	for( const auto&amp; v: vlist )
 		jvmon->set(v.first,v.second);
 
 	<xsl:if test="normalize-space($STAT)='1'">
-	auto jstat = uniset::json::make_child(jdata,"Statistics");
+	auto jstat = uniset3::json::make_child(jdata,"Statistics");
 	jstat->set("processingMessageCatchCount", processingMessageCatchCount);
 
-	auto jsens = uniset::json::make_child(jstat,"sensors");
+	auto jsens = uniset3::json::make_child(jstat,"sensors");
 	for( const auto&amp; s: smStat )
 	{
 		std::string sname(ORepHelpers::getShortName( uniset_conf()->oind->getMapName(s.first)));
-		auto js = uniset::json::make_child(jsens,sname);
+		auto js = uniset3::json::make_child(jsens,sname);
 		js->set("id", s.first);
 		js->set("name", sname);
 		js->set("count", s.second);
@@ -713,11 +713,11 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpGet( const P
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpHelp( const Poco::URI::QueryParameters&amp; params )
 {
-	<xsl:if test="not(normalize-space($BASECLASS)='')">uniset::json::help::object myhelp(myname, <xsl:value-of select="$BASECLASS"/>::httpHelp(params));</xsl:if>
-	<xsl:if test="normalize-space($BASECLASS)=''">uniset::json::help::object myhelp(myname, UniSetObject::httpGet(params));</xsl:if>
+	<xsl:if test="not(normalize-space($BASECLASS)='')">uniset3::json::help::object myhelp(myname, <xsl:value-of select="$BASECLASS"/>::httpHelp(params));</xsl:if>
+	<xsl:if test="normalize-space($BASECLASS)=''">uniset3::json::help::object myhelp(myname, UniSetObject::httpGet(params));</xsl:if>
 
 	// 'log'
-	uniset::json::help::item cmd("log","show log level");
+	uniset3::json::help::item cmd("log","show log level");
 	myhelp.add(cmd);
 
 	return myhelp;
@@ -742,7 +742,7 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpRequestLog( 
 Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::request_params_set( const std::string&amp; req, const Poco::URI::QueryParameters&amp; params )
 {
     Poco::JSON::Object::Ptr jret = new Poco::JSON::Object();
-    Poco::JSON::Array::Ptr jupdated = uniset::json::make_child_array(jret, "updated");
+    Poco::JSON::Array::Ptr jupdated = uniset3::json::make_child_array(jret, "updated");
 
     for( const auto&amp; p: params )
     {
@@ -860,7 +860,7 @@ bool <xsl:value-of select="$CLASSNAME"/>_SK::checkTestMode() const noexcept
 // -----------------------------------------------------------------------------
 </xsl:if>
 <xsl:if test="normalize-space($VARMAP)='1'">
-const long* <xsl:value-of select="$CLASSNAME"/>_SK::valptr( const uniset::ObjectId&amp; id ) noexcept
+const long* <xsl:value-of select="$CLASSNAME"/>_SK::valptr( const uniset3::ObjectId&amp; id ) noexcept
 {
 	try
 	{
@@ -873,7 +873,7 @@ const long* <xsl:value-of select="$CLASSNAME"/>_SK::valptr( const uniset::Object
 	return nullptr;
 }
 
-long* <xsl:value-of select="$CLASSNAME"/>_SK::outptr( const uniset::ObjectId&amp; id ) noexcept
+long* <xsl:value-of select="$CLASSNAME"/>_SK::outptr( const uniset3::ObjectId&amp; id ) noexcept
 {
 	try
 	{
@@ -886,7 +886,7 @@ long* <xsl:value-of select="$CLASSNAME"/>_SK::outptr( const uniset::ObjectId&amp
 	return nullptr;
 }
 
-uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( const long* p ) const noexcept
+uniset3::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( const long* p ) const noexcept
 {
 	try
 	{
@@ -896,10 +896,10 @@ uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( const long* p ) 
 	}
 	catch(...){}
 
-	return uniset::DefaultObjectId;
+	return uniset3::DefaultObjectId;
 }
 
-uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( const long&amp; p ) const noexcept
+uniset3::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( const long&amp; p ) const noexcept
 {
 	try
 	{
@@ -909,10 +909,10 @@ uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( const long&amp; 
 	}
 	catch(...){}
 
-	return uniset::DefaultObjectId;
+	return uniset3::DefaultObjectId;
 }
 
-uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( long&amp; p ) const noexcept
+uniset3::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( long&amp; p ) const noexcept
 {
 	try
 	{
@@ -921,10 +921,10 @@ uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( long&amp; p ) co
 			return *(i->second);
 	}
 	catch(...){}
-	return uniset::DefaultObjectId;
+	return uniset3::DefaultObjectId;
 }
 
-uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( long* p ) const noexcept
+uniset3::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( long* p ) const noexcept
 {
 	try
 	{
@@ -934,7 +934,7 @@ uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::idval( long* p ) const 
 	}
 	catch(...){}
 
-	return uniset::DefaultObjectId;
+	return uniset3::DefaultObjectId;
 }
 </xsl:if>
 // -----------------------------------------------------------------------------
@@ -960,7 +960,7 @@ bool <xsl:value-of select="$CLASSNAME"/>_SK::deactivateObject()
 	<xsl:if test="normalize-space($BASECLASS)=''">return UniSetObject::deactivateObject();</xsl:if>
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::preTimerInfo( const uniset::TimerMessage* _tm )
+void <xsl:value-of select="$CLASSNAME"/>_SK::preTimerInfo( const uniset3::TimerMessage* _tm )
 {
 	timerInfo(_tm);
 }
@@ -1039,14 +1039,14 @@ std::string <xsl:value-of select="$CLASSNAME"/>_SK::help() const noexcept
 </xsl:template>
 
 <xsl:template name="COMMON-ID-LIST">
-	if( uniset::findArgParam("--print-id-list",uniset_conf()->getArgc(),uniset_conf()->getArgv()) != -1 )
+	if( uniset3::findArgParam("--print-id-list",uniset_conf()->getArgc(),uniset_conf()->getArgv()) != -1 )
 	{
 <xsl:for-each select="//smap/item">
-		if( <xsl:value-of select="normalize-space(@name)"/> != uniset::DefaultObjectId )
+		if( <xsl:value-of select="normalize-space(@name)"/> != uniset3::DefaultObjectId )
     		cout &lt;&lt; "id:" &lt;&lt; <xsl:value-of select="normalize-space(@name)"/> &lt;&lt; endl;
 </xsl:for-each>
 <xsl:for-each select="//msgmap/item">
-		if( <xsl:value-of select="normalize-space(@name)"/> != uniset::DefaultObjectId )
+		if( <xsl:value-of select="normalize-space(@name)"/> != uniset3::DefaultObjectId )
     		cout &lt;&lt; "id:" &lt;&lt; <xsl:value-of select="normalize-space(@name)"/> &lt;&lt; endl;
 </xsl:for-each>
 //		abort();
@@ -1124,7 +1124,7 @@ std::string <xsl:value-of select="$CLASSNAME"/>_SK::help() const noexcept
 
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 </xsl:template>
 
@@ -1181,7 +1181,7 @@ forceOut(false),
 end_private(false)
 {
 	mycrit &lt;&lt; "<xsl:value-of select="$CLASSNAME"/>: init failed!!!!!!!!!!!!!!!" &lt;&lt; endl;
-	throw uniset::Exception( std::string(myname+": init failed!!!") );
+	throw uniset3::Exception( std::string(myname+": init failed!!!") );
 }
 // -----------------------------------------------------------------------------
 // ( val, confval, globalval, default val )
@@ -1210,7 +1210,7 @@ static const std::string init3_str( const std::string&amp; s1, const std::string
 	return s3;
 }
 // -----------------------------------------------------------------------------
-static uniset::ObjectId init_node( xmlNode* cnode, const std::string&amp; prop )
+static uniset3::ObjectId init_node( xmlNode* cnode, const std::string&amp; prop )
 {
 	if( prop.empty() )
 		return uniset_conf()->getLocalNode();
@@ -1284,7 +1284,7 @@ end_private(false)
 	{
 		ostringstream err;
 		err &lt;&lt; "(<xsl:value-of select="$CLASSNAME"/>::init): Unknown ObjectID!";
-		throw uniset::SystemError( err.str() );
+		throw uniset3::SystemError( err.str() );
 	}
 
     mylog = make_shared&lt;DebugStream&gt;();
@@ -1304,14 +1304,14 @@ end_private(false)
 
 <xsl:for-each select="//smap/item">
 	<xsl:if test="normalize-space(@no_check_id)!='1'">
-	if( <xsl:value-of select="normalize-space(@name)"/> == uniset::DefaultObjectId )
-		throw uniset::SystemError( myname + ": Not found ID for (<xsl:value-of select="@name"/>) " + conf->getProp(cnode,"<xsl:value-of select="@name"/>") );
+	if( <xsl:value-of select="normalize-space(@name)"/> == uniset3::DefaultObjectId )
+		throw uniset3::SystemError( myname + ": Not found ID for (<xsl:value-of select="@name"/>) " + conf->getProp(cnode,"<xsl:value-of select="@name"/>") );
 	
 	</xsl:if>
 
 	<xsl:if test="normalize-space(@no_check_id)!='1'">
-	if( node_<xsl:value-of select="normalize-space(@name)"/> == uniset::DefaultObjectId )
-		throw uniset::SystemError( myname + ": Not found NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
+	if( node_<xsl:value-of select="normalize-space(@name)"/> == uniset3::DefaultObjectId )
+		throw uniset3::SystemError( myname + ": Not found NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
 	</xsl:if>
 
 	<xsl:if test="normalize-space($VARMAP)='1'">
@@ -1328,14 +1328,14 @@ end_private(false)
 </xsl:for-each>
 
 <xsl:for-each select="//msgmap/item">
-	if( <xsl:value-of select="normalize-space(@name)"/> == uniset::DefaultObjectId )
+	if( <xsl:value-of select="normalize-space(@name)"/> == uniset3::DefaultObjectId )
 	{
 		if( !conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>").empty() )
-			throw uniset::SystemError( myname + ": Not found Message::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
+			throw uniset3::SystemError( myname + ": Not found Message::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
 	}
 	
-	if( node_<xsl:value-of select="normalize-space(@name)"/> == uniset::DefaultObjectId )
-		throw uniset::SystemError( myname + ": Not found Message::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
+	if( node_<xsl:value-of select="normalize-space(@name)"/> == uniset3::DefaultObjectId )
+		throw uniset3::SystemError( myname + ": Not found Message::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
 </xsl:for-each>
 
 	UniXML::iterator it(cnode);
@@ -1357,7 +1357,7 @@ end_private(false)
 		{
 			ostringstream err;
 			err &lt;&lt; myname &lt;&lt; ": не найден идентификатор для датчика 'HeartBeat' " &lt;&lt; heart;
-			throw uniset::SystemError(err.str());
+			throw uniset3::SystemError(err.str());
 		}
 
 		int heartbeatTime = conf->getArgPInt("--" + argprefix + "heartbeat-time",it.getProp("heartbeatTime"),conf-&gt;getHeartBeatTime());
@@ -1398,7 +1398,7 @@ end_private(false)
 	</xsl:if>
 	</xsl:for-each>
 	
-	si.id = uniset::DefaultObjectId;
+	si.id = uniset3::DefaultObjectId;
 	si.node = conf->getLocalNode();
 	
 	sleep_msec = conf->getArgPInt("--" + argprefix + "sleep-msec","<xsl:call-template name="settings"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>", <xsl:call-template name="settings"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>);
@@ -1444,14 +1444,14 @@ end_private(false)
 	if( <xsl:value-of select="@name"/> &lt; <xsl:value-of select="@min"/> )
 	{
         mywarn &lt;&lt; myname &lt;&lt; ": RANGE WARNING: <xsl:value-of select="@name"/>=" &lt;&lt; <xsl:value-of select="@name"/> &lt;&lt; " &lt; <xsl:value-of select="@min"/>" &lt;&lt; endl;
-		<xsl:if test="normalize-space(@no_range_exception)=''">throw uniset::SystemError(myname+"(init): <xsl:value-of select="@name"/> &lt; <xsl:value-of select="@min"/>");</xsl:if>
+		<xsl:if test="normalize-space(@no_range_exception)=''">throw uniset3::SystemError(myname+"(init): <xsl:value-of select="@name"/> &lt; <xsl:value-of select="@min"/>");</xsl:if>
 	}
 	</xsl:if>
 	<xsl:if test="normalize-space(@max)!=''">
 	if( <xsl:value-of select="@name"/> &gt; <xsl:value-of select="@max"/> )
 	{
         mywarn &lt;&lt; myname &lt;&lt; ": RANGE WARNING: <xsl:value-of select="@name"/>=" &lt;&lt; <xsl:value-of select="@name"/> &lt;&lt; " &gt; <xsl:value-of select="@max"/>" &lt;&lt; endl;
-		<xsl:if test="normalize-space(@no_range_exception)=''">throw uniset::SystemError(myname+"(init): <xsl:value-of select="@name"/> &gt; <xsl:value-of select="@max"/>");</xsl:if>
+		<xsl:if test="normalize-space(@no_range_exception)=''">throw uniset3::SystemError(myname+"(init): <xsl:value-of select="@name"/> &gt; <xsl:value-of select="@max"/>");</xsl:if>
 	}
 	</xsl:if>
 	// ----------
@@ -1470,7 +1470,7 @@ end_private(false)
 	
 
 	// help надо выводить в конце, когда уже все переменные инициализированы по умолчанию
-	if( uniset::findArgParam("--" + argprefix + "help",uniset_conf()->getArgc(),uniset_conf()->getArgv()) != -1 )
+	if( uniset3::findArgParam("--" + argprefix + "help",uniset_conf()->getArgc(),uniset_conf()->getArgv()) != -1 )
 		cout &lt;&lt; help() &lt;&lt; endl;
 }
 
@@ -1519,9 +1519,9 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::checkSensors()
 	</xsl:for-each>
 }
 // -----------------------------------------------------------------------------
-bool <xsl:value-of select="$CLASSNAME"/>_SK::setMsg( uniset::ObjectId _code, bool _state ) noexcept
+bool <xsl:value-of select="$CLASSNAME"/>_SK::setMsg( uniset3::ObjectId _code, bool _state ) noexcept
 {
-	if( _code == uniset::DefaultObjectId )
+	if( _code == uniset3::DefaultObjectId )
 	{
 		mylog8 &lt;&lt; myname &lt;&lt; "(setMsg): попытка послать сообщение с DefaultObjectId" &lt;&lt; endl;
 		return false;	
@@ -1568,7 +1568,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::resetMsg()
 // reset messages
 <xsl:for-each select="//msgmap/item">
 	m_<xsl:value-of select="@name"/> = 0;
-	if( <xsl:value-of select="@name"/> != uniset::DefaultObjectId )
+	if( <xsl:value-of select="@name"/> != uniset3::DefaultObjectId )
 	{
 		try
 		{
@@ -1576,7 +1576,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::resetMsg()
 			si.node = node_<xsl:value-of select="@name"/>;
 			ui->setValue( si, 0, getId() );
 		}
-		catch( const uniset::Exception&amp; ex )
+		catch( const uniset3::Exception&amp; ex )
 		{
             mywarn &lt;&lt; getName() &lt;&lt; ex &lt;&lt; endl;
 		}
@@ -1584,7 +1584,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::resetMsg()
 </xsl:for-each>
 }
 // -----------------------------------------------------------------------------
-uniset::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::getSMTestID() const
+uniset3::ObjectId <xsl:value-of select="$CLASSNAME"/>_SK::getSMTestID() const
 {
 	if( smTestID != DefaultObjectId )
 		return smTestID;
@@ -1616,13 +1616,13 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 {
 	Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
 
-	Poco::JSON::Object::Ptr j_in = uniset::json::make_child(jdata,"in");
+	Poco::JSON::Object::Ptr j_in = uniset3::json::make_child(jdata,"in");
 
 	<xsl:for-each select="//smap/item">
 	<xsl:sort select="@name" order="ascending" data-type="text"/>
 	<xsl:if test="normalize-space(@vartype)='in'">
 	{
-		Poco::JSON::Object::Ptr inf = uniset::json::make_child(j_in,"<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>");
+		Poco::JSON::Object::Ptr inf = uniset3::json::make_child(j_in,"<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>");
 		inf->set("id",<xsl:value-of select="@name"/>);
 		inf->set("name",ORepHelpers::getShortName( uniset_conf()->oind->getMapName(<xsl:value-of select="@name"/>)));
 		inf->set("value",<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>);
@@ -1632,13 +1632,13 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 	</xsl:if>
 	</xsl:for-each>
 	
-	Poco::JSON::Object::Ptr j_out = uniset::json::make_child(jdata,"out");
+	Poco::JSON::Object::Ptr j_out = uniset3::json::make_child(jdata,"out");
 
 	<xsl:for-each select="//smap/item">
 	<xsl:sort select="@name" order="ascending" data-type="text"/>
 	<xsl:if test="normalize-space(@vartype)='out'">
 	{
-		Poco::JSON::Object::Ptr inf = uniset::json::make_child(j_out,"<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>");
+		Poco::JSON::Object::Ptr inf = uniset3::json::make_child(j_out,"<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>");
 		inf->set("id",<xsl:value-of select="@name"/>);
 		inf->set("name",ORepHelpers::getShortName( uniset_conf()->oind->getMapName(<xsl:value-of select="@name"/>)));
 		inf->set("value",<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>);
@@ -1709,7 +1709,7 @@ std::string  <xsl:value-of select="$CLASSNAME"/>_SK::dumpIO()
 	return s.str();
 }
 // ----------------------------------------------------------------------------
-std::string  <xsl:value-of select="$CLASSNAME"/>_SK::msgstr( uniset::ObjectId id, bool showLinkName ) const
+std::string  <xsl:value-of select="$CLASSNAME"/>_SK::msgstr( uniset3::ObjectId id, bool showLinkName ) const
 {
 	ostringstream s;
 	<xsl:for-each select="//msgmap/item">
@@ -1723,7 +1723,7 @@ std::string  <xsl:value-of select="$CLASSNAME"/>_SK::msgstr( uniset::ObjectId id
 	return "";
 }
 // ----------------------------------------------------------------------------
-std::string  <xsl:value-of select="$CLASSNAME"/>_SK::str( uniset::ObjectId id, bool showLinkName ) const
+std::string  <xsl:value-of select="$CLASSNAME"/>_SK::str( uniset3::ObjectId id, bool showLinkName ) const
 {
 	ostringstream s;
 	<xsl:for-each select="//smap/item">
@@ -1737,7 +1737,7 @@ std::string  <xsl:value-of select="$CLASSNAME"/>_SK::str( uniset::ObjectId id, b
 	return "";
 }
 // ----------------------------------------------------------------------------
-std::string  <xsl:value-of select="$CLASSNAME"/>_SK::strval( uniset::ObjectId id, bool showLinkName ) const
+std::string  <xsl:value-of select="$CLASSNAME"/>_SK::strval( uniset3::ObjectId id, bool showLinkName ) const
 {
 	if( id == DefaultObjectId )
 		return "";
@@ -1812,7 +1812,7 @@ askPause(2000),
 forceOut(false)
 {
 	mycrit &lt;&lt; "<xsl:value-of select="$CLASSNAME"/>: init failed!!!!!!!!!!!!!!!" &lt;&lt; endl;
-	throw uniset::SystemError( std::string(myname+": init failed!!!") );
+	throw uniset3::SystemError( std::string(myname+": init failed!!!") );
 }
 // -----------------------------------------------------------------------------
 <xsl:value-of select="$CLASSNAME"/>_SK::<xsl:value-of select="$CLASSNAME"/>_SK( ObjectId id, xmlNode* cnode, const std::string&amp; _argprefix, xmlNode* globalnode ):
@@ -1852,7 +1852,7 @@ askPause(uniset_conf()->getPIntProp(cnode,"askPause",2000))
 	{
 		ostringstream err;
 		err &lt;&lt; "(<xsl:value-of select="$CLASSNAME"/>::init): Unknown ObjectID!";
-		throw uniset::SystemError( err.str() );
+		throw uniset3::SystemError( err.str() );
 	}
 
 	mylog = make_shared&lt;DebugStream&gt;();
@@ -1897,7 +1897,7 @@ askPause(uniset_conf()->getPIntProp(cnode,"askPause",2000))
 		{
 			ostringstream err;
 			err &lt;&lt; myname &lt;&lt; ": не найден идентификатор для датчика 'HeartBeat' " &lt;&lt; heart;
-			throw uniset::SystemError(err.str());
+			throw uniset3::SystemError(err.str());
 		}
 
 		int heartbeatTime = conf->getArgPInt("--" + argprefix + "heartbeat-time",it.getProp("heartbeatTime"),conf-&gt;getHeartBeatTime());
@@ -1910,7 +1910,7 @@ askPause(uniset_conf()->getPIntProp(cnode,"askPause",2000))
 		maxHeartBeat = conf->getArgPInt("--" + argprefix + "heartbeat-max",it.getProp("heartbeat_max"), 10);
 	}
 
-	si.id = uniset::DefaultObjectId;
+	si.id = uniset3::DefaultObjectId;
 	si.node = conf->getLocalNode();
 
 	sleep_msec = conf->getArgPInt("--" + argprefix + "sleep-msec","<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>", <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>);
@@ -2014,9 +2014,9 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::resetMsg()
 
 }
 // -----------------------------------------------------------------------------
-bool <xsl:value-of select="$CLASSNAME"/>_SK::setMsg( uniset::ObjectId _code, bool _state ) noexcept
+bool <xsl:value-of select="$CLASSNAME"/>_SK::setMsg( uniset3::ObjectId _code, bool _state ) noexcept
 {
-	if( _code == uniset::DefaultObjectId )
+	if( _code == uniset3::DefaultObjectId )
 	{
         mylog8  &lt;&lt; myname &lt;&lt; "(setMsg): попытка послать сообщение с DefaultObjectId" &lt;&lt; endl;
 		return false;	
@@ -2046,8 +2046,8 @@ bool <xsl:value-of select="$CLASSNAME"/>_SK::setMsg( uniset::ObjectId _code, boo
 Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 {
 	Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
-	Poco::JSON::Object::Ptr j_in = uniset::json::make_child(jdata,"in");
-	Poco::JSON::Object::Ptr j_out = uniset::json::make_child(jdata,"out");
+	Poco::JSON::Object::Ptr j_in = uniset3::json::make_child(jdata,"in");
+	Poco::JSON::Object::Ptr j_out = uniset3::json::make_child(jdata,"out");
 	
 	<xsl:for-each select="//sensors/item/consumers/consumer">
 	<xsl:sort select="../../@name" order="ascending" data-type="text"/>
@@ -2055,7 +2055,7 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 	<xsl:if test="normalize-space(@name)=$OID">
 	<xsl:if test="normalize-space(@vartype)='in'">
 	{
-		Poco::JSON::Object::Ptr inf = uniset::json::make_child(j_in,"<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>");
+		Poco::JSON::Object::Ptr inf = uniset3::json::make_child(j_in,"<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>");
 		inf->set("id",<xsl:value-of select="../../@id"/>);
 		inf->set("name", "<xsl:value-of select="../../@name"/>");
 		inf->set("value",<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>);
@@ -2065,7 +2065,7 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 	</xsl:if>
 	<xsl:if test="normalize-space(@vartype)='out'">
 	{
-		Poco::JSON::Object::Ptr inf = uniset::json::make_child(j_out,"<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>");
+		Poco::JSON::Object::Ptr inf = uniset3::json::make_child(j_out,"<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>");
 		inf->set("id",<xsl:value-of select="../../@id"/>);
 		inf->set("name", "<xsl:value-of select="../../@name"/>");
 		inf->set("value",<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>);
@@ -2114,7 +2114,7 @@ std::string  <xsl:value-of select="$CLASSNAME"/>_SK::dumpIO()
 	return s.str();
 }
 // ----------------------------------------------------------------------------
-std::string  <xsl:value-of select="$CLASSNAME"/>_SK::str( uniset::ObjectId id, bool showLinkName ) const
+std::string  <xsl:value-of select="$CLASSNAME"/>_SK::str( uniset3::ObjectId id, bool showLinkName ) const
 {
 	ostringstream s;
 	<xsl:for-each select="//sensors/item/consumers/consumer">
@@ -2132,7 +2132,7 @@ std::string  <xsl:value-of select="$CLASSNAME"/>_SK::str( uniset::ObjectId id, b
 	return "";
 }
 // ----------------------------------------------------------------------------
-std::string <xsl:value-of select="$CLASSNAME"/>_SK::strval( uniset::ObjectId id, bool showLinkName ) const
+std::string <xsl:value-of select="$CLASSNAME"/>_SK::strval( uniset3::ObjectId id, bool showLinkName ) const
 {
 	if( id == DefaultObjectId )
 		return "";
@@ -2165,7 +2165,7 @@ std::string <xsl:value-of select="$CLASSNAME"/>_SK::strval( uniset::ObjectId id,
 	<xsl:if test="normalize-space($onlymsg)=''">
 	</xsl:if>
 		SensorMessage _sm( <xsl:value-of select="@name"/>, (long)<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/> );
-		_sm.sensor_type = UniversalIO::AI;
+		_sm.sensor_type = uniset3::AI;
 		sensorInfo(&amp;_sm);
 	}
 </xsl:template>

@@ -20,8 +20,8 @@
 #include "LProcessor.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 int main(int argc, const char** argv)
 {
@@ -37,7 +37,7 @@ int main(int argc, const char** argv)
             cout << "--sleepTime msec        - Время между шагам рассчёта. По умолчанию: 200 милисек" << endl;
             cout << "--sm-ready-timeout msec - Максимальное время ожидания готовности SharedMemory к работе, перед началом работы. По умолчанию: 2 минуты" << endl;
             cout << endl;
-            cout << uniset::Configuration::help() << endl;
+            cout << uniset3::Configuration::help() << endl;
             return 0;
         }
 
@@ -70,7 +70,7 @@ int main(int argc, const char** argv)
     {
         cerr << ex << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << ex << endl;
     }

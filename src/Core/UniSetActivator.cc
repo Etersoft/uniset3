@@ -44,7 +44,7 @@
 #include "Mutex.h"
 
 // ------------------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 static std::mutex              g_donemutex;
@@ -62,7 +62,7 @@ struct ORBThreadDeleter
     }
 };
 // ---------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     UniSetActivatorPtr UniSetActivator::inst;
     // ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ namespace uniset
 
     // ---------------------------------------------------------------------------
     UniSetActivator::UniSetActivator():
-        UniSetManager(uniset::DefaultObjectId)
+        UniSetManager(uniset3::DefaultObjectId)
     {
         UniSetActivator::init();
     }
@@ -143,7 +143,7 @@ namespace uniset
 
         UniSetManager::initPOA(aptr);
 
-        if( getId() == uniset::DefaultObjectId )
+        if( getId() == uniset3::DefaultObjectId )
             offThread(); // отключение потока обработки сообщений, раз не задан ObjectId
 
         UniSetManager::activate(); // а там вызывается активация всех подчиненных объектов и менеджеров
@@ -410,7 +410,7 @@ namespace uniset
         ostringstream err;
         err << "Object '" << name << "' not found";
 
-        throw uniset::NameNotFound(err.str());
+        throw uniset3::NameNotFound(err.str());
     }
     // ------------------------------------------------------------------------------------------
     Poco::JSON::Array::Ptr UniSetActivator::httpGetObjectsList( const Poco::URI::QueryParameters& p )
@@ -442,7 +442,7 @@ namespace uniset
 
         ostringstream err;
         err << "Object '" << name << "' not found";
-        throw uniset::NameNotFound(err.str());
+        throw uniset3::NameNotFound(err.str());
     }
     // ------------------------------------------------------------------------------------------
     Poco::JSON::Object::Ptr UniSetActivator::httpRequestByName( const string& name, const std::string& req, const Poco::URI::QueryParameters& p)
@@ -462,10 +462,10 @@ namespace uniset
 
         ostringstream err;
         err << "Object '" << name << "' not found";
-        throw uniset::NameNotFound(err.str());
+        throw uniset3::NameNotFound(err.str());
     }
     // ------------------------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API
     // ------------------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // ------------------------------------------------------------------------------------------

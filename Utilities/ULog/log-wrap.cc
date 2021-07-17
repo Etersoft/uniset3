@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <cstring>
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -------------------------------------------------------------------------
 static void print_help()
@@ -105,7 +105,7 @@ int main( int argc, char* argv[], char* envp[] )
         cerr << "(logserver-wrap): " << err << endl;
         return 1;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(logserver-wrap): " << ex << endl;
         return 1;

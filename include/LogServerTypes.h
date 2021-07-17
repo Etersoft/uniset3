@@ -21,7 +21,7 @@
 #include <cstring>
 #include <vector>
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     namespace LogServerTypes

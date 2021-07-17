@@ -12,7 +12,7 @@
 #endif
 // -------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 using namespace ModbusRTU;
 // -------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& os, const MBTCPTestServer* m )

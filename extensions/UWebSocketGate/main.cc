@@ -4,7 +4,7 @@
 #include "Configuration.h"
 #include "UniSetActivator.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 int main(int argc, char** argv)
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
         if( !sID.empty() )
             shmID = conf->getControllerID(sID);
         else
-            shmID = uniset::extensions::getSharedMemoryID();
+            shmID = uniset3::extensions::getSharedMemoryID();
 
         if( shmID == DefaultObjectId )
         {

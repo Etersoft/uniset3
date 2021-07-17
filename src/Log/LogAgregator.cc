@@ -21,7 +21,7 @@
 #include "DebugExtBuf.h"
 #include "LogAgregator.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
@@ -207,7 +207,7 @@ namespace uniset
 
 		const string s_tab(s.str());
 
-		uniset::ios_fmt_restorer ifs(os);
+		uniset3::ios_fmt_restorer ifs(os);
 
 		os << std::right << g_tab << setw(tab_width - 1) << std::right << getLogName() << sep << endl; // << setw(6) << " " << "[ " << Debug::str(DebugStream::level()) << " ]" << endl;
 
@@ -438,4 +438,4 @@ namespace uniset
 			l->onLogFile();
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

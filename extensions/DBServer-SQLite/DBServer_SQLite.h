@@ -27,7 +27,7 @@
 #include "SQLiteInterface.h"
 #include "DBServer.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //------------------------------------------------------------------------------------------
     /*!
@@ -153,7 +153,7 @@ namespace uniset
         public DBServer
     {
         public:
-            DBServer_SQLite( uniset::ObjectId id, const std::string& prefix );
+            DBServer_SQLite( uniset3::ObjectId id, const std::string& prefix );
             explicit DBServer_SQLite( const std::string& prefix );
             virtual ~DBServer_SQLite();
 
@@ -179,11 +179,11 @@ namespace uniset
             virtual void initDB( const std::unique_ptr<SQLiteInterface>& db ) {};
             virtual void initDBTableMap( DBTableMap& tblMap ) {};
 
-            virtual void timerInfo( const uniset::TimerMessage* tm ) override;
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-            virtual void confirmInfo( const uniset::ConfirmMessage* cmsg ) override;
-            virtual void onTextMessage( const uniset::TextMessage* msg ) override;
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void confirmInfo( const uniset3::ConfirmMessage* cmsg ) override;
+            virtual void onTextMessage( const uniset3::TextMessage* msg ) override;
             virtual std::string getMonitInfo( const std::string& params ) override;
 
             bool writeToBase( const std::string& query );
@@ -215,13 +215,13 @@ namespace uniset
             bool lastRemove = { false };
 
             void flushBuffer();
-            uniset::uniset_rwmutex mqbuf;
+            uniset3::uniset_rwmutex mqbuf;
 
         private:
             DBTableMap tblMap;
 
     };
     // ----------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 //------------------------------------------------------------------------------------------
 #endif

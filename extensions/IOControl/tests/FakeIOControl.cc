@@ -20,11 +20,11 @@
 // -----------------------------------------------------------------------------
 using namespace std;
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
 
-    FakeIOControl::FakeIOControl(uniset::ObjectId id, uniset::ObjectId icID,
+    FakeIOControl::FakeIOControl(uniset3::ObjectId id, uniset3::ObjectId icID,
                                  const std::shared_ptr<SharedMemory>& ic, int numcards, const std::string& prefix_ ):
         IOControl(id, icID, ic, numcards, prefix_)
     {
@@ -56,7 +56,7 @@ namespace uniset
 
     // --------------------------------------------------------------------------------
     std::shared_ptr<FakeIOControl> FakeIOControl::init_iocontrol(int argc, const char* const* argv,
-            uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+            uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
             const std::string& prefix )
     {
         auto conf = uniset_conf();
@@ -70,7 +70,7 @@ namespace uniset
 
         ObjectId ID = conf->getObjectID(name);
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             std::cerr << "(iocontrol): Unknown ID for " << name
                       << "' Not found in <objects>" << std::endl;
@@ -155,4 +155,4 @@ namespace uniset
     }
 
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

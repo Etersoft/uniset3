@@ -25,7 +25,7 @@
 // -------------------------------------------------------------------------
 using namespace Poco::Net;
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	using namespace UHttp;
 	// -------------------------------------------------------------------------
@@ -38,12 +38,12 @@ namespace uniset
 	{
 	}
 	// -------------------------------------------------------------------------
-	void UHttpClient::setTimeout( uniset::timeout_t usec )
+	void UHttpClient::setTimeout( uniset3::timeout_t usec )
 	{
-		session.setTimeout( uniset::PassiveTimer::microsecToPoco(usec));
+		session.setTimeout( uniset3::PassiveTimer::microsecToPoco(usec));
 	}
 	// -------------------------------------------------------------------------
-	uniset::timeout_t UHttpClient::getTimeout()
+	uniset3::timeout_t UHttpClient::getTimeout()
 	{
 		return session.getTimeout().totalMicroseconds();
 	}
@@ -70,6 +70,6 @@ namespace uniset
 		return "";
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API

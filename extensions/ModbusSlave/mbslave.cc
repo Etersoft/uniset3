@@ -23,8 +23,8 @@
 #include "Extensions.h"
 
 // --------------------------------------------------------------------------
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 using namespace std;
 // --------------------------------------------------------------------------
 int main(int argc, const char** argv)
@@ -41,7 +41,7 @@ int main(int argc, const char** argv)
         cout << endl;
         MBSlave::help_print(argc, argv);
         cout << " Global options:" << endl;
-        cout << uniset::Configuration::help() << endl;
+        cout << uniset3::Configuration::help() << endl;
         return 0;
     }
 

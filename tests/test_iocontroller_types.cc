@@ -7,7 +7,7 @@
 #include "IOController.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 //! \todo test_iocontroller_types: Дописать больше тестов
 // -----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ TEST_CASE("IOController: USensorInfo", "[ioc][usi]" )
 
     SECTION( "makeSensorIOInfo" )
     {
-        IOController_i::SensorIOInfo si( usi.makeSensorIOInfo() );
+        uniset3::SensorIOInfo si( usi.makeSensorIOInfo() );
         REQUIRE( si.supplier == 100 );
         REQUIRE( si.blocked == true );
         REQUIRE( si.value == 9 );
@@ -28,7 +28,7 @@ TEST_CASE("IOController: USensorInfo", "[ioc][usi]" )
 
     SECTION( "makeSensorMessage" )
     {
-        uniset::SensorMessage sm( usi.makeSensorMessage() );
+        uniset3::SensorMessage sm( usi.makeSensorMessage() );
         REQUIRE( sm.supplier == 100 );
         REQUIRE( sm.value == 9 );
     }

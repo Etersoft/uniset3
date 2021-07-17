@@ -8,8 +8,8 @@
 #include "IOBase.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 static std::shared_ptr<SMInterface> shm;
 static void init_test()

@@ -18,7 +18,7 @@
 // --------------------------------------------------------------------------
 #include "ujson.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// --------------------------------------------------------------------------
 	Poco::JSON::Object::Ptr json::make_object( const std::string& key, const Poco::Dynamic::Var& val )
@@ -64,12 +64,12 @@ namespace uniset
 		return root;
 	}
 	// --------------------------------------------------------------------------
-	uniset::json::help::item::operator Poco::Dynamic::Var()
+	uniset3::json::help::item::operator Poco::Dynamic::Var()
 	{
 		return root;
 	}
 	// --------------------------------------------------------------------------
-	uniset::json::help::item::operator Poco::JSON::Object::Ptr()
+	uniset3::json::help::item::operator Poco::JSON::Object::Ptr()
 	{
 		return root;
 	}
@@ -108,12 +108,12 @@ namespace uniset
 		return root;
 	}
 	// --------------------------------------------------------------------------
-	uniset::json::help::object::operator Poco::Dynamic::Var()
+	uniset3::json::help::object::operator Poco::Dynamic::Var()
 	{
 		return root;
 	}
 	// --------------------------------------------------------------------------
-	uniset::json::help::object::operator Poco::JSON::Object::Ptr()
+	uniset3::json::help::object::operator Poco::JSON::Object::Ptr()
 	{
 		return root;
 	}
@@ -134,6 +134,6 @@ namespace uniset
 
 	// --------------------------------------------------------------------------
 	// --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // --------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API

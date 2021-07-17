@@ -21,11 +21,11 @@
 #include "BackendOpenTSDB.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-BackendOpenTSDB::BackendOpenTSDB( uniset::ObjectId objId, xmlNode* cnode,
-                                  uniset::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
+BackendOpenTSDB::BackendOpenTSDB( uniset3::ObjectId objId, xmlNode* cnode,
+                                  uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                                   const string& prefix ):
     UObject_SK(objId, cnode, string(prefix + "-")),
     prefix(prefix)
@@ -105,7 +105,7 @@ void BackendOpenTSDB::init( xmlNode* cnode )
 
         for(; it1.getCurrent(); it1.goNext() )
         {
-            if( !uniset::check_filter(it1, ff, fv) )
+            if( !uniset3::check_filter(it1, ff, fv) )
                 continue;
 
             std::string pname = it1.getProp2("tsdb_name", it1.getProp("name"));
@@ -179,7 +179,7 @@ void BackendOpenTSDB::help_print( int argc, const char* const* argv )
 // -----------------------------------------------------------------------------
 std::shared_ptr<BackendOpenTSDB> BackendOpenTSDB::init_opendtsdb( int argc,
         const char* const* argv,
-        uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+        uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
         const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -194,7 +194,7 @@ std::shared_ptr<BackendOpenTSDB> BackendOpenTSDB::init_opendtsdb( int argc,
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         dcrit << "(BackendOpenTSDB): Not found ID for '" << name
               << " in '" << conf->getObjectsSection() << "' section" << endl;
@@ -221,7 +221,7 @@ void BackendOpenTSDB::callback() noexcept
     UniSetObject::callback();
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::askSensors( UniversalIO::UIOCommand cmd )
+void BackendOpenTSDB::askSensors( uniset3::UIOCommand cmd )
 {
     UObject_SK::askSensors(cmd);
 
@@ -245,7 +245,7 @@ void BackendOpenTSDB::askSensors( UniversalIO::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::sensorInfo( const uniset::SensorMessage* sm )
+void BackendOpenTSDB::sensorInfo( const uniset3::SensorMessage* sm )
 {
     auto it = tsdbParams.find(sm->id);
 
@@ -299,7 +299,7 @@ void BackendOpenTSDB::sensorInfo( const uniset::SensorMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::timerInfo( const uniset::TimerMessage* tm )
+void BackendOpenTSDB::timerInfo( const uniset3::TimerMessage* tm )
 {
     if( tm->id == tmFlushBuffer )
         flushBuffer();

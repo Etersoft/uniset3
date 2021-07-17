@@ -1,8 +1,8 @@
 ############################################################################
-# This file is part of the UniSet library								  #
+# This file is part of the UniSet library                                  #
 ############################################################################
 
-FIRSTSUBDIRS=IDL
+FIRSTSUBDIRS=proto
 SUBDIRS=. src lib include Utilities tests extensions wrappers docs
 # testsuite
 

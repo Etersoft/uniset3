@@ -17,12 +17,12 @@
 #include "SMViewer.h"
 #include "Extensions.h"
 //--------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 //--------------------------------------------------------------------------------
-SMViewer::SMViewer( uniset::ObjectId shmID ):
+SMViewer::SMViewer( uniset3::ObjectId shmID ):
     SViewer(uniset_conf()->getControllersSection(), true),
     shm(make_shared<SMInterface>(shmID, ui, DefaultObjectId))
 {
@@ -35,8 +35,8 @@ SMViewer::~SMViewer()
 // --------------------------------------------------------------------------
 void SMViewer::run()
 {
-    IOController_i::SensorInfoSeq_var amap = shm->getSensorsMap();
-    IONotifyController_i::ThresholdsListSeq_var tlst = shm->getThresholdsList();
+    uniset3::SensorInfoSeq_var amap = shm->getSensorsMap();
+    uniset3::ThresholdsListSeq_var tlst = shm->getThresholdsList();
 
     try
     {

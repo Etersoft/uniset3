@@ -24,7 +24,6 @@
 // --------------------------------------------------------------------------
 #include <deque>
 #include <memory>
-#include <omniORB4/CORBA.h>
 #include "UniSetTypes.h"
 #include "UniSetObject.h"
 #include "UniSetManager.h"
@@ -32,7 +31,7 @@
 #include "UHttpRequestHandler.h"
 #include "UHttpServer.h"
 //----------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! \page pg_Act Активтор объектов
      *
@@ -71,7 +70,7 @@ namespace uniset
     class UniSetActivator:
         public UniSetManager
 #ifndef DISABLE_REST_API
-        , public uniset::UHttp::IHttpRequestRegistry
+        , public uniset3::UHttp::IHttpRequestRegistry
 #endif
     {
         public:
@@ -94,9 +93,9 @@ namespace uniset
             // прерывание работы
             void terminate();
 
-            virtual uniset::ObjectType getType() override
+            virtual uniset3::ObjectType getType() override
             {
-                return uniset::ObjectType("UniSetActivator");
+                return uniset3::ObjectType("UniSetActivator");
             }
 
 
@@ -128,7 +127,7 @@ namespace uniset
             bool termControl = { true };
 
 #ifndef DISABLE_REST_API
-            std::shared_ptr<uniset::UHttp::UHttpServer> httpserv;
+            std::shared_ptr<uniset3::UHttp::UHttpServer> httpserv;
             std::string httpHost = { "" };
             int httpPort = { 0 };
             std::string httpCORS_allow = { "*" };

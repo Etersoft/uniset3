@@ -9,7 +9,7 @@
 #include "TCPCheck.h"
 #include "UniSetTypes.h"
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 
 static int port = 2048;
 static std::string host = "localhost";

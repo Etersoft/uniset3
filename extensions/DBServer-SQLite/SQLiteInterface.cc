@@ -24,7 +24,7 @@
 #include "SQLiteInterface.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 
 SQLiteInterface::SQLiteInterface():
@@ -79,7 +79,7 @@ bool SQLiteInterface::connect( const std::string& param )
 bool SQLiteInterface::connect( const string& dbfile, bool create, int extra_sqlite_flags )
 {
     // т.к. sqlite3 по умолчанию, создаёт файл при открытии, то проверим "сами"
-    //    if( !create && !uniset::file_exist(dbfile) )
+    //    if( !create && !uniset3::file_exist(dbfile) )
     //        return false;
 
     if( db && ping() )

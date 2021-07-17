@@ -25,8 +25,8 @@ UConnector::UConnector( UTypes::Params* p, const std::string& xfile )throw(UExce
 {
     try
     {
-        conf = uniset::uniset_init(p->argc, p->argv, xmlfile);
-        ui = make_shared<uniset::UInterface>(conf);
+        conf = uniset3::uniset_init(p->argc, p->argv, xmlfile);
+        ui = make_shared<uniset3::UInterface>(conf);
     }
     catch( std::exception& ex )
     {
@@ -43,8 +43,8 @@ UConnector::UConnector(int argc, char** argv, const string& xfile )throw(UExcept
 {
     try
     {
-        conf = uniset::uniset_init(argc, argv, xmlfile);
-        ui = make_shared<uniset::UInterface>(conf);
+        conf = uniset3::uniset_init(argc, argv, xmlfile);
+        ui = make_shared<uniset3::UInterface>(conf);
     }
     catch( std::exception& ex )
     {
@@ -82,7 +82,7 @@ long UConnector::getValue( long id, long node )throw(UException)
     {
         return ui->getValue(id, node);
     }
-    catch( uniset::Exception& ex )
+    catch( uniset3::Exception& ex )
     {
         throw UException(ex.what());
     }
@@ -105,7 +105,7 @@ void UConnector::setValue( long id, long val, long node, long supplier )throw(UE
     {
         ui->setValue(id, val, node, supplier);
     }
-    catch( uniset::Exception& ex )
+    catch( uniset3::Exception& ex )
     {
         throw UException(ex.what());
     }
@@ -115,7 +115,7 @@ void UConnector::setValue( long id, long val, long node, long supplier )throw(UE
     }
 }
 //---------------------------------------------------------------------------
-static UTypes::ShortIOInfo toUTypes( IOController_i::ShortIOInfo i )
+static UTypes::ShortIOInfo toUTypes( uniset3::ShortIOInfo i )
 {
     UTypes::ShortIOInfo ret;
     ret.value = i.value;
@@ -137,7 +137,7 @@ UTypes::ShortIOInfo UConnector::getTimeChange( long id, long node )
 
     try
     {
-        IOController_i::ShortIOInfo i = ui->getTimeChange(id, node);
+        uniset3::ShortIOInfo i = ui->getTimeChange(id, node);
         return toUTypes(i);
     }
     catch( const std::exception& ex )
@@ -173,7 +173,7 @@ string UConnector::getName( long id )
 string UConnector::getShortName( long id )
 {
     if( conf )
-        return uniset::ORepHelpers::getShortName(conf->oind->getMapName(id));
+        return uniset3::ORepHelpers::getShortName(conf->oind->getMapName(id));
 
     return "";
 }
@@ -233,8 +233,8 @@ void UConnector::activate_objects() throw(UException)
 {
     try
     {
-        auto act = uniset::UniSetActivator::Instance();
-        uniset::SystemMessage sm(uniset::SystemMessage::StartUp);
+        auto act = uniset3::UniSetActivator::Instance();
+        uniset3::SystemMessage sm(uniset3::SystemMessage::StartUp);
         act->broadcast( sm.transport_msg() );
         act->run(true);
     }

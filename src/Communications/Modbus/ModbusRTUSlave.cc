@@ -23,12 +23,12 @@
 #include "ComPort485F.h"
 #include "modbus/ModbusRTUSlave.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
 	using namespace ModbusRTU;
-	using namespace uniset;
+	using namespace uniset3;
 	// -------------------------------------------------------------------------
 	ModbusRTUSlave::ModbusRTUSlave( const string& dev, bool use485, bool tr_ctl ):
 		port(NULL),
@@ -127,7 +127,7 @@ namespace uniset
 		{
 			port->sendBlock(buf, len);
 		}
-		catch( const uniset::Exception& ex ) // SystemError
+		catch( const uniset3::Exception& ex ) // SystemError
 		{
 			if( dlog->is_crit() )
 				dlog->crit() << "(send): " << ex << endl;
@@ -198,4 +198,4 @@ namespace uniset
 
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

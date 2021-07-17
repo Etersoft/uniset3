@@ -10,7 +10,7 @@
 #include "PassiveTimer.h"
 #include "ModbusTypes.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     /*!    Modbus client (master) interface
@@ -156,7 +156,7 @@ namespace uniset
                 sleepPause_usec = usec;
             }
 
-            void initLog( std::shared_ptr<uniset::Configuration> conf, const std::string& name, const std::string& logfile = "" );
+            void initLog( std::shared_ptr<uniset3::Configuration> conf, const std::string& name, const std::string& logfile = "" );
             void setLog( std::shared_ptr<DebugStream> dlog );
 
             inline void setCRCNoCheckit( bool set )
@@ -206,7 +206,7 @@ namespace uniset
 
             bool crcNoCheckit;
 
-            uniset::uniset_rwmutex sendMutex;
+            uniset3::uniset_rwmutex sendMutex;
             std::shared_ptr<DebugStream> dlog;
 
             void printProcessingTime();
@@ -218,7 +218,7 @@ namespace uniset
             ModbusRTU::ModbusMessage qbuf;     /*!< буфер для посылки сообщений */
     };
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // ModbusClient_H_
 // -------------------------------------------------------------------------

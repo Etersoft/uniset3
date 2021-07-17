@@ -25,7 +25,7 @@
 #include "modbus/ModbusTCPMaster.h"
 #include "MTR.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 static struct option longopts[] =

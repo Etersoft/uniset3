@@ -13,7 +13,7 @@
 #include "UNetExchange.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static shared_ptr<UInterface> ui = nullptr;
 static ObjectId aid = 2;
@@ -92,7 +92,7 @@ void InitMulticastTest()
 static UniSetUDP::UDPMessage mreceive( unsigned int pnum = 0, timeout_t tout = 2000, int ncycle = 20 )
 {
     UniSetUDP::UDPMessage pack;
-    uint8_t rbuf[uniset::UniSetUDP::MessageBufSize];
+    uint8_t rbuf[uniset3::UniSetUDP::MessageBufSize];
 
     while( ncycle > 0 )
     {
@@ -406,7 +406,7 @@ TEST_CASE("[UNetUDP]: multicast check undefined value", "[unetudp][multicast][un
     REQUIRE( pack.dsize() == 2 );
     REQUIRE( pack.aValue(0) == 110 );
 
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 2;
     si.node = uniset_conf()->getLocalNode();
     ui->setUndefinedState(si, true, 6000 /* TestProc */ );

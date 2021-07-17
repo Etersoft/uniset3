@@ -21,7 +21,7 @@
 #include <algorithm>
 #include "PassiveTimer.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // header only
 

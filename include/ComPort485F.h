@@ -22,7 +22,7 @@
 #include "ComPort.h"
 #include "PassiveTimer.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*!
         Класс для обмена через 485 интерфейс СПЕЦИАЛЬНО

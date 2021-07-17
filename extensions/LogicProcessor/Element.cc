@@ -18,7 +18,7 @@
 #include <iostream>
 #include "Element.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     using namespace std;
@@ -154,4 +154,4 @@ namespace uniset
     }
 
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

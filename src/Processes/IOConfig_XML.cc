@@ -22,7 +22,7 @@
 // --------------------------------------------------------------------------
 using namespace std;
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// --------------------------------------------------------------------------
 	IOConfig_XML::IOConfig_XML()
@@ -112,7 +112,7 @@ namespace uniset
 		return lst;
 	}
 	// ------------------------------------------------------------------------------------------
-	bool IOConfig_XML::getBaseInfo( xmlNode* node, IOController_i::SensorInfo& si ) const
+	bool IOConfig_XML::getBaseInfo( xmlNode* node, uniset3::SensorInfo& si ) const
 	{
 		UniXML::iterator it(node);
 		const string sname( it.getProp("name"));
@@ -124,7 +124,7 @@ namespace uniset
 		}
 
 		// преобразуем в полное имя
-		ObjectId sid = uniset::DefaultObjectId;
+		ObjectId sid = uniset3::DefaultObjectId;
 
 		const string id(it.getProp("id"));
 
@@ -133,7 +133,7 @@ namespace uniset
 		else
 			sid = conf->getSensorID(sname);
 
-		if( sid == uniset::DefaultObjectId )
+		if( sid == uniset3::DefaultObjectId )
 		{
 			ostringstream err;
 			err << "(IOConfig_XML::getBaseInfo): Not found ID for sensor --> " << sname;
@@ -147,7 +147,7 @@ namespace uniset
 		if( !snodename.empty() )
 			snode = conf->getNodeID(snodename);
 
-		if( snode == uniset::DefaultObjectId )
+		if( snode == uniset3::DefaultObjectId )
 		{
 			ucrit << "(IOConfig_XML::getBaseInfo): Not found ID for node --> " << snodename << endl;
 			return false;
@@ -178,9 +178,9 @@ namespace uniset
 		else
 			inf->priority = Message::Medium;
 
-		inf->type = uniset::getIOType(it.getProp("iotype"));
+		inf->type = uniset3::getIOType(it.getProp("iotype"));
 
-		if( inf->type == UniversalIO::UnknownIOType )
+		if( inf->type == uniset3::UnknownIOType )
 		{
 			ostringstream err;
 			err << "(IOConfig_XML:getSensorInfo): unknown iotype=" << it.getProp("iotype")
@@ -190,7 +190,7 @@ namespace uniset
 		}
 
 		// калибровка
-		if( inf->type == UniversalIO::AI || inf->type == UniversalIO::AO )
+		if( inf->type == uniset3::AI || inf->type == uniset3::AO )
 		{
 			inf->ci.minRaw = it.getIntProp("rmin");
 			inf->ci.maxRaw = it.getIntProp("rmax");
@@ -222,7 +222,7 @@ namespace uniset
 		{
 			inf->depend_sid = conf->getSensorID(d_txt);
 
-			if( inf->depend_sid == uniset::DefaultObjectId )
+			if( inf->depend_sid == uniset3::DefaultObjectId )
 			{
 				ostringstream err;
 				err << "(IOConfig_XML::getSensorInfo): sensor='"
@@ -278,14 +278,14 @@ namespace uniset
 			if( !check_thresholds_item(it) )
 				continue;
 
-			IOController_i::SensorInfo si;
+			uniset3::SensorInfo si;
 
 			if( !getBaseInfo(it, si) )
 			{
 				ostringstream err;
 				err << "(IOConfig_XML::init_thresholds): failed read parameters for threashold " << it.getProp("name");
 				ucrit << err.str() << endl;
-				throw uniset::SystemError(err.str());
+				throw uniset3::SystemError(err.str());
 			}
 
 			auto inf = iolist.find(si.id);
@@ -295,7 +295,7 @@ namespace uniset
 				ostringstream err;
 				err << "(IOConfig_XML::init_thresholds): NOT FOUND " << it.getProp("name");
 				ucrit << err.str() << endl;
-				throw uniset::SystemError(err.str());
+				throw uniset3::SystemError(err.str());
 			}
 
 			ulog3 << "(IOConfig_XML::read_thresholds): " << it.getProp("name") << endl;
@@ -318,7 +318,7 @@ namespace uniset
 						<< conf->oind->getNameById(si.id);
 
 					ucrit << err.str() << endl;
-					throw uniset::SystemError(err.str());
+					throw uniset3::SystemError(err.str());
 				}
 
 				ulog3  << "(IOConfig_XML::read_thresholds): \tthreshold low="
@@ -398,21 +398,21 @@ namespace uniset
 		{
 			ti->sid = conf->getSensorID(sid_name);
 
-			if( ti->sid == uniset::DefaultObjectId )
+			if( ti->sid == uniset3::DefaultObjectId )
 			{
 				ostringstream err;
 				err << "(IOConfig_XML:getThresholdInfo): "
 					<< " Not found ID for " << sid_name;
 
 				ucrit << err.str() << endl;
-				throw uniset::SystemError(err.str());
+				throw uniset3::SystemError(err.str());
 			}
 			else
 			{
-				UniversalIO::IOType iotype = conf->getIOType(ti->sid);
+				uniset3::IOType iotype = conf->getIOType(ti->sid);
 
 				// Пока что IONotifyController поддерживает работу только с 'DI/DO'.
-				if( iotype != UniversalIO::DI && iotype != UniversalIO::DO )
+				if( iotype != uniset3::DI && iotype != uniset3::DO )
 				{
 					ostringstream err;
 					err << "(IOConfig_XML:getThresholdInfo): "
@@ -420,7 +420,7 @@ namespace uniset
 						<< ". iotype must be 'DI' or 'DO'.";
 
 					ucrit << err.str() << endl;
-					throw uniset::SystemError(err.str());
+					throw uniset3::SystemError(err.str());
 				}
 			}
 		}
@@ -429,13 +429,13 @@ namespace uniset
 		ti->lowlimit     = uit.getIntProp("lowlimit");
 		ti->hilimit      = uit.getIntProp("hilimit");
 		ti->invert       = uit.getIntProp("invert");
-		ti->state        = IONotifyController_i::NormalThreshold;
+		ti->state        = uniset3::NormalThreshold;
 		return true;
 	}
 	// ------------------------------------------------------------------------------------------
 	bool IOConfig_XML::check_thresholds_item( UniXML::iterator& it ) const
 	{
-		return uniset::check_filter(it, t_filterField, t_filterValue);
+		return uniset3::check_filter(it, t_filterField, t_filterValue);
 	}
 	// ------------------------------------------------------------------------------------------
 	void IOConfig_XML::setReadThresholdItem( ReaderSlot sl )
@@ -497,7 +497,7 @@ namespace uniset
 
 		cid = uniset_conf()->oind->getIdByName(cname);
 
-		if( cid == uniset::DefaultObjectId )
+		if( cid == uniset3::DefaultObjectId )
 		{
 			ucrit << "(Restorer_XML:getConsumerInfo): НЕ НАЙДЕН ИДЕНТИФИКАТОР заказчика -->"
 				  << cname << endl;
@@ -511,7 +511,7 @@ namespace uniset
 		else
 			cnode = uniset_conf()->getLocalNode();
 
-		if( cnode == uniset::DefaultObjectId )
+		if( cnode == uniset3::DefaultObjectId )
 		{
 			ucrit << "(Restorer_XML:getConsumerInfo): НЕ НАЙДЕН ИДЕНТИФИКАТОР узла -->"
 				  << cnodename << endl;
@@ -524,12 +524,12 @@ namespace uniset
 	// -----------------------------------------------------------------------------
 	bool IOConfig_XML::check_list_item( UniXML::iterator& it ) const
 	{
-		return uniset::check_filter(it, i_filterField, i_filterValue);
+		return uniset3::check_filter(it, i_filterField, i_filterValue);
 	}
 	// -----------------------------------------------------------------------------
 	bool IOConfig_XML::check_consumer_item( UniXML::iterator& it ) const
 	{
-		return uniset::check_filter(it, c_filterField, c_filterValue);
+		return uniset3::check_filter(it, c_filterField, c_filterValue);
 	}
 	// -----------------------------------------------------------------------------
 	void IOConfig_XML::setReadItem( ReaderSlot sl )

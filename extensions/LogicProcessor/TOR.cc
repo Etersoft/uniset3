@@ -19,11 +19,11 @@
 #include "Extensions.h"
 #include "Element.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -------------------------------------------------------------------------
     TOR::TOR(ElementID id, size_t num, bool st):
         Element(id),
@@ -85,4 +85,4 @@ namespace uniset
             Element::setChildOut();
     }
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

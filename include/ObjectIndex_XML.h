@@ -28,7 +28,7 @@
 #include "ObjectIndex.h"
 #include "UniXML.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     /*! реализация интерфейса ObjectIndex на основе xml-файла, с автоматическим назначением id объектам
@@ -43,8 +43,8 @@ namespace uniset
             ObjectIndex_XML( const std::shared_ptr<UniXML>& xml, size_t minSize = 1000 );
             virtual ~ObjectIndex_XML();
 
-            virtual const uniset::ObjectInfo* getObjectInfo( const ObjectId ) const noexcept override;
-            virtual const uniset::ObjectInfo* getObjectInfo( const std::string& name ) const noexcept override;
+            virtual const uniset3::ObjectInfo* getObjectInfo( const ObjectId ) const noexcept override;
+            virtual const uniset3::ObjectInfo* getObjectInfo( const std::string& name ) const noexcept override;
             virtual ObjectId getIdByName( const std::string& name ) const noexcept override;
             virtual std::string getMapName( const ObjectId id ) const noexcept override;
             virtual std::string getTextName( const ObjectId id ) const noexcept override;

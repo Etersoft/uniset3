@@ -32,7 +32,7 @@
 #include "IOController.h"
 
 //---------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     class IOConfig;
     //---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ namespace uniset
     Механизм функционирует по следующей логике:
     "заказчики" уведомляют \b IONC об изменении какого именно датчика они хотят получать уведомление,
     после чего, если данный датчик меняет своё состояние, заказчику посылается
-    сообщение uniset::SensorMessage содержащее информацию о текущем(новом) состоянии датчика,
+    сообщение uniset3::SensorMessage содержащее информацию о текущем(новом) состоянии датчика,
     времени изменения и т.п. В случае необходимости можно отказаться от уведомления.
     Для заказа датчиков предусмотрен ряд функций. На данный момент рекомендуется
     пользоваться функцией IONotifyController::askSensor.
@@ -136,30 +136,30 @@ namespace uniset
         public:
 
             IONotifyController(const std::string& name, const std::string& section, std::shared_ptr<IOConfig> ioconf = nullptr );
-            IONotifyController(const uniset::ObjectId id, std::shared_ptr<IOConfig> ioconf = nullptr );
+            IONotifyController(const uniset3::ObjectId id, std::shared_ptr<IOConfig> ioconf = nullptr );
 
             virtual ~IONotifyController();
 
-            virtual uniset::ObjectType getType() override
+            virtual uniset3::ObjectType getType() override
             {
-                return uniset::ObjectType("IONotifyController");
+                return uniset3::ObjectType("IONotifyController");
             }
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
-            virtual void askSensor(const uniset::ObjectId sid, const uniset::ConsumerInfo& ci, UniversalIO::UIOCommand cmd) override;
+            virtual void askSensor(const uniset3::ObjectId sid, const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd) override;
 
-            virtual void askThreshold(const uniset::ObjectId sid, const uniset::ConsumerInfo& ci,
-                                      uniset::ThresholdId tid,
+            virtual void askThreshold(const uniset3::ObjectId sid, const uniset3::ConsumerInfo& ci,
+                                      uniset3::ThresholdId tid,
                                       CORBA::Long lowLimit, CORBA::Long hiLimit, CORBA::Boolean invert,
-                                      UniversalIO::UIOCommand cmd ) override;
+                                      uniset3::UIOCommand cmd ) override;
 
-            virtual IONotifyController_i::ThresholdInfo getThresholdInfo( const uniset::ObjectId sid, uniset::ThresholdId tid ) override;
-            virtual IONotifyController_i::ThresholdList* getThresholds(const uniset::ObjectId sid ) override;
-            virtual IONotifyController_i::ThresholdsListSeq* getThresholdsList() override;
+            virtual uniset3::ThresholdInfo getThresholdInfo( const uniset3::ObjectId sid, uniset3::ThresholdId tid ) override;
+            virtual uniset3::ThresholdList* getThresholds(const uniset3::ObjectId sid ) override;
+            virtual uniset3::ThresholdsListSeq* getThresholdsList() override;
 
-            virtual uniset::IDSeq* askSensorsSeq(const uniset::IDSeq& lst,
-                                                 const uniset::ConsumerInfo& ci, UniversalIO::UIOCommand cmd) override;
+            virtual uniset3::IDSeq* askSensorsSeq(const uniset3::IDSeq& lst,
+                                                 const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd) override;
 
             // --------------------------------------------
 
@@ -172,11 +172,11 @@ namespace uniset
             // --------------------------------------------
             /*! Информация о заказчике */
             struct ConsumerInfoExt:
-                public uniset::ConsumerInfo
+                public uniset3::ConsumerInfo
             {
-                ConsumerInfoExt( const uniset::ConsumerInfo& ci,
+                ConsumerInfoExt( const uniset3::ConsumerInfo& ci,
                                  UniSetObject_i_ptr ref = 0, size_t maxAttemtps = 10 ):
-                    uniset::ConsumerInfo(ci),
+                    uniset3::ConsumerInfo(ci),
                     ref(ref), attempt(maxAttemtps) {}
 
                 UniSetObject_i_var ref;
@@ -196,7 +196,7 @@ namespace uniset
             {
                 ConsumerListInfo(): mut("ConsumerInfoMutex") {}
                 ConsumerList clst;
-                uniset::uniset_rwmutex mut;
+                uniset3::uniset_rwmutex mut;
 
                 ConsumerListInfo( const ConsumerListInfo& ) = delete;
                 ConsumerListInfo& operator=( const ConsumerListInfo& ) = delete;
@@ -205,7 +205,7 @@ namespace uniset
             };
 
             /*! словарь: датчик -> список потребителей */
-            typedef std::unordered_map<uniset::ObjectId, ConsumerListInfo> AskMap;
+            typedef std::unordered_map<uniset3::ObjectId, ConsumerListInfo> AskMap;
 
             // связь: id датчика --> id порога --> список заказчиков
             // т.к. каждый порог имеет уникальный указатель, используем его в качестве ключа
@@ -218,14 +218,14 @@ namespace uniset
             virtual void initItem( std::shared_ptr<USensorInfo>& usi, IOController* ic );
 
             //! посылка информации об изменении состояния датчика (всем или указанному заказчику)
-            virtual void send( ConsumerListInfo& lst, const uniset::SensorMessage& sm, const uniset::ConsumerInfo* ci = nullptr );
+            virtual void send( ConsumerListInfo& lst, const uniset3::SensorMessage& sm, const uniset3::ConsumerInfo* ci = nullptr );
 
             //! проверка срабатывания пороговых датчиков
             virtual void checkThreshold( std::shared_ptr<USensorInfo>& usi, bool send = true );
-            virtual void checkThreshold( IOController::IOStateList::iterator& li, const uniset::ObjectId sid, bool send_msg = true );
+            virtual void checkThreshold( IOController::IOStateList::iterator& li, const uniset3::ObjectId sid, bool send_msg = true );
 
             //! поиск информации о пороговом датчике
-            std::shared_ptr<UThresholdInfo> findThreshold( const uniset::ObjectId sid, const uniset::ThresholdId tid );
+            std::shared_ptr<UThresholdInfo> findThreshold( const uniset3::ObjectId sid, const uniset3::ThresholdId tid );
 
             /*! чтение dump-файла */
             virtual void readConf();
@@ -236,13 +236,13 @@ namespace uniset
 
             // функция для работы напрямую с указателем (оптимизация)
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi,
-                                        CORBA::Long value, uniset::ObjectId sup_id ) override;
+                                        CORBA::Long value, uniset3::ObjectId sup_id ) override;
 
 #ifndef DISABLE_REST_API
             // http api
             Poco::JSON::Object::Ptr request_consumers( const std::string& req, const Poco::URI::QueryParameters& p );
             Poco::JSON::Object::Ptr request_lost( const std::string& req, const Poco::URI::QueryParameters& p );
-            Poco::JSON::Object::Ptr getConsumers(uniset::ObjectId sid, ConsumerListInfo& clist, bool ifNotEmpty = true );
+            Poco::JSON::Object::Ptr getConsumers(uniset3::ObjectId sid, ConsumerListInfo& clist, bool ifNotEmpty = true );
 #endif
 
             // статистика
@@ -264,29 +264,29 @@ namespace uniset
             friend class NCRestorer;
 
             //----------------------
-            bool addConsumer( ConsumerListInfo& lst, const uniset::ConsumerInfo& cons );     //!< добавить потребителя сообщения
-            bool removeConsumer( ConsumerListInfo& lst, const uniset::ConsumerInfo& cons );  //!< удалить потребителя сообщения
+            bool addConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );     //!< добавить потребителя сообщения
+            bool removeConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );  //!< удалить потребителя сообщения
 
             //! обработка заказа
-            void ask(AskMap& askLst, const uniset::ObjectId sid,
-                     const uniset::ConsumerInfo& ci, UniversalIO::UIOCommand cmd);
+            void ask(AskMap& askLst, const uniset3::ObjectId sid,
+                     const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd);
 
             /*! добавить новый порог для датчика */
             std::shared_ptr<UThresholdInfo> addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi, std::shared_ptr<UThresholdInfo>& ti );
-            bool addThresholdConsumer( std::shared_ptr<UThresholdInfo>& ti, const uniset::ConsumerInfo& ci );
+            bool addThresholdConsumer( std::shared_ptr<UThresholdInfo>& ti, const uniset3::ConsumerInfo& ci );
 
             /*! удалить порог для датчика */
             bool removeThresholdConsumer( std::shared_ptr<USensorInfo>& usi,
                                           std::shared_ptr<UThresholdInfo>& ti,
-                                          const uniset::ConsumerInfo& ci);
+                                          const uniset3::ConsumerInfo& ci);
 
             AskMap askIOList; /*!< список потребителей по  датчикам */
             AskThresholdMap askTMap; /*!< список порогов по датчикам */
 
             /*! замок для блокирования совместного доступа к cписку потребителей датчиков */
-            uniset::uniset_rwmutex askIOMutex;
+            uniset3::uniset_rwmutex askIOMutex;
             /*! замок для блокирования совместного доступа к cписку потребителей пороговых датчиков */
-            uniset::uniset_rwmutex trshMutex;
+            uniset3::uniset_rwmutex trshMutex;
 
             sigc::connection conInit;
             sigc::connection conUndef;
@@ -307,7 +307,7 @@ namespace uniset
             /*! map для хранения информации о заказчиках с которыми была потеряна связь
              * и которые были удалены из списка заказчиков
              */
-            std::unordered_map<uniset::ObjectId, LostConsumerInfo> lostConsumers;
+            std::unordered_map<uniset3::ObjectId, LostConsumerInfo> lostConsumers;
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace

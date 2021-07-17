@@ -25,8 +25,8 @@
 #include "UNetLogSugar.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 CommonEventLoop UNetReceiver::loop;
 // -----------------------------------------------------------------------------
@@ -134,14 +134,14 @@ void UNetReceiver::setInitPause( timeout_t msec ) noexcept
     initPause = (msec / 1000.0);
 }
 // -----------------------------------------------------------------------------
-void UNetReceiver::setRespondID( uniset::ObjectId id, bool invert ) noexcept
+void UNetReceiver::setRespondID( uniset3::ObjectId id, bool invert ) noexcept
 {
     sidRespond = id;
     respondInvert = invert;
     shm->initIterator(itRespond);
 }
 // -----------------------------------------------------------------------------
-void UNetReceiver::setLostPacketsID( uniset::ObjectId id ) noexcept
+void UNetReceiver::setLostPacketsID( uniset3::ObjectId id ) noexcept
 {
     sidLostPackets = id;
     shm->initIterator(itLostPackets);
@@ -411,7 +411,7 @@ void UNetReceiver::update() noexcept
 
                 shm->localSetValue(c_it->ioit, p->dID(i), p->dValue(i), shm->ID());
             }
-            catch( const uniset::Exception& ex)
+            catch( const uniset3::Exception& ex)
             {
                 unetcrit << myname << "(update): D:"
                          << " id=" << p->dID(i)
@@ -447,7 +447,7 @@ void UNetReceiver::update() noexcept
 
                 shm->localSetValue(c_it->ioit, p->aID(i), p->aValue(i), shm->ID());
             }
-            catch( const uniset::Exception& ex)
+            catch( const uniset3::Exception& ex)
             {
                 unetcrit << myname << "(update): A:"
                          << " id=" << p->aID(i)
@@ -496,7 +496,7 @@ void UNetReceiver::readEvent( ev::io& watcher ) noexcept
             ok = true;
         }
     }
-    catch( uniset::Exception& ex )
+    catch( uniset3::Exception& ex )
     {
         unetwarn << myname << "(receive): " << ex << std::endl;
     }

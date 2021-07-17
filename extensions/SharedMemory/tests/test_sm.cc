@@ -8,7 +8,7 @@
 #include "TestObject.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static shared_ptr<UInterface> ui;
 extern shared_ptr<TestObject> obj;
@@ -270,7 +270,7 @@ TEST_CASE("[SM]: monitonic sensor message", "[sm][monitonic]")
     // Для проверки этого датчик монотонно увеличивается на +1
     // сама проверка см. TestObject::sensorInfo()
     auto conf = uniset_conf();
-    const long max = uniset::getArgInt("--monotonic-max-value", conf->getArgc(), conf->getArgv(), "1000");
+    const long max = uniset3::getArgInt("--monotonic-max-value", conf->getArgc(), conf->getArgv(), "1000");
 
     auto&& write_worker = [&max]
     {
@@ -307,7 +307,7 @@ TEST_CASE("[SM]: monitonic sensor message", "[sm][monitonic]")
     REQUIRE( obj->getLastValue() == max );
 
     // print statistic
-    //  uniset::SimpleInfo_var si = obj->getInfo(0);
+    //  uniset3::SimpleInfo_var si = obj->getInfo(0);
     //  cerr << std::string(si->info) << endl;
 }
 // -----------------------------------------------------------------------------
@@ -328,7 +328,7 @@ TEST_CASE("[SM]: freezeValue", "[sm][freezeValue]")
 {
     InitTest();
 
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 517;
     si.node = uniset_conf()->getLocalNode();
 

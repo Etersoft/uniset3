@@ -41,7 +41,7 @@
 #include "UHttpServer.h"
 #include "UTCPCore.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //------------------------------------------------------------------------------------------
     /*!
@@ -417,7 +417,7 @@ namespace uniset
             friend class LogWebSocketGuard;
 
             std::list<std::shared_ptr<LogWebSocket>> wsocks;
-            uniset::uniset_rwmutex wsocksMutex;
+            uniset3::uniset_rwmutex wsocksMutex;
             size_t maxwsocks = { 50 }; // максимальное количество websocket-ов
 
 
@@ -438,6 +438,6 @@ namespace uniset
         private:
     };
     // ----------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 //------------------------------------------------------------------------------------------
 #endif

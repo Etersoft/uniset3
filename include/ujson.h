@@ -20,7 +20,7 @@
 #ifndef DISABLE_REST_API
 #include <Poco/JSON/Object.h>
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     namespace json
     {
@@ -72,7 +72,7 @@ namespace uniset
         } // end of namespace help
     } // end of namespace json
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // --------------------------------------------------------------------------
 #endif // end of #ifndef DISABLE_REST_API
 // --------------------------------------------------------------------------

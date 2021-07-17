@@ -25,7 +25,7 @@
 #include <memory>
 #include <utility>
 
-namespace unisetstd
+namespace uniset3std
 {
 
     template<typename T, typename ...Args>
@@ -34,6 +34,6 @@ namespace unisetstd
         return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
     }
     // --------------------------------------------------------------------------
-} // end of namespace unisetstd
+} // end of namespace uniset3std
 // --------------------------------------------------------------------------
 #endif

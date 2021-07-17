@@ -21,7 +21,7 @@
 #include "Exceptions.h"
 #include "Configuration.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // Шаблон для "универсальной инициализации объекта (процесса)".
     // Использование:
@@ -35,23 +35,23 @@ namespace uniset
     template<typename T, typename... _Args>
     std::shared_ptr<T> make_object( const std::string& idname, const std::string& secname, _Args&& ... __args )
     {
-        auto conf = uniset::uniset_conf();
-        uniset::ObjectId id = conf->getObjectID(idname);
+        auto conf = uniset3::uniset_conf();
+        uniset3::ObjectId id = conf->getObjectID(idname);
 
-        if( id == uniset::DefaultObjectId )
-            throw uniset::SystemError("(make_object<" + std::string(typeid(T).name()) + ">): Not found ID for '" + idname + "'");
+        if( id == uniset3::DefaultObjectId )
+            throw uniset3::SystemError("(make_object<" + std::string(typeid(T).name()) + ">): Not found ID for '" + idname + "'");
 
         auto xml = conf->getConfXML();
         std::string s( (secname.empty() ? idname : secname) );
         xmlNode* cnode = conf->findNode(xml->getFirstNode(), s, idname);
 
         if( cnode == 0 )
-            throw uniset::SystemError("(make_object<" + std::string(typeid(T).name()) + ">): Not found xmlnode <" + s + " name='" + idname + "' ... >");
+            throw uniset3::SystemError("(make_object<" + std::string(typeid(T).name()) + ">): Not found xmlnode <" + s + " name='" + idname + "' ... >");
 
         std::shared_ptr<T> obj = std::make_shared<T>(id, cnode, std::forward<_Args>(__args)...);
 
         if (obj == nullptr)
-            throw uniset::SystemError("(make_object<T>  == nullptr" + std::string(typeid(T).name()));
+            throw uniset3::SystemError("(make_object<T>  == nullptr" + std::string(typeid(T).name()));
 
         return obj;
     }
@@ -61,18 +61,18 @@ namespace uniset
     template<typename T, typename... _Args>
     std::shared_ptr<T> make_object_x( xmlNode* root, const std::string& secname, _Args&& ... __args )
     {
-        auto conf = uniset::uniset_conf();
+        auto conf = uniset3::uniset_conf();
         auto xml = conf->getConfXML();
         xmlNode* cnode = conf->findNode(root, secname, "");
 
         if( cnode == 0 )
-            throw uniset::SystemError("(make_object_x<" + std::string(typeid(T).name()) + ">): Not found xmlnode <" + secname + " ... >");
+            throw uniset3::SystemError("(make_object_x<" + std::string(typeid(T).name()) + ">): Not found xmlnode <" + secname + " ... >");
 
         std::string idname = conf->getProp(cnode, "name");
-        uniset::ObjectId id = conf->getObjectID(idname);
+        uniset3::ObjectId id = conf->getObjectID(idname);
 
-        if( id == uniset::DefaultObjectId )
-            throw uniset::SystemError("(make_object_x<" + std::string(typeid(T).name()) + ">): Not found ID for '" + idname + "'");
+        if( id == uniset3::DefaultObjectId )
+            throw uniset3::SystemError("(make_object_x<" + std::string(typeid(T).name()) + ">): Not found ID for '" + idname + "'");
 
         return std::make_shared<T>(id, cnode, std::forward<_Args>(__args)...);
 
@@ -90,12 +90,12 @@ namespace uniset
         try
         {
             m->log()->info() << m->getName() << "(" << __FUNCTION__ << "): " << "create " << idname << "..." << std::endl;
-            auto o = uniset::make_object<T>(idname, secname, std::forward<_Args>(__args)...);
+            auto o = uniset3::make_object<T>(idname, secname, std::forward<_Args>(__args)...);
             m->add(o);
             m->logAgregator()->add(o->logAgregator());
             return o;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             m->log()->crit() << m->getName() << "(" << __FUNCTION__ << "): " << "(create " << idname << "): " << ex << std::endl;
             throw;
@@ -108,18 +108,18 @@ namespace uniset
     {
         try
         {
-            auto o = uniset::make_object_x<T>(root, secname, std::forward<_Args>(__args)...);
+            auto o = uniset3::make_object_x<T>(root, secname, std::forward<_Args>(__args)...);
             m->add(o);
             m->logAgregator()->add(o->logAgregator());
             return o;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             m->log()->crit() << m->getName() << "(" << __FUNCTION__ << "): " << "(create " << std::string(typeid(T).name()) << "): " << ex << std::endl;
             throw;
         }
     }
     // -----------------------------------------------------------------------------------------
-} // endof namespace uniset
+} // endof namespace uniset3
 // -----------------------------------------------------------------------------------------
 #endif // UHelpers_H_

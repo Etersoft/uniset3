@@ -30,11 +30,11 @@
 //#include "Configuration.h"
 // --------------------------------------------------------------------------
 using namespace omni;
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 
-ObjectRepository::ObjectRepository( const std::shared_ptr<uniset::Configuration>& _conf ):
+ObjectRepository::ObjectRepository( const std::shared_ptr<uniset3::Configuration>& _conf ):
 	nsName(_conf->getNSName()),
 	uconf(_conf)
 {
@@ -103,7 +103,7 @@ void ObjectRepository::registration(const string& name, const ObjectPtr oRef, co
 	}
 
 	// Проверка корректности имени
-	char bad = uniset::checkBadSymbols(name);
+	char bad = uniset3::checkBadSymbols(name);
 
 	if( bad != 0 )
 	{
@@ -182,7 +182,7 @@ void ObjectRepository::registration(const string& name, const ObjectPtr oRef, co
  *  \exception ORepFailed - генерируется если произошла ошибка при регистрации
  *  \sa registration(const string name, const ObjectPtr oRef, const string section)
 */
-void ObjectRepository::registration( const std::string& fullName, const uniset::ObjectPtr oRef, bool force ) const
+void ObjectRepository::registration( const std::string& fullName, const uniset3::ObjectPtr oRef, bool force ) const
 {
 	//    string n(ORepHelpers::getShortName(fullName));
 	const string n( uconf->oind->getBaseName(fullName) );
@@ -447,7 +447,7 @@ bool ObjectRepository::isExist( const ObjectPtr& oref ) const
 */
 bool ObjectRepository::createSection(const string& name, const string& in_section) const
 {
-	char bad = uniset::checkBadSymbols(name);
+	char bad = uniset3::checkBadSymbols(name);
 
 	if (bad != 0)
 	{

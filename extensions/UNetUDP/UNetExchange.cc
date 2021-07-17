@@ -25,24 +25,24 @@
 #include "MulticastTransport.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-UNetExchange::UNetExchange(uniset::ObjectId objId, uniset::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
+UNetExchange::UNetExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
     UniSetObject(objId),
     initPause(0),
     activated(false),
     no_sender(false)
 {
     if( objId == DefaultObjectId )
-        throw uniset::SystemError("(UNetExchange): objId=-1?!! Use --" + prefix + "-unet-name" );
+        throw uniset3::SystemError("(UNetExchange): objId=-1?!! Use --" + prefix + "-unet-name" );
 
     auto conf = uniset_conf();
 
     cnode = conf->getNode(myname);
 
     if( cnode == NULL )
-        throw uniset::SystemError("(UNetExchange): Not found conf-node for " + myname );
+        throw uniset3::SystemError("(UNetExchange): Not found conf-node for " + myname );
 
     unetlog = make_shared<DebugStream>();
     unetlog->setLogName(myname);
@@ -99,7 +99,7 @@ UNetExchange::UNetExchange(uniset::ObjectId objId, uniset::ObjectId shmId, const
     unetinfo << myname << "(init): init from <" << nconfname << ">" << endl;
 
     if( !nodes )
-        throw uniset::SystemError("(UNetExchange): Not found confnode <" + nconfname + ">");
+        throw uniset3::SystemError("(UNetExchange): Not found confnode <" + nconfname + ">");
 
     UniXML::iterator n_it(nodes);
 
@@ -376,7 +376,7 @@ void UNetExchange::ReceiverInfo::step( const std::shared_ptr<SMInterface>& shm, 
     }
 }
 // -----------------------------------------------------------------------------
-void UNetExchange::sysCommand( const uniset::SystemMessage* sm )
+void UNetExchange::sysCommand( const uniset3::SystemMessage* sm )
 {
     switch( sm->command )
     {
@@ -427,10 +427,10 @@ void UNetExchange::sysCommand( const uniset::SystemMessage* sm )
                 unetcrit << myname << "(sysCommand): ************* don`t activate?! ************" << endl;
 
             {
-                uniset::uniset_rwmutex_rlock l(mutex_start);
+                uniset3::uniset_rwmutex_rlock l(mutex_start);
 
                 if( shm->isLocalwork() )
-                    askSensors(UniversalIO::UIONotify);
+                    askSensors(uniset3::UIONotify);
             }
 
             askTimer(tmStep, steptime);
@@ -447,7 +447,7 @@ void UNetExchange::sysCommand( const uniset::SystemMessage* sm )
         case SystemMessage::FoldUp:
         case SystemMessage::Finish:
             if( shm->isLocalwork() )
-                askSensors(UniversalIO::UIODontNotify);
+                askSensors(uniset3::UIODontNotify);
 
             break;
 
@@ -461,7 +461,7 @@ void UNetExchange::sysCommand( const uniset::SystemMessage* sm )
             // то обрабатывать WatchDog не надо, т.к. мы и так ждём готовности SM
             // при заказе датчиков, а если SM вылетит, то вместе с этим процессом(UNetExchange)
             if( shm->isLocalwork() )
-                askSensors(UniversalIO::UIONotify);
+                askSensors(uniset3::UIONotify);
         }
         break;
 
@@ -483,7 +483,7 @@ void UNetExchange::sysCommand( const uniset::SystemMessage* sm )
     }
 }
 // ------------------------------------------------------------------------------------------
-void UNetExchange::askSensors( UniversalIO::UIOCommand cmd )
+void UNetExchange::askSensors( uniset3::UIOCommand cmd )
 {
     if( !shm->waitSMworking(test_id, activateTimeout, 50) )
     {
@@ -504,7 +504,7 @@ void UNetExchange::askSensors( UniversalIO::UIOCommand cmd )
         sender2->askSensors(cmd);
 }
 // ------------------------------------------------------------------------------------------
-void UNetExchange::sensorInfo( const uniset::SensorMessage* sm )
+void UNetExchange::sensorInfo( const uniset3::SensorMessage* sm )
 {
     if( sender )
         sender->updateSensor( sm->id, sm->value );
@@ -520,7 +520,7 @@ bool UNetExchange::activateObject()
     // см. sysCommand()
     {
         activated = false;
-        uniset::uniset_rwmutex_wrlock l(mutex_start);
+        uniset3::uniset_rwmutex_wrlock l(mutex_start);
         UniSetObject::activateObject();
         initIterators();
         activated = true;
@@ -632,7 +632,7 @@ void UNetExchange::help_print( int argc, const char* argv[] ) noexcept
     cout << LogServer::help_print("prefix-logserver") << endl;
 }
 // -----------------------------------------------------------------------------
-std::shared_ptr<UNetExchange> UNetExchange::init_unetexchange(int argc, const char* const argv[], uniset::ObjectId icID,
+std::shared_ptr<UNetExchange> UNetExchange::init_unetexchange(int argc, const char* const argv[], uniset3::ObjectId icID,
         const std::shared_ptr<SharedMemory>& ic, const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -648,7 +648,7 @@ std::shared_ptr<UNetExchange> UNetExchange::init_unetexchange(int argc, const ch
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         cerr << "(unetexchange): Not found ObjectID for '" << name
              << " in section '" << conf->getObjectsSection() << "'" << endl;
@@ -755,9 +755,9 @@ void UNetExchange::receiverEvent( const shared_ptr<UNetReceiver>& r, UNetReceive
     }
 }
 // -----------------------------------------------------------------------------
-uniset::SimpleInfo* UNetExchange::getInfo( const char* userparam )
+uniset3::SimpleInfo* UNetExchange::getInfo( const char* userparam )
 {
-    uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+    uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
 
     ostringstream inf;
 
@@ -810,7 +810,7 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
     const string default_ip2 = n_it.getProp("unet_broadcast_ip2");
 
     if( !n_it.goChildren() )
-        throw uniset::SystemError("(UNetExchange): Items not found for <nodes>");
+        throw uniset3::SystemError("(UNetExchange): Items not found for <nodes>");
 
     for( ; n_it.getCurrent(); n_it.goNext() )
     {
@@ -821,7 +821,7 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         // проверяем фильтры для подсетей
-        if( !uniset::check_filter(n_it, n_field, n_fvalue) )
+        if( !uniset3::check_filter(n_it, n_field, n_fvalue) )
             continue;
 
         string n = n_it.getProp("name");
@@ -880,13 +880,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         bool resp_invert = n_it.getIntProp("unet_respond_invert");
 
         string s_resp_id(n_it.getProp("unet_respond1_id"));
-        uniset::ObjectId resp_id = uniset::DefaultObjectId;
+        uniset3::ObjectId resp_id = uniset3::DefaultObjectId;
 
         if( !s_resp_id.empty() )
         {
             resp_id = conf->getSensorID(s_resp_id);
 
-            if( resp_id == uniset::DefaultObjectId )
+            if( resp_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown RespondID.. Not found id for '" << s_resp_id << "'" << endl;
@@ -896,13 +896,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_resp2_id(n_it.getProp("unet_respond2_id"));
-        uniset::ObjectId resp2_id = uniset::DefaultObjectId;
+        uniset3::ObjectId resp2_id = uniset3::DefaultObjectId;
 
         if( !s_resp2_id.empty() )
         {
             resp2_id = conf->getSensorID(s_resp2_id);
 
-            if( resp2_id == uniset::DefaultObjectId )
+            if( resp2_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown RespondID(2).. Not found id for '" << s_resp2_id << "'" << endl;
@@ -912,13 +912,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_lp_id(n_it.getProp("unet_lostpackets1_id"));
-        uniset::ObjectId lp_id = uniset::DefaultObjectId;
+        uniset3::ObjectId lp_id = uniset3::DefaultObjectId;
 
         if( !s_lp_id.empty() )
         {
             lp_id = conf->getSensorID(s_lp_id);
 
-            if( lp_id == uniset::DefaultObjectId )
+            if( lp_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown LostPacketsID.. Not found id for '" << s_lp_id << "'" << endl;
@@ -928,13 +928,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_lp2_id(n_it.getProp("unet_lostpackets2_id"));
-        uniset::ObjectId lp2_id = uniset::DefaultObjectId;
+        uniset3::ObjectId lp2_id = uniset3::DefaultObjectId;
 
         if( !s_lp2_id.empty() )
         {
             lp2_id = conf->getSensorID(s_lp2_id);
 
-            if( lp2_id == uniset::DefaultObjectId )
+            if( lp2_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown LostPacketsID(2).. Not found id for '" << s_lp2_id << "'" << endl;
@@ -944,13 +944,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_lp_comm_id(n_it.getProp("unet_lostpackets_id"));
-        uniset::ObjectId lp_comm_id = uniset::DefaultObjectId;
+        uniset3::ObjectId lp_comm_id = uniset3::DefaultObjectId;
 
         if( !s_lp_comm_id.empty() )
         {
             lp_comm_id = conf->getSensorID(s_lp_comm_id);
 
-            if( lp_comm_id == uniset::DefaultObjectId )
+            if( lp_comm_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown LostPacketsID(comm).. Not found id for '" << s_lp_comm_id << "'" << endl;
@@ -960,13 +960,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_resp_comm_id(n_it.getProp("unet_respond_id"));
-        uniset::ObjectId resp_comm_id = uniset::DefaultObjectId;
+        uniset3::ObjectId resp_comm_id = uniset3::DefaultObjectId;
 
         if( !s_resp_comm_id.empty() )
         {
             resp_comm_id = conf->getSensorID(s_resp_comm_id);
 
-            if( resp_comm_id == uniset::DefaultObjectId )
+            if( resp_comm_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown RespondID(comm).. Not found id for '" << s_resp_comm_id << "'" << endl;
@@ -976,13 +976,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_numchannel_id(n_it.getProp("unet_numchannel_id"));
-        uniset::ObjectId numchannel_id = uniset::DefaultObjectId;
+        uniset3::ObjectId numchannel_id = uniset3::DefaultObjectId;
 
         if( !s_numchannel_id.empty() )
         {
             numchannel_id = conf->getSensorID(s_numchannel_id);
 
-            if( numchannel_id == uniset::DefaultObjectId )
+            if( numchannel_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown NumChannelID.. Not found id for '" << s_numchannel_id << "'" << endl;
@@ -992,13 +992,13 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         }
 
         string s_channelSwitchCount_id(n_it.getProp("unet_channelswitchcount_id"));
-        uniset::ObjectId channelswitchcount_id = uniset::DefaultObjectId;
+        uniset3::ObjectId channelswitchcount_id = uniset3::DefaultObjectId;
 
         if( !s_channelSwitchCount_id.empty() )
         {
             channelswitchcount_id = conf->getSensorID(s_channelSwitchCount_id);
 
-            if( channelswitchcount_id == uniset::DefaultObjectId )
+            if( channelswitchcount_id == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << myname << ": " << n_it.getProp("name") << " : Unknown ChannelSwitchCountID.. Not found id for '" << channelswitchcount_id << "'" << endl;
@@ -1081,7 +1081,7 @@ void UNetExchange::initMulticastTransport( UniXML::iterator n_it,
     auto root = n_it;
 
     if( !n_it.goChildren() )
-        throw uniset::SystemError("(UNetExchange): Items not found for <nodes>");
+        throw uniset3::SystemError("(UNetExchange): Items not found for <nodes>");
 
     const string defaultIP2 = root.getProp("unet_multicast_ip2");
 
@@ -1095,7 +1095,7 @@ void UNetExchange::initMulticastTransport( UniXML::iterator n_it,
         }
 
         // проверяем фильтры для подсетей
-        if( !uniset::check_filter(n_it, n_field, n_fvalue) )
+        if( !uniset3::check_filter(n_it, n_field, n_fvalue) )
             continue;
 
         string n = n_it.getProp("name");
@@ -1166,14 +1166,14 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     bool resp_invert = n_it.getIntProp("unet_respond_invert");
 
     string s_resp_id(n_it.getProp("unet_respond1_id"));
-    uniset::ObjectId resp_id = uniset::DefaultObjectId;
+    uniset3::ObjectId resp_id = uniset3::DefaultObjectId;
     const string defaultIP2 = root.getProp("unet_multicast_ip2");
 
     if( !s_resp_id.empty() )
     {
         resp_id = conf->getSensorID(s_resp_id);
 
-        if( resp_id == uniset::DefaultObjectId )
+        if( resp_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown RespondID.. Not found id for '" << s_resp_id << "'" << endl;
@@ -1183,13 +1183,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_resp2_id(n_it.getProp("unet_respond2_id"));
-    uniset::ObjectId resp2_id = uniset::DefaultObjectId;
+    uniset3::ObjectId resp2_id = uniset3::DefaultObjectId;
 
     if( !s_resp2_id.empty() )
     {
         resp2_id = conf->getSensorID(s_resp2_id);
 
-        if( resp2_id == uniset::DefaultObjectId )
+        if( resp2_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown RespondID(2).. Not found id for '" << s_resp2_id << "'" << endl;
@@ -1199,13 +1199,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_lp_id(n_it.getProp("unet_lostpackets1_id"));
-    uniset::ObjectId lp_id = uniset::DefaultObjectId;
+    uniset3::ObjectId lp_id = uniset3::DefaultObjectId;
 
     if( !s_lp_id.empty() )
     {
         lp_id = conf->getSensorID(s_lp_id);
 
-        if( lp_id == uniset::DefaultObjectId )
+        if( lp_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown LostPacketsID.. Not found id for '" << s_lp_id << "'" << endl;
@@ -1215,13 +1215,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_lp2_id(n_it.getProp("unet_lostpackets2_id"));
-    uniset::ObjectId lp2_id = uniset::DefaultObjectId;
+    uniset3::ObjectId lp2_id = uniset3::DefaultObjectId;
 
     if( !s_lp2_id.empty() )
     {
         lp2_id = conf->getSensorID(s_lp2_id);
 
-        if( lp2_id == uniset::DefaultObjectId )
+        if( lp2_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown LostPacketsID(2).. Not found id for '" << s_lp2_id << "'" << endl;
@@ -1231,13 +1231,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_lp_comm_id(n_it.getProp("unet_lostpackets_id"));
-    uniset::ObjectId lp_comm_id = uniset::DefaultObjectId;
+    uniset3::ObjectId lp_comm_id = uniset3::DefaultObjectId;
 
     if( !s_lp_comm_id.empty() )
     {
         lp_comm_id = conf->getSensorID(s_lp_comm_id);
 
-        if( lp_comm_id == uniset::DefaultObjectId )
+        if( lp_comm_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown LostPacketsID(comm).. Not found id for '" << s_lp_comm_id << "'" << endl;
@@ -1247,13 +1247,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_resp_comm_id(n_it.getProp("unet_respond_id"));
-    uniset::ObjectId resp_comm_id = uniset::DefaultObjectId;
+    uniset3::ObjectId resp_comm_id = uniset3::DefaultObjectId;
 
     if( !s_resp_comm_id.empty() )
     {
         resp_comm_id = conf->getSensorID(s_resp_comm_id);
 
-        if( resp_comm_id == uniset::DefaultObjectId )
+        if( resp_comm_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown RespondID(comm).. Not found id for '" << s_resp_comm_id << "'" << endl;
@@ -1263,13 +1263,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_numchannel_id(n_it.getProp("unet_numchannel_id"));
-    uniset::ObjectId numchannel_id = uniset::DefaultObjectId;
+    uniset3::ObjectId numchannel_id = uniset3::DefaultObjectId;
 
     if( !s_numchannel_id.empty() )
     {
         numchannel_id = conf->getSensorID(s_numchannel_id);
 
-        if( numchannel_id == uniset::DefaultObjectId )
+        if( numchannel_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown NumChannelID.. Not found id for '" << s_numchannel_id << "'" << endl;
@@ -1279,13 +1279,13 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     }
 
     string s_channelSwitchCount_id(n_it.getProp("unet_channelswitchcount_id"));
-    uniset::ObjectId channelswitchcount_id = uniset::DefaultObjectId;
+    uniset3::ObjectId channelswitchcount_id = uniset3::DefaultObjectId;
 
     if( !s_channelSwitchCount_id.empty() )
     {
         channelswitchcount_id = conf->getSensorID(s_channelSwitchCount_id);
 
-        if( channelswitchcount_id == uniset::DefaultObjectId )
+        if( channelswitchcount_id == uniset3::DefaultObjectId )
         {
             ostringstream err;
             err << myname << ": " << n_it.getProp("name") << " : Unknown ChannelSwitchCountID.. Not found id for '" << channelswitchcount_id << "'" << endl;

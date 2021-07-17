@@ -8,7 +8,7 @@
 #include "LProcessor.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 int main(int argc, const char* argv[] )
 {
@@ -66,7 +66,7 @@ int main(int argc, const char* argv[] )
     {
         cerr << "(tests): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(tests): " << ex << endl;
     }

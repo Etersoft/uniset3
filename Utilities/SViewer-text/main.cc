@@ -3,14 +3,14 @@
 #include "SViewer.h"
 #include "Configuration.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 static void short_usage()
 {
     cout << "Usage: uniset-sviewer-text [--fullname] [--polltime msec] [--confile uniset-confile]\n";
     cout << endl;
-    cout << uniset::Configuration::help() << endl;
+    cout << uniset3::Configuration::help() << endl;
 }
 // --------------------------------------------------------------------------
 int main(int argc, const char** argv)

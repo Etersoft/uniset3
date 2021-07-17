@@ -19,7 +19,7 @@
 #include "modbus/ModbusRTUMaster.h"
 #include "RTUStorage.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 static struct option longopts[] =
@@ -126,10 +126,10 @@ int main( int argc, char** argv )
         cout << rtu << endl;
 
         for( unsigned int i = 0; i < 24; i++ )
-            cout << "UNIO1 AI" << i << ": " << rtu.getFloat( RTUStorage::nJ1, i, UniversalIO::AI ) << endl;
+            cout << "UNIO1 AI" << i << ": " << rtu.getFloat( RTUStorage::nJ1, i, uniset3::AI ) << endl;
 
         for( unsigned int i = 0; i < 24; i++ )
-            cout << "UNIO1 DI" << i << ": " << rtu.getState( RTUStorage::nJ1, i, UniversalIO::DI ) << endl;
+            cout << "UNIO1 DI" << i << ": " << rtu.getState( RTUStorage::nJ1, i, uniset3::DI ) << endl;
 
         return 0;
     }

@@ -9,7 +9,7 @@
 #include "MQMutex.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 MQAtomic mq; // тестируемая очередь
 
@@ -96,11 +96,11 @@ int main(int argc, const char** argv)
 
         return 0;
     }
-    catch( const uniset::SystemError& err )
+    catch( const uniset3::SystemError& err )
     {
         cerr << "(mq-test): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(mq-test): " << ex << endl;
     }

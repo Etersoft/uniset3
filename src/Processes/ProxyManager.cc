@@ -25,7 +25,7 @@
 #include "ProxyManager.h"
 #include "PassiveObject.h"
 // -------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ ProxyManager::~ProxyManager()
 {
 }
 
-ProxyManager::ProxyManager( uniset::ObjectId id ):
+ProxyManager::ProxyManager( uniset3::ObjectId id ):
 	UniSetObject(id)
 {
 	uin = ui;
@@ -41,7 +41,7 @@ ProxyManager::ProxyManager( uniset::ObjectId id ):
 
 
 // -------------------------------------------------------------------------
-void ProxyManager::attachObject( PassiveObject* po, uniset::ObjectId id )
+void ProxyManager::attachObject( PassiveObject* po, uniset3::ObjectId id )
 {
 	if( id == DefaultObjectId )
 	{
@@ -57,7 +57,7 @@ void ProxyManager::attachObject( PassiveObject* po, uniset::ObjectId id )
 		omap.emplace(id, po);
 }
 // -------------------------------------------------------------------------
-void ProxyManager::detachObject( uniset::ObjectId id )
+void ProxyManager::detachObject( uniset3::ObjectId id )
 {
 	auto it = omap.find(id);
 
@@ -89,7 +89,7 @@ bool ProxyManager::activateObject()
 					ui->registered(it.first, getRef(), true);
 					break;
 				}
-				catch( uniset::ObjectNameAlready& ex )
+				catch( uniset3::ObjectNameAlready& ex )
 				{
 					ucrit << myname << "(registered): СПЕРВА РАЗРЕГИСТРИРУЮ (ObjectNameAlready)" << endl;
 
@@ -97,14 +97,14 @@ bool ProxyManager::activateObject()
 					{
 						ui->unregister(it.first);
 					}
-					catch( const uniset::Exception& ex )
+					catch( const uniset3::Exception& ex )
 					{
 						ucrit << myname << "(unregistered): " << ex << endl;
 					}
 				}
 			}
 		}
-		catch( const uniset::Exception& ex )
+		catch( const uniset3::Exception& ex )
 		{
 			ucrit << myname << "(activate): " << ex << endl << flush;
 			//std::terminate();
@@ -123,7 +123,7 @@ bool ProxyManager::deactivateObject()
 		{
 			ui->unregister(it->first);
 		}
-		catch( const uniset::Exception& ex )
+		catch( const uniset3::Exception& ex )
 		{
 			ucrit << myname << "(activate): " << ex << endl;
 		}
@@ -132,7 +132,7 @@ bool ProxyManager::deactivateObject()
 	return UniSetObject::deactivateObject();
 }
 // -------------------------------------------------------------------------
-void ProxyManager::processingMessage( const uniset::VoidMessage* msg )
+void ProxyManager::processingMessage( const uniset3::VoidMessage* msg )
 {
 	try
 	{
@@ -155,13 +155,13 @@ void ProxyManager::processingMessage( const uniset::VoidMessage* msg )
 			break;
 		}
 	}
-	catch( const uniset::Exception& ex )
+	catch( const uniset3::Exception& ex )
 	{
 		ucrit << myname << "(processingMessage): " << ex << endl;
 	}
 }
 // -------------------------------------------------------------------------
-void ProxyManager::allMessage( const uniset::VoidMessage* msg )
+void ProxyManager::allMessage( const uniset3::VoidMessage* msg )
 {
 	for( const auto& o : omap )
 	{
@@ -169,7 +169,7 @@ void ProxyManager::allMessage( const uniset::VoidMessage* msg )
 		{
 			o.second->processingMessage(msg);
 		}
-		catch( const uniset::Exception& ex )
+		catch( const uniset3::Exception& ex )
 		{
 			ucrit << myname << "(allMessage): " << ex << endl;
 		}

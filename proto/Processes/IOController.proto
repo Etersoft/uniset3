@@ -1,0 +1,286 @@
+syntax = "proto3";
+
+package uniset3;
+
+option optimize_for = LITE_RUNTIME;
+// ---------------------------------------------------------------------------
+import "UniSetTypes.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+enum ErrorCode {
+    
+    OK = 0;
+    NameNotFound = 1; /*!< Датчик не найден */
+    IOBadParam = 2;
+    Undefined = 3;  /*!< Значение не определено (например: обрыв датчика) */
+}
+
+/*! Информация о датчике */
+message SensorInfo
+{
+    int64 id = 1;    /*!< идентификатор датчика */
+    int64 node = 2;  /*!< узел на котором он находится */
+}
+
+message SetValueParams {
+    int64 id = 1;
+    int64 value = 2;
+    int64 sup_id = 3;
+}
+
+message FreezeValueParams {
+    int64 id = 1;
+    bool set = 2;
+    int64 value = 3;
+    int64 sup_id = 4;
+}
+
+message SetUndefinedParams {
+    int64 id = 1;
+    bool undefined = 2;
+    int64 sup_id = 3;
+}
+
+message CalibrateInfo
+{
+    int64 minRaw = 1;     /*!< минимальное "сырое" значение */
+    int64 maxRaw = 2;     /*!< максимальное "сырое" значение */
+    int64 minCal = 3;     /*!< минимальное калиброванное значение */
+    int64 maxCal = 4;     /*!< максимальное калиброванное значение */
+    int32 precision = 5;  /*!< точность */
+}
+
+message CalibrateParams
+{
+    int64 id = 1;
+    CalibrateInfo ci = 2;
+    int64 adminId = 3;
+}
+
+message RetIOType
+{
+    uniset3.IOType type = 1;
+}
+
+
+// --- Интерфейс получения информации о всех датчиках ---
+/*! Информация датчике */
+message SensorIOInfo
+{
+    int64 value = 1;                   /*!< значение */
+    bool undefined = 2;                /*!< признак неопределённости значения */
+    bool blocked = 3;                  /*!< данное значение блокировано другим */
+    bool frozen = 4;                   /*!< данное значение "заморожено" */
+    int64 real_value = 5;              /*!< запомненное состояние, до блокировки или заморозки */
+    uniset3.IOType type = 6;     /*!< тип */
+    int32 priority = 7;                /*!< приоритет уведомления */
+    SensorInfo si = 8;
+    int64 default_val = 9;             /*!< значение по умолчанию */
+    CalibrateInfo ci = 10;              /*!< калибровочные параметры */
+    uint64 tv_sec = 11;     /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
+    uint64 tv_nsec = 12;    /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
+    int64 supplier = 13;    /*!< идентификатор объекта изменившего состояние датчика */
+    bool dbignore = 14;     /*!< не сохранять изменения в БД */
+    int64 depend_sid = 15;  /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
+}
+
+message SensorInfoSeq
+{
+    repeated SensorIOInfo lst = 1;
+}
+
+/*! Информация о "выходе" */
+message OutInfo
+{
+    SensorInfo si = 1;    /*!< идентификатор выхода */
+    int64 value = 2;       /*!< значение */
+}
+
+message OutSeq
+{
+    repeated OutInfo lst = 1;
+}
+
+message SetOutputParams
+{
+    OutSeq lst = 1;
+    int64 supplier = 2;
+}
+
+/*! Информация о датчике */
+message ShortIOInfo
+{
+    int64 value = 1;
+    uint64 tv_sec = 2;    /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
+    uint64 tv_nsec = 3;   /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
+    int64 supplier = 4;  /*!< идентификатор того, кто менял датчик (последний раз) */
+}
+
+message ShortMap
+{
+    uniset3.IOType type = 1;
+    int64 value = 2;
+    int64 id = 3;
+}
+
+message ShortMapSeq
+{
+    repeated ShortMap lst = 1;
+}
+
+// ---------------------------------------------------------------------------
+/*! 
+ * \interface IOController_i 
+ * \brief Базовый интерфейс для создания контролеров ввода/вывода  
+ */ 
+service IOController_i {
+    rpc getValue(google.protobuf.Int64Value) returns(google.protobuf.Int64Value) {}
+    rpc setValue(SetValueParams) returns(google.protobuf.Empty) {}
+    rpc freezeValue(FreezeValueParams) returns(google.protobuf.Empty) {}
+    rpc getIOType(google.protobuf.Int64Value) returns(RetIOType) {}
+    
+    // установка неопределённого состояния
+    // (пока работает только для аналоговых датчиков)
+    rpc setUndefinedState(SetUndefinedParams) returns(google.protobuf.Empty) {}
+    
+    /*! Получени неколиброванного значения */
+    rpc getRawValue(google.protobuf.Int64Value) returns(google.protobuf.Int64Value) {}
+    
+    // --- Интерфейс получения информации о всех датчиках ---
+    rpc calibrate(CalibrateParams) returns(google.protobuf.Empty) {}
+    rpc getCalibrateInfo(google.protobuf.Int64Value) returns(CalibrateInfo) {}
+    
+    rpc getSensorsMap(google.protobuf.Empty) returns(SensorInfoSeq) {}
+    rpc getSensorIOInfo(google.protobuf.Int64Value) returns(SensorInfo) {}
+    
+    // -- Функции работы со списком датчиков --
+    
+    /*! Получение состояния датчиков. */
+    rpc getSensorSeq(uniset3.IDSeq) returns(SensorInfoSeq) {}
+    
+    /*!
+        Выставить состояние группы датчиков/выходов (дискретных или аналоговых).
+        \return Возвращает список входов/выходов изменить состояние которых не удалось.
+            Будет пустым если всё хорошо.
+    */
+    rpc setOutputSeq(SetOutputParams) returns(uniset3.IDSeq) {}
+
+    rpc getTimeChange(google.protobuf.Int64Value) returns(ShortIOInfo) {}
+    rpc getSensors(google.protobuf.Empty) returns(ShortMapSeq){}
+}
+// ---------------------------------------------------------------------------
+message AskParams
+{
+    int64 sid = 1;
+    uniset3.ConsumerInfo ci = 2;
+    uniset3.UIOCommand cmd = 3;
+}
+
+message AskSeqParams
+{
+    uniset3.IDSeq ids = 1;
+    uniset3.ConsumerInfo ci = 2;
+    uniset3.UIOCommand cmd = 3;
+}
+
+
+/*! Состояние порогового датчика */
+enum ThresholdState
+{
+    LowThreshold = 0;       /*!< сработал нижний порог  (значение меньше нижнего) */
+    NormalThreshold = 1;    /*!< значение в заданных пределах (не достигли порога) */
+    HiThreshold = 2;        /*!< сработал верхний порог  (значение больше верхнего) */
+}
+
+message ThresholdInfo
+{
+    int64 id = 1;            
+    int64 hilimit = 2;     /*!< верхняя граница срабатывания */
+    int64 lowlimit = 3;    /*!< нижняя граница срабатывания */
+    ThresholdState state = 4;
+    uint64 tv_sec = 5;    /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
+    uint64 tv_nsec = 6;   /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
+    bool invert = 7;       /*!< инвертированная логика */
+}
+
+message ThresholdInfoSeq
+{
+    repeated ThresholdInfo lst = 1;
+}
+
+message AskThresholdParams
+{
+    int64 sid = 1;
+    uniset3.ConsumerInfo ci = 2;
+    int64 tid = 3;
+    int64 lowlimit = 4;
+    int64 hilimit = 5;
+    bool invert = 6;
+    uniset3.UIOCommand cmd = 7;
+}
+
+message GetThresholdInfoParams
+{
+    int64 sid = 1;
+    int64 tid = 2;
+}
+
+message ThresholdList
+{
+    SensorInfo si = 1;
+    uniset3.IOType type = 2;
+    int64 value = 3;
+    ThresholdInfoSeq tlist = 4;
+}
+
+message ThresholdsListSeq 
+{
+   repeated ThresholdList lst = 1;
+}
+
+
+/*!
+ * \interface IONotifyController_i
+ * \brief Базовый интерфейс для создания процессов рассылающих сообщения об изменении состояния
+ * \author Pavel Vainerman
+ * \version
+ * \date   September 2001-
+ *
+ * ... а здесь идет кратенькое описание...
+*/
+service IONotifyController_i
+{
+    /*! Универсальная функция заказа уведомления об изменении датчика.
+     * \sa UniversalIO::IOController::askSensor()
+    */
+    rpc askSensor(AskParams) returns(google.protobuf.Empty){}
+
+    /*!
+        Заказ сразу списка объектов.
+        \return Возвращает список объектов заказ по котором не прошёл.
+            Будет пустым если всё хорошо.
+    */
+    rpc askSensorsSeq(AskSeqParams) returns(uniset3.IDSeq) {}
+
+        /*! Заказ порогового датчика
+     * \sa UniversalIO::UniversalIOController::askThreshold()
+     * \param tid - идентификатор порога
+     * \param lowLimit - нижний порог срабатывания
+     * \param hiLimit - верхний порог срабатывания
+     * \param invert - инвертировать логику срабатывания
+     * Если invert=false, порог срабатывает при условии >= hilimit и отпускается при <= lowlimit
+     * Если invert=true, порог срабатывает при условии <= lowlimit и отпускается при <= hilimit
+    */
+    rpc askThreshold(AskThresholdParams) returns(google.protobuf.Empty){}
+    
+    
+    /*! Получение информации о пороге
+     *  Т.к. пороги могут иметь одинаковый tid для разных аналоговых датчиков, то передаётся и SensorInfo
+    */
+    rpc getThresholdInfo(GetThresholdInfoParams) returns(ThresholdInfo) {}
+
+    
+    /*! получить список ВСЕХ датчиков по которым созданы пороги */
+    rpc getThresholdsList(google.protobuf.Empty) returns(ThresholdsListSeq) {}
+}

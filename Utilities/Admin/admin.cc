@@ -20,7 +20,7 @@
 #include "Debug.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 enum Command
 {
@@ -87,7 +87,7 @@ int freezeValue( const string& args, bool set, UInterface& ui );
 // --------------------------------------------------------------------------
 static void print_help(int width, const string& cmd, const string& help, const string& tab = " ", const string& sep = " - " )
 {
-    uniset::ios_fmt_restorer ifs(cout);
+    uniset3::ios_fmt_restorer ifs(cout);
     cout.setf(ios::left, ios::adjustfield);
     cout << tab << setw(width) << cmd << sep << help;
 }
@@ -138,7 +138,7 @@ static void usage()
     cout << endl;
     cout << "Глобальные параметры, которые необходимо передавать через '--'" << endl;
     cout << "-----------------------------------------\n";
-    cout << uniset::Configuration::help() << endl;
+    cout << uniset3::Configuration::help() << endl;
     cout << "Example: uniset2-admin arg1 arg2 arg3 -- global_arg1 global_arg2 ..." << endl;
     cout << endl;
 }
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
                 {
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     const string name = ( optarg ) ? optarg : "";
                     return setValue(name, ui);
                 }
@@ -218,7 +218,7 @@ int main(int argc, char** argv)
                     std::string sensors(optarg);
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     return freezeValue(sensors, true, ui);
                 }
                 break;
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
                     std::string sensors(optarg);
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     return freezeValue(sensors, false, ui);
                 }
                 break;
@@ -242,7 +242,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --getValue='"<<optarg<<"'"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     const string name = ( optarg ) ? optarg : "";
                     return getValue(name, ui);
                 }
@@ -253,7 +253,7 @@ int main(int argc, char** argv)
                     //                cout<<"(main):received option --getRawValue='"<<optarg<<"'"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     const string name = ( optarg ) ? optarg : "";
                     return getRawValue(name, ui);
                 }
@@ -263,7 +263,7 @@ int main(int argc, char** argv)
                 {
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     const string name = ( optarg ) ? optarg : "";
                     return getTimeChange(name, ui);
                 }
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --oinfo='"<<optarg<<"'"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     std::string userparam = { "" };
 
@@ -290,7 +290,7 @@ int main(int argc, char** argv)
                 {
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     return sinfo(optarg, ui);
                 }
                 break;
@@ -308,7 +308,7 @@ int main(int argc, char** argv)
 
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     const std::string query = string(argv[optind]);
 
@@ -321,7 +321,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --exist"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     verb = true;
                     Command cmd = Exist;
@@ -338,7 +338,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --start"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     Command cmd = StartUp;
                     auto rep = make_shared<ObjectRepository>(conf);
@@ -353,7 +353,7 @@ int main(int argc, char** argv)
                 {
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     const string name = ( optarg ) ? optarg : "";
                     return configure(name, ui);
                 }
@@ -364,7 +364,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --finish"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     Command cmd = Finish;
                     auto rep = make_shared<ObjectRepository>(conf);
@@ -382,7 +382,7 @@ int main(int argc, char** argv)
                 {
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     const string name = ( optarg ) ? optarg : "";
                     return logRotate(name, ui);
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --getCalibrate='"<<optarg<<"'"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
                     const string name = ( optarg ) ? optarg : "";
                     return getCalibrate(name, ui);
                 }
@@ -405,7 +405,7 @@ int main(int argc, char** argv)
                     //                    cout<<"(main):received option --foldUp"<<endl;
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     Command cmd = FoldUp;
                     auto rep = make_shared<ObjectRepository>(conf);
@@ -449,7 +449,7 @@ int main(int argc, char** argv)
 
                     auto conf = uniset_init(argc, argv, conffile);
                     UInterface ui(conf);
-                    ui.initBackId(uniset::AdminID);
+                    ui.initBackId(uniset3::AdminID);
 
                     sendText(consumers, ui, txt.str(), mtype);
                     return 0;
@@ -487,7 +487,7 @@ int main(int argc, char** argv)
             cerr << "  mesg: " << fe.errmsg() << endl;
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         if( !quiet )
             cout << "admin(main): " << ex << endl;
@@ -512,7 +512,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
     if( verb )
         cout << "\n||=======********  " << section << "  ********=========||\n" << endl;
 
-    uniset::ios_fmt_restorer ifs(cout);
+    uniset3::ios_fmt_restorer ifs(cout);
 
     cout.setf(ios::left, ios::adjustfield);
 
@@ -539,7 +539,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
 
             try
             {
-                uniset::ObjectVar o = rep->resolve(fullName);
+                uniset3::ObjectVar o = rep->resolve(fullName);
                 obj = UniSetObject_i::_narrow(o);
 
                 switch( cmd )
@@ -636,7 +636,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
                 if( !quiet )
                     cerr << setw(55) << oname  << "   <--- недоступен!!(CORBA::SystemException): " << ex.NP_minorString() << endl;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 if( !quiet )
                     cerr << setw(55) << oname << "   <--- " << ex << endl;
@@ -660,7 +660,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
 }
 
 // ==============================================================================================
-static void createSections( const std::shared_ptr<uniset::Configuration>& rconf )
+static void createSections( const std::shared_ptr<uniset3::Configuration>& rconf )
 {
     ObjectRepository repf(rconf);
 
@@ -677,7 +677,7 @@ static void createSections( const std::shared_ptr<uniset::Configuration>& rconf 
 // ==============================================================================================
 int omap()
 {
-    uniset::ios_fmt_restorer ifs(cout);
+    uniset3::ios_fmt_restorer ifs(cout);
 
     try
     {
@@ -686,7 +686,7 @@ int omap()
         uniset_conf()->oind->printMap(cout);
         cout << "==========================================================================\n";
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         if( !quiet )
             cerr << " configuration init failed: " << ex << endl;
@@ -709,7 +709,7 @@ int setValue( const string& args, UInterface& ui )
 {
     int err = 0;
     auto conf = ui.getConf();
-    auto sl = uniset::getSInfoList(args, conf);
+    auto sl = uniset3::getSInfoList(args, conf);
 
     if( verb )
         cout << "====== setValue ======" << endl;
@@ -718,7 +718,7 @@ int setValue( const string& args, UInterface& ui )
     {
         try
         {
-            UniversalIO::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id);
 
             if( verb )
             {
@@ -733,10 +733,10 @@ int setValue( const string& args, UInterface& ui )
 
             switch(t)
             {
-                case UniversalIO::DI:
-                case UniversalIO::DO:
-                case UniversalIO::AI:
-                case UniversalIO::AO:
+                case uniset3::DI:
+                case uniset3::DO:
+                case uniset3::AI:
+                case uniset3::AO:
                     ui.setValue(it.si.id, it.val, it.si.node, AdminID);
                     break;
 
@@ -748,7 +748,7 @@ int setValue( const string& args, UInterface& ui )
                     break;
             }
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << "(setValue): " << ex << endl;;
@@ -773,7 +773,7 @@ int getValue( const string& args, UInterface& ui )
     int err = 0;
 
     auto conf = ui.getConf();
-    auto sl = uniset::getSInfoList( args, conf );
+    auto sl = uniset3::getSInfoList( args, conf );
 
     if( csv )
         quiet = true;
@@ -787,7 +787,7 @@ int getValue( const string& args, UInterface& ui )
     {
         try
         {
-            UniversalIO::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id);
 
             if( !quiet )
             {
@@ -801,10 +801,10 @@ int getValue( const string& args, UInterface& ui )
 
             switch(t)
             {
-                case UniversalIO::DO:
-                case UniversalIO::DI:
-                case UniversalIO::AO:
-                case UniversalIO::AI:
+                case uniset3::DO:
+                case uniset3::DI:
+                case uniset3::AO:
+                case uniset3::AI:
                     if( !quiet )
                         cout << "  value: " << ui.getValue(it.si.id, it.si.node) << endl;
                     else
@@ -834,7 +834,7 @@ int getValue( const string& args, UInterface& ui )
                     break;
             }
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << "(getValue): " << ex << endl;
@@ -857,7 +857,7 @@ int freezeValue( const string& args, bool set, UInterface& ui )
 {
     int err = 0;
     auto conf = ui.getConf();
-    auto sl = uniset::getSInfoList(args, conf);
+    auto sl = uniset3::getSInfoList(args, conf);
 
     if( verb )
         cout << "====== " << (set ? "freeze" : "unfreeze") << " ======" << endl;
@@ -866,7 +866,7 @@ int freezeValue( const string& args, bool set, UInterface& ui )
     {
         try
         {
-            UniversalIO::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id);
 
             if( verb )
             {
@@ -881,10 +881,10 @@ int freezeValue( const string& args, bool set, UInterface& ui )
 
             switch(t)
             {
-                case UniversalIO::DI:
-                case UniversalIO::DO:
-                case UniversalIO::AI:
-                case UniversalIO::AO:
+                case uniset3::DI:
+                case uniset3::DO:
+                case uniset3::AI:
+                case uniset3::AO:
                     ui.freezeValue(it.si, set, it.val, AdminID);
                     break;
 
@@ -896,7 +896,7 @@ int freezeValue( const string& args, bool set, UInterface& ui )
                     break;
             }
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << (set ? "freeze: " : "unfreeze: ") << ex << endl;;
@@ -919,7 +919,7 @@ int getCalibrate( const std::string& args, UInterface& ui )
 {
     int err = 0;
     auto conf = ui.getConf();
-    auto sl = uniset::getSInfoList( args, conf );
+    auto sl = uniset3::getSInfoList( args, conf );
 
     if( !quiet )
         cout << "====== getCalibrate ======" << endl;
@@ -938,14 +938,14 @@ int getCalibrate( const std::string& args, UInterface& ui )
                 cout << "калибровка: ";
             }
 
-            IOController_i::CalibrateInfo ci = ui.getCalibrateInfo(it.si);
+            uniset3::CalibrateInfo ci = ui.getCalibrateInfo(it.si);
 
             if( !quiet )
                 cout << ci << endl;
             else
                 cout << ci;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << "(getCalibrate): " << ex << endl;;
@@ -969,7 +969,7 @@ int getRawValue( const std::string& args, UInterface& ui )
 {
     int err = 0;
     auto conf = ui.getConf();
-    auto sl = uniset::getSInfoList( args, conf );
+    auto sl = uniset3::getSInfoList( args, conf );
 
     if( !quiet )
         cout << "====== getRawValue ======" << endl;
@@ -990,7 +990,7 @@ int getRawValue( const std::string& args, UInterface& ui )
             else
                 cout << ui.getRawValue(it.si);
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << "(getRawValue): " << ex << endl;;
@@ -1014,7 +1014,7 @@ int getTimeChange( const std::string& args, UInterface& ui )
 {
     int err = 0;
     auto conf = ui.getConf();
-    auto sl = uniset::getSInfoList( args, conf );
+    auto sl = uniset3::getSInfoList( args, conf );
 
     if( !quiet )
         cout << "====== getChangedTime ======" << endl;
@@ -1061,7 +1061,7 @@ int getTimeChange( const std::string& args, UInterface& ui )
 
             err = 1;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << "(getChangedTime): " << ex << endl;;
@@ -1102,7 +1102,7 @@ int logRotate( const string& arg, UInterface& ui )
     }
     else // посылка определённому объекту
     {
-        uniset::ObjectId id = conf->getObjectID(arg);
+        uniset3::ObjectId id = conf->getObjectID(arg);
 
         if( id == DefaultObjectId )
             id = conf->getControllerID(arg);
@@ -1144,7 +1144,7 @@ int configure( const string& arg, UInterface& ui )
     }
     else // посылка определённому объекту
     {
-        uniset::ObjectId id = conf->getObjectID(arg);
+        uniset3::ObjectId id = conf->getObjectID(arg);
 
         if( id == DefaultObjectId )
             id = conf->getControllerID(arg);
@@ -1174,7 +1174,7 @@ int configure( const string& arg, UInterface& ui )
 int oinfo(const string& args, UInterface& ui, const string& userparam )
 {
     auto conf = uniset_conf();
-    auto sl = uniset::getObjectsList( args, conf );
+    auto sl = uniset3::getObjectsList( args, conf );
 
     for( auto&& it : sl )
     {
@@ -1206,7 +1206,7 @@ int sinfo(const string& args, UInterface& ui )
 {
     int err = 0;
     auto conf = uniset_conf();
-    auto sl = uniset::getSInfoList(args, conf);
+    auto sl = uniset3::getSInfoList(args, conf);
 
     for( auto&& it : sl )
     {
@@ -1214,14 +1214,14 @@ int sinfo(const string& args, UInterface& ui )
         {
             // проверка есть ли такой датчик, т.к. тут будет выкинуто исключение
             // если его нет
-            UniversalIO::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id);
 
             if( it.si.node == DefaultObjectId )
                 it.si.node = conf->getLocalNode();
 
             auto sinf = ui.getSensorIOInfo(it.si);
 #if 0
-            UniversalIO::IOType type;     /*!< тип */
+            uniset3::IOType type;     /*!< тип */
             long priority;                /*!< приоритет уведомления */
             long default_val;             /*!< значение по умолчанию */
             CalibrateInfo ci;             /*!< калибровочные параметры */
@@ -1238,7 +1238,7 @@ int sinfo(const string& args, UInterface& ui )
             if( sinf.depend_sid != DefaultObjectId )
                 print_help(w, "depend_sensor", "(" + to_string(sinf.depend_sid) + ")" + ORepHelpers::getShortName(conf->oind->getMapName(sinf.depend_sid)) + "\n", " ", " : ");
 
-            if( sinf.supplier == uniset::AdminID )
+            if( sinf.supplier == uniset3::AdminID )
                 print_help(w, "supplier", "admin\n", " ", " : ");
             else
                 print_help(w, "supplier", ORepHelpers::getShortName(conf->oind->getMapName(sinf.supplier)) + "\n", " ", " : ");
@@ -1247,7 +1247,7 @@ int sinfo(const string& args, UInterface& ui )
             ts << dateToString(sinf.tv_sec) << " " << timeToString(sinf.tv_sec) << "." << sinf.tv_nsec << "\n";
             print_help(w, "changed", ts.str(), " ", " : ");
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( !quiet )
                 cerr << "(sinfo): " << ex << endl;;
@@ -1269,7 +1269,7 @@ int sinfo(const string& args, UInterface& ui )
 int apiRequest( const string& args, UInterface& ui, const string& query )
 {
     auto conf = uniset_conf();
-    auto sl = uniset::getObjectsList( args, conf );
+    auto sl = uniset3::getObjectsList( args, conf );
 
     //  if( verb )
     //      cout << "apiRequest: query: " << query << endl;
@@ -1287,7 +1287,7 @@ int apiRequest( const string& args, UInterface& ui, const string& query )
     if( q.rfind("/api/", 0) != 0 )
     {
 #ifndef DISABLE_REST_API
-        q = "/api/" + uniset::UHttp::UHTTP_API_VERSION;
+        q = "/api/" + uniset3::UHttp::UHTTP_API_VERSION;
 #else
         q = "/api/v01";
 #endif
@@ -1328,7 +1328,7 @@ int apiRequest( const string& args, UInterface& ui, const string& query )
 void sendText( const string& args, UInterface& ui, const string& txt, int mtype )
 {
     auto conf = uniset_conf();
-    auto sl = uniset::getObjectsList( args, conf );
+    auto sl = uniset3::getObjectsList( args, conf );
 
     cout << "mtype=" << mtype << " txt: " << txt << endl;
 

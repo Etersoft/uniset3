@@ -20,7 +20,7 @@
 #include <string>
 #include "PassiveTimer.h" // for typedef timeout_t
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // Интерфейс для получения данных по сети
     class UNetReceiveTransport

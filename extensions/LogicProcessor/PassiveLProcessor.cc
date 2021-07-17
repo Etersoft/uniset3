@@ -19,11 +19,11 @@
 #include "PassiveLProcessor.h"
 // -------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -------------------------------------------------------------------------
-PassiveLProcessor::PassiveLProcessor( uniset::ObjectId objId,
-                                      uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
+PassiveLProcessor::PassiveLProcessor( uniset3::ObjectId objId,
+                                      uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
     UniSetObject(objId),
     shm(nullptr)
 {
@@ -88,7 +88,7 @@ void PassiveLProcessor::step()
     {
         LProcessor::step();
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dcrit << myname << "(step): (hb) " << ex << std::endl;
     }
@@ -100,7 +100,7 @@ void PassiveLProcessor::step()
             shm->localSetValue(itHeartBeat, sidHeartBeat, maxHeartBeat, getId());
             ptHeartBeat.reset();
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             dcrit << myname << "(step): (hb) " << ex << std::endl;
         }
@@ -113,21 +113,21 @@ void PassiveLProcessor::getInputs()
 
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::askSensors( UniversalIO::UIOCommand cmd )
+void PassiveLProcessor::askSensors( uniset3::UIOCommand cmd )
 {
     try
     {
         for( auto&& it : extInputs )
             shm->askSensor(it.sid, cmd);
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dcrit << myname << "(askSensors): " << ex << endl;
         throw SystemError(myname + "(askSensors): do not ask sensors" );
     }
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::sensorInfo( const uniset::SensorMessage* sm )
+void PassiveLProcessor::sensorInfo( const uniset3::SensorMessage* sm )
 {
     for( auto&& it : extInputs )
     {
@@ -136,13 +136,13 @@ void PassiveLProcessor::sensorInfo( const uniset::SensorMessage* sm )
     }
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::timerInfo( const uniset::TimerMessage* tm )
+void PassiveLProcessor::timerInfo( const uniset3::TimerMessage* tm )
 {
     if( tm->id == tidStep )
         step();
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::sysCommand( const uniset::SystemMessage* sm )
+void PassiveLProcessor::sysCommand( const uniset3::SystemMessage* sm )
 {
     switch( sm->command )
     {
@@ -157,14 +157,14 @@ void PassiveLProcessor::sysCommand( const uniset::SystemMessage* sm )
             }
 
             std::lock_guard<std::mutex> l(mutex_start);
-            askSensors(UniversalIO::UIONotify);
+            askSensors(uniset3::UIONotify);
             askTimer(tidStep, LProcessor::sleepTime);
             break;
         }
 
         case SystemMessage::FoldUp:
         case SystemMessage::Finish:
-            askSensors(UniversalIO::UIODontNotify);
+            askSensors(uniset3::UIODontNotify);
             break;
 
         case SystemMessage::WatchDog:
@@ -177,7 +177,7 @@ void PassiveLProcessor::sysCommand( const uniset::SystemMessage* sm )
             if( shm->isLocalwork() )
                 break;
 
-            askSensors(UniversalIO::UIONotify);
+            askSensors(uniset3::UIONotify);
         }
         break;
 
@@ -256,7 +256,7 @@ void PassiveLProcessor::setOuts()
         {
             shm->setValue( it.sid, it.el->getOut() );
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             dcrit << myname << "(setOuts): " << ex << endl;
         }
@@ -280,7 +280,7 @@ void PassiveLProcessor::help_print( int argc, const char* const* argv )
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<PassiveLProcessor> PassiveLProcessor::init_plproc(int argc, const char* const* argv,
-        uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic,
+        uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic,
         const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -294,7 +294,7 @@ std::shared_ptr<PassiveLProcessor> PassiveLProcessor::init_plproc(int argc, cons
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         cerr << "(plproc): идентификатор '" << name
              << "' не найден в конф. файле!"

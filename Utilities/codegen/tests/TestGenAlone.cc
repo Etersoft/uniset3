@@ -2,9 +2,9 @@
 #include "TestGenAlone.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-TestGenAlone::TestGenAlone( uniset::ObjectId id, xmlNode* confnode ):
+TestGenAlone::TestGenAlone( uniset3::ObjectId id, xmlNode* confnode ):
     TestGenAlone_SK( id, confnode )
 {
 }

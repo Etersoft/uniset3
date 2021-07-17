@@ -23,10 +23,10 @@
 #include "Mutex.h"
 #include "MessageType.h"
 //--------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //--------------------------------------------------------------------------
-    typedef std::shared_ptr<uniset::VoidMessage> VoidMessagePtr;
+    typedef std::shared_ptr<uniset3::VoidMessage> VoidMessagePtr;
     //--------------------------------------------------------------------------
 
     /*! \class MQMutex

@@ -25,7 +25,7 @@
 #include "DebugStream.h"
 #include "LogServerTypes.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     class LogReader

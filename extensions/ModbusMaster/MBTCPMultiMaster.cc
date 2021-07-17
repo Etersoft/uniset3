@@ -25,16 +25,16 @@
 #include "modbus/MBLogSugar.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-MBTCPMultiMaster::MBTCPMultiMaster( uniset::ObjectId objId, uniset::ObjectId shmId,
+MBTCPMultiMaster::MBTCPMultiMaster( uniset3::ObjectId objId, uniset3::ObjectId shmId,
                                     const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
     MBExchange(objId, shmId, ic, prefix),
     force_disconnect(true)
 {
     if( objId == DefaultObjectId )
-        throw uniset::SystemError("(MBTCPMultiMaster): objId=-1?!! Use --" + prefix + "-name" );
+        throw uniset3::SystemError("(MBTCPMultiMaster): objId=-1?!! Use --" + prefix + "-name" );
 
     auto conf = uniset_conf();
 
@@ -99,7 +99,7 @@ MBTCPMultiMaster::~MBTCPMultiMaster()
 
 }
 // -----------------------------------------------------------------------------
-void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shared_ptr<uniset::MBConfig>& mconf )
+void MBTCPMultiMaster::initGateList(uniset3::UniXML::iterator it, const std::shared_ptr<uniset3::MBConfig>& mconf )
 {
     auto conf = uniset_conf();
     UniXML::iterator it1(it);
@@ -109,7 +109,7 @@ void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shar
         ostringstream err;
         err << myname << "(init): not found <GateList>";
         mbcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     if( !it1.goChildren() )
@@ -117,7 +117,7 @@ void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shar
         ostringstream err;
         err << myname << "(init): empty <GateList> ?!";
         mbcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     for( ; it1.getCurrent(); it1++ )
@@ -137,7 +137,7 @@ void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shar
             ostringstream err;
             err << myname << "(init): ip='' in <GateList>";
             mbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         sinf->port = it1.getIntProp("port");
@@ -147,7 +147,7 @@ void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shar
             ostringstream err;
             err << myname << "(init): ERROR: port=''" << sinf->port << " for ip='" << sinf->ip << "' in <GateList>";
             mbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         if( !it1.getProp("respondSensor").empty() )
@@ -159,7 +159,7 @@ void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shar
                 ostringstream err;
                 err << myname << "(init): ERROR: Unknown SensorID for '" << it1.getProp("respondSensor") << "' in <GateList>";
                 mbcrit << err.str() << endl;
-                throw uniset::SystemError(err.str());
+                throw uniset3::SystemError(err.str());
             }
         }
 
@@ -215,7 +215,7 @@ void MBTCPMultiMaster::initGateList(uniset::UniXML::iterator it, const std::shar
         ostringstream err;
         err << myname << "(init): empty <GateList>!";
         mbcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     mblist.sort();
@@ -437,7 +437,7 @@ bool MBTCPMultiMaster::MBSlaveInfo::init( std::shared_ptr<DebugStream>& mblog )
     return initOK;
 }
 // -----------------------------------------------------------------------------
-void MBTCPMultiMaster::sysCommand( const uniset::SystemMessage* sm )
+void MBTCPMultiMaster::sysCommand( const uniset3::SystemMessage* sm )
 {
     MBExchange::sysCommand(sm);
 
@@ -457,7 +457,7 @@ void MBTCPMultiMaster::poll_thread()
     // ждём начала работы..(см. MBExchange::activateObject)
     while( !isProcActive() && !canceled )
     {
-        uniset::uniset_rwmutex_rlock l(mutex_start);
+        uniset3::uniset_rwmutex_rlock l(mutex_start);
     }
 
     // работаем..
@@ -536,7 +536,7 @@ void MBTCPMultiMaster::check_thread()
                         }
                     }
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbcrit << myname << "(check): (respond) " << it->myname << " : " << ex << std::endl;
                 }
@@ -696,7 +696,7 @@ void MBTCPMultiMaster::help_print( int argc, const char* const* argv )
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<MBTCPMultiMaster> MBTCPMultiMaster::init_mbmaster( int argc, const char* const* argv,
-        uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+        uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
         const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -711,7 +711,7 @@ std::shared_ptr<MBTCPMultiMaster> MBTCPMultiMaster::init_mbmaster( int argc, con
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         dcrit << "(MBTCPMultiMaster): идентификатор '" << name
               << "' не найден в конф. файле!"
@@ -740,9 +740,9 @@ const std::string MBTCPMultiMaster::MBSlaveInfo::getShortInfo() const
     return s.str();
 }
 // -----------------------------------------------------------------------------
-uniset::SimpleInfo* MBTCPMultiMaster::getInfo( const char* userparam )
+uniset3::SimpleInfo* MBTCPMultiMaster::getInfo( const char* userparam )
 {
-    uniset::SimpleInfo_var i = MBExchange::getInfo(userparam);
+    uniset3::SimpleInfo_var i = MBExchange::getInfo(userparam);
 
     ostringstream inf;
 
@@ -758,7 +758,7 @@ uniset::SimpleInfo* MBTCPMultiMaster::getInfo( const char* userparam )
     return i._retn();
 }
 // ----------------------------------------------------------------------------
-bool MBTCPMultiMaster::reconfigure( const std::shared_ptr<uniset::UniXML>& xml, const std::shared_ptr<uniset::MBConfig>& newConf )
+bool MBTCPMultiMaster::reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& newConf )
 {
     newConf->prop_prefix = initPropPrefix(newConf->s_field, "tcp_");
     UniXML::iterator it(newConf->cnode);

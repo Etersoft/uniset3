@@ -24,7 +24,7 @@
 #include "LogAgregator.h"
 #include "Configuration.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
@@ -194,7 +194,7 @@ namespace uniset
 			{
 				evprepare(io.loop);
 			}
-			catch( uniset::SystemError& ex )
+			catch( uniset3::SystemError& ex )
 			{
 				if( mylog.is_crit() )
 					mylog.crit() <<  myname << "(evprepare): " << ex << endl;
@@ -240,7 +240,7 @@ namespace uniset
 			if( mylog.is_crit() )
 				mylog.crit() << err.str() << endl;
 
-			throw uniset::SystemError( err.str() );
+			throw uniset3::SystemError( err.str() );
 		}
 
 		try
@@ -256,7 +256,7 @@ namespace uniset
 			if( mylog.is_crit() )
 				mylog.crit() << err.str() << endl;
 
-			throw uniset::SystemError( err.str() );
+			throw uniset3::SystemError( err.str() );
 		}
 		catch( std::exception& ex )
 		{
@@ -267,7 +267,7 @@ namespace uniset
 			if( mylog.is_crit() )
 				mylog.crit() << err.str() << endl;
 
-			throw uniset::SystemError( err.str() );
+			throw uniset3::SystemError( err.str() );
 		}
 
 		sock->setBlocking(false);
@@ -534,4 +534,4 @@ namespace uniset
 		return "";
 	}
 	// -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

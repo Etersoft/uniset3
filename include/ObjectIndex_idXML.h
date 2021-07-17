@@ -22,22 +22,22 @@
 #include "ObjectIndex.h"
 #include "UniXML.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! реализация интерфейса ObjectIndex на основе xml-файла, в котором прописаны id объектов  */
     class ObjectIndex_idXML:
-        public uniset::ObjectIndex
+        public uniset3::ObjectIndex
     {
         public:
             ObjectIndex_idXML( const std::string& xmlfile );
             ObjectIndex_idXML( const std::shared_ptr<UniXML>& xml );
             virtual ~ObjectIndex_idXML();
 
-            virtual const uniset::ObjectInfo* getObjectInfo( const uniset::ObjectId ) const noexcept override;
-            virtual const uniset::ObjectInfo* getObjectInfo( const std::string& name ) const noexcept override;
-            virtual uniset::ObjectId getIdByName( const std::string& name ) const noexcept override;
-            virtual std::string getMapName( const uniset::ObjectId id ) const noexcept override;
-            virtual std::string getTextName( const uniset::ObjectId id ) const noexcept override;
+            virtual const uniset3::ObjectInfo* getObjectInfo( const uniset3::ObjectId ) const noexcept override;
+            virtual const uniset3::ObjectInfo* getObjectInfo( const std::string& name ) const noexcept override;
+            virtual uniset3::ObjectId getIdByName( const std::string& name ) const noexcept override;
+            virtual std::string getMapName( const uniset3::ObjectId id ) const noexcept override;
+            virtual std::string getTextName( const uniset3::ObjectId id ) const noexcept override;
 
             virtual std::ostream& printMap( std::ostream& os ) const noexcept override;
             friend std::ostream& operator<<(std::ostream& os, ObjectIndex_idXML& oi );
@@ -48,10 +48,10 @@ namespace uniset
             void read_nodes( const std::shared_ptr<UniXML>& xml, const std::string& sec );
 
         private:
-            typedef std::unordered_map<uniset::ObjectId, uniset::ObjectInfo> MapObjects;
+            typedef std::unordered_map<uniset3::ObjectId, uniset3::ObjectInfo> MapObjects;
             MapObjects omap;
 
-            typedef std::unordered_map<std::string, uniset::ObjectId> MapObjectKey;
+            typedef std::unordered_map<std::string, uniset3::ObjectId> MapObjectKey;
             MapObjectKey mok; // для обратного писка
     };
     // -------------------------------------------------------------------------

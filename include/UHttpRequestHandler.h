@@ -83,7 +83,7 @@
  * \todo подумать над /api/version/tree - получение "дерева" объектов (древовидный список с учётом подчинения Manager/Objects)
 */
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     namespace UHttp
     {

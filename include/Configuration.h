@@ -33,9 +33,9 @@
 #include "Debug.h"
 // --------------------------------------------------------------------------
 /*
-    В функции main нужно обязательно вызывать uniset::uniset_init(argc,argv);
+    В функции main нужно обязательно вызывать uniset3::uniset_init(argc,argv);
 */
-namespace uniset
+namespace uniset3
 {
     /*!
          Конфигурация системы
@@ -60,7 +60,7 @@ namespace uniset
 
             /*! устаревший вариант, для поддержки старых проектов */
             Configuration( int argc, const char* const* argv,
-                           const std::string& fileConf, uniset::ObjectInfo* objectsMap );
+                           const std::string& fileConf, uniset3::ObjectInfo* objectsMap );
 
             /// Получить значение полей с путём path
             std::string getField(const std::string& path) const noexcept;
@@ -102,29 +102,28 @@ namespace uniset
             xmlNode* getXMLControllersSection() noexcept;
             xmlNode* getXMLServicesSection()  noexcept;
             xmlNode* getXMLNodesSection() noexcept;
-            xmlNode* getXMLObjectNode( uniset::ObjectId ) const noexcept;
+            xmlNode* getXMLObjectNode( uniset3::ObjectId ) const noexcept;
 
-            UniversalIO::IOType getIOType( uniset::ObjectId ) const noexcept;
-            UniversalIO::IOType getIOType( const std::string& name ) const noexcept;
+            uniset3::IOType getIOType( uniset3::ObjectId ) const noexcept;
+            uniset3::IOType getIOType( const std::string& name ) const noexcept;
 
             // net
             size_t getCountOfNet() const noexcept;
             timeout_t getRepeatTimeout() const noexcept;
             size_t getRepeatCount() const noexcept;
 
-            uniset::ObjectId getSensorID( const std::string& name ) const noexcept;
-            uniset::ObjectId getControllerID( const std::string& name ) const noexcept;
-            uniset::ObjectId getObjectID( const std::string& name ) const noexcept;
-            uniset::ObjectId getServiceID( const std::string& name ) const noexcept;
-            uniset::ObjectId getNodeID( const std::string& name ) const noexcept;
+            uniset3::ObjectId getSensorID( const std::string& name ) const noexcept;
+            uniset3::ObjectId getControllerID( const std::string& name ) const noexcept;
+            uniset3::ObjectId getObjectID( const std::string& name ) const noexcept;
+            uniset3::ObjectId getServiceID( const std::string& name ) const noexcept;
+            uniset3::ObjectId getNodeID( const std::string& name ) const noexcept;
 
             // поиск в sensors,objects,controlles,services,nodes
-            uniset::ObjectId getAnyID( const std::string& name ) const noexcept;
-
+            uniset3::ObjectId getAnyID( const std::string& name ) const noexcept;
 
             const std::string getConfFileName() const noexcept;
             std::string getImagesDir() const noexcept;
-            std::string getNodeIp( uniset::ObjectId node );
+            std::string getNodeIp( uniset3::ObjectId node );
 
             timeout_t getHeartBeatTime() const noexcept;
             timeout_t getNCReadyTimeout() const noexcept;
@@ -159,9 +158,6 @@ namespace uniset
             xmlNode* initLogStream( std::shared_ptr<DebugStream> deb, const std::string& nodename ) noexcept;
             xmlNode* initLogStream( DebugStream* deb, const std::string& nodename ) noexcept;
 
-            uniset::ListOfNode::const_iterator listNodesBegin() const noexcept;
-            uniset::ListOfNode::const_iterator listNodesEnd() const noexcept;
-
             /*! интерфейс к карте объектов */
             std::shared_ptr<ObjectIndex> oind;
 
@@ -181,9 +177,6 @@ namespace uniset
 
             virtual void initConfiguration(int argc, const char* const* argv);
 
-            void createNodesList();
-            virtual void initNode( uniset::NodeInfo& ninfo, UniXML::iterator& it) noexcept;
-
             void initRepSections();
             std::pair<std::string, xmlNode*> getRepSectionName( const std::string& sec );
             void setConfFileName( const std::string& fn = "" );
@@ -197,10 +190,7 @@ namespace uniset
 
             int _argc = { 0 };
             const char** _argv = { nullptr };
-            CORBA::ORB_var orb;
-            CORBA::PolicyList policyList;
 
-            std::string NSName = { "" };  /*!< имя сервиса именования на данной машине (обычно "NameService") */
             size_t countOfNet = { 1 };    /*!< количество резервных каналов */
             size_t repeatCount = { 3 };   /*!< количество попыток получить доступ к удаленному объекту
                                             прежде чем будет выработано исключение TimeOut.        */
@@ -208,8 +198,6 @@ namespace uniset
             timeout_t repeatTimeout = { 50 };    /*!< пауза между попытками [мс] */
 
             size_t httpResolverPort = { 8008 };
-
-            uniset::ListOfNode lnodes;
 
             // repository
             std::string secRoot = { "" };
@@ -225,8 +213,8 @@ namespace uniset
             xmlNode* xmlServicesSec = { 0 };
             xmlNode* xmlNodesSec = { 0 };
 
-            ObjectId localDBServer = { uniset::DefaultObjectId };
-            ObjectId localNode = { uniset::DefaultObjectId };
+            ObjectId localDBServer = { uniset3::DefaultObjectId };
+            ObjectId localNode = { uniset3::DefaultObjectId };
 
             std::string localNodeName = { "" };
             std::string fileConfName = { "" };
@@ -259,20 +247,20 @@ namespace uniset
 }    // end of uniset namespace
 // --------------------------------------------------------------------------
 // "синтаксический сахар" для логов
-#define uinfo if( uniset::ulog()->debugging(Debug::INFO) ) uniset::ulog()->info()
-#define uwarn if( uniset::ulog()->debugging(Debug::WARN) ) uniset::ulog()->warn()
-#define ucrit if( uniset::ulog()->debugging(Debug::CRIT) ) uniset::ulog()->crit()
-#define ulog1 if( uniset::ulog()->debugging(Debug::LEVEL1) ) uniset::ulog()->level1()
-#define ulog2 if( uniset::ulog()->debugging(Debug::LEVEL2) ) uniset::ulog()->level2()
-#define ulog3 if( uniset::ulog()->debugging(Debug::LEVEL3) ) uniset::ulog()->level3()
-#define ulog4 if( uniset::ulog()->debugging(Debug::LEVEL4) ) uniset::ulog()->level4()
-#define ulog5 if( uniset::ulog()->debugging(Debug::LEVEL5) ) uniset::ulog()->level5()
-#define ulog6 if( uniset::ulog()->debugging(Debug::LEVEL6) ) uniset::ulog()->level6()
-#define ulog7 if( uniset::ulog()->debugging(Debug::LEVEL7) ) uniset::ulog()->level7()
-#define ulog8 if( uniset::ulog()->debugging(Debug::LEVEL8) ) uniset::ulog()->level8()
-#define ulog9 if( uniset::ulog()->debugging(Debug::LEVEL9) ) uniset::ulog()->level9()
-#define ulogsys if( uniset::ulog()->debugging(Debug::SYSTEM) ) uniset::ulog()->system()
-#define ulogrep if( uniset::ulog()->debugging(Debug::REPOSITORY) ) uniset::ulog()->repository()
-#define ulogany uniset::ulog()->any()
+#define uinfo if( uniset3::ulog()->debugging(Debug::INFO) ) uniset3::ulog()->info()
+#define uwarn if( uniset3::ulog()->debugging(Debug::WARN) ) uniset3::ulog()->warn()
+#define ucrit if( uniset3::ulog()->debugging(Debug::CRIT) ) uniset3::ulog()->crit()
+#define ulog1 if( uniset3::ulog()->debugging(Debug::LEVEL1) ) uniset3::ulog()->level1()
+#define ulog2 if( uniset3::ulog()->debugging(Debug::LEVEL2) ) uniset3::ulog()->level2()
+#define ulog3 if( uniset3::ulog()->debugging(Debug::LEVEL3) ) uniset3::ulog()->level3()
+#define ulog4 if( uniset3::ulog()->debugging(Debug::LEVEL4) ) uniset3::ulog()->level4()
+#define ulog5 if( uniset3::ulog()->debugging(Debug::LEVEL5) ) uniset3::ulog()->level5()
+#define ulog6 if( uniset3::ulog()->debugging(Debug::LEVEL6) ) uniset3::ulog()->level6()
+#define ulog7 if( uniset3::ulog()->debugging(Debug::LEVEL7) ) uniset3::ulog()->level7()
+#define ulog8 if( uniset3::ulog()->debugging(Debug::LEVEL8) ) uniset3::ulog()->level8()
+#define ulog9 if( uniset3::ulog()->debugging(Debug::LEVEL9) ) uniset3::ulog()->level9()
+#define ulogsys if( uniset3::ulog()->debugging(Debug::SYSTEM) ) uniset3::ulog()->system()
+#define ulogrep if( uniset3::ulog()->debugging(Debug::REPOSITORY) ) uniset3::ulog()->repository()
+#define ulogany uniset3::ulog()->any()
 // --------------------------------------------------------------------------
 #endif // Configuration_H_

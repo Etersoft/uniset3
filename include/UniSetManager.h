@@ -22,13 +22,12 @@
 #ifndef UniSetManager_H_
 #define UniSetManager_H_
 // --------------------------------------------------------------------------
-#include <omniORB4/CORBA.h>
 #include <memory>
 #include "UniSetTypes.h"
 #include "UniSetObject.h"
-#include "UniSetManager_i.hh"
+#include "UniSetManager.pb.h"
 //---------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //---------------------------------------------------------------------------
     class UniSetActivator;
@@ -59,18 +58,18 @@ namespace uniset
         public POA_UniSetManager_i
     {
         public:
-            UniSetManager( uniset::ObjectId id);
+            UniSetManager( uniset3::ObjectId id);
             UniSetManager( const std::string& name, const std::string& section );
             virtual ~UniSetManager();
 
-            virtual uniset::ObjectType getType() override
+            virtual uniset3::ObjectType getType() override
             {
-                return uniset::ObjectType("UniSetManager");
+                return uniset3::ObjectType("UniSetManager");
             }
 
             // ------  функции объявленые в интерфейсе(IDL) ------
-            virtual void broadcast( const uniset::TransportMessage& msg) override;
-            virtual uniset::SimpleInfoSeq* getObjectsInfo( CORBA::Long MaxLength = 300, const char* userparam = 0  ) override ;
+            virtual void broadcast( const uniset3::TransportMessage& msg) override;
+            virtual uniset3::SimpleInfoSeq* getObjectsInfo( CORBA::Long MaxLength = 300, const char* userparam = 0  ) override ;
 
             // --------------------------
             virtual bool add( const std::shared_ptr<UniSetObject>& obj );
@@ -93,7 +92,7 @@ namespace uniset
             virtual bool removeObject( const std::shared_ptr<UniSetObject>& obj );
 
             enum OManagerCommand { deactiv, activ, initial };
-            friend std::ostream& operator<<( std::ostream& os, uniset::UniSetManager::OManagerCommand& cmd );
+            friend std::ostream& operator<<( std::ostream& os, uniset3::UniSetManager::OManagerCommand& cmd );
 
             // работа со списком объектов
             void objects(OManagerCommand cmd);
@@ -118,7 +117,7 @@ namespace uniset
 
             typedef UniSetManagerList::iterator MListIterator;
 
-            int getObjectsInfo(const std::shared_ptr<UniSetManager>& mngr, uniset::SimpleInfoSeq* seq,
+            int getObjectsInfo(const std::shared_ptr<UniSetManager>& mngr, uniset3::SimpleInfoSeq* seq,
                                int begin, const long uplimit, const char* userparam );
 
             PortableServer::POA_var poa;
@@ -137,8 +136,8 @@ namespace uniset
             UniSetManagerList mlist;
             ObjectsList olist;
 
-            mutable uniset::uniset_rwmutex olistMutex;
-            mutable uniset::uniset_rwmutex mlistMutex;
+            mutable uniset3::uniset_rwmutex olistMutex;
+            mutable uniset3::uniset_rwmutex mlistMutex;
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace

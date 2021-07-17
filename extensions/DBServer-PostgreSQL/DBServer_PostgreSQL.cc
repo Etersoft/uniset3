@@ -27,7 +27,7 @@
 #include "UniXML.h"
 #include "DBLogSugar.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 DBServer_PostgreSQL::DBServer_PostgreSQL(ObjectId id, const std::string& prefix ):
@@ -63,7 +63,7 @@ DBServer_PostgreSQL::~DBServer_PostgreSQL()
         db->close();
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::sysCommand( const uniset::SystemMessage* sm )
+void DBServer_PostgreSQL::sysCommand( const uniset3::SystemMessage* sm )
 {
     DBServer::sysCommand(sm);
 
@@ -87,7 +87,7 @@ void DBServer_PostgreSQL::sysCommand( const uniset::SystemMessage* sm )
 }
 
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::confirmInfo( const uniset::ConfirmMessage* cem )
+void DBServer_PostgreSQL::confirmInfo( const uniset3::ConfirmMessage* cem )
 {
     DBServer::confirmInfo(cem);
 
@@ -112,7 +112,7 @@ void DBServer_PostgreSQL::confirmInfo( const uniset::ConfirmMessage* cem )
             dbcrit << myname << "(update_confirm):  db error: " << db->error() << endl;
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dbcrit << myname << "(update_confirm): " << ex << endl;
     }
@@ -143,7 +143,7 @@ void DBServer_PostgreSQL::onTextMessage( const TextMessage* msg )
             dbcrit << myname << "(insert_main_messages): error: " << db->error() << endl;
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dbcrit << myname << "(insert_main_messages): " << ex << endl;
     }
@@ -277,7 +277,7 @@ bool DBServer_PostgreSQL::writeInsertBufferToDB( const std::string& tableName
     return db->copy(tableName, colNames, wbuf);
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::sensorInfo( const uniset::SensorMessage* si )
+void DBServer_PostgreSQL::sensorInfo( const uniset3::SensorMessage* si )
 {
     try
     {
@@ -304,7 +304,7 @@ void DBServer_PostgreSQL::sensorInfo( const uniset::SensorMessage* si )
 
         addRecord( std::move(rec) );
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dbcrit << myname << "(insert_main_history): " << ex << endl;
     }
@@ -328,7 +328,7 @@ void DBServer_PostgreSQL::initDBServer()
 
     auto conf = uniset_conf();
 
-    if( conf->getDBServer() == uniset::DefaultObjectId )
+    if( conf->getDBServer() == uniset3::DefaultObjectId )
     {
         ostringstream msg;
         msg << myname << "(init): DBServer OFF for this node.."
@@ -359,9 +359,9 @@ void DBServer_PostgreSQL::initDBServer()
     std::string sfactor = conf->getArg2Param("--" + prefix + "-ibuf-overflow-cleanfactor", it.getProp("ibufOverflowCleanFactor"), "0.5");
     ibufOverflowCleanFactor = atof(sfactor.c_str());
 
-    tblMap[uniset::Message::SensorInfo] = "main_history";
-    tblMap[uniset::Message::Confirm] = "main_history";
-    tblMap[uniset::Message::TextMessage] = "main_messages";
+    tblMap[uniset3::Message::SensorInfo] = "main_history";
+    tblMap[uniset3::Message::Confirm] = "main_history";
+    tblMap[uniset3::Message::TextMessage] = "main_messages";
 
     PingTime = conf->getArgPInt("--" + prefix + "-pingTime", it.getProp("pingTime"), PingTime);
     ReconnectTime = conf->getArgPInt("--" + prefix + "-reconnectTime", it.getProp("reconnectTime"), ReconnectTime);
@@ -432,7 +432,7 @@ void DBServer_PostgreSQL::createTables( const std::shared_ptr<PostgreSQLInterfac
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::timerInfo( const uniset::TimerMessage* tm )
+void DBServer_PostgreSQL::timerInfo( const uniset3::TimerMessage* tm )
 {
     DBServer::timerInfo(tm);
 
@@ -543,7 +543,7 @@ std::shared_ptr<DBServer_PostgreSQL> DBServer_PostgreSQL::init_dbserver( int arg
     {
         ObjectId ID = conf->getObjectID(name);
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(DBServer_PostgreSQL): Unknown ObjectID for '" << name << endl;
             return 0;

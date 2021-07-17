@@ -12,7 +12,7 @@
 #include "LogReader.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 static const std::string ip = "localhost";
 static const int port = 33333;

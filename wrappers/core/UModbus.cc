@@ -60,7 +60,7 @@ UModbus::UModbus():
     ip(""),
     tout_msec(5000)
 {
-    mb = new uniset::ModbusTCPMaster();
+    mb = new uniset3::ModbusTCPMaster();
 }
 // --------------------------------------------------------------------------
 UModbus::~UModbus()
@@ -129,8 +129,8 @@ bool UModbus::getBit( int addr, int mbreg, int mbfunc )throw(UException)
 long UModbus::mbread(int mbaddr, int mbreg, int mbfunc, const string& s_vtype, int nbit,
                      const string& new_ip, int new_port )throw(UException)
 {
-    using namespace uniset;
-    using namespace uniset::VTypes;
+    using namespace uniset3;
+    using namespace uniset3::VTypes;
 
     const string n_ip( ( new_ip.empty() ? ip : new_ip ) );
     int n_port = ( new_port > 0 ) ? new_port : port;
@@ -223,7 +223,7 @@ long UModbus::mbread(int mbaddr, int mbreg, int mbfunc, const string& s_vtype, i
     }
 }
 //---------------------------------------------------------------------------
-long UModbus::data2value( uniset::VTypes::VType vtype, uniset::ModbusRTU::ModbusData* data )
+long UModbus::data2value( uniset3::VTypes::VType vtype, uniset3::ModbusRTU::ModbusData* data )
 {
 #if 0
 
@@ -236,8 +236,8 @@ long UModbus::data2value( uniset::VTypes::VType vtype, uniset::ModbusRTU::Modbus
 
         if( p->rnum <= 1 )
         {
-            if( p->stype == UniversalIO::DI ||
-                    p->stype == UniversalIO::DO )
+            if( p->stype == uniset3::DI ||
+                    p->stype == uniset3::DO )
             {
                 IOBase::processingAsDI( p, data[0], shm, force );
             }
@@ -254,7 +254,7 @@ long UModbus::data2value( uniset::VTypes::VType vtype, uniset::ModbusRTU::Modbus
     }
 
 #endif
-    using namespace uniset;
+    using namespace uniset3;
 
     if( vtype == VTypes::vtSigned )
         return (signed short)(data[0]);
@@ -302,7 +302,7 @@ void UModbus::mbwrite( int mbaddr, int mbreg, int val, int mbfunc, const std::st
     {
         switch( mbfunc )
         {
-            case uniset::ModbusRTU::fnWriteOutputSingleRegister:
+            case uniset3::ModbusRTU::fnWriteOutputSingleRegister:
             {
                 // ModbusRTU::WriteSingleOutputRetMessage ret =
                 // игнорируем return т.к. если будет ошибка, то будет исключение
@@ -310,9 +310,9 @@ void UModbus::mbwrite( int mbaddr, int mbreg, int val, int mbfunc, const std::st
             }
             break;
 
-            case uniset::ModbusRTU::fnWriteOutputRegisters:
+            case uniset3::ModbusRTU::fnWriteOutputRegisters:
             {
-                uniset::ModbusRTU::WriteOutputMessage msg(mbaddr, mbreg);
+                uniset3::ModbusRTU::WriteOutputMessage msg(mbaddr, mbreg);
                 msg.addData(val);
                 //ModbusRTU::WriteOutputRetMessage ret =
                 // игнорируем return т.к. если будет ошибка, то будет исключение
@@ -320,7 +320,7 @@ void UModbus::mbwrite( int mbaddr, int mbreg, int val, int mbfunc, const std::st
             }
             break;
 
-            case uniset::ModbusRTU::fnForceSingleCoil:
+            case uniset3::ModbusRTU::fnForceSingleCoil:
             {
                 // ModbusRTU::ForceSingleCoilRetMessage ret =
                 // игнорируем return т.к. если будет ошибка, то будет исключение
@@ -328,9 +328,9 @@ void UModbus::mbwrite( int mbaddr, int mbreg, int val, int mbfunc, const std::st
             }
             break;
 
-            case uniset::ModbusRTU::fnForceMultipleCoils:
+            case uniset3::ModbusRTU::fnForceMultipleCoils:
             {
-                uniset::ModbusRTU::ForceCoilsMessage msg(mbaddr, mbreg);
+                uniset3::ModbusRTU::ForceCoilsMessage msg(mbaddr, mbreg);
                 msg.addBit( (val ? true : false) );
                 // ModbusRTU::ForceCoilsRetMessage ret =
                 // игнорируем return т.к. если будет ошибка, то будет исключение
@@ -347,9 +347,9 @@ void UModbus::mbwrite( int mbaddr, int mbreg, int val, int mbfunc, const std::st
             break;
         }
     }
-    catch( const uniset::ModbusRTU::mbException& ex )
+    catch( const uniset3::ModbusRTU::mbException& ex )
     {
-        if( ex.err != uniset::ModbusRTU::erTimeOut )
+        if( ex.err != uniset3::ModbusRTU::erTimeOut )
             throw UTimeOut();
 
         std::ostringstream err;

@@ -23,7 +23,7 @@
 #include "MulticastTransport.h"
 // -------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -------------------------------------------------------------------------
 xmlNode* MulticastReceiveTransport::getReceiveListNode( UniXML::iterator root )
 {
@@ -71,7 +71,7 @@ std::unique_ptr<MulticastReceiveTransport> MulticastReceiveTransport::createFrom
     {
         ostringstream err;
         err << "(MulticastReceiveTransport): Unknown multicast IP for " << it.getProp("name");
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     Poco::Net::IPAddress a(h);
@@ -130,21 +130,21 @@ MulticastReceiveTransport::MulticastReceiveTransport( const std::string& _bind, 
             {
                 ostringstream err;
                 err << "(MulticastReceiveTransport): Not found interface for '" << ifaceaddr << "'";
-                throw uniset::SystemError(err.str());
+                throw uniset3::SystemError(err.str());
             }
         }
         catch( const Poco::Net::InterfaceNotFoundException& ex )
         {
             ostringstream err;
             err << "(MulticastReceiveTransport): Not found interface for '" << ifaceaddr << "'";
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
         catch( const std::exception& ex )
         {
             ostringstream err;
             err << "(MulticastReceiveTransport): Not found interface for '" << ifaceaddr
                 << "' err: " << ex.what();
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
     }
 }
@@ -225,7 +225,7 @@ bool MulticastReceiveTransport::createConnection( bool throwEx, timeout_t readTi
                 {
                     ostringstream err;
                     err << "(MulticastReceiveTransport): Not found interface or address " << ifaceaddr;
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
 
                 return false;
@@ -244,7 +244,7 @@ bool MulticastReceiveTransport::createConnection( bool throwEx, timeout_t readTi
         {
             ostringstream err;
             err << "(MulticastReceiveTransport): Not found interface for address " << ifaceaddr;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
     }
     catch( const std::exception& e )
@@ -255,7 +255,7 @@ bool MulticastReceiveTransport::createConnection( bool throwEx, timeout_t readTi
         {
             ostringstream s;
             s << host << ":" << port << "(createConnection): " << e.what();
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
     catch( ... )
@@ -266,7 +266,7 @@ bool MulticastReceiveTransport::createConnection( bool throwEx, timeout_t readTi
         {
             ostringstream s;
             s << host << ":" << port << "(createConnection): catch...";
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
 
@@ -342,7 +342,7 @@ std::unique_ptr<MulticastSendTransport> MulticastSendTransport::createFromXml( U
     {
         ostringstream err;
         err << "(MulticastSendTransport): Undefined " << fieldIp.str() << " for " << it.getProp("name");
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     Poco::Net::IPAddress a(h);
@@ -481,7 +481,7 @@ bool MulticastSendTransport::createConnection( bool throwEx, timeout_t sendTimeo
         {
             ostringstream s;
             s << sockAddr.toString() << "(createConnection): " << e.what();
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
     catch( ... )
@@ -492,7 +492,7 @@ bool MulticastSendTransport::createConnection( bool throwEx, timeout_t sendTimeo
         {
             ostringstream s;
             s << sockAddr.toString() << "(createConnection): catch...";
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
 

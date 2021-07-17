@@ -24,7 +24,7 @@
 #include "UniSetActivator.h"
 #include "UProxyObject.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 /*! PIMPL  реализация UProxyObject */
 class UProxyObject_impl:
@@ -32,11 +32,11 @@ class UProxyObject_impl:
 {
     public:
 
-        UProxyObject_impl( uniset::ObjectId id );
+        UProxyObject_impl( uniset3::ObjectId id );
         virtual ~UProxyObject_impl();
 
-        void impl_addToAsk( uniset::ObjectId id ) throw(UException);
-        void impl_askSensor( uniset::ObjectId id ) throw(UException);
+        void impl_addToAsk( uniset3::ObjectId id ) throw(UException);
+        void impl_askSensor( uniset3::ObjectId id ) throw(UException);
 
         long impl_getValue( long id ) throw(UException);
         void impl_setValue( long id, long val ) throw(UException);
@@ -48,8 +48,8 @@ class UProxyObject_impl:
         bool impl_smIsOK();
 
     protected:
-        virtual void askSensors( UniversalIO::UIOCommand cmd ) override;
-        virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
+        virtual void askSensors( uniset3::UIOCommand cmd ) override;
+        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
 
     private:
 
@@ -57,18 +57,18 @@ class UProxyObject_impl:
         {
             SInfo()
             {
-                si.id = uniset::DefaultObjectId;
-                si.node = uniset::DefaultObjectId;
+                si.id = uniset3::DefaultObjectId;
+                si.node = uniset3::DefaultObjectId;
             }
 
-            IOController_i::SensorInfo si;
+            uniset3::SensorInfo si;
             long value = { 0 };
             float fvalue = { 0.0 };
             long precision = { 0 };
         };
 
         std::mutex mutexSMap;
-        std::unordered_map<uniset::ObjectId, SInfo> smap;
+        std::unordered_map<uniset3::ObjectId, SInfo> smap;
         bool askOK = { false };
 };
 // --------------------------------------------------------------------------
@@ -265,7 +265,7 @@ void UProxyObject_impl::impl_setValue( long id, long val ) throw(UException)
 // --------------------------------------------------------------------------
 bool UProxyObject_impl::impl_reaskSensors()
 {
-    askSensors(UniversalIO::UIONotify);
+    askSensors(uniset3::UIONotify);
     return impl_askIsOK();
 }
 // --------------------------------------------------------------------------
@@ -300,13 +300,13 @@ bool UProxyObject_impl::impl_smIsOK()
     return ui->isExist(s->second.si.id, s->second.si.node);
 }
 // --------------------------------------------------------------------------
-void UProxyObject_impl::impl_askSensor( uniset::ObjectId id ) throw(UException)
+void UProxyObject_impl::impl_askSensor( uniset3::ObjectId id ) throw(UException)
 {
-    ui->askRemoteSensor(id, UniversalIO::UIONotify, uniset_conf()->getLocalNode(), getId());
+    ui->askRemoteSensor(id, uniset3::UIONotify, uniset_conf()->getLocalNode(), getId());
     impl_addToAsk(id);
 }
 // --------------------------------------------------------------------------
-void UProxyObject_impl::askSensors( UniversalIO::UIOCommand cmd )
+void UProxyObject_impl::askSensors( uniset3::UIOCommand cmd )
 {
     std::unique_lock<std::mutex> lk(mutexSMap);
     askOK = true;

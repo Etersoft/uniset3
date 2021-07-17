@@ -21,7 +21,7 @@
 #include <Poco/Net/SocketStream.h>
 #include "PassiveTimer.h" // for timeout_t
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     /*! Специальная "обёртка" над ost::TCPStream, устанавливающая ещё и параметры KeepAlive,

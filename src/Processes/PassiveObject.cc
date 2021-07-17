@@ -25,16 +25,16 @@
 #include "Configuration.h"
 // ------------------------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // ------------------------------------------------------------------------------------------
 PassiveObject::PassiveObject():
 	mngr(0),
-	id(uniset::DefaultObjectId)
+	id(uniset3::DefaultObjectId)
 {
 
 }
 
-PassiveObject::PassiveObject( uniset::ObjectId id ):
+PassiveObject::PassiveObject( uniset3::ObjectId id ):
 	mngr(0),
 	id(id)
 {
@@ -60,7 +60,7 @@ PassiveObject::~PassiveObject()
 }
 
 // ------------------------------------------------------------------------------------------
-void PassiveObject::setID( uniset::ObjectId id_ )
+void PassiveObject::setID( uniset3::ObjectId id_ )
 {
 	id = id_;
 }
@@ -79,7 +79,7 @@ void PassiveObject::init( ProxyManager* _mngr )
 }
 
 // ------------------------------------------------------------------------------------------
-void PassiveObject::processingMessage( const uniset::VoidMessage* msg )
+void PassiveObject::processingMessage( const uniset3::VoidMessage* msg )
 {
 	try
 	{
@@ -121,7 +121,7 @@ void PassiveObject::processingMessage( const uniset::VoidMessage* msg )
 					   << " mesg: " << fe.errmsg() << endl;
 		}
 	}
-	catch( const uniset::Exception& ex )
+	catch( const uniset3::Exception& ex )
 	{
 		ucrit  << myname << "(processingMessage): " << ex << endl;
 	}
@@ -132,12 +132,12 @@ void PassiveObject::sysCommand( const SystemMessage* sm )
 	switch( sm->command )
 	{
 		case SystemMessage::StartUp:
-			askSensors(UniversalIO::UIONotify);
+			askSensors(uniset3::UIONotify);
 			break;
 
 		case SystemMessage::FoldUp:
 		case SystemMessage::Finish:
-			askSensors(UniversalIO::UIODontNotify);
+			askSensors(uniset3::UIODontNotify);
 			break;
 
 		case SystemMessage::WatchDog:

@@ -23,16 +23,16 @@
 #include <ostream>
 #include "Exceptions.h"
 //--------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // --------------------------------------------------------------------------
 
     class LogicException:
-        public uniset::Exception
+        public uniset3::Exception
     {
         public:
-            LogicException(): uniset::Exception("LogicException") {}
-            explicit LogicException( const std::string& err): uniset::Exception(err) {}
+            LogicException(): uniset3::Exception("LogicException") {}
+            explicit LogicException( const std::string& err): uniset3::Exception(err) {}
     };
 
 
@@ -194,6 +194,6 @@ namespace uniset
         private:
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // ---------------------------------------------------------------------------
 #endif

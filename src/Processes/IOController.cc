@@ -26,7 +26,7 @@
 #include "ORepHelpers.h"
 #include "Debug.h"
 // ------------------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace UniversalIO;
 using namespace std;
 // ------------------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ void IOController::sensorsUnregistration()
 		{
 			ioUnRegistration( li.second->si.id );
 		}
-		catch( const uniset::Exception& ex )
+		catch( const uniset3::Exception& ex )
 		{
 			ucrit << myname << "(sensorsUnregistration): " << ex << endl;
 		}
@@ -123,7 +123,7 @@ void IOController::activateInit()
 
 			sigInit.emit(s, this);
 		}
-		catch( const uniset::Exception& ex )
+		catch( const uniset3::Exception& ex )
 		{
 			ucrit << myname << "(activateInit): " << ex << endl << flush;
 			//std::terminate();
@@ -132,13 +132,13 @@ void IOController::activateInit()
 	}
 }
 // ------------------------------------------------------------------------------------------
-CORBA::Long IOController::getValue( uniset::ObjectId sid )
+CORBA::Long IOController::getValue( uniset3::ObjectId sid )
 {
 	auto li = ioList.end();
 	return localGetValue(li, sid);
 }
 // ------------------------------------------------------------------------------------------
-long IOController::localGetValue( IOController::IOStateList::iterator& li, const uniset::ObjectId sid )
+long IOController::localGetValue( IOController::IOStateList::iterator& li, const uniset3::ObjectId sid )
 {
 	if( li == ioList.end() )
 	{
@@ -155,7 +155,7 @@ long IOController::localGetValue( IOController::IOStateList::iterator& li, const
 		<< uniset_conf()->oind->getNameById(sid);
 
 	uinfo << err.str() << endl;
-	throw IOController_i::NameNotFound(err.str().c_str());
+	throw uniset3::NameNotFound(err.str().c_str());
 }
 // ------------------------------------------------------------------------------------------
 long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
@@ -166,7 +166,7 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
 
 		if( usi->undefined )
 		{
-			auto ex = IOController_i::Undefined();
+			auto ex = uniset3::Undefined();
 			ex.value = usi->value;
 			throw ex;
 		}
@@ -178,17 +178,17 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
 	ostringstream err;
 	err << myname << "(localGetValue): Unknown sensor";
 	uinfo << err.str() << endl;
-	throw IOController_i::NameNotFound(err.str().c_str());
+	throw uniset3::NameNotFound(err.str().c_str());
 }
 // ------------------------------------------------------------------------------------------
-void IOController::setUndefinedState( uniset::ObjectId sid, CORBA::Boolean undefined, uniset::ObjectId sup_id )
+void IOController::setUndefinedState( uniset3::ObjectId sid, CORBA::Boolean undefined, uniset3::ObjectId sup_id )
 {
 	auto li = ioList.end();
 	localSetUndefinedState( li, undefined, sid );
 }
 // -----------------------------------------------------------------------------
 void IOController::localSetUndefinedState( IOStateList::iterator& li,
-		bool undefined, const uniset::ObjectId sid )
+		bool undefined, const uniset3::ObjectId sid )
 {
 	// сохранение текущего состояния
 	if( li == ioList.end() )
@@ -199,7 +199,7 @@ void IOController::localSetUndefinedState( IOStateList::iterator& li,
 		ostringstream err;
 		err << myname << "(localSetUndefined): Unknown sensor (" << sid << ")"
 			<< "name: " << uniset_conf()->oind->getNameById(sid);
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	bool changed = false;
@@ -265,22 +265,22 @@ void IOController::localSetUndefinedState( IOStateList::iterator& li,
 	catch(...) {}
 }
 // ------------------------------------------------------------------------------------------
-void IOController::freezeValue( uniset::ObjectId sid,
+void IOController::freezeValue( uniset3::ObjectId sid,
 								CORBA::Boolean set,
 								CORBA::Long value,
-								uniset::ObjectId sup_id )
+								uniset3::ObjectId sup_id )
 {
 	auto li = ioList.end();
 	localFreezeValueIt( li, sid, set, value, sup_id );
 }
 // ------------------------------------------------------------------------------------------
 void IOController::localFreezeValueIt( IOController::IOStateList::iterator& li,
-									   uniset::ObjectId sid,
+									   uniset3::ObjectId sid,
 									   CORBA::Boolean set,
 									   CORBA::Long value,
-									   uniset::ObjectId sup_id )
+									   uniset3::ObjectId sup_id )
 {
-	if( sup_id == uniset::DefaultObjectId )
+	if( sup_id == uniset3::DefaultObjectId )
 		sup_id = getId();
 
 	// сохранение текущего состояния
@@ -295,7 +295,7 @@ void IOController::localFreezeValueIt( IOController::IOStateList::iterator& li,
 		ostringstream err;
 		err << myname << "(localFreezeValue): Unknown sensor (" << sid << ")"
 			<< "name: " << uniset_conf()->oind->getNameById(sid);
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	localFreezeValue(li->second, set, value, sup_id);
@@ -304,7 +304,7 @@ void IOController::localFreezeValueIt( IOController::IOStateList::iterator& li,
 void IOController::localFreezeValue( std::shared_ptr<USensorInfo>& usi,
 									 CORBA::Boolean set,
 									 CORBA::Long value,
-									 uniset::ObjectId sup_id )
+									 uniset3::ObjectId sup_id )
 {
 	ulog4 << myname << "(localFreezeValue): (" << usi->si.id << ")"
 		  << uniset_conf()->oind->getNameById(usi->si.id)
@@ -324,17 +324,17 @@ void IOController::localFreezeValue( std::shared_ptr<USensorInfo>& usi,
 	localSetValue(usi, value, sup_id);
 }
 // ------------------------------------------------------------------------------------------
-void IOController::setValue( uniset::ObjectId sid, CORBA::Long value, uniset::ObjectId sup_id )
+void IOController::setValue( uniset3::ObjectId sid, CORBA::Long value, uniset3::ObjectId sup_id )
 {
 	auto li = ioList.end();
 	localSetValueIt( li, sid, value, sup_id );
 }
 // ------------------------------------------------------------------------------------------
 long IOController::localSetValueIt( IOController::IOStateList::iterator& li,
-									uniset::ObjectId sid,
-									CORBA::Long value, uniset::ObjectId sup_id )
+									uniset3::ObjectId sid,
+									CORBA::Long value, uniset3::ObjectId sup_id )
 {
-	if( sup_id == uniset::DefaultObjectId )
+	if( sup_id == uniset3::DefaultObjectId )
 		sup_id = getId();
 
 	// сохранение текущего состояния
@@ -349,14 +349,14 @@ long IOController::localSetValueIt( IOController::IOStateList::iterator& li,
 		ostringstream err;
 		err << myname << "(localSetValue): Unknown sensor (" << sid << ")"
 			<< "name: " << uniset_conf()->oind->getNameById(sid);
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	return localSetValue(li->second, value, sup_id);
 }
 // ------------------------------------------------------------------------------------------
 long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
-								  CORBA::Long value, uniset::ObjectId sup_id )
+								  CORBA::Long value, uniset3::ObjectId sup_id )
 {
 	// if( !usi ) - не проверяем, т.к. считаем что это внутренние функции и несуществующий указатель передать не могут
 
@@ -405,7 +405,7 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
 			// запоминаем время изменения
 			try
 			{
-				struct timespec tm = uniset::now_to_timespec();
+				struct timespec tm = uniset3::now_to_timespec();
 				usi->tv_sec  = tm.tv_sec;
 				usi->tv_nsec = tm.tv_nsec;
 			}
@@ -439,7 +439,7 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
 	return retValue;
 }
 // ------------------------------------------------------------------------------------------
-IOType IOController::getIOType( uniset::ObjectId sid )
+IOType IOController::getIOType( uniset3::ObjectId sid )
 {
 	auto ali = ioList.find(sid);
 
@@ -448,7 +448,7 @@ IOType IOController::getIOType( uniset::ObjectId sid )
 
 	ostringstream err;
 	err << myname << "(getIOType): датчик имя: " << uniset_conf()->oind->getNameById(sid) << " не найден";
-	throw IOController_i::NameNotFound(err.str().c_str());
+	throw uniset3::NameNotFound(err.str().c_str());
 }
 // ---------------------------------------------------------------------------
 void IOController::ioRegistration( std::shared_ptr<USensorInfo>& usi )
@@ -482,25 +482,25 @@ void IOController::ioRegistration( std::shared_ptr<USensorInfo>& usi )
 			}
 		}
 	}
-	catch( const uniset::Exception& ex )
+	catch( const uniset3::Exception& ex )
 	{
 		ucrit << myname << "(ioRegistration): " << ex << endl;
 	}
 }
 // ---------------------------------------------------------------------------
-void IOController::ioUnRegistration( const uniset::ObjectId sid )
+void IOController::ioUnRegistration( const uniset3::ObjectId sid )
 {
 	ui->unregister(sid);
 }
 // ---------------------------------------------------------------------------
-void IOController::logging( uniset::SensorMessage& sm )
+void IOController::logging( uniset3::SensorMessage& sm )
 {
 	std::lock_guard<std::mutex> l(loggingMutex);
 
 	try
 	{
 		// значит на этом узле нет DBServer-а
-		if( dbserverID == uniset::DefaultObjectId )
+		if( dbserverID == uniset3::DefaultObjectId )
 		{
 			isPingDBServer = false;
 			return;
@@ -524,7 +524,7 @@ void IOController::logging( uniset::SensorMessage& sm )
 void IOController::dumpToDB()
 {
 	// значит на этом узле нет DBServer-а
-	if( dbserverID == uniset::DefaultObjectId )
+	if( dbserverID == uniset3::DefaultObjectId )
 		return;
 
 	{
@@ -543,11 +543,11 @@ void IOController::dumpToDB()
 	}    // unlock
 }
 // --------------------------------------------------------------------------------------------------------------
-IOController_i::SensorInfoSeq* IOController::getSensorsMap()
+uniset3::SensorInfoSeq* IOController::getSensorsMap()
 {
 	// ЗА ОСВОБОЖДЕНИЕ ПАМЯТИ ОТВЕЧАЕТ КЛИЕНТ!!!!!!
 	// поэтому ему лучше пользоваться при получении _var-классом
-	IOController_i::SensorInfoSeq* res = new IOController_i::SensorInfoSeq();
+	uniset3::SensorInfoSeq* res = new uniset3::SensorInfoSeq();
 	res->length( ioList.size());
 
 	unsigned int i = 0;
@@ -562,17 +562,17 @@ IOController_i::SensorInfoSeq* IOController::getSensorsMap()
 	return res;
 }
 // --------------------------------------------------------------------------------------------------------------
-uniset::Message::Priority IOController::getPriority( const uniset::ObjectId sid )
+uniset3::Message::Priority IOController::getPriority( const uniset3::ObjectId sid )
 {
 	auto it = ioList.find(sid);
 
 	if( it != ioList.end() )
-		return (uniset::Message::Priority)it->second->priority;
+		return (uniset3::Message::Priority)it->second->priority;
 
-	return uniset::Message::Medium; // ??
+	return uniset3::Message::Medium; // ??
 }
 // --------------------------------------------------------------------------------------------------------------
-IOController_i::SensorIOInfo IOController::getSensorIOInfo( const uniset::ObjectId sid )
+uniset3::SensorIOInfo IOController::getSensorIOInfo( const uniset3::ObjectId sid )
 {
 	auto it = ioList.find(sid);
 
@@ -589,10 +589,10 @@ IOController_i::SensorIOInfo IOController::getSensorIOInfo( const uniset::Object
 
 	uinfo << err.str() << endl;
 
-	throw IOController_i::NameNotFound(err.str().c_str());
+	throw uniset3::NameNotFound(err.str().c_str());
 }
 // --------------------------------------------------------------------------------------------------------------
-CORBA::Long IOController::getRawValue( uniset::ObjectId sid )
+CORBA::Long IOController::getRawValue( uniset3::ObjectId sid )
 {
 	auto it = ioList.find(sid);
 
@@ -601,27 +601,27 @@ CORBA::Long IOController::getRawValue( uniset::ObjectId sid )
 		ostringstream err;
 		err << myname << "(getRawValue): Unknown analog sensor (" << sid << ")"
 			<< uniset_conf()->oind->getNameById(sid);
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	// ??? получаем raw из калиброванного значения ???
-	IOController_i::CalibrateInfo& ci(it->second->ci);
+	uniset3::CalibrateInfo& ci(it->second->ci);
 
 	if( ci.maxCal != 0 && ci.maxCal != ci.minCal )
 	{
-		if( it->second->type == UniversalIO::AI )
-			return uniset::lcalibrate(it->second->value, ci.minRaw, ci.maxRaw, ci.minCal, ci.maxCal, true);
+		if( it->second->type == uniset3::AI )
+			return uniset3::lcalibrate(it->second->value, ci.minRaw, ci.maxRaw, ci.minCal, ci.maxCal, true);
 
-		if( it->second->type == UniversalIO::AO )
-			return uniset::lcalibrate(it->second->value, ci.minCal, ci.maxCal, ci.minRaw, ci.maxRaw, true);
+		if( it->second->type == uniset3::AO )
+			return uniset3::lcalibrate(it->second->value, ci.minCal, ci.maxCal, ci.minRaw, ci.maxRaw, true);
 	}
 
 	return it->second->value;
 }
 // --------------------------------------------------------------------------------------------------------------
-void IOController::calibrate( uniset::ObjectId sid,
-							  const IOController_i::CalibrateInfo& ci,
-							  uniset::ObjectId adminId )
+void IOController::calibrate( uniset3::ObjectId sid,
+							  const uniset3::CalibrateInfo& ci,
+							  uniset3::ObjectId adminId )
 {
 	auto it = ioList.find(sid);
 
@@ -630,7 +630,7 @@ void IOController::calibrate( uniset::ObjectId sid,
 		ostringstream err;
 		err << myname << "(calibrate): Unknown analog sensor (" << sid << ")"
 			<< uniset_conf()->oind->getNameById(sid);
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	uinfo << myname << "(calibrate): from " << uniset_conf()->oind->getNameById(adminId) << endl;
@@ -638,7 +638,7 @@ void IOController::calibrate( uniset::ObjectId sid,
 	it->second->ci = ci;
 }
 // --------------------------------------------------------------------------------------------------------------
-IOController_i::CalibrateInfo IOController::getCalibrateInfo( uniset::ObjectId sid )
+uniset3::CalibrateInfo IOController::getCalibrateInfo( uniset3::ObjectId sid )
 {
 	auto it = ioList.find(sid);
 
@@ -647,26 +647,26 @@ IOController_i::CalibrateInfo IOController::getCalibrateInfo( uniset::ObjectId s
 		ostringstream err;
 		err << myname << "(calibrate): Unknown analog sensor (" << sid << ")"
 			<< uniset_conf()->oind->getNameById(sid);
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	return it->second->ci;
 }
 // --------------------------------------------------------------------------------------------------------------
-IOController::USensorInfo::USensorInfo( IOController_i::SensorIOInfo& ai ):
-	IOController_i::SensorIOInfo(ai)
+IOController::USensorInfo::USensorInfo( uniset3::SensorIOInfo& ai ):
+	uniset3::SensorIOInfo(ai)
 {}
 
-IOController::USensorInfo::USensorInfo( const IOController_i::SensorIOInfo& ai ):
-	IOController_i::SensorIOInfo(ai)
+IOController::USensorInfo::USensorInfo( const uniset3::SensorIOInfo& ai ):
+	uniset3::SensorIOInfo(ai)
 {}
 
-IOController::USensorInfo::USensorInfo(IOController_i::SensorIOInfo* ai):
-	IOController_i::SensorIOInfo(*ai)
+IOController::USensorInfo::USensorInfo(uniset3::SensorIOInfo* ai):
+	uniset3::SensorIOInfo(*ai)
 {}
 
 IOController::USensorInfo&
-IOController::USensorInfo::operator=(IOController_i::SensorIOInfo& r)
+IOController::USensorInfo::operator=(uniset3::SensorIOInfo& r)
 {
 	IOController::USensorInfo tmp(r);
 	(*this) = std::move(tmp);
@@ -675,7 +675,7 @@ IOController::USensorInfo::operator=(IOController_i::SensorIOInfo& r)
 // ----------------------------------------------------------------------------------------
 IOController::USensorInfo::USensorInfo(): d_value(1), d_off_value(0)
 {
-	depend_sid = uniset::DefaultObjectId;
+	depend_sid = uniset3::DefaultObjectId;
 	default_val = 0;
 	value = default_val;
 	real_value = default_val;
@@ -683,18 +683,18 @@ IOController::USensorInfo::USensorInfo(): d_value(1), d_off_value(0)
 	undefined = false;
 	blocked = false;
 	frozen = false;
-	supplier = uniset::DefaultObjectId;
+	supplier = uniset3::DefaultObjectId;
 
 	// стоит ли выставлять текущее время
 	// Мы теряем возможность понять (по tv_sec=0),
 	// что значение ещё ни разу никем не менялось
-	auto tm = uniset::now_to_timespec();
+	auto tm = uniset3::now_to_timespec();
 	tv_sec = tm.tv_sec;
 	tv_nsec = tm.tv_nsec;
 }
 // ----------------------------------------------------------------------------------------
 IOController::USensorInfo&
-IOController::USensorInfo::operator=( IOController_i::SensorIOInfo* r )
+IOController::USensorInfo::operator=( uniset3::SensorIOInfo* r )
 {
 	IOController::USensorInfo tmp(r);
 	(*this) = std::move(tmp);
@@ -706,7 +706,7 @@ void* IOController::USensorInfo::getUserData( size_t index )
 	if( index >= MaxUserData )
 		return nullptr;
 
-	uniset::uniset_rwmutex_rlock ulock(userdata_lock);
+	uniset3::uniset_rwmutex_rlock ulock(userdata_lock);
 	return userdata[index];
 }
 
@@ -715,19 +715,19 @@ void IOController::USensorInfo::setUserData( size_t index, void* data )
 	if( index >= MaxUserData )
 		return;
 
-	uniset::uniset_rwmutex_wrlock ulock(userdata_lock);
+	uniset3::uniset_rwmutex_wrlock ulock(userdata_lock);
 	userdata[index] = data;
 }
 // ----------------------------------------------------------------------------------------
 const IOController::USensorInfo&
-IOController::USensorInfo::operator=( const IOController_i::SensorIOInfo& r )
+IOController::USensorInfo::operator=( const uniset3::SensorIOInfo& r )
 {
 	IOController::USensorInfo tmp(r);
 	(*this) = std::move(tmp);
 	return *this;
 }
 // ----------------------------------------------------------------------------------------
-void IOController::USensorInfo::init( const IOController_i::SensorIOInfo& s )
+void IOController::USensorInfo::init( const uniset3::SensorIOInfo& s )
 {
 	IOController::USensorInfo r(s);
 	(*this) = std::move(r);
@@ -756,16 +756,16 @@ void IOController::for_iolist( IOController::UFunction f )
 		f(s.second);
 }
 // ----------------------------------------------------------------------------------------
-IOController::IOStateList::iterator IOController::myiofind( const uniset::ObjectId id )
+IOController::IOStateList::iterator IOController::myiofind( const uniset3::ObjectId id )
 {
 	return ioList.find(id);
 }
 // -----------------------------------------------------------------------------
-IOController_i::SensorInfoSeq* IOController::getSensorSeq( const IDSeq& lst )
+uniset3::SensorInfoSeq* IOController::getSensorSeq( const IDSeq& lst )
 {
 	int size = lst.length();
 
-	IOController_i::SensorInfoSeq* res = new IOController_i::SensorInfoSeq();
+	uniset3::SensorInfoSeq* res = new uniset3::SensorInfoSeq();
 	res->length(size);
 
 	for( auto i = 0; i < size; i++ )
@@ -787,9 +787,9 @@ IOController_i::SensorInfoSeq* IOController::getSensorSeq( const IDSeq& lst )
 	return res;
 }
 // -----------------------------------------------------------------------------
-IDSeq* IOController::setOutputSeq(const IOController_i::OutSeq& lst, ObjectId sup_id )
+IDSeq* IOController::setOutputSeq(const uniset3::OutSeq& lst, ObjectId sup_id )
 {
-	uniset::IDList badlist; // список не найденных идентификаторов
+	uniset3::IDList badlist; // список не найденных идентификаторов
 
 	int size = lst.length();
 
@@ -814,13 +814,13 @@ IDSeq* IOController::setOutputSeq(const IOController_i::OutSeq& lst, ObjectId su
 	return badlist.getIDSeq();
 }
 // -----------------------------------------------------------------------------
-IOController_i::ShortIOInfo IOController::getTimeChange( uniset::ObjectId sid )
+uniset3::ShortIOInfo IOController::getTimeChange( uniset3::ObjectId sid )
 {
 	auto ait = ioList.find(sid);
 
 	if( ait != ioList.end() )
 	{
-		IOController_i::ShortIOInfo i;
+		uniset3::ShortIOInfo i;
 		auto s = ait->second;
 		uniset_rwmutex_rlock lock(s->val_lock);
 		i.value = s->value;
@@ -836,21 +836,21 @@ IOController_i::ShortIOInfo IOController::getTimeChange( uniset::ObjectId sid )
 		<< uniset_conf()->oind->getNameById(sid) << " не найден";
 
 	uinfo << err.str() << endl;
-	throw IOController_i::NameNotFound(err.str().c_str());
+	throw uniset3::NameNotFound(err.str().c_str());
 }
 // -----------------------------------------------------------------------------
-IOController_i::ShortMapSeq* IOController::getSensors()
+uniset3::ShortMapSeq* IOController::getSensors()
 {
 	// ЗА ОСВОБОЖДЕНИЕ ПАМЯТИ ОТВЕЧАЕТ КЛИЕНТ!!!!!!
 	// поэтому ему лучше пользоваться при получении _var-классом
-	IOController_i::ShortMapSeq* res = new IOController_i::ShortMapSeq();
+	uniset3::ShortMapSeq* res = new uniset3::ShortMapSeq();
 	res->length( ioList.size() );
 
 	int i = 0;
 
 	for( const auto& it : ioList )
 	{
-		IOController_i::ShortMap m;
+		uniset3::ShortMap m;
 		{
 			uniset_rwmutex_rlock lock(it.second->val_lock);
 			m.id    = it.second->si.id;
@@ -863,7 +863,7 @@ IOController_i::ShortMapSeq* IOController::getSensors()
 	return res;
 }
 // -----------------------------------------------------------------------------
-IOController::ChangeSignal IOController::signal_change_value( uniset::ObjectId sid )
+IOController::ChangeSignal IOController::signal_change_value( uniset3::ObjectId sid )
 {
 	auto it = ioList.find(sid);
 
@@ -874,7 +874,7 @@ IOController::ChangeSignal IOController::signal_change_value( uniset::ObjectId s
 			<< uniset_conf()->oind->getNameById(sid) << " не найден";
 
 		uinfo << err.str() << endl;
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	return it->second->sigChange;
@@ -885,7 +885,7 @@ IOController::ChangeSignal IOController::signal_change_value()
 	return sigAnyChange;
 }
 // -----------------------------------------------------------------------------
-IOController::ChangeUndefinedStateSignal IOController::signal_change_undefined_state( uniset::ObjectId sid )
+IOController::ChangeUndefinedStateSignal IOController::signal_change_undefined_state( uniset3::ObjectId sid )
 {
 	auto it = ioList.find(sid);
 
@@ -897,7 +897,7 @@ IOController::ChangeUndefinedStateSignal IOController::signal_change_undefined_s
 
 		uinfo << err.str() << endl;
 
-		throw IOController_i::NameNotFound(err.str().c_str());
+		throw uniset3::NameNotFound(err.str().c_str());
 	}
 
 	//	uniset_rwmutex_rlock lock(it->second->val_lock);
@@ -935,9 +935,9 @@ void IOController::USensorInfo::checkDepend( std::shared_ptr<USensorInfo>& d_it,
 		ic->localSetValue( d_usi, real_value, sup_id );
 }
 // -----------------------------------------------------------------------------
-uniset::SimpleInfo* IOController::getInfo( const char* userparam )
+uniset3::SimpleInfo* IOController::getInfo( const char* userparam )
 {
-	uniset::SimpleInfo_var i = UniSetManager::getInfo(userparam);
+	uniset3::SimpleInfo_var i = UniSetManager::getInfo(userparam);
 
 	ostringstream inf;
 
@@ -952,11 +952,11 @@ uniset::SimpleInfo* IOController::getInfo( const char* userparam )
 #ifndef DISABLE_REST_API
 Poco::JSON::Object::Ptr IOController::httpHelp( const Poco::URI::QueryParameters& p )
 {
-	uniset::json::help::object myhelp( myname, UniSetManager::httpHelp(p) );
+	uniset3::json::help::object myhelp( myname, UniSetManager::httpHelp(p) );
 
 	{
 		// 'get'
-		uniset::json::help::item cmd("get", "get value for sensor");
+		uniset3::json::help::item cmd("get", "get value for sensor");
 		cmd.param("id1,name2,id3", "get value for id1,name2,id3 sensors");
 		cmd.param("shortInfo", "get short information for sensors");
 		myhelp.add(cmd);
@@ -964,7 +964,7 @@ Poco::JSON::Object::Ptr IOController::httpHelp( const Poco::URI::QueryParameters
 
 	{
 		// 'sensors'
-		uniset::json::help::item cmd("sensors", "get all sensors");
+		uniset3::json::help::item cmd("sensors", "get all sensors");
 		cmd.param("nameonly", "get only name sensors");
 		cmd.param("offset=N", "get from N record");
 		cmd.param("limit=M", "limit of records");
@@ -991,17 +991,17 @@ Poco::JSON::Object::Ptr IOController::request_get( const string& req, const Poco
 	{
 		ostringstream err;
 		err << myname << "(request): 'get'. Unknown ID or Name. Use parameters: get?ID1,name2,ID3,...";
-		throw uniset::SystemError(err.str());
+		throw uniset3::SystemError(err.str());
 	}
 
 	auto conf = uniset_conf();
-	auto slist = uniset::getSInfoList( p[0].first, conf );
+	auto slist = uniset3::getSInfoList( p[0].first, conf );
 
 	if( slist.empty() )
 	{
 		ostringstream err;
 		err << myname << "(request): 'get'. Unknown ID or Name. Use parameters: get?ID1,name2,ID3,...";
-		throw uniset::SystemError(err.str());
+		throw uniset3::SystemError(err.str());
 	}
 
 	bool shortInfo = false;
@@ -1021,7 +1021,7 @@ Poco::JSON::Object::Ptr IOController::request_get( const string& req, const Poco
 
 	Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
 	auto my = httpGetMyInfo(jdata);
-	auto jsens = uniset::json::make_child_array(jdata, "sensors");
+	auto jsens = uniset3::json::make_child_array(jdata, "sensors");
 
 	for( const auto& s : slist )
 	{
@@ -1040,7 +1040,7 @@ Poco::JSON::Object::Ptr IOController::request_get( const string& req, const Poco
 
 			getSensorInfo(jsens, sinf->second, shortInfo);
 		}
-		catch( IOController_i::NameNotFound& ex )
+		catch( uniset3::NameNotFound& ex )
 		{
 			Poco::JSON::Object::Ptr jr = new Poco::JSON::Object();
 			jr->set("name", s.fname);
@@ -1078,7 +1078,7 @@ void IOController::getSensorInfo( Poco::JSON::Array::Ptr& jdata, std::shared_ptr
 	if( shortInfo )
 		return;
 
-	jsens->set("type", uniset::iotype2str(s->type));
+	jsens->set("type", uniset3::iotype2str(s->type));
 	jsens->set("default_val", s->default_val);
 	jsens->set("dbignore", s->dbignore);
 	jsens->set("nchanges", s->nchanges);
@@ -1093,7 +1093,7 @@ void IOController::getSensorInfo( Poco::JSON::Array::Ptr& jdata, std::shared_ptr
 		jsens->set("depend_off_value", s->d_off_value);
 	}
 
-	Poco::JSON::Object::Ptr calibr = uniset::json::make_child(jsens, "calibration");
+	Poco::JSON::Object::Ptr calibr = uniset3::json::make_child(jsens, "calibration");
 	calibr->set("cmin", s->ci.minCal);
 	calibr->set("cmax", s->ci.maxCal);
 	calibr->set("rmin", s->ci.minRaw);
@@ -1110,7 +1110,7 @@ void IOController::getSensorInfo( Poco::JSON::Array::Ptr& jdata, std::shared_ptr
 Poco::JSON::Object::Ptr IOController::request_sensors( const string& req, const Poco::URI::QueryParameters& params )
 {
 	Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
-	Poco::JSON::Array::Ptr jsens = uniset::json::make_child_array(jdata, "sensors");
+	Poco::JSON::Array::Ptr jsens = uniset3::json::make_child_array(jdata, "sensors");
 	auto my = httpGetMyInfo(jdata);
 
 	size_t num = 0;

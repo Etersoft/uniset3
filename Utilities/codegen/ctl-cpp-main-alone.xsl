@@ -39,7 +39,7 @@
 #include "<xsl:value-of select="$CLASSNAME"/>.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 int main( int argc,char* argv[] )
 {
@@ -60,7 +60,7 @@ int main( int argc,char* argv[] )
 		if( !name.empty() )
 			ID = conf->getObjectID(name);
 
-		if( ID == uniset::DefaultObjectId )
+		if( ID == uniset3::DefaultObjectId )
 		{
 			cerr &lt;&lt; "(main): идентификатор '" &lt;&lt; name 
 				&lt;&lt; "' не найден в конф. файле!"
@@ -78,7 +78,7 @@ int main( int argc,char* argv[] )
 		act-&gt;run(false);
 		return 0;
 	}
-	catch( const uniset::Exception&amp; ex )
+	catch( const uniset3::Exception&amp; ex )
 	{
 		cerr &lt;&lt; "(main): " &lt;&lt; ex &lt;&lt; endl;
 	}

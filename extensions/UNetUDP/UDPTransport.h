@@ -23,7 +23,7 @@
 #include "UDPCore.h"
 #include "UniXML.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     class UDPReceiveTransport:
         public UNetReceiveTransport

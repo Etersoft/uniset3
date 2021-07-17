@@ -2,9 +2,9 @@
 #include "TestGen.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-TestGen::TestGen( uniset::ObjectId id, xmlNode* confnode ):
+TestGen::TestGen( uniset3::ObjectId id, xmlNode* confnode ):
     TestGen_SK( id, confnode )
 {
     vmonit(int_var);
@@ -89,7 +89,7 @@ void TestGen::httpGetUserData( Poco::JSON::Object::Ptr& jdata )
 // -----------------------------------------------------------------------------
 #endif
 // -----------------------------------------------------------------------------
-void TestGen::sysCommand( const uniset::SystemMessage* sm )
+void TestGen::sysCommand( const uniset3::SystemMessage* sm )
 {
     if( sm->command == SystemMessage::StartUp )
         askTimer(1, 2000);

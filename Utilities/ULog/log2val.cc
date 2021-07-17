@@ -2,7 +2,7 @@
 #include "Debug.h"
 #include "Configuration.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 int main( int argc, char** argv )

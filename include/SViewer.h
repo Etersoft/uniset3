@@ -29,7 +29,7 @@
 #include "UInterface.h"
 #include "PassiveTimer.h"
 //--------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     class SViewer
@@ -44,14 +44,14 @@ namespace uniset
 
         protected:
             void readSection(const std::string& sec, const std::string& secRoot);
-            void getInfo(uniset::ObjectId id);
+            void getInfo(uniset3::ObjectId id);
 
-            virtual void updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::ObjectId oid );
-            virtual void updateThresholds( IONotifyController_i::ThresholdsListSeq_var& tlst, uniset::ObjectId oid );
+            virtual void updateSensors( uniset3::SensorInfoSeq_var& amap, uniset3::ObjectId oid );
+            virtual void updateThresholds( uniset3::ThresholdsListSeq_var& tlst, uniset3::ObjectId oid );
 
             const std::string csec;
 
-            void printInfo(uniset::ObjectId id,
+            void printInfo(uniset3::ObjectId id,
                            const std::string& sname,
                            long value,
                            const std::string& supplier,

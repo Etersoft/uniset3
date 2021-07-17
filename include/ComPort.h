@@ -23,7 +23,7 @@
 #include <string>
 #include "PassiveTimer.h" // for use timeout_t
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     class ComPort

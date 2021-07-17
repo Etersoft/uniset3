@@ -23,7 +23,7 @@
 // -------------------------------------------------------------------------
 using namespace std;
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     namespace extensions
@@ -47,9 +47,9 @@ namespace uniset
             return _dlog;
         }
         // -------------------------------------------------------------------------
-        static uniset::ObjectId shmID = DefaultObjectId;
+        static uniset3::ObjectId shmID = DefaultObjectId;
 
-        uniset::ObjectId getSharedMemoryID()
+        uniset3::ObjectId getSharedMemoryID()
         {
             if( shmID != DefaultObjectId )
                 return shmID;
@@ -59,7 +59,7 @@ namespace uniset
             string sname = conf->getArgParam("--smemory-id", "SharedMemory1");
             shmID = conf->getControllerID(sname);
 
-            if( shmID == uniset::DefaultObjectId )
+            if( shmID == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << ": Unknown ID for '" << sname << "'" << endl;
@@ -156,5 +156,5 @@ namespace uniset
         }
         // --------------------------------------------------------------------------
     } // end of namespace extensions
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------

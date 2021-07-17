@@ -19,7 +19,7 @@
 #include "MessageType.h"
 #include "MQAtomic.h"
 //--------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 //--------------------------------------------------------------------------
 MQAtomic::MQAtomic( size_t qsize ):

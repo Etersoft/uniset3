@@ -4,7 +4,7 @@
 #include "LogAgregator.h"
 
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 
 std::ostringstream ss;
 std::ostringstream ss1;

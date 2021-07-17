@@ -33,15 +33,15 @@
 #include "Debug.h"
 
 // ------------------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 // объект-функция для посылки сообщения менеджеру
-class MPush: public unary_function< const std::shared_ptr<uniset::UniSetManager>&, bool>
+class MPush: public unary_function< const std::shared_ptr<uniset3::UniSetManager>&, bool>
 {
     public:
-        explicit MPush(const uniset::TransportMessage& msg): msg(msg) {}
-        bool operator()( const std::shared_ptr<uniset::UniSetManager>& m ) const
+        explicit MPush(const uniset3::TransportMessage& msg): msg(msg) {}
+        bool operator()( const std::shared_ptr<uniset3::UniSetManager>& m ) const
         {
             try
             {
@@ -59,15 +59,15 @@ class MPush: public unary_function< const std::shared_ptr<uniset::UniSetManager>
         }
 
     private:
-        const uniset::TransportMessage& msg;
+        const uniset3::TransportMessage& msg;
 };
 
 // объект-функция для посылки сообщения объекту
-class OPush: public unary_function< const std::shared_ptr<uniset::UniSetObject>&, bool>
+class OPush: public unary_function< const std::shared_ptr<uniset3::UniSetObject>&, bool>
 {
     public:
-        explicit OPush(const uniset::TransportMessage& msg): msg(msg) {}
-        bool operator()( const std::shared_ptr<uniset::UniSetObject>& o ) const
+        explicit OPush(const uniset3::TransportMessage& msg): msg(msg) {}
+        bool operator()( const std::shared_ptr<uniset3::UniSetObject>& o ) const
         {
             try
             {
@@ -82,12 +82,12 @@ class OPush: public unary_function< const std::shared_ptr<uniset::UniSetObject>&
             return false;
         }
     private:
-        const uniset::TransportMessage& msg;
+        const uniset3::TransportMessage& msg;
 };
 
 // ------------------------------------------------------------------------------------------
 UniSetManager::UniSetManager():
-    UniSetObject(uniset::DefaultObjectId),
+    UniSetObject(uniset3::DefaultObjectId),
     olistMutex("UniSetManager_olistMutex"),
     mlistMutex("UniSetManager_mlistMutex")
 {
@@ -130,7 +130,7 @@ void UniSetManager::initPOA( const std::weak_ptr<UniSetManager>& rmngr )
         ostringstream err;
         err << myname << "(initPOA): failed weak_ptr !!";
         ucrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     if( CORBA::is_nil(pman) )
@@ -146,7 +146,7 @@ void UniSetManager::initPOA( const std::weak_ptr<UniSetManager>& rmngr )
         ostringstream err;
         err << myname << "(initPOA): failed init poa ";
         ucrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     // Инициализация самого менеджера и его подобъектов
@@ -224,7 +224,7 @@ bool UniSetManager::removeObject( const std::shared_ptr<UniSetObject>& obj )
                       << " line: " << fe.line()
                       << " mesg: " << fe.errmsg() << endl;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 uwarn << myname << "(removeObject): " << ex << endl;
             }
@@ -317,7 +317,7 @@ void UniSetManager::managers( OManagerCommand cmd )
                     std::terminate();
                 }
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 ostringstream err;
                 err << myname << "(managers): " << ex << endl
@@ -416,7 +416,7 @@ void UniSetManager::objects(OManagerCommand cmd)
                     std::terminate();
                 }
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 ostringstream err;
                 err << myname << "(objects): " << ex << endl;
@@ -697,16 +697,16 @@ PortableServer::POAManager_ptr UniSetManager::getPOAManager()
     return  PortableServer::POAManager::_duplicate(pman);
 }
 // ------------------------------------------------------------------------------------------
-std::ostream& uniset::operator<<(std::ostream& os, uniset::UniSetManager::OManagerCommand& cmd )
+std::ostream& uniset3::operator<<(std::ostream& os, uniset3::UniSetManager::OManagerCommand& cmd )
 {
     // { deactiv, activ, initial, term };
-    if( cmd == uniset::UniSetManager::deactiv )
+    if( cmd == uniset3::UniSetManager::deactiv )
         return os << "deactivate";
 
-    if( cmd == uniset::UniSetManager::activ )
+    if( cmd == uniset3::UniSetManager::activ )
         return os << "activate";
 
-    if( cmd == uniset::UniSetManager::initial )
+    if( cmd == uniset3::UniSetManager::initial )
         return os << "init";
 
     return os << "unkwnown";

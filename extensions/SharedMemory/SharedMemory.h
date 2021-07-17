@@ -36,7 +36,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*! \page page_SharedMemory Реализация разделяемой между процессами памяти (SharedMemory)
@@ -340,7 +340,7 @@ namespace uniset
             // чтобы понять, когда можно получать от SM данные.
             virtual CORBA::Boolean exist() override;
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
             void addReadItem( IOConfig_XML::ReaderSlot sl );
 
@@ -349,8 +349,8 @@ namespace uniset
 
             struct HistoryItem
             {
-                explicit HistoryItem( size_t bufsize = 0 ): id(uniset::DefaultObjectId), buf(bufsize) {}
-                HistoryItem( const uniset::ObjectId _id, const size_t bufsize, const long val ): id(_id), buf(bufsize, val) {}
+                explicit HistoryItem( size_t bufsize = 0 ): id(uniset3::DefaultObjectId), buf(bufsize) {}
+                HistoryItem( const uniset3::ObjectId _id, const size_t bufsize, const long val ): id(_id), buf(bufsize, val) {}
 
                 inline void init( size_t size, long val )
                 {
@@ -358,7 +358,7 @@ namespace uniset
                         buf.assign(size, val);
                 }
 
-                uniset::ObjectId id;
+                uniset3::ObjectId id;
                 HBuffer buf;
 
                 IOStateList::iterator ioit;
@@ -386,7 +386,7 @@ namespace uniset
                 HistoryList hlst;               // history list
                 size_t size = { 0 };
                 std::string filter = { "" };    // filter field
-                uniset::ObjectId fuse_id = { uniset::DefaultObjectId };  // fuse sesnsor
+                uniset3::ObjectId fuse_id = { uniset3::DefaultObjectId };  // fuse sesnsor
                 bool fuse_invert = { false };
                 bool fuse_use_val = { false };
                 long fuse_val = { 0 };
@@ -401,7 +401,7 @@ namespace uniset
             // вводим не просто map, а "map списка историй".
             // точнее итераторов-историй.
             typedef std::list<History::iterator> HistoryItList;
-            typedef std::unordered_map<uniset::ObjectId, HistoryItList> HistoryFuseMap;
+            typedef std::unordered_map<uniset3::ObjectId, HistoryItList> HistoryFuseMap;
 
             typedef sigc::signal<void, const HistoryInfo&> HistorySlot;
             HistorySlot signal_history(); /*!< сигнал о срабатывании условий "сброса" дампа истории */
@@ -426,13 +426,13 @@ namespace uniset
             typedef std::list<IOConfig_XML::ReaderSlot> ReadSlotList;
             ReadSlotList lstRSlot;
 
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
-            virtual void timerInfo( const uniset::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
             virtual std::string getTimerName(int id) const override;
 
-            void sendEvent( uniset::SystemMessage& sm );
+            void sendEvent( uniset3::SystemMessage& sm );
             void initFromReserv();
-            bool initFromSM( uniset::ObjectId sm_id, uniset::ObjectId sm_node );
+            bool initFromSM( uniset3::ObjectId sm_id, uniset3::ObjectId sm_node );
 
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
@@ -447,15 +447,15 @@ namespace uniset
             {
                 public:
                     HeartBeatInfo():
-                        a_sid(uniset::DefaultObjectId),
-                        d_sid(uniset::DefaultObjectId),
+                        a_sid(uniset3::DefaultObjectId),
+                        d_sid(uniset3::DefaultObjectId),
                         reboot_msec(UniSetTimer::WaitUpTime),
                         timer_running(false),
                         ptReboot(UniSetTimer::WaitUpTime)
                     {}
 
-                    uniset::ObjectId a_sid; // аналоговый счётчик
-                    uniset::ObjectId d_sid; // дискретный датчик состояния процесса
+                    uniset3::ObjectId a_sid; // аналоговый счётчик
+                    uniset3::ObjectId d_sid; // дискретный датчик состояния процесса
                     IOStateList::iterator a_it;
                     IOStateList::iterator d_it;
 
@@ -490,13 +490,13 @@ namespace uniset
             std::atomic_bool workready = { false };
             std::atomic_bool cancelled = { false };
 
-            typedef std::list<uniset::ObjectId> EventList;
+            typedef std::list<uniset3::ObjectId> EventList;
             EventList elst;
             std::string e_filter;
             int evntPause;
             int activateTimeout;
 
-            virtual void logging( uniset::SensorMessage& sm ) override;
+            virtual void logging( uniset3::SensorMessage& sm ) override;
 
             bool dblogging = { false };
 
@@ -518,7 +518,7 @@ namespace uniset
             void checkHistoryFilter( UniXML::iterator& it );
 
             IOStateList::iterator itPulsar;
-            uniset::ObjectId sidPulsar;
+            uniset3::ObjectId sidPulsar;
             int msecPulsar;
 
             xmlNode* confnode;
@@ -535,7 +535,7 @@ namespace uniset
             HistorySlot m_historySignal;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // SharedMemory_H_
 // -----------------------------------------------------------------------------

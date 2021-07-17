@@ -23,7 +23,7 @@
 //--------------------------------------------------------------------------
 using namespace std;
 //--------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //--------------------------------------------------------------------------
     DigitalFilter::DigitalFilter( unsigned int bufsize, double T, double lsq,
@@ -307,4 +307,4 @@ namespace uniset
         return prev;
     }
     //--------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

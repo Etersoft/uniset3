@@ -28,16 +28,16 @@
 #include "ObjectIndex_Array.h"
 
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace UniversalIO;
 using namespace std;
 // --------------------------------------------------------------------------
 SViewer::SViewer(const string& csec, bool sn):
 	csec(csec),
-	rep(uniset::uniset_conf()),
+	rep(uniset3::uniset_conf()),
 	isShortName(sn)
 {
-	ui = make_shared<UInterface>(uniset::uniset_conf());
+	ui = make_shared<UInterface>(uniset3::uniset_conf());
 	ui->setCacheMaxSize(500);
 }
 
@@ -61,7 +61,7 @@ void SViewer::view()
 	{
 		readSection(csec, "");
 	}
-	catch( const uniset::Exception& ex )
+	catch( const uniset3::Exception& ex )
 	{
 		cerr << ex << endl;
 	}
@@ -141,7 +141,7 @@ void SViewer::readSection( const string& section, const string& secRoot )
 					else
 						getInfo(id);
 				}
-				catch( const uniset::Exception& ex )
+				catch( const uniset3::Exception& ex )
 				{
 					cout << "(readSection): " << ex << endl;
 				}
@@ -162,7 +162,7 @@ void SViewer::getInfo( ObjectId id )
 		if( CORBA::is_nil(oref) )
 			oref = ui->resolve(id);
 
-		IONotifyController_i_var ioc = IONotifyController_i::_narrow(oref);
+		IONotifyController_i_var ioc = uniset3::_narrow(oref);
 
 		if( CORBA::is_nil(ioc) )
 		{
@@ -173,23 +173,23 @@ void SViewer::getInfo( ObjectId id )
 
 		try
 		{
-			IOController_i::SensorInfoSeq_var amap = ioc->getSensorsMap();
+			uniset3::SensorInfoSeq_var amap = ioc->getSensorsMap();
 			updateSensors(amap, id);
 		}
-		catch( const IOController_i::NameNotFound& ex ) {}
+		catch( const uniset3::NameNotFound& ex ) {}
 		catch(...) {}
 
 		try
 		{
-			IONotifyController_i::ThresholdsListSeq_var tlst = ioc->getThresholdsList();
+			uniset3::ThresholdsListSeq_var tlst = ioc->getThresholdsList();
 			updateThresholds(tlst, id);
 		}
-		catch( const IOController_i::NameNotFound& ex ) {}
+		catch( const uniset3::NameNotFound& ex ) {}
 		catch(...) {}
 
 		return;
 	}
-	catch( const uniset::Exception& ex )
+	catch( const uniset3::Exception& ex )
 	{
 		cout << "(getInfo):" << ex << endl;
 	}
@@ -201,7 +201,7 @@ void SViewer::getInfo( ObjectId id )
 }
 
 // ---------------------------------------------------------------------------
-void SViewer::updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::ObjectId oid )
+void SViewer::updateSensors( uniset3::SensorInfoSeq_var& amap, uniset3::ObjectId oid )
 {
 	const string owner = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(oid));
 	cout << "\n======================================================\n"
@@ -213,7 +213,7 @@ void SViewer::updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::Ob
 
 	for(int i = 0; i < size; i++)
 	{
-		if( amap[i].type == UniversalIO::AI || amap[i].type == UniversalIO::DI )
+		if( amap[i].type == uniset3::AI || amap[i].type == uniset3::DI )
 		{
 			string name(uniset_conf()->oind->getNameById(amap[i].si.id));
 
@@ -222,11 +222,11 @@ void SViewer::updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::Ob
 
 			string supplier = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(amap[i].supplier));
 
-			if( amap[i].supplier == uniset::AdminID )
+			if( amap[i].supplier == uniset3::AdminID )
 				supplier = "uniset-admin";
 
 			const string txtname( uniset_conf()->oind->getTextName(amap[i].si.id) );
-			printInfo( amap[i].si.id, name, amap[i].value, supplier, txtname, (amap[i].type == UniversalIO::AI ? "AI" : "DI") );
+			printInfo( amap[i].si.id, name, amap[i].value, supplier, txtname, (amap[i].type == uniset3::AI ? "AI" : "DI") );
 		}
 	}
 
@@ -238,7 +238,7 @@ void SViewer::updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::Ob
 
 	for(int i = 0; i < size; i++)
 	{
-		if( amap[i].type == UniversalIO::AO || amap[i].type == UniversalIO::DO )
+		if( amap[i].type == uniset3::AO || amap[i].type == uniset3::DO )
 		{
 			string name(uniset_conf()->oind->getNameById(amap[i].si.id));
 
@@ -247,11 +247,11 @@ void SViewer::updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::Ob
 
 			string supplier = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(amap[i].supplier));
 
-			if( amap[i].supplier == uniset::AdminID )
+			if( amap[i].supplier == uniset3::AdminID )
 				supplier = "uniset-admin";
 
 			const string txtname( uniset_conf()->oind->getTextName(amap[i].si.id) );
-			printInfo( amap[i].si.id, name, amap[i].value, supplier, txtname, (amap[i].type == UniversalIO::AO ? "AO" : "DO"));
+			printInfo( amap[i].si.id, name, amap[i].value, supplier, txtname, (amap[i].type == uniset3::AO ? "AO" : "DO"));
 		}
 	}
 
@@ -259,7 +259,7 @@ void SViewer::updateSensors( IOController_i::SensorInfoSeq_var& amap, uniset::Ob
 
 }
 // ---------------------------------------------------------------------------
-void SViewer::updateThresholds( IONotifyController_i::ThresholdsListSeq_var& tlst, uniset::ObjectId oid )
+void SViewer::updateThresholds( uniset3::ThresholdsListSeq_var& tlst, uniset3::ObjectId oid )
 {
 	int size = tlst->length();
 	const string owner = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(oid));
@@ -273,11 +273,11 @@ void SViewer::updateThresholds( IONotifyController_i::ThresholdsListSeq_var& tls
 
 		switch( tlst[i].type  )
 		{
-			case UniversalIO::AI:
+			case uniset3::AI:
 				cout << "AI";
 				break;
 
-			case UniversalIO::AO:
+			case uniset3::AO:
 				cout << "AO";
 				break;
 
@@ -297,7 +297,7 @@ void SViewer::updateThresholds( IONotifyController_i::ThresholdsListSeq_var& tls
 
 		for( auto k = 0; k < m; k++ )
 		{
-			IONotifyController_i::ThresholdInfo* ti = &tlst[i].tlist[k];
+			uniset3::ThresholdInfo* ti = &tlst[i].tlist[k];
 			cout << "\t(" << setw(3) << ti->id << ")  |  " << setw(5) << ti->state << "  |  hi: " << setw(5) << ti->hilimit;
 			cout << " | low: " << setw(5) << ti->lowlimit;
 			cout << endl;
@@ -306,7 +306,7 @@ void SViewer::updateThresholds( IONotifyController_i::ThresholdsListSeq_var& tls
 }
 // ---------------------------------------------------------------------------
 
-void SViewer::printInfo(uniset::ObjectId id, const string& sname, long value, const string& supplier,
+void SViewer::printInfo(uniset3::ObjectId id, const string& sname, long value, const string& supplier,
 						const string& txtname, const string& iotype)
 {
 	std::ios_base::fmtflags old_flags = cout.flags();

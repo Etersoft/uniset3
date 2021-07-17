@@ -20,7 +20,7 @@
 #include <memory>
 #include "IOControl.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! Специальный "управляемый тестами" интерфейс карты в/в. */
     class FakeComediInterface final:
@@ -64,12 +64,12 @@ namespace uniset
         public IOControl
     {
         public:
-            FakeIOControl( uniset::ObjectId id, uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& shm = nullptr, int numcards = 2, const std::string& prefix = "io" );
+            FakeIOControl( uniset3::ObjectId id, uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& shm = nullptr, int numcards = 2, const std::string& prefix = "io" );
             virtual ~FakeIOControl();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<FakeIOControl> init_iocontrol( int argc, const char* const* argv,
-                    uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "io" );
 
 
@@ -81,7 +81,7 @@ namespace uniset
         private:
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // FakeIOControl_H_
 // -----------------------------------------------------------------------------

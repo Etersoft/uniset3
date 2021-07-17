@@ -24,7 +24,7 @@
  */
 //--------------------------------------------------------------------------
 #include <string>
-namespace uniset
+namespace uniset3
 {
 
     class WDTInterface

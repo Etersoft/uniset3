@@ -33,14 +33,14 @@
 #include "UniSetTypes.h"
 #include "ObjectIndex.h"
 #include "ObjectRepository.h"
-#include "IOController_i.hh"
+#include "IOController.pb.h"
 #include "MessageType.h"
 #include "Configuration.h"
 #ifndef DISABLE_REST_API
 #include "UHttpClient.h"
 #endif
 // -----------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*!
      * \class UInterface
@@ -55,174 +55,174 @@ namespace uniset
     {
         public:
 
-            UInterface( const uniset::ObjectId backid, CORBA::ORB_var orb = NULL, const std::shared_ptr<uniset::ObjectIndex> oind = nullptr );
-            UInterface( const std::shared_ptr<uniset::Configuration>& uconf = uniset::uniset_conf() );
+            UInterface( const uniset3::ObjectId backid, CORBA::ORB_var orb = NULL, const std::shared_ptr<uniset3::ObjectIndex> oind = nullptr );
+            UInterface( const std::shared_ptr<uniset3::Configuration>& uconf = uniset3::uniset_conf() );
             ~UInterface();
 
             // ---------------------------------------------------------------
             // Работа с датчиками
 
             //! Получение состояния датчика
-            long getValue (const uniset::ObjectId id, const uniset::ObjectId node) const;
-            long getValue ( const uniset::ObjectId id ) const;
-            long getRawValue( const IOController_i::SensorInfo& si );
+            long getValue (const uniset3::ObjectId id, const uniset3::ObjectId node) const;
+            long getValue ( const uniset3::ObjectId id ) const;
+            long getRawValue( const uniset3::SensorInfo& si );
 
             //! Выставление состояния датчика
-            void setValue ( const uniset::ObjectId id, long value, const uniset::ObjectId node, uniset::ObjectId sup_id = uniset::DefaultObjectId ) const;
-            void setValue ( const uniset::ObjectId id, long value ) const;
-            void setValue ( const IOController_i::SensorInfo& si, long value, const uniset::ObjectId supplier ) const;
+            void setValue ( const uniset3::ObjectId id, long value, const uniset3::ObjectId node, uniset3::ObjectId sup_id = uniset3::DefaultObjectId ) const;
+            void setValue ( const uniset3::ObjectId id, long value ) const;
+            void setValue ( const uniset3::SensorInfo& si, long value, const uniset3::ObjectId supplier ) const;
 
             // fast - это удалённый вызов "без подтверждения", он быстрее, но менее надёжен
             // т.к. вызывающий никогда не узнает об ошибке, если она была (датчик такой не найден и т.п.)
-            void fastSetValue( const IOController_i::SensorInfo& si, long value, uniset::ObjectId supplier ) const;
+            void fastSetValue( const uniset3::SensorInfo& si, long value, uniset3::ObjectId supplier ) const;
 
             //! Получение состояния для списка указанных датчиков
-            IOController_i::SensorInfoSeq_var getSensorSeq( const uniset::IDList& lst );
+            uniset3::SensorInfoSeq getSensorSeq( const uniset3::IDList& lst );
 
             //! Получение состояния информации о датчике
-            IOController_i::SensorIOInfo getSensorIOInfo( const IOController_i::SensorInfo& si );
+            uniset3::SensorIOInfo getSensorIOInfo( const uniset3::SensorInfo& si );
 
             /*! Изменения состояния списка входов/выходов
                 \return Возвращает список не найденных идентификаторов */
-            uniset::IDSeq_var setOutputSeq( const IOController_i::OutSeq& lst, uniset::ObjectId sup_id );
+            uniset3::IDSeq setOutputSeq( const uniset3::OutSeq& lst, uniset3::ObjectId sup_id );
 
             // ---------------------------------------------------------------
             // Заказ датчиков
 
             //! Универсальный заказ информации об изменении датчика
-            void askSensor( const uniset::ObjectId id, UniversalIO::UIOCommand cmd,
-                            uniset::ObjectId backid = uniset::DefaultObjectId ) const;
+            void askSensor( const uniset3::ObjectId id, uniset3::UIOCommand cmd,
+                            uniset3::ObjectId backid = uniset3::DefaultObjectId ) const;
 
-            void askRemoteSensor( const uniset::ObjectId id, UniversalIO::UIOCommand cmd, const uniset::ObjectId node,
-                                  uniset::ObjectId backid = uniset::DefaultObjectId ) const;
+            void askRemoteSensor( const uniset3::ObjectId id, uniset3::UIOCommand cmd, const uniset3::ObjectId node,
+                                  uniset3::ObjectId backid = uniset3::DefaultObjectId ) const;
 
             //! Заказ по списку
-            uniset::IDSeq_var askSensorsSeq( const uniset::IDList& lst, UniversalIO::UIOCommand cmd,
-                                             uniset::ObjectId backid = uniset::DefaultObjectId );
+            uniset3::IDSeq askSensorsSeq( const uniset3::IDList& lst, uniset3::UIOCommand cmd,
+                                             uniset3::ObjectId backid = uniset3::DefaultObjectId );
             // ------------------------------------------------------
 
             // установка неопределённого состояния
-            void setUndefinedState( const IOController_i::SensorInfo& si, bool undefined, uniset::ObjectId supplier );
+            void setUndefinedState( const uniset3::SensorInfo& si, bool undefined, uniset3::ObjectId supplier );
 
             // заморозка значения (выставить указанный value и не менять)
-            void freezeValue( const IOController_i::SensorInfo& si, bool set, long value, uniset::ObjectId supplier = uniset::DefaultObjectId );
+            void freezeValue( const uniset3::SensorInfo& si, bool set, long value, uniset3::ObjectId supplier = uniset3::DefaultObjectId );
             // ---------------------------------------------------------------
             // Калибровка... пороги...
 
             //! калибровка
-            void calibrate(const IOController_i::SensorInfo& si,
-                           const IOController_i::CalibrateInfo& ci,
-                           uniset::ObjectId adminId = uniset::DefaultObjectId );
+            void calibrate(const uniset3::SensorInfo& si,
+                           const uniset3::CalibrateInfo& ci,
+                           uniset3::ObjectId adminId = uniset3::DefaultObjectId );
 
-            IOController_i::CalibrateInfo getCalibrateInfo( const IOController_i::SensorInfo& si );
+            uniset3::CalibrateInfo getCalibrateInfo( const uniset3::SensorInfo& si );
 
             //! Заказ информации об изменении порога
-            void askThreshold( const uniset::ObjectId sensorId, const uniset::ThresholdId tid,
-                               UniversalIO::UIOCommand cmd,
+            void askThreshold( const uniset3::ObjectId sensorId, const uniset3::ThresholdId tid,
+                               uniset3::UIOCommand cmd,
                                long lowLimit, long hiLimit, bool invert = false,
-                               uniset::ObjectId backid = uniset::DefaultObjectId ) const;
+                               uniset3::ObjectId backid = uniset3::DefaultObjectId ) const;
 
-            void askRemoteThreshold( const uniset::ObjectId sensorId, const uniset::ObjectId node,
-                                     const uniset::ThresholdId thresholdId, UniversalIO::UIOCommand cmd,
+            void askRemoteThreshold( const uniset3::ObjectId sensorId, const uniset3::ObjectId node,
+                                     const uniset3::ThresholdId thresholdId, uniset3::UIOCommand cmd,
                                      long lowLimit, long hiLimit, bool invert = false,
-                                     uniset::ObjectId backid = uniset::DefaultObjectId ) const;
+                                     uniset3::ObjectId backid = uniset3::DefaultObjectId ) const;
 
-            IONotifyController_i::ThresholdInfo getThresholdInfo( const IOController_i::SensorInfo& si, const uniset::ThresholdId tid ) const;
-            IONotifyController_i::ThresholdInfo getThresholdInfo( const uniset::ObjectId sid, const uniset::ThresholdId tid ) const;
+            uniset3::ThresholdInfo getThresholdInfo( const uniset3::SensorInfo& si, const uniset3::ThresholdId tid ) const;
+            uniset3::ThresholdInfo getThresholdInfo( const uniset3::ObjectId sid, const uniset3::ThresholdId tid ) const;
 
             // ---------------------------------------------------------------
             // Вспомогательные функции
 
-            UniversalIO::IOType getIOType(const uniset::ObjectId id, uniset::ObjectId node) const;
-            UniversalIO::IOType getIOType(const uniset::ObjectId id) const;
+            uniset3::IOType getIOType(const uniset3::ObjectId id, uniset3::ObjectId node) const;
+            uniset3::IOType getIOType(const uniset3::ObjectId id) const;
 
             // read from xml (only for xml!) т.е. без удалённого запроса
-            UniversalIO::IOType getConfIOType( const uniset::ObjectId id ) const noexcept;
+            uniset3::IOType getConfIOType( const uniset3::ObjectId id ) const noexcept;
 
             // Получение типа объекта..
-            uniset::ObjectType getType(const uniset::ObjectId id, const uniset::ObjectId node) const;
-            uniset::ObjectType getType(const uniset::ObjectId id) const;
+            uniset3::ObjectType getType(const uniset3::ObjectId id, const uniset3::ObjectId node) const;
+            uniset3::ObjectType getType(const uniset3::ObjectId id) const;
 
             //! Время последнего изменения датчика
-            IOController_i::ShortIOInfo getTimeChange( const uniset::ObjectId id, const uniset::ObjectId node ) const;
+            uniset3::ShortIOInfo getTimeChange( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
 
             //! Информация об объекте
-            std::string getObjectInfo( const uniset::ObjectId id, const std::string& params, const uniset::ObjectId node ) const;
-            std::string apiRequest( const uniset::ObjectId id, const std::string& query, const uniset::ObjectId node ) const;
+            std::string getObjectInfo( const uniset3::ObjectId id, const std::string& params, const uniset3::ObjectId node ) const;
+            std::string apiRequest( const uniset3::ObjectId id, const std::string& query, const uniset3::ObjectId node ) const;
 
             //! Получить список датчиков
-            IOController_i::ShortMapSeq* getSensors( const uniset::ObjectId id,
-                    const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() );
+            uniset3::ShortMapSeq* getSensors( const uniset3::ObjectId id,
+                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
 
-            IOController_i::SensorInfoSeq* getSensorsMap( const uniset::ObjectId id,
-                    const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() );
+            uniset3::SensorInfoSeq* getSensorsMap( const uniset3::ObjectId id,
+                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
 
-            IONotifyController_i::ThresholdsListSeq* getThresholdsList( const uniset::ObjectId id,
-                    const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() );
+            uniset3::ThresholdsListSeq* getThresholdsList( const uniset3::ObjectId id,
+                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------
             // Работа с репозиторием
 
             /*! регистрация объекта в репозитории
-             *  throw(uniset::ORepFailed)
+             *  throw(uniset3::ORepFailed)
              */
-            void registered(const uniset::ObjectId id, const uniset::ObjectPtr oRef, bool force = false) const;
+            void registered(const uniset3::ObjectId id, const uniset3::ObjectPtr oRef, bool force = false) const;
 
-            // throw(uniset::ORepFailed)
-            void unregister(const uniset::ObjectId id);
+            // throw(uniset3::ORepFailed)
+            void unregister(const uniset3::ObjectId id);
 
-            uniset::ObjectPtr resolve( const std::string& name ) const;
-            uniset::ObjectPtr resolve( const uniset::ObjectId id ) const;
+            uniset3::ObjectPtr resolve( const std::string& name ) const;
+            uniset3::ObjectPtr resolve( const uniset3::ObjectId id ) const;
 
-            // throw(uniset::ResolveNameError, uniset::TimeOut);
-            uniset::ObjectPtr resolve(const uniset::ObjectId id, const uniset::ObjectId nodeName) const;
+            // throw(uniset3::ResolveNameError, uniset3::TimeOut);
+            uniset3::ObjectPtr resolve(const uniset3::ObjectId id, const uniset3::ObjectId nodeName) const;
 
             // Проверка доступности объекта или датчика
-            bool isExist( const uniset::ObjectId id ) const noexcept;
-            bool isExist( const uniset::ObjectId id, const uniset::ObjectId node ) const noexcept;
+            bool isExist( const uniset3::ObjectId id ) const noexcept;
+            bool isExist( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
 
             //! used for check 'isExist' \deprecated! Use waitReadyWithCancellation(..)
-            bool waitReady( const uniset::ObjectId id, int msec, int pause = 5000,
-                            const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() ) noexcept;
+            bool waitReady( const uniset3::ObjectId id, int msec, int pause = 5000,
+                            const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() ) noexcept;
 
             //! used for check 'getValue'
-            bool waitWorking( const uniset::ObjectId id, int msec, int pause = 3000,
-                              const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() ) noexcept;
+            bool waitWorking( const uniset3::ObjectId id, int msec, int pause = 3000,
+                              const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() ) noexcept;
 
-            bool waitReadyWithCancellation( const uniset::ObjectId id, int msec, std::atomic_bool& cancelFlag, int pause = 5000,
-                                            const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode() ) noexcept;
+            bool waitReadyWithCancellation( const uniset3::ObjectId id, int msec, std::atomic_bool& cancelFlag, int pause = 5000,
+                                            const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() ) noexcept;
 
             // ---------------------------------------------------------------
             // Работа с ID, Name
 
             /*! получение идентификатора объекта по имени */
-            inline uniset::ObjectId getIdByName( const std::string& name ) const noexcept
+            inline uniset3::ObjectId getIdByName( const std::string& name ) const noexcept
             {
                 return oind->getIdByName(name);
             }
 
             /*! получение имени по идентификатору объекта */
-            inline std::string getNameById( const uniset::ObjectId id ) const noexcept
+            inline std::string getNameById( const uniset3::ObjectId id ) const noexcept
             {
                 return oind->getNameById(id);
             }
 
-            inline uniset::ObjectId getNodeId( const std::string& fullname ) const noexcept
+            inline uniset3::ObjectId getNodeId( const std::string& fullname ) const noexcept
             {
                 return oind->getNodeId(fullname);
             }
 
-            inline std::string getTextName( const uniset::ObjectId id ) const noexcept
+            inline std::string getTextName( const uniset3::ObjectId id ) const noexcept
             {
                 return oind->getTextName(id);
             }
 
             // ---------------------------------------------------------------
             // Получение указателей на вспомогательные классы.
-            inline const std::shared_ptr<uniset::ObjectIndex> getObjectIndex() noexcept
+            inline const std::shared_ptr<uniset3::ObjectIndex> getObjectIndex() noexcept
             {
                 return oind;
             }
-            inline const std::shared_ptr<uniset::Configuration> getConf() noexcept
+            inline const std::shared_ptr<uniset3::Configuration> getConf() noexcept
             {
                 return uconf;
             }
@@ -230,10 +230,10 @@ namespace uniset
             // Посылка сообщений
 
             /*! посылка сообщения msg объекту name на узел node */
-            void send( const uniset::ObjectId name, const uniset::TransportMessage& msg, uniset::ObjectId node );
-            void send( const uniset::ObjectId name, const uniset::TransportMessage& msg);
-            void sendText(const uniset::ObjectId name, const std::string& text, int mtype, const uniset::ObjectId node = uniset::DefaultObjectId );
-            void sendText(const uniset::ObjectId name, const uniset::TextMessage& msg, const uniset::ObjectId node = uniset::DefaultObjectId );
+            void send( const uniset3::ObjectId name, const uniset3::TransportMessage& msg, uniset3::ObjectId node );
+            void send( const uniset3::ObjectId name, const uniset3::TransportMessage& msg);
+            void sendText(const uniset3::ObjectId name, const std::string& text, int mtype, const uniset3::ObjectId node = uniset3::DefaultObjectId );
+            void sendText(const uniset3::ObjectId name, const uniset3::TextMessage& msg, const uniset3::ObjectId node = uniset3::DefaultObjectId );
 
             // ---------------------------------------------------------------
             // Вспомогательный класс для кэширования ссылок на удалённые объекты
@@ -251,11 +251,11 @@ namespace uniset
                         MaxSize(maxsize), minCallCount(cleancount) {};
                     ~CacheOfResolve() {};
 
-                    //  throw(uniset::NameNotFound, uniset::SystemError)
-                    uniset::ObjectPtr resolve( const uniset::ObjectId id, const uniset::ObjectId node ) const;
+                    //  throw(uniset3::NameNotFound, uniset3::SystemError)
+                    uniset3::ObjectPtr resolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
 
-                    void cache(const uniset::ObjectId id, const uniset::ObjectId node, uniset::ObjectVar& ptr ) const;
-                    void erase( const uniset::ObjectId id, const uniset::ObjectId node ) const noexcept;
+                    void cache(const uniset3::ObjectId id, const uniset3::ObjectId node, uniset3::ObjectVar& ptr ) const;
+                    void erase( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
 
                     inline void setMaxSize( size_t ms ) noexcept
                     {
@@ -270,16 +270,16 @@ namespace uniset
                     bool clean() noexcept;       /*!< функция очистки кэш-а от старых ссылок */
                     inline void clear() noexcept /*!< удаление всей информации */
                     {
-                        uniset::uniset_rwmutex_wrlock l(cmutex);
+                        uniset3::uniset_rwmutex_wrlock l(cmutex);
                         mcache.clear();
                     };
 
                     struct Item
                     {
-                        Item( const uniset::ObjectVar& ptr ): ptr(ptr), ncall(0) {}
+                        Item( const uniset3::ObjectVar& ptr ): ptr(ptr), ncall(0) {}
                         Item(): ptr(NULL), ncall(0) {}
 
-                        uniset::ObjectVar ptr;
+                        uniset3::ObjectVar ptr;
                         size_t ncall; // счётчик обращений
 
                         bool operator<( const CacheOfResolve::Item& rhs ) const
@@ -288,29 +288,29 @@ namespace uniset
                         }
                     };
 
-                    typedef std::unordered_map<uniset::KeyType, Item> CacheMap;
+                    typedef std::unordered_map<uniset3::KeyType, Item> CacheMap;
                     mutable CacheMap mcache;
-                    mutable uniset::uniset_rwmutex cmutex;
+                    mutable uniset3::uniset_rwmutex cmutex;
                     size_t MaxSize = { 20 };      /*!< максимальный размер кэша */
                     size_t minCallCount = { 20 }; /*!< минимальное количество вызовов, меньше которого ссылка считается устаревшей */
             };
 
-            void initBackId( uniset::ObjectId backid );
+            void initBackId( uniset3::ObjectId backid );
 
         protected:
-            std::string set_err(const std::string& pre, const uniset::ObjectId id, const uniset::ObjectId node) const;
-            std::string httpResolve( const uniset::ObjectId id, const uniset::ObjectId node ) const;
+            std::string set_err(const std::string& pre, const uniset3::ObjectId id, const uniset3::ObjectId node) const;
+            std::string httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
 
         private:
             void init();
 
             ObjectRepository rep;
-            uniset::ObjectId myid;
+            uniset3::ObjectId myid;
             mutable CosNaming::NamingContext_var localctx;
             mutable CORBA::ORB_var orb;
             CacheOfResolve rcache;
-            std::shared_ptr<uniset::ObjectIndex> oind;
-            std::shared_ptr<uniset::Configuration> uconf;
+            std::shared_ptr<uniset3::ObjectIndex> oind;
+            std::shared_ptr<uniset3::Configuration> uconf;
 #ifndef DISABLE_REST_API
             mutable UHttp::UHttpClient resolver;
 #endif

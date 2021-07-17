@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 //----------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! \class ThreadCreator
      *    Шаблон для создания потоков с указанием функции вызова.

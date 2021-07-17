@@ -20,7 +20,7 @@
 #include "IOController.h"
 #include "IONotifyController.h"
 // ------------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! Интерфейс конфигурирования IOController-ов */
     class IOConfig

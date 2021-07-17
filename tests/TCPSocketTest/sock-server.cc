@@ -10,14 +10,14 @@ int main(int argc, const char** argv)
 {
     try
     {
-        uniset::UTCPSocket sock("localhost", 2048);
+        uniset3::UTCPSocket sock("localhost", 2048);
 
         while(true)
         {
             Net::StreamSocket ss = sock.acceptConnection();
             Poco::FIFOBuffer buf(1000);
 
-            if( ss.poll(uniset::UniSetTimer::millisecToPoco(5000), Poco::Net::Socket::SELECT_READ) )
+            if( ss.poll(uniset3::UniSetTimer::millisecToPoco(5000), Poco::Net::Socket::SELECT_READ) )
             {
                 int r = ss.receiveBytes(buf);
 

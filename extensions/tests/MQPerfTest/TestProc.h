@@ -8,7 +8,7 @@ class TestProc:
     public TestProc_SK
 {
     public:
-        TestProc( uniset::ObjectId id, xmlNode* confnode );
+        TestProc( uniset3::ObjectId id, xmlNode* confnode );
         virtual ~TestProc();
 
         bool isFullQueue();

@@ -28,7 +28,7 @@
 #include "Exceptions.h"
 #include "ComPort485F.h"
 // --------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------------
 /* This is for RTS control (through GPIO) */
@@ -163,7 +163,7 @@ unsigned char ComPort485F::m_receiveByte( bool wait )
 		}
 
 		if( rc <= 0 )
-			throw uniset::TimeOut();
+			throw uniset3::TimeOut();
 	}
 
 
@@ -200,7 +200,7 @@ ssize_t ComPort485F::sendBlock(unsigned char* msg, size_t len )
 			m_read(2000);
 		}
 	}
-	catch( const uniset::Exception& )
+	catch( const uniset3::Exception& )
 	{
 		if( tmit_ctrl_on )
 		{
@@ -243,7 +243,7 @@ void ComPort485F::sendByte( unsigned char x )
 		wq.push(x);
 		m_read(2000);
 	}
-	catch( const uniset::Exception& )
+	catch( const uniset3::Exception& )
 	{
 		if( tmit_ctrl_on )
 		{

@@ -18,11 +18,11 @@
 #include "Extensions.h"
 #include "TA2D.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -------------------------------------------------------------------------
     TA2D::TA2D(Element::ElementID id, long filterValue ):
         Element(id),
@@ -60,4 +60,4 @@ namespace uniset
         fvalue = value;
     }
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

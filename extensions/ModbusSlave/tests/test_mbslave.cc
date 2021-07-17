@@ -8,7 +8,7 @@
 #include "modbus/ModbusTCPMaster.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static ModbusRTU::ModbusAddr slaveaddr = 0x01;
 static ModbusRTU::ModbusAddr slaveaddr2 = 0x02;
@@ -675,10 +675,10 @@ static void test_write10_F2( const float& val )
     REQUIRE( ret.quant == F2::wsize() );
 
     auto conf = uniset_conf();
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 2007;
     si.node = conf->getLocalNode();
-    IOController_i::CalibrateInfo cal = ui->getCalibrateInfo(si);
+    uniset3::CalibrateInfo cal = ui->getCalibrateInfo(si);
     float fval = (float)ui->getValue(si.id) / pow(10.0, cal.precision);
 
     REQUIRE( fval == val );
@@ -696,10 +696,10 @@ static void test_write10_F2r( const float& val )
     REQUIRE( ret.quant == F2r::wsize() );
 
     auto conf = uniset_conf();
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 2008;
     si.node = conf->getLocalNode();
-    IOController_i::CalibrateInfo cal = ui->getCalibrateInfo(si);
+    uniset3::CalibrateInfo cal = ui->getCalibrateInfo(si);
     float fval = (float)ui->getValue(si.id) / pow(10.0, cal.precision);
 
     REQUIRE( fval == val );
@@ -720,7 +720,7 @@ static void test_write10_F4raw( const float& val )
     REQUIRE( ret.quant == F4::wsize() );
 
     auto conf = uniset_conf();
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 2013;
     si.node = conf->getLocalNode();
 
@@ -745,10 +745,10 @@ static void test_write10_F4prec( const float& val )
     REQUIRE( ret.quant == F4::wsize() );
 
     auto conf = uniset_conf();
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 2009;
     si.node = conf->getLocalNode();
-    IOController_i::CalibrateInfo cal = ui->getCalibrateInfo(si);
+    uniset3::CalibrateInfo cal = ui->getCalibrateInfo(si);
     float fval = (float)ui->getValue(si.id) / pow(10.0, cal.precision);
 
     REQUIRE( fval == val );
@@ -1090,7 +1090,7 @@ TEST_CASE("write10: 10 registers", "[modbus][mbslave][mbtcpslave][writemore]")
     using namespace VTypes;
     InitTest();
 
-    uniset::ObjectId id = 2036;
+    uniset3::ObjectId id = 2036;
     int offset = 2;
     ModbusRTU::ModbusData tREG = 150 - offset; // реальные регистры начинаются с 150
     size_t num = 10;

@@ -27,7 +27,7 @@
 #include "SMInterface.h"
 #include "LProcessor.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -------------------------------------------------------------------------
     /*! Реализация LogicProccessor основанная на заказе датчиков */
@@ -37,8 +37,8 @@ namespace uniset
     {
         public:
 
-            PassiveLProcessor(uniset::ObjectId objId,
-                              uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr, const std::string& prefix = "lproc" );
+            PassiveLProcessor(uniset3::ObjectId objId,
+                              uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr, const std::string& prefix = "lproc" );
             virtual ~PassiveLProcessor();
 
             enum Timers
@@ -49,7 +49,7 @@ namespace uniset
             static void help_print( int argc, const char* const* argv );
 
             static std::shared_ptr<PassiveLProcessor> init_plproc( int argc, const char* const* argv,
-                    uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "plproc" );
 
         protected:
@@ -59,10 +59,10 @@ namespace uniset
             virtual void getInputs() override;
             virtual void setOuts() override;
 
-            void sysCommand( const uniset::SystemMessage* msg ) override;
-            void sensorInfo( const uniset::SensorMessage* sm ) override;
-            void timerInfo( const uniset::TimerMessage* tm ) override;
-            void askSensors( const UniversalIO::UIOCommand cmd );
+            void sysCommand( const uniset3::SystemMessage* msg ) override;
+            void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            void timerInfo( const uniset3::TimerMessage* tm ) override;
+            void askSensors( const uniset3::UIOCommand cmd );
             //        void initOutput();
 
             void initIterators();
@@ -73,13 +73,13 @@ namespace uniset
 
         private:
             PassiveTimer ptHeartBeat;
-            uniset::ObjectId sidHeartBeat = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidHeartBeat = { uniset3::DefaultObjectId };
             int maxHeartBeat = { 10 };
             IOController::IOStateList::iterator itHeartBeat;
             std::mutex mutex_start;
             std::atomic_bool cannceled = { false };
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // ---------------------------------------------------------------------------
 #endif

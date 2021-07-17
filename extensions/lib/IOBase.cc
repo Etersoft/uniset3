@@ -22,7 +22,7 @@
 // -----------------------------------------------------------------------------
 using namespace std;
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, IOBase& inf )
@@ -81,7 +81,7 @@ namespace uniset
         if( d_id == DefaultObjectId )
             return true;
 
-        if( d_iotype == UniversalIO::DI || d_iotype == UniversalIO::DO  )
+        if( d_iotype == uniset3::DI || d_iotype == uniset3::DO  )
         {
             if( (bool)shm->localGetValue(d_it, d_id) == (bool)d_value )
                 return true;
@@ -89,7 +89,7 @@ namespace uniset
             return false;
         }
 
-        if( d_iotype == UniversalIO::AI || d_iotype == UniversalIO::AO )
+        if( d_iotype == uniset3::AI || d_iotype == uniset3::AO )
         {
             if( shm->localGetValue(d_it, d_id) == d_value )
                 return true;
@@ -194,7 +194,7 @@ namespace uniset
     // -----------------------------------------------------------------------------
     void IOBase::processingAsAI( IOBase* it, long val, const std::shared_ptr<SMInterface>& shm, bool force )
     {
-        if( it->stype == UniversalIO::DI || it->stype == UniversalIO::DO )
+        if( it->stype == uniset3::DI || it->stype == uniset3::DO )
         {
             val = (val ? 1 : 0);
         }
@@ -241,10 +241,10 @@ namespace uniset
                     }
                     else
                     {
-                        IOController_i::CalibrateInfo* cal( &(it->cal) );
+                        uniset3::CalibrateInfo* cal( &(it->cal) );
 
                         if( cal->maxRaw != cal->minRaw ) // задана обычная калибровка
-                            val = uniset::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
+                            val = uniset3::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
                     }
 
                     if( !it->noprecision && it->cal.precision != 0 )
@@ -274,7 +274,7 @@ namespace uniset
     {
         long val = lroundf(fval);
 
-        if( it->stype == UniversalIO::DI || it->stype == UniversalIO::DO )
+        if( it->stype == uniset3::DI || it->stype == uniset3::DO )
             val = (fval != 0 ? 1 : 0);
         else
         {
@@ -311,10 +311,10 @@ namespace uniset
 
                 if( !it->rawdata )
                 {
-                    IOController_i::CalibrateInfo* cal( &(it->cal) );
+                    uniset3::CalibrateInfo* cal( &(it->cal) );
 
                     if( cal->maxRaw != cal->minRaw ) // задана обычная калибровка
-                        val = uniset::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
+                        val = uniset3::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
                 }
             }
         }
@@ -339,7 +339,7 @@ namespace uniset
     {
         long val = lroundf(fval);
 
-        if( it->stype == UniversalIO::DI || it->stype == UniversalIO::DO )
+        if( it->stype == uniset3::DI || it->stype == uniset3::DO )
             val = (fval != 0 ? 1 : 0);
         else
         {
@@ -376,10 +376,10 @@ namespace uniset
 
                 if( !it->rawdata )
                 {
-                    IOController_i::CalibrateInfo* cal( &(it->cal) );
+                    uniset3::CalibrateInfo* cal( &(it->cal) );
 
                     if( cal->maxRaw != cal->minRaw ) // задана обычная калибровка
-                        val = uniset::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
+                        val = uniset3::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
                 }
             }
         }
@@ -443,8 +443,8 @@ namespace uniset
         if( it->rawdata )
             return val;
 
-        if( it->stype == UniversalIO::AO ||
-                it->stype == UniversalIO::AI )
+        if( it->stype == uniset3::AO ||
+                it->stype == uniset3::AI )
         {
             if( it->cdiagram )    // задана специальная калибровочная диаграмма
             {
@@ -463,12 +463,12 @@ namespace uniset
                 if( !it->noprecision && it->cal.precision != 0 )
                     val = lroundf( (float)it->value / pow(10.0, it->cal.precision) );
 
-                IOController_i::CalibrateInfo* cal = &(it->cal);
+                uniset3::CalibrateInfo* cal = &(it->cal);
 
                 if( cal->maxRaw != cal->minRaw ) // задана калибровка
                 {
                     // Калибруем в обратную сторону!!!
-                    val = uniset::lcalibrate(val, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
+                    val = uniset3::lcalibrate(val, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
                 }
             }
         }
@@ -516,20 +516,20 @@ namespace uniset
 
         float fval = val;
 
-        if( it->stype == UniversalIO::AO || it->stype == UniversalIO::AI )
+        if( it->stype == uniset3::AO || it->stype == uniset3::AI )
         {
-            IOController_i::CalibrateInfo* cal( &(it->cal) );
+            uniset3::CalibrateInfo* cal( &(it->cal) );
 
             if( cal->maxRaw != cal->minRaw ) // задана калибровка
             {
                 // Калибруем в обратную сторону!!!
-                fval = uniset::fcalibrate(fval, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
+                fval = uniset3::fcalibrate(fval, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
             }
 
             if( !it->noprecision && it->cal.precision != 0 )
                 return ( fval / pow(10.0, it->cal.precision) );
         }
-        else // if( it->stype == UniversalIO::DI || it->stype == UniversalIO::DO )
+        else // if( it->stype == uniset3::DI || it->stype == uniset3::DO )
             fval = val ? 1.0 : 0.0;
 
         return fval;
@@ -559,20 +559,20 @@ namespace uniset
 
         double dval = val;
 
-        if( it->stype == UniversalIO::AO || it->stype == UniversalIO::AI )
+        if( it->stype == uniset3::AO || it->stype == uniset3::AI )
         {
-            IOController_i::CalibrateInfo* cal( &(it->cal) );
+            uniset3::CalibrateInfo* cal( &(it->cal) );
 
             if( cal->maxRaw != cal->minRaw ) // задана калибровка
             {
                 // Калибруем в обратную сторону!!!
-                dval = uniset::dcalibrate(dval, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
+                dval = uniset3::dcalibrate(dval, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
             }
 
             if( !it->noprecision && it->cal.precision != 0 )
                 return ( dval / pow(10.0, it->cal.precision) );
         }
-        else // if( it->stype == UniversalIO::DI || it->stype == UniversalIO::DO )
+        else // if( it->stype == uniset3::DI || it->stype == uniset3::DO )
             dval = val ? 1.0 : 0.0;
 
         return dval;
@@ -748,9 +748,9 @@ namespace uniset
         if( b->safevalDefined )
             b->safeval = uni_atoi(ssafe);
 
-        b->stype = uniset::getIOType(initProp(it, "iotype", prefix, init_prefix_only));
+        b->stype = uniset3::getIOType(initProp(it, "iotype", prefix, init_prefix_only));
 
-        if( b->stype == UniversalIO::UnknownIOType )
+        if( b->stype == uniset3::UnknownIOType )
         {
             if( dlog && dlog->is_crit() )
                 dlog->crit() << myname << "(IOBase::readItem): Unknown iotype=: "
@@ -795,7 +795,7 @@ namespace uniset
 
         shm->initIterator(b->ioit);
 
-        if( b->stype == UniversalIO::AI || b->stype == UniversalIO::AO )
+        if( b->stype == uniset3::AI || b->stype == uniset3::AO )
         {
             b->cal.minRaw = initIntProp(it, "rmin", prefix, init_prefix_only);
             b->cal.maxRaw = initIntProp(it, "rmax", prefix, init_prefix_only);
@@ -849,7 +849,7 @@ namespace uniset
             if( !initProp(it, "iir_coeff_new", prefix, init_prefix_only).empty() )
                 f_iir_coeff_new = atof(initProp(it, "iir_coeff_new", prefix, init_prefix_only).c_str());
 
-            if( b->stype == UniversalIO::AI )
+            if( b->stype == uniset3::AI )
                 b->df.setSettings( f_size, f_T, f_lsparam, f_iir,
                                    f_iir_coeff_prev, f_iir_coeff_new );
 
@@ -859,7 +859,7 @@ namespace uniset
 
             if( !caldiagram.empty() )
             {
-                b->cdiagram = uniset::extensions::buildCalibrationDiagram(caldiagram);
+                b->cdiagram = uniset3::extensions::buildCalibrationDiagram(caldiagram);
 
                 if( !initProp(it, "cal_cachesize", prefix, init_prefix_only).empty() )
                     b->cdiagram->setCacheSize(initIntProp(it, "cal_cachesize", prefix, init_prefix_only));
@@ -868,7 +868,7 @@ namespace uniset
                     b->cdiagram->setCacheResortCycle(initIntProp(it, "cal_cacheresort", prefix, init_prefix_only));
             }
         }
-        else if( b->stype == UniversalIO::DI || b->stype == UniversalIO::DO ) // -V560
+        else if( b->stype == uniset3::DI || b->stype == uniset3::DO ) // -V560
         {
             string tai(initProp(it, "threshold_aid", prefix, init_prefix_only));
 
@@ -996,4 +996,4 @@ namespace uniset
         offdelay_state = b.offdelay_state;
     }
     // ------------------------------------------------------------------------------------------
-} //  end of namespace uniset
+} //  end of namespace uniset3

@@ -23,7 +23,7 @@
 #include "UDPTransport.h"
 // -------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -------------------------------------------------------------------------
 std::unique_ptr<UDPReceiveTransport> UDPReceiveTransport::createFromXml( UniXML::iterator it, const std::string& defaultIP, int numChan )
 {
@@ -39,7 +39,7 @@ std::unique_ptr<UDPReceiveTransport> UDPReceiveTransport::createFromXml( UniXML:
     {
         ostringstream err;
         err << "(UDPReceiveTransport): Unknown broadcast IP for " << it.getProp("name");
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     ostringstream fieldPort;
@@ -100,7 +100,7 @@ bool UDPReceiveTransport::createConnection( bool throwEx, timeout_t readTimeout,
         {
             ostringstream s;
             s << host << ":" << port << "(createConnection): " << e.what();
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
     catch( ... )
@@ -111,7 +111,7 @@ bool UDPReceiveTransport::createConnection( bool throwEx, timeout_t readTimeout,
         {
             ostringstream s;
             s << host << ":" << port << "(createConnection): catch...";
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
 
@@ -158,7 +158,7 @@ std::unique_ptr<UDPSendTransport> UDPSendTransport::createFromXml( UniXML::itera
     {
         ostringstream err;
         err << "(UDPReceiveTransport): Unknown broadcast IP for " << it.getProp("name");
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     ostringstream fieldPort;
@@ -209,7 +209,7 @@ bool UDPSendTransport::createConnection( bool throwEx, timeout_t sendTimeout )
         {
             ostringstream s;
             s << saddr.toString() << "(createConnection): " << e.what();
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
     catch( ... )
@@ -220,7 +220,7 @@ bool UDPSendTransport::createConnection( bool throwEx, timeout_t sendTimeout )
         {
             ostringstream s;
             s << saddr.toString() << "(createConnection): catch...";
-            throw uniset::SystemError(s.str());
+            throw uniset3::SystemError(s.str());
         }
     }
 

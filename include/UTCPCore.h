@@ -6,7 +6,7 @@
 #include <cstring> // for std::memcpy
 #include "PassiveTimer.h" // ..for timeout_t
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     namespace UTCPCore

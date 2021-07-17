@@ -19,12 +19,12 @@
 #include "Exceptions.h"
 #include "ComPort.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
 	using namespace ModbusRTU;
-	using namespace uniset;
+	using namespace uniset3;
 	// -------------------------------------------------------------------------
 	static ComPort::Speed checkSpeed[] =
 	{
@@ -163,4 +163,4 @@ namespace uniset
 		return autodetectSpeed( &mb, slave, reg, fn );
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -53,7 +53,7 @@ static ostream& print_help( ostream& os, int width, const string& cmd,
     return os << info.str();
 }
 
-std::string uniset::Configuration::help()
+std::string uniset3::Configuration::help()
 {
     ostringstream os;
     print_help(os, 25, "--confile", "Файл конфигурации. По умолчанию: configure.xml\n");
@@ -71,7 +71,7 @@ std::string uniset::Configuration::help()
     return os.str();
 }
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     static std::shared_ptr<Configuration> uconf;
     static std::shared_ptr<DebugStream> _ulog;
@@ -109,8 +109,8 @@ namespace uniset
         //      _argv(nullptr),
         NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
-        localDBServer(uniset::DefaultObjectId),
-        localNode(uniset::DefaultObjectId),
+        localDBServer(uniset3::DefaultObjectId),
+        localNode(uniset3::DefaultObjectId),
         localNodeName(""),
         fileConfName(""),
         heartbeat_msec(3000)
@@ -141,8 +141,8 @@ namespace uniset
         //      _argv(argv),
         NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
-        localDBServer(uniset::DefaultObjectId),
-        localNode(uniset::DefaultObjectId),
+        localDBServer(uniset3::DefaultObjectId),
+        localNode(uniset3::DefaultObjectId),
         localNodeName(""),
         fileConfName(xmlfile)
     {
@@ -157,8 +157,8 @@ namespace uniset
         //      _argv(argv),
         NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
-        localDBServer(uniset::DefaultObjectId),
-        localNode(uniset::DefaultObjectId),
+        localDBServer(uniset3::DefaultObjectId),
+        localNode(uniset3::DefaultObjectId),
         localNodeName(""),
         fileConfName(fileConf)
     {
@@ -171,8 +171,8 @@ namespace uniset
         unixml(xml),
         NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
-        localDBServer(uniset::DefaultObjectId),
-        localNode(uniset::DefaultObjectId),
+        localDBServer(uniset3::DefaultObjectId),
+        localNode(uniset3::DefaultObjectId),
         localNodeName(""),
         fileConfName(xml->getFileName())
     {
@@ -180,14 +180,14 @@ namespace uniset
     }
     // ---------------------------------------------------------------------------------
     Configuration::Configuration( int argc, const char* const* argv, const string& fileConf,
-                                  uniset::ObjectInfo* omap ):
+                                  uniset3::ObjectInfo* omap ):
         oind(NULL),
         //      _argc(argc),
         //      _argv(argv),
         NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
-        localDBServer(uniset::DefaultObjectId),
-        localNode(uniset::DefaultObjectId),
+        localDBServer(uniset3::DefaultObjectId),
+        localNode(uniset3::DefaultObjectId),
         localNodeName(""),
         fileConfName(fileConf)
     {
@@ -205,7 +205,7 @@ namespace uniset
         _argv = new const char* [argc];
 
         for( int i = 0; i < argc; i++ )
-            _argv[i] = uniset::uni_strdup(argv[i]);
+            _argv[i] = uniset3::uni_strdup(argv[i]);
 
         // инициализировать надо после argc,argv
         if( fileConfName.empty() )
@@ -253,7 +253,7 @@ namespace uniset
                 ostringstream err;
                 err << "(Configuration): FAILED open configuration from " <<  fileConfName;
                 ulogany << err.str() << endl;
-                throw uniset::SystemError(err.str());
+                throw uniset3::SystemError(err.str());
             }
 
 
@@ -269,7 +269,7 @@ namespace uniset
                     if( !it )
                     {
                         ucrit << "(Configuration:init): not found <ObjectsMap> node in "  << fileConfName << endl;
-                        throw uniset::SystemError("(Configuration:init): not found <ObjectsMap> node in " + fileConfName );
+                        throw uniset3::SystemError("(Configuration:init): not found <ObjectsMap> node in " + fileConfName );
                     }
 
                     try
@@ -285,7 +285,7 @@ namespace uniset
                             oind = static_pointer_cast<ObjectIndex>(oi);
                         }
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         ucrit << ex << endl;
                         throw;
@@ -511,7 +511,7 @@ namespace uniset
             // ---------------------------------------
 
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             ucrit << "Configuration:" << ex << endl;
             throw;
@@ -528,27 +528,27 @@ namespace uniset
     // -------------------------------------------------------------------------
     std::string Configuration::getArg2Param( const std::string& name, const std::string& defval, const std::string& defval2 ) const noexcept
     {
-        return uniset::getArg2Param(name, _argc, _argv, defval, defval2);
+        return uniset3::getArg2Param(name, _argc, _argv, defval, defval2);
     }
 
     string Configuration::getArgParam( const string& name, const string& defval ) const noexcept
     {
-        return uniset::getArgParam(name, _argc, _argv, defval);
+        return uniset3::getArgParam(name, _argc, _argv, defval);
     }
 
     int Configuration::getArgInt( const string& name, const string& defval ) const noexcept
     {
-        return uniset::uni_atoi(getArgParam( name, defval ));
+        return uniset3::uni_atoi(getArgParam( name, defval ));
     }
 
     int Configuration::getArgPInt( const string& name, int defval ) const noexcept
     {
-        return uniset::getArgPInt(name, _argc, _argv, "", defval);
+        return uniset3::getArgPInt(name, _argc, _argv, "", defval);
     }
 
     int Configuration::getArgPInt( const string& name, const string& strdefval, int defval ) const noexcept
     {
-        return uniset::getArgPInt(name, _argc, _argv, strdefval, defval);
+        return uniset3::getArgPInt(name, _argc, _argv, strdefval, defval);
     }
 
     // -------------------------------------------------------------------------
@@ -559,7 +559,7 @@ namespace uniset
         if( !root )
         {
             ucrit << "Configuration: INIT PARAM`s FAILED! <UniSet>...</UniSet> not found" << endl;
-            throw uniset::SystemError("Configuration: INIT PARAM`s FAILED! <UniSet>...</UniSet> not found!");
+            throw uniset3::SystemError("Configuration: INIT PARAM`s FAILED! <UniSet>...</UniSet> not found!");
         }
 
         UniXML::iterator it(root);
@@ -567,7 +567,7 @@ namespace uniset
         if( !it.goChildren() )
         {
             ucrit << "Configuration: INIT PARAM`s FAILED!!!!" << endl;
-            throw uniset::SystemError("Configuration: INIT PARAM`s FAILED!!!!");
+            throw uniset3::SystemError("Configuration: INIT PARAM`s FAILED!!!!");
         }
 
         httpResolverPort = 8008;
@@ -578,7 +578,7 @@ namespace uniset
 
             if( name == "LocalNode" )
             {
-                if( localNode == uniset::DefaultObjectId )
+                if( localNode == uniset3::DefaultObjectId )
                 {
                     const string nodename( it.getProp("name") );
                     setLocalNode(nodename);
@@ -596,7 +596,7 @@ namespace uniset
                     ostringstream msg;
                     msg << "Configuration: DBServer '" << secDB << "' not found ServiceID in <services>!";
                     ucrit << msg.str() << endl;
-                    throw uniset::SystemError(msg.str());
+                    throw uniset3::SystemError(msg.str());
                 }
             }
             else if( name == "CountOfNet" )
@@ -638,7 +638,7 @@ namespace uniset
                 {
                     ostringstream err;
                     err << "Configuration: DataDir=" << dataDir << " NOT EXISTS";
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
             else if( name == "BinDir" )
@@ -652,7 +652,7 @@ namespace uniset
                 {
                     ostringstream err;
                     err << "Configuration: BinDir=" << binDir << " NOT EXISTS";
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
             else if( name == "LogDir" )
@@ -666,7 +666,7 @@ namespace uniset
                 {
                     ostringstream err;
                     err << "Configuration: LogDir=" << logDir << " NOT EXISTS";
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
             else if( name == "LockDir" )
@@ -680,7 +680,7 @@ namespace uniset
                 {
                     ostringstream err;
                     err << "Configuration: LockDir=" << lockDir << " NOT EXISTS";
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
             else if( name == "ConfDir" )
@@ -694,7 +694,7 @@ namespace uniset
                 {
                     ostringstream err;
                     err << "Configuration: ConfDir=" << confDir << " NOT EXISTS";
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
         }
@@ -749,7 +749,7 @@ namespace uniset
             stringstream err;
             err << "(Configuration::setLocalNode): Not found node '" << nodename << "'";
             ucrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         localNodeName = nodename;
@@ -904,7 +904,7 @@ namespace uniset
         if( !omapnode )
         {
             ucrit << "(Configuration): <ObjectsMap> not found!!!" << endl;
-            throw uniset::SystemError("(Configuration): <ObjectsMap> not found!");
+            throw uniset3::SystemError("(Configuration): <ObjectsMap> not found!");
         }
 
 
@@ -913,7 +913,7 @@ namespace uniset
         if(!node)
         {
             ucrit << "(Configuration): <nodes> section not found!" << endl;
-            throw uniset::SystemError("(Configiuration): <nodes> section not found");
+            throw uniset3::SystemError("(Configiuration): <nodes> section not found");
         }
 
         UniXML::iterator it(node);
@@ -931,7 +931,7 @@ namespace uniset
             if(sname.empty())
             {
                 ucrit << "Configuration(createNodesList): unknown name='' in <nodes> " << endl;
-                throw uniset::SystemError("Configuration(createNodesList: unknown name='' in <nodes>");
+                throw uniset3::SystemError("Configuration(createNodesList: unknown name='' in <nodes>");
             }
 
             string nodename(sname);
@@ -945,7 +945,7 @@ namespace uniset
             if( ninf.id == DefaultObjectId )
             {
                 ucrit << "Configuration(createNodesList): Not found ID for node '" << nodename << "'" << endl;
-                throw uniset::SystemError("Configuration(createNodesList): Not found ID for node '" + nodename + "'");
+                throw uniset3::SystemError("Configuration(createNodesList): Not found ID for node '" + nodename + "'");
             }
 
             ninf.host = getProp(it, "ip").c_str();
@@ -959,7 +959,7 @@ namespace uniset
             string tmp(it.getProp("dbserver"));
 
             if( tmp.empty() )
-                ninf.dbserver = uniset::DefaultObjectId;
+                ninf.dbserver = uniset3::DefaultObjectId;
             else
             {
                 string dname(getServicesSection() + "/" + tmp);
@@ -968,7 +968,7 @@ namespace uniset
                 if( ninf.dbserver == DefaultObjectId )
                 {
                     ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << dname << "'" << endl;
-                    throw uniset::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
+                    throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
                 }
             }
 
@@ -985,7 +985,7 @@ namespace uniset
         uinfo << "Configuration(createNodesList): size of node list " << lnodes.size() << endl;
     }
     // -------------------------------------------------------------------------
-    void Configuration::initNode( uniset::NodeInfo& ninfo, UniXML::iterator& it ) noexcept
+    void Configuration::initNode( uniset3::NodeInfo& ninfo, UniXML::iterator& it ) noexcept
     {
         if( ninfo.id == getLocalNode() )
             ninfo.connected = true;
@@ -1102,7 +1102,7 @@ namespace uniset
             }
             else if( verb_level == _argv[i] )
             {
-                deb->verbose(uniset::uni_atoi(_argv[i + 1]));
+                deb->verbose(uniset3::uni_atoi(_argv[i + 1]));
             }
         }
 
@@ -1112,12 +1112,12 @@ namespace uniset
         return dnode;
     }
     // -------------------------------------------------------------------------
-    uniset::ListOfNode::const_iterator Configuration::listNodesBegin() const noexcept
+    uniset3::ListOfNode::const_iterator Configuration::listNodesBegin() const noexcept
     {
         return lnodes.begin();
     }
     // -------------------------------------------------------------------------
-    uniset::ListOfNode::const_iterator Configuration::listNodesEnd() const noexcept
+    uniset3::ListOfNode::const_iterator Configuration::listNodesEnd() const noexcept
     {
         return lnodes.end();
     }
@@ -1154,7 +1154,7 @@ namespace uniset
             ostringstream msg;
             msg << "Configuration(initRepSections): Not found section <RootSection> in " << fileConfName;
             ucrit << msg.str() << endl;
-            throw uniset::SystemError(msg.str());
+            throw uniset3::SystemError(msg.str());
         }
 
         secRoot       = unixml->getProp(node, "name");
@@ -1182,7 +1182,7 @@ namespace uniset
             ostringstream msg;
             msg << "Configuration(initRepSections): Not found section '" << sec << "' in " << fileConfName;
             ucrit << msg.str() << endl;
-            throw uniset::SystemError(msg.str());
+            throw uniset3::SystemError(msg.str());
         }
 
         string ret(unixml->getProp(secnode, "section"));
@@ -1222,7 +1222,7 @@ namespace uniset
                 << " Use --confile filename " << endl
                 << " OR define enviropment variable UNISET_CONFILE" << endl;
             ucrit << msg.str();
-            throw uniset::SystemError(msg.str());
+            throw uniset3::SystemError(msg.str());
         }
     }
     // -------------------------------------------------------------------------
@@ -1281,7 +1281,7 @@ namespace uniset
         return oind->getIdByName(getServicesSection() + "/" + name);
     }
     // -------------------------------------------------------------------------
-    uniset::ObjectId Configuration::getNodeID( const std::string& name ) const noexcept
+    uniset3::ObjectId Configuration::getNodeID( const std::string& name ) const noexcept
     {
         if( name.empty() )
             return DefaultObjectId;
@@ -1293,7 +1293,7 @@ namespace uniset
     {
         ObjectId id = DefaultObjectId;
 
-        if( uniset::is_digit(name) )
+        if( uniset3::is_digit(name) )
             return uni_atoi(name);
 
         // ищем в <sensors>
@@ -1388,7 +1388,7 @@ namespace uniset
         return httpResolverPort;
     }
 
-    std::string Configuration::getNodeIp( uniset::ObjectId node )
+    std::string Configuration::getNodeIp( uniset3::ObjectId node )
     {
         UniXML::iterator nIt = getXMLObjectNode(node);
 
@@ -1444,7 +1444,7 @@ namespace uniset
         return xmlNodesSec;
     }
     // -------------------------------------------------------------------------
-    xmlNode* Configuration::getXMLObjectNode( uniset::ObjectId id ) const noexcept
+    xmlNode* Configuration::getXMLObjectNode( uniset3::ObjectId id ) const noexcept
     {
         const ObjectInfo* i = oind->getObjectInfo(id);
 
@@ -1454,20 +1454,20 @@ namespace uniset
         return 0;
     }
     // -------------------------------------------------------------------------
-    UniversalIO::IOType Configuration::getIOType( uniset::ObjectId id ) const noexcept
+    uniset3::IOType Configuration::getIOType( uniset3::ObjectId id ) const noexcept
     {
         const ObjectInfo* i = oind->getObjectInfo(id);
 
         if( i && i->xmlnode )
         {
             UniXML::iterator it(i->xmlnode);
-            return uniset::getIOType( it.getProp("iotype") );
+            return uniset3::getIOType( it.getProp("iotype") );
         }
 
-        return UniversalIO::UnknownIOType;
+        return uniset3::UnknownIOType;
     }
     // -------------------------------------------------------------------------
-    UniversalIO::IOType Configuration::getIOType( const std::string& name ) const noexcept
+    uniset3::IOType Configuration::getIOType( const std::string& name ) const noexcept
     {
         // Если указано "короткое" имя
         // то просто сперва ищём ID, а потом по нему
@@ -1484,10 +1484,10 @@ namespace uniset
         if( i && i->xmlnode )
         {
             UniXML::iterator it(i->xmlnode);
-            return uniset::getIOType( it.getProp("iotype") );
+            return uniset3::getIOType( it.getProp("iotype") );
         }
 
-        return UniversalIO::UnknownIOType;
+        return uniset3::UnknownIOType;
     }
     // -------------------------------------------------------------------------
     size_t Configuration::getCountOfNet() const noexcept
@@ -1507,35 +1507,35 @@ namespace uniset
     // -------------------------------------------------------------------------
     std::shared_ptr<Configuration> uniset_init( int argc, const char* const* argv, const std::string& xmlfile )
     {
-        if( uniset::uconf )
+        if( uniset3::uconf )
         {
             cerr << "Reusable call uniset_init... ignore.." << endl;
-            return uniset::uconf;
+            return uniset3::uconf;
         }
 
         //      atexit( UniSetActivator::normalexit );
         //      set_terminate( UniSetActivator::normalterminate ); // ловушка для неизвестных исключений
 
-        const string confile = uniset::getArgParam( "--confile", argc, argv, xmlfile );
-        uniset::uconf = make_shared<Configuration>(argc, argv, confile);
+        const string confile = uniset3::getArgParam( "--confile", argc, argv, xmlfile );
+        uniset3::uconf = make_shared<Configuration>(argc, argv, confile);
 
-        return uniset::uconf;
+        return uniset3::uconf;
     }
     // -------------------------------------------------------------------------
     std::shared_ptr<Configuration> uniset_init( int argc, const char* const* argv, std::shared_ptr<UniXML> xml )
     {
-        if( uniset::uconf )
+        if( uniset3::uconf )
         {
             cerr << "Reusable call uniset_init... ignore.." << endl;
-            return uniset::uconf;
+            return uniset3::uconf;
         }
 
         //      atexit( UniSetActivator::normalexit );
         //      set_terminate( UniSetActivator::normalterminate ); // ловушка для неизвестных исключений
 
-        uniset::uconf = make_shared<Configuration>(argc, argv, xml);
+        uniset3::uconf = make_shared<Configuration>(argc, argv, xml);
 
-        return uniset::uconf;
+        return uniset3::uconf;
     }
     // -------------------------------------------------------------------------
 

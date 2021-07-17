@@ -3,8 +3,8 @@
 #include "SMViewer.h"
 #include "Extensions.h"
 // -----------------------------------------------------------------------------
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 using namespace std;
 // -----------------------------------------------------------------------------
 int main( int argc, const char** argv )
@@ -19,7 +19,7 @@ int main( int argc, const char** argv )
             cout << "--smemory-id objectName  - SharedMemory objectID. Default: read from <SharedMemory>" << endl;
             cout << endl;
             cout << "Global options:" << endl;
-            cout << uniset::Configuration::help() << endl;
+            cout << uniset3::Configuration::help() << endl;
             return 0;
         }
 
@@ -43,7 +43,7 @@ int main( int argc, const char** argv )
         smv.run();
         return 0;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cout << "(main):" << ex << endl;
     }

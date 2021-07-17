@@ -23,11 +23,11 @@
 #include "UNetSender.h"
 #include "UNetLogSugar.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -----------------------------------------------------------------------------
     UNetSender::UNetSender( std::unique_ptr<UNetSendTransport>&& _transport, const std::shared_ptr<SMInterface>& smi,
                             bool nocheckConnection, const std::string& s_f, const std::string& s_val,
@@ -142,7 +142,7 @@ namespace uniset
                 long value = shm->localGetValue(i.ioit, i.id);
                 updateItem(i, value);
             }
-            catch( IOController_i::Undefined& ex )
+            catch( uniset3::Undefined& ex )
             {
                 unetwarn << myname << "(updateFromSM): sid=" << i.id
                          << " undefined state (value=" << ex.value << ")." << endl;
@@ -158,7 +158,7 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    void UNetSender::updateSensor( uniset::ObjectId id, long value )
+    void UNetSender::updateSensor( uniset3::ObjectId id, long value )
     {
         if( !shm->isLocalwork() )
             return;
@@ -174,11 +174,11 @@ namespace uniset
         auto& pk = mypacks[it.pack_sendfactor];
 
         auto& mypack(pk[it.pack_num]);
-        uniset::uniset_rwmutex_wrlock l(mypack.mut);
+        uniset3::uniset_rwmutex_wrlock l(mypack.mut);
 
-        if( it.iotype == UniversalIO::DI || it.iotype == UniversalIO::DO )
+        if( it.iotype == uniset3::DI || it.iotype == uniset3::DO )
             mypack.msg.setDData(it.pack_ind, value);
-        else if( it.iotype == UniversalIO::AI || it.iotype == UniversalIO::AO )
+        else if( it.iotype == uniset3::AI || it.iotype == uniset3::AO )
             mypack.msg.setAData(it.pack_ind, value);
     }
     // -----------------------------------------------------------------------------
@@ -258,7 +258,7 @@ namespace uniset
             {
                 unetwarn << myname << "(send): " << e.displayText() << endl;
             }
-            catch( uniset::Exception& ex)
+            catch( uniset3::Exception& ex)
             {
                 unetwarn << myname << "(send): " << ex << std::endl;
             }
@@ -286,7 +286,7 @@ namespace uniset
     {
         try
         {
-            uniset::uniset_rwmutex_rlock l(mypack.mut);
+            uniset3::uniset_rwmutex_rlock l(mypack.mut);
 #ifdef UNETUDP_DISABLE_OPTIMIZATION_N1
             mypack.msg.setNum(packetnum++);
 #else
@@ -377,7 +377,7 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     bool UNetSender::readItem( const std::shared_ptr<UniXML>& xml, UniXML::iterator& it, xmlNode* sec )
     {
-        if( uniset::check_filter(it, s_field, s_fvalue) )
+        if( uniset3::check_filter(it, s_field, s_fvalue) )
             initItem(it);
 
         return true;
@@ -393,7 +393,7 @@ namespace uniset
 
         if( !tid.empty() )
         {
-            sid = uniset::uni_atoi(tid);
+            sid = uniset3::uni_atoi(tid);
 
             if( sid <= 0 )
                 sid = DefaultObjectId;
@@ -414,14 +414,14 @@ namespace uniset
         auto& pk = mypacks[priority];
 
         UItem p;
-        p.iotype = uniset::getIOType(it.getProp("iotype"));
+        p.iotype = uniset3::getIOType(it.getProp("iotype"));
         p.pack_sendfactor = priority;
         long defval = it.getIntProp("default");
 
         if( !it.getProp("undefined_value").empty() )
             p.undefined_value = it.getIntProp("undefined_value");
 
-        if( p.iotype == UniversalIO::UnknownIOType )
+        if( p.iotype == uniset3::UnknownIOType )
         {
             unetcrit << myname << "(readItem): Unknown iotype for sid=" << sid << endl;
             return false;
@@ -429,7 +429,7 @@ namespace uniset
 
         p.id = sid;
 
-        if( p.iotype == UniversalIO::DI || p.iotype == UniversalIO::DO )
+        if( p.iotype == uniset3::DI || p.iotype == uniset3::DO )
         {
             size_t dnum = packs_dnum[priority];
 
@@ -470,7 +470,7 @@ namespace uniset
                 return false;
             }
         }
-        else if( p.iotype == UniversalIO::AI || p.iotype == UniversalIO::AO ) // -V560
+        else if( p.iotype == uniset3::AI || p.iotype == uniset3::AO ) // -V560
         {
             size_t anum = packs_anum[priority];
 
@@ -539,7 +539,7 @@ namespace uniset
             shm->initIterator(it.second.ioit);
     }
     // -----------------------------------------------------------------------------
-    void UNetSender::askSensors( UniversalIO::UIOCommand cmd )
+    void UNetSender::askSensors( uniset3::UIOCommand cmd )
     {
         for( const auto& it : items  )
             shm->askSensor(it.second.id, cmd);
@@ -584,4 +584,4 @@ namespace uniset
         return s.str();
     }
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

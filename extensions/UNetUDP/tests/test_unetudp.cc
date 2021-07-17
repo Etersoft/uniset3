@@ -12,7 +12,7 @@
 #include "UNetExchange.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static int port = 3000;
 static const std::string host("127.255.255.255");
@@ -61,7 +61,7 @@ void InitTest()
 static UniSetUDP::UDPMessage receive( unsigned int pnum = 0, timeout_t tout = 2000, int ncycle = 20 )
 {
     UniSetUDP::UDPMessage pack;
-    uint8_t rbuf[uniset::UniSetUDP::MessageBufSize];
+    uint8_t rbuf[uniset3::UniSetUDP::MessageBufSize];
 
     while( ncycle > 0 )
     {
@@ -465,7 +465,7 @@ TEST_CASE("[UNetUDP]: check undefined value", "[unetudp][sender]")
     REQUIRE( pack.dsize() == 2 );
     REQUIRE( pack.aValue(0) == 110 );
 
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = 2;
     si.node = uniset_conf()->getLocalNode();
     ui->setUndefinedState(si, true, 6000 /* TestProc */ );
@@ -495,7 +495,7 @@ TEST_CASE("[UNetUDP]: perf test", "[unetudp][zero][perf]")
     pack.header.procID = 100;
     pack.header.num = 1;
 
-    for( size_t i = 0; i < uniset::UniSetUDP::MaxACount; i++ )
+    for( size_t i = 0; i < uniset3::UniSetUDP::MaxACount; i++ )
     {
         pack.addAData(i, i);
         pack.addDData(i, true);

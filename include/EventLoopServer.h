@@ -7,7 +7,7 @@
 #include <thread>
 #include <future>
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*!
      * \brief The EventLoopServer class

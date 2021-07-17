@@ -4,8 +4,8 @@
 #include "UNetExchange.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
@@ -22,7 +22,7 @@ int main( int argc, const char** argv )
             cout << endl;
             UNetExchange::help_print(argc, argv);
             cout << " Global options:" << endl;
-            cout << uniset::Configuration::help() << endl;
+            cout << uniset3::Configuration::help() << endl;
             return 0;
         }
 
@@ -63,7 +63,7 @@ int main( int argc, const char** argv )
 
         act->run(false);
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dcrit << "(unetexchange): " << ex << std::endl;
     }

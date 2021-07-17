@@ -3,9 +3,9 @@
 #include "LostPassiveTestProc.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-LostPassiveTestProc::LostPassiveTestProc( uniset::ObjectId id, xmlNode* confnode ):
+LostPassiveTestProc::LostPassiveTestProc( uniset3::ObjectId id, xmlNode* confnode ):
     LostTestProc_SK( id, confnode )
 {
     auto conf = uniset_conf();
@@ -26,7 +26,7 @@ LostPassiveTestProc::LostPassiveTestProc( uniset::ObjectId id, xmlNode* confnode
 
     for( ; it; it++ )
     {
-        if( !uniset::check_filter(it, f_field, f_value) )
+        if( !uniset3::check_filter(it, f_field, f_value) )
             continue;
 
         if( it.getProp("iotype") != "AI" )
@@ -58,7 +58,7 @@ long LostPassiveTestProc::checkValue( ObjectId sid )
     {
         ostringstream err;
         err << myname << "(checkValue): NOT FOUND?!! sensor ID=" << sid;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     return s->second;
@@ -67,10 +67,10 @@ long LostPassiveTestProc::checkValue( ObjectId sid )
 LostPassiveTestProc::LostPassiveTestProc()
 {
     cerr << ": init failed!!!!!!!!!!!!!!!" << endl;
-    throw uniset::Exception(myname + "(init): FAILED..");
+    throw uniset3::Exception(myname + "(init): FAILED..");
 }
 // -----------------------------------------------------------------------------
-void LostPassiveTestProc::askSensors(UniversalIO::UIOCommand cmd)
+void LostPassiveTestProc::askSensors(uniset3::UIOCommand cmd)
 {
     for( const auto& s : slist )
         askSensor(s.first, cmd);
@@ -85,7 +85,7 @@ void LostPassiveTestProc::sensorInfo(const SensorMessage* sm)
     if( s == slist.end() )
     {
         mycrit << myname << "(sensorInfo): ERROR: message from UNKNOWN SENSOR sm->id=" << sm->id << endl;
-        uniset::SimpleInfo_var i = getInfo("");
+        uniset3::SimpleInfo_var i = getInfo("");
         mycrit << i->info << endl;
         std::abort();
     }

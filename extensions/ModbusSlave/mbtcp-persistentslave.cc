@@ -23,8 +23,8 @@
 #include "Extensions.h"
 
 // --------------------------------------------------------------------------
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 using namespace std;
 // --------------------------------------------------------------------------
 int main(int argc, const char** argv)
@@ -95,7 +95,7 @@ int main(int argc, const char** argv)
     {
         dcrit << "(mbmultislave): " << err << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dcrit << "(mbmultislave): " << ex << endl;
     }

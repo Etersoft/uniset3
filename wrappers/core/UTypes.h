@@ -23,8 +23,8 @@
 // --------------------------------------------------------------------------
 namespace UTypes
 {
-    const long DefaultID = uniset::DefaultObjectId;
-    const long DefaultSupplerID = uniset::AdminID;
+    const long DefaultID = uniset3::DefaultObjectId;
+    const long DefaultSupplerID = uniset3::AdminID;
 
     struct Params
     {
@@ -39,7 +39,7 @@ namespace UTypes
         {
             if( argc < Params::max )
             {
-                argv[argc++] = uniset::uni_strdup(s);
+                argv[argc++] = uniset3::uni_strdup(s);
                 return true;
             }
 
@@ -50,7 +50,7 @@ namespace UTypes
         {
             if( argc < Params::max )
             {
-                argv[argc++] = uniset::uni_strdup(s);
+                argv[argc++] = uniset3::uni_strdup(s);
                 return true;
             }
 

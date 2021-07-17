@@ -8,7 +8,7 @@
 #include "MulticastTransport.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static int port = 3000;
 static const std::string host("127.255.255.255");

@@ -23,12 +23,12 @@
 #include "modbus/ModbusTCPMaster.h"
 #include "modbus/ModbusTCPCore.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
 	using namespace ModbusRTU;
-	using namespace uniset;
+	using namespace uniset3;
 	using namespace Poco;
 	// -------------------------------------------------------------------------
 	ModbusTCPMaster::ModbusTCPMaster():
@@ -290,7 +290,7 @@ namespace uniset
 			if( dlog->is_warn() )
 				dlog->warn() << "(query): " << err << endl;
 		}
-		catch( const uniset::CommFailed& ex )
+		catch( const uniset3::CommFailed& ex )
 		{
 			if( dlog->is_crit() )
 				dlog->crit() << "(query): " << ex << endl;
@@ -303,7 +303,7 @@ namespace uniset
 			if( dlog->is_warn() )
 				dlog->warn() << "(query): tcp error: " << e.displayText() << endl;
 		}
-		catch( const uniset::Exception& ex )
+		catch( const uniset3::Exception& ex )
 		{
 			if( dlog->is_warn() )
 				dlog->warn() << "(query): " << ex << endl;
@@ -524,4 +524,4 @@ namespace uniset
 		return tcp && tcp->isConnected();
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

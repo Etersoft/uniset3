@@ -27,10 +27,10 @@
 #include "Configuration.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 
 // -----------------------------------------------------------------------------
-float uniset::fcalibrate( float raw, float rawMin, float rawMax,
+float uniset3::fcalibrate( float raw, float rawMin, float rawMax,
                           float calMin, float calMax, bool limit )
 {
     if( rawMax == rawMin ) return 0; // деление на 0!!!
@@ -61,7 +61,7 @@ float uniset::fcalibrate( float raw, float rawMin, float rawMax,
     return ret;
 }
 // -----------------------------------------------------------------------------
-double uniset::dcalibrate( double raw, double rawMin, double rawMax,
+double uniset3::dcalibrate( double raw, double rawMin, double rawMax,
                            double calMin, double calMax, bool limit )
 {
     if( rawMax == rawMin ) return 0; // деление на 0!!!
@@ -93,7 +93,7 @@ double uniset::dcalibrate( double raw, double rawMin, double rawMax,
 }
 // -------------------------------------------------------------------------
 // Пересчитываем из исходных пределов в заданные
-long uniset::lcalibrate(long raw, long rawMin, long rawMax, long calMin, long calMax, bool limit )
+long uniset3::lcalibrate(long raw, long rawMin, long rawMax, long calMin, long calMax, bool limit )
 {
     if( rawMax == rawMin ) return 0; // деление на 0!!!
 
@@ -108,7 +108,7 @@ long uniset::lcalibrate(long raw, long rawMin, long rawMax, long calMin, long ca
 
 // -------------------------------------------------------------------------
 // Приводим указанное значение в заданные пределы
-long uniset::setinregion(long ret, long calMin, long calMax)
+long uniset3::setinregion(long ret, long calMin, long calMax)
 {
     // Переворачиваем calMin и calMax для проверки, если calMin > calMax
     if (calMin < calMax)
@@ -132,7 +132,7 @@ long uniset::setinregion(long ret, long calMin, long calMax)
 }
 
 // Выводим указанное значение из заданных пределов (на границы)
-long uniset::setoutregion(long ret, long calMin, long calMax)
+long uniset3::setoutregion(long ret, long calMin, long calMax)
 {
     if ((ret > calMin) && (ret < calMax))
     {
@@ -146,8 +146,8 @@ long uniset::setoutregion(long ret, long calMin, long calMax)
 }
 
 // -------------------------------------------------------------------------
-uniset::IDList::IDList( const std::vector<string>& svec ): // -V730
-    uniset::IDList::IDList()
+uniset3::IDList::IDList( const std::vector<string>& svec ): // -V730
+    uniset3::IDList::IDList()
 {
     auto conf = uniset_conf();
 
@@ -165,17 +165,17 @@ uniset::IDList::IDList( const std::vector<string>& svec ): // -V730
     }
 }
 // -------------------------------------------------------------------------
-uniset::IDList::IDList():
-    node( (uniset::uniset_conf() ? uniset::uniset_conf()->getLocalNode() : DefaultObjectId) )
+uniset3::IDList::IDList():
+    node( (uniset3::uniset_conf() ? uniset3::uniset_conf()->getLocalNode() : DefaultObjectId) )
 {
 
 }
 
-uniset::IDList::~IDList()
+uniset3::IDList::~IDList()
 {
 }
 
-void uniset::IDList::add( ObjectId id )
+void uniset3::IDList::add( ObjectId id )
 {
     for( auto it = lst.begin(); it != lst.end(); ++it )
     {
@@ -186,7 +186,7 @@ void uniset::IDList::add( ObjectId id )
     lst.push_back(id);
 }
 
-void uniset::IDList::del( ObjectId id )
+void uniset3::IDList::del( ObjectId id )
 {
     for( auto it = lst.begin(); it != lst.end(); ++it )
     {
@@ -198,34 +198,31 @@ void uniset::IDList::del( ObjectId id )
     }
 }
 
-std::list<uniset::ObjectId> uniset::IDList::getList() const noexcept
+std::list<uniset3::ObjectId> uniset3::IDList::getList() const noexcept
 {
     return lst;
 }
 
-uniset::ObjectId uniset::IDList::getFirst() const noexcept
+uniset3::ObjectId uniset3::IDList::getFirst() const noexcept
 {
     if( lst.empty() )
-        return uniset::DefaultObjectId;
+        return uniset3::DefaultObjectId;
 
     return (*lst.begin());
 }
 
 // за освобождение выделенной памяти
 // отвечает вызывающий!
-IDSeq* uniset::IDList::getIDSeq() const
+uniset3::IDSeq uniset3::IDList::getIDSeq() const
 {
-    IDSeq* seq = new IDSeq();
-    seq->length(lst.size());
-    int i = 0;
-
+    IDSeq seq
     for( auto it = lst.begin(); it != lst.end(); ++it, i++ )
-        (*seq)[i] = (*it);
+        seq.lst().add(*it);
 
     return seq;
 }
 // -------------------------------------------------------------------------
-bool uniset::directory_exist( const std::string& path )
+bool uniset3::directory_exist( const std::string& path )
 {
     try
     {
@@ -237,7 +234,7 @@ bool uniset::directory_exist( const std::string& path )
     return false;
 }
 // -------------------------------------------------------------------------
-bool uniset::file_exist( const std::string& filename )
+bool uniset3::file_exist( const std::string& filename )
 {
     std::ifstream file;
 #ifdef HAVE_IOS_NOCREATE
@@ -254,13 +251,13 @@ bool uniset::file_exist( const std::string& filename )
     return result;
 }
 // -------------------------------------------------------------------------
-uniset::IDList uniset::explode( const std::string& str, char sep )
+uniset3::IDList uniset3::explode( const std::string& str, char sep )
 {
-    uniset::IDList l( explode_str(str, sep) );
+    uniset3::IDList l( explode_str(str, sep) );
     return l;
 }
 // -------------------------------------------------------------------------
-std::vector<std::string> uniset::explode_str( const std::string& str, char sep )
+std::vector<std::string> uniset3::explode_str( const std::string& str, char sep )
 {
     std::vector<std::string> v;
 
@@ -304,7 +301,7 @@ std::vector<std::string> uniset::explode_str( const std::string& str, char sep )
     return v;
 }
 // ------------------------------------------------------------------------------------------
-bool uniset::is_digit( const std::string& s ) noexcept
+bool uniset3::is_digit( const std::string& s ) noexcept
 {
     if( s.empty() )
         return false;
@@ -319,17 +316,17 @@ bool uniset::is_digit( const std::string& s ) noexcept
     //return (std::count_if(s.begin(),s.end(),std::isdigit) == s.size()) ? true : false;
 }
 // --------------------------------------------------------------------------------------
-std::list<uniset::ParamSInfo> uniset::getSInfoList( const string& str, std::shared_ptr<Configuration> conf )
+std::list<uniset3::ParamSInfo> uniset3::getSInfoList( const string& str, std::shared_ptr<Configuration> conf )
 {
-	std::list<uniset::ParamSInfo> res;
+	std::list<uniset3::ParamSInfo> res;
 
-	auto lst = uniset::explode_str(str, ',');
+	auto lst = uniset3::explode_str(str, ',');
 
 	for( const auto& it : lst )
 	{
-		uniset::ParamSInfo item;
+		uniset3::ParamSInfo item;
 
-		auto p = uniset::explode_str(it, '=');
+		auto p = uniset3::explode_str(it, '=');
 		std::string s = "";
 
 		if( p.size() == 1 )
@@ -349,18 +346,18 @@ std::list<uniset::ParamSInfo> uniset::getSInfoList( const string& str, std::shar
 		}
 
 		item.fname = s;
-		auto t = uniset::explode_str(s, '@');
+		auto t = uniset3::explode_str(s, '@');
 
 		if( t.size() == 1 )
 		{
 			const std::string s_id = *(t.begin());
 
-			if( is_digit(s_id) || !conf )
-				item.si.id = uni_atoi(s_id);
-			else
-				item.si.id = conf->getSensorID(s_id);
+            if( is_digit(s_id) || !conf )
+                item.si.set_id(uni_atoi(s_id));
+            else
+                item.si.set_id(conf->getSensorID(s_id));
 
-			item.si.node = DefaultObjectId;
+            item.si.set_node(DefaultObjectId);
 		}
 		else if( t.size() == 2 )
 		{
@@ -368,14 +365,14 @@ std::list<uniset::ParamSInfo> uniset::getSInfoList( const string& str, std::shar
 			const std::string s_node = *(++t.begin());
 
 			if( is_digit(s_id) || !conf )
-				item.si.id = uni_atoi(s_id);
+                item.si.set_id(uni_atoi(s_id));
 			else
-				item.si.id = conf->getSensorID(s_id);
+                item.si.set_id(conf->getSensorID(s_id));
 
 			if( is_digit(s_node) || !conf )
-				item.si.node = uni_atoi(s_node);
-			else
-				item.si.node = conf->getNodeID(s_node);
+                item.si.set_node(uni_atoi(s_node));
+            else
+                item.si.set_node(conf->getNodeID(s_node));
 		}
 		else
 		{
@@ -389,39 +386,39 @@ std::list<uniset::ParamSInfo> uniset::getSInfoList( const string& str, std::shar
 	return res;
 }
 // --------------------------------------------------------------------------------------
-std::list<uniset::ConsumerInfo> uniset::getObjectsList( const string& str, std::shared_ptr<Configuration> conf )
+std::list<uniset3::ConsumerInfo> uniset3::getObjectsList( const string& str, std::shared_ptr<Configuration> conf )
 {
     if( conf == nullptr )
         conf = uniset_conf();
 
-    std::list<uniset::ConsumerInfo> res;
+    std::list<uniset3::ConsumerInfo> res;
 
-    auto lst = uniset::explode_str(str, ',');
+    auto lst = uniset3::explode_str(str, ',');
 
     for( const auto& it : lst )
     {
-        uniset::ConsumerInfo item;
+        uniset3::ConsumerInfo item;
 
-        auto t = uniset::explode_str(it, '@');
+        auto t = uniset3::explode_str(it, '@');
 
 		if( t.size() == 1 )
 		{
 			const std::string s_id(*(t.begin()));
 
             if( is_digit(s_id) )
-                item.id = uni_atoi(s_id);
+                item.set_id(uni_atoi(s_id));
             else
             {
-                item.id = conf->getObjectID(s_id);
+                item.set_id(conf->getObjectID(s_id));
 
-                if( item.id == DefaultObjectId )
-                    item.id = conf->getControllerID(s_id);
+                if( item.id() == DefaultObjectId )
+                    item.set_id(conf->getControllerID(s_id));
 
-                if( item.id == DefaultObjectId )
-                    item.id = conf->getServiceID(s_id);
+                if( item.id() == DefaultObjectId )
+                    item.set_id(conf->getServiceID(s_id));
             }
 
-			item.node = DefaultObjectId;
+            item.set_node(DefaultObjectId);
 		}
 		else if( t.size() == 2 )
 		{
@@ -429,22 +426,22 @@ std::list<uniset::ConsumerInfo> uniset::getObjectsList( const string& str, std::
 			const std::string s_node = *(++t.begin());
 
             if( is_digit(s_id) )
-                item.id = uni_atoi(s_id);
+                item.set_id(uni_atoi(s_id));
             else
             {
-                item.id = conf->getObjectID(s_id);
+                item.set_id(conf->getObjectID(s_id));
 
-                if( item.id == DefaultObjectId )
-                    item.id = conf->getControllerID(s_id);
+                if( item.id() == DefaultObjectId )
+                    item.set_id(conf->getControllerID(s_id));
 
-                if( item.id == DefaultObjectId )
-                    item.id = conf->getServiceID(s_id);
+                if( item.id() == DefaultObjectId )
+                    item.set_id(conf->getServiceID(s_id));
             }
 
             if( is_digit(s_node) )
-                item.node = uni_atoi(s_node);
+                item.set_node(uni_atoi(s_node));
             else
-                item.node = conf->getNodeID(s_node);
+                item.set_node(conf->getNodeID(s_node));
         }
         else
         {
@@ -458,47 +455,47 @@ std::list<uniset::ConsumerInfo> uniset::getObjectsList( const string& str, std::
     return res;
 }
 // --------------------------------------------------------------------------------------
-UniversalIO::IOType uniset::getIOType( const std::string& stype ) noexcept
+uniset3::IOType uniset3::getIOType( const std::string& stype ) noexcept
 {
     if ( stype == "DI" || stype == "di" )
-        return UniversalIO::DI;
+        return uniset3::DI;
 
     if( stype == "AI" || stype == "ai" )
-        return UniversalIO::AI;
+        return uniset3::AI;
 
     if ( stype == "DO" || stype == "do" )
-        return UniversalIO::DO;
+        return uniset3::DO;
 
     if ( stype == "AO" || stype == "ao" )
-        return UniversalIO::AO;
+        return uniset3::AO;
 
-    return UniversalIO::UnknownIOType;
+    return uniset3::UnknownIOType;
 }
 // ------------------------------------------------------------------------------------------
 
-std::string uniset::iotype2str( const UniversalIO::IOType& t ) noexcept
+std::string uniset3::iotype2str( const uniset3::IOType& t ) noexcept
 {
-    if( t == UniversalIO::AI )
+    if( t == uniset3::AI )
         return "AI";
 
-    if( t == UniversalIO::DI )
+    if( t == uniset3::DI )
         return "DI";
 
-    if( t == UniversalIO::AO )
+    if( t == uniset3::AO )
         return "AO";
 
-    if( t == UniversalIO::DO )
+    if( t == uniset3::DO )
         return "DO";
 
     return "UnknownIOType";
 }
 // ------------------------------------------------------------------------------------------
-std::ostream& uniset::operator<<( std::ostream& os, const UniversalIO::IOType t )
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::IOType t )
 {
     return os << iotype2str(t);
 }
 // ------------------------------------------------------------------------------------------
-bool uniset::check_filter( UniXML::iterator& it, const std::string& f_prop, const std::string& f_val ) noexcept
+bool uniset3::check_filter( UniXML::iterator& it, const std::string& f_prop, const std::string& f_val ) noexcept
 {
     if( f_prop.empty() )
         return true;
@@ -514,7 +511,7 @@ bool uniset::check_filter( UniXML::iterator& it, const std::string& f_prop, cons
     return true;
 }
 // ------------------------------------------------------------------------------------------
-string uniset::timeToString(time_t tm, const std::string& brk ) noexcept
+string uniset3::timeToString(time_t tm, const std::string& brk ) noexcept
 {
     std::tm tms;
     gmtime_r(&tm, &tms);
@@ -525,7 +522,7 @@ string uniset::timeToString(time_t tm, const std::string& brk ) noexcept
     return time.str();
 }
 
-string uniset::dateToString(time_t tm, const std::string& brk ) noexcept
+string uniset3::dateToString(time_t tm, const std::string& brk ) noexcept
 {
     std::tm tms;
     gmtime_r(&tm, &tms);
@@ -537,7 +534,7 @@ string uniset::dateToString(time_t tm, const std::string& brk ) noexcept
 }
 
 //--------------------------------------------------------------------------------------------
-int uniset::uni_atoi( const char* str ) noexcept
+int uniset3::uni_atoi( const char* str ) noexcept
 {
     // if str is NULL or sscanf failed, we return 0
     if( str == nullptr )
@@ -564,7 +561,7 @@ int uniset::uni_atoi( const char* str ) noexcept
     return n; // а возвращаем int..
 }
 //--------------------------------------------------------------------------------------------
-char* uniset::uni_strdup( const string& src )
+char* uniset3::uni_strdup( const string& src )
 {
     size_t len = src.size();
     char* d = new char[len + 1];
@@ -573,56 +570,56 @@ char* uniset::uni_strdup( const string& src )
     return d;
 }
 // -------------------------------------------------------------------------
-std::ostream& uniset::operator<<( std::ostream& os, const IOController_i::CalibrateInfo& c )
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::CalibrateInfo& c )
 {
-    os << "[ rmin=" << c.minRaw
-       << " rmax=" << c.maxRaw
-       << " cmin=" << c.minCal
-       << " cmax=" << c.maxCal
-       << " prec=" << c.precision
+    os << "[ rmin=" << c.minraw()
+       << " rmax=" << c.maxraw()
+       << " cmin=" << c.mincal()
+       << " cmax=" << c.maxcal()
+       << " prec=" << c.precision()
        << " ]";
 
     return os;
 }
 // -------------------------------------------------------------------------
-std::ostream& uniset::operator<<( std::ostream& os, const IONotifyController_i::ThresholdInfo& ti )
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdInfo& ti )
 {
-    os << "[ id=" << ti.id
-       << " hilim=" << ti.hilimit
-       << " lowlim=" << ti.lowlimit
-       << " state=" << ti.state
-       << " tv_sec=" << ti.tv_sec
-       << " tv_nsec=" << ti.tv_nsec
-       << " invert=" << ti.invert
+    os << "[ id=" << ti.id()
+       << " hilim=" << ti.hilimit()
+       << " lowlim=" << ti.lowlimit()
+       << " state=" << ti.state()
+       << " tv_sec=" << ti.tv_sec()
+       << " tv_nsec=" << ti.tv_nsec()
+       << " invert=" << ti.invert()
        << " ]";
 
     return os;
 }
 // -------------------------------------------------------------------------
-std::ostream& uniset::operator<<( std::ostream& os, const IOController_i::ShortIOInfo& s )
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ShortIOInfo& s )
 {
-    os << setw(10) << dateToString(s.tv_sec)
-       << " " << setw(8) << timeToString(s.tv_sec) << "." << s.tv_nsec
-       << " [ value=" << s.value << " supplier=" << s.supplier << " ]";
+    os << setw(10) << dateToString(s.tv_sec())
+       << " " << setw(8) << timeToString(s.tv_sec()) << "." << s.tv_nsec()
+       << " [ value=" << s.value() << " supplier=" << s.supplier() << " ]";
 
     return os;
 }
 // -------------------------------------------------------------------------
-std::ostream& uniset::operator<<( std::ostream& os, const IONotifyController_i::ThresholdState& s )
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdState& s )
 {
-    if( s == IONotifyController_i::LowThreshold )
+    if( s == uniset3::LowThreshold )
         return os << "low";
 
-    if( s == IONotifyController_i::HiThreshold )
+    if( s == uniset3::HiThreshold )
         return os << "hi";
 
-    if( s == IONotifyController_i::NormalThreshold )
+    if( s == uniset3::NormalThreshold )
         return os << "norm";
 
     return os << "Unknown";
 }
 // -------------------------------------------------------------------------
-std::string uniset::replace_all( const std::string& src, const std::string& from, const std::string& to )
+std::string uniset3::replace_all( const std::string& src, const std::string& from, const std::string& to )
 {
     string res(src);
 
@@ -641,7 +638,7 @@ std::string uniset::replace_all( const std::string& src, const std::string& from
     return res;
 }
 // -------------------------------------------------------------------------
-timeval uniset::to_timeval( const chrono::system_clock::duration& d )
+timeval uniset3::to_timeval( const chrono::system_clock::duration& d )
 {
     struct timeval tv;
 
@@ -657,7 +654,7 @@ timeval uniset::to_timeval( const chrono::system_clock::duration& d )
     return tv;
 }
 // -------------------------------------------------------------------------
-timespec uniset::to_timespec( const chrono::system_clock::duration& d )
+timespec uniset3::to_timespec( const chrono::system_clock::duration& d )
 {
     struct timespec ts;
 
@@ -673,35 +670,37 @@ timespec uniset::to_timespec( const chrono::system_clock::duration& d )
     return ts;
 }
 // -------------------------------------------------------------------------
-timespec uniset::now_to_timespec()
+timespec uniset3::now_to_timespec()
 {
     auto d = std::chrono::system_clock::now().time_since_epoch();
     return to_timespec(d);
 }
 // -------------------------------------------------------------------------
-uniset::Timespec_var uniset::now_to_uniset_timespec()
+uniset3::Timespec uniset3::now_to_uniset_timespec()
 {
     auto d = std::chrono::system_clock::now().time_since_epoch();
     return to_uniset_timespec(d);
 }
 // -------------------------------------------------------------------------
-uniset::Timespec_var uniset::to_uniset_timespec( const chrono::system_clock::duration& d )
+uniset3::Timespec uniset3::to_uniset_timespec( const chrono::system_clock::duration& d )
 {
-    uniset::Timespec_var ts;
+    uniset3::Timespec ts;
 
-    if( d.count() == 0 )
-        ts->sec = ts->nsec = 0;
+    if( d.count() == 0 ) {
+        ts.set_sec(0);
+        ts.set_nsec(0);
+    }
     else
     {
         std::chrono::seconds const sec = std::chrono::duration_cast<std::chrono::seconds>(d);
-        ts->sec  = sec.count();
-        ts->nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(d - sec).count();
+        ts.set_sec(sec.count());
+        ts.set_nsec(std::chrono::duration_cast<std::chrono::nanoseconds>(d - sec).count());
     }
 
     return ts;
 }
 // -------------------------------------------------------------------------
-char uniset::checkBadSymbols( const string& str )
+char uniset3::checkBadSymbols( const string& str )
 {
     for ( const auto& c : str )
     {
@@ -716,7 +715,7 @@ char uniset::checkBadSymbols( const string& str )
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-string uniset::BadSymbolsToStr()
+string uniset3::BadSymbolsToStr()
 {
     string bad = "";
 
@@ -730,14 +729,14 @@ string uniset::BadSymbolsToStr()
     return bad;
 }
 // ---------------------------------------------------------------------------------------------------------------
-uniset::KeyType uniset::key( const uniset::ObjectId id, const uniset::ObjectId node )
+uniset3::KeyType uniset3::key( const uniset3::ObjectId id, const uniset3::ObjectId node )
 {
     //! \warning что тут у нас с переполнением..
     return KeyType( (id * node) + (id + 2 * node) );
 }
 // ---------------------------------------------------------------------------------------------------------------
-uniset::KeyType uniset::key( const IOController_i::SensorInfo& si )
+uniset3::KeyType uniset3::key( const uniset3::SensorInfo& si )
 {
-    return key(si.id, si.node);
+    return key(si.id(), si.node());
 }
 // ---------------------------------------------------------------------------------------------------------------

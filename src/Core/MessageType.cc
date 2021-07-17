@@ -28,7 +28,7 @@
 #include "UniSetTypes.h"
 #include "MessageType.h"
 
-namespace uniset
+namespace uniset3
 {
     //--------------------------------------------------------------------------------------------
     std::string strTypeOfMessage( int type )
@@ -61,18 +61,18 @@ namespace uniset
     //--------------------------------------------------------------------------------------------
     Message::Message() noexcept:
         type(Unused), priority(Medium),
-        node( uniset::uniset_conf() ? uniset::uniset_conf()->getLocalNode() : DefaultObjectId ),
+        node( uniset3::uniset_conf() ? uniset3::uniset_conf()->getLocalNode() : DefaultObjectId ),
         supplier(DefaultObjectId),
         consumer(DefaultObjectId)
     {
-        tm = uniset::now_to_timespec();
+        tm = uniset3::now_to_timespec();
     }
 
     //--------------------------------------------------------------------------------------------
     VoidMessage::VoidMessage( const TransportMessage& tm ) noexcept:
         Message(1) // вызываем dummy-конструктор, который не инициализирует данные (оптимизация)
     {
-        assert(sizeof(VoidMessage) >= sizeof(uniset::RawDataOfTransportMessage));
+        assert(sizeof(VoidMessage) >= sizeof(uniset3::RawDataOfTransportMessage));
         memcpy(this, &tm.data, sizeof(tm.data));
         consumer = tm.consumer;
     }
@@ -80,7 +80,7 @@ namespace uniset
     VoidMessage::VoidMessage() noexcept
     {
 
-        assert(sizeof(VoidMessage) >= sizeof(uniset::RawDataOfTransportMessage));
+        assert(sizeof(VoidMessage) >= sizeof(uniset3::RawDataOfTransportMessage));
     }
 
     //--------------------------------------------------------------------------------------------
@@ -88,9 +88,9 @@ namespace uniset
         id(DefaultObjectId),
         value(0),
         undefined(false),
-        sensor_type(UniversalIO::DI),
+        sensor_type(uniset3::DI),
         threshold(false),
-        tid(uniset::DefaultThresholdId)
+        tid(uniset3::DefaultThresholdId)
     {
         type    = Message::SensorInfo;
         sm_tv   = tm; // или инициализировать нулём ?
@@ -101,16 +101,16 @@ namespace uniset
         ci.precision = 0;
     }
 
-    SensorMessage::SensorMessage(ObjectId id, long value, const IOController_i::CalibrateInfo& ci,
+    SensorMessage::SensorMessage(ObjectId id, long value, const uniset3::CalibrateInfo& ci,
                                  Priority priority,
-                                 UniversalIO::IOType st, ObjectId consumer) noexcept:
+                                 uniset3::IOType st, ObjectId consumer) noexcept:
         id(id),
         value(value),
         undefined(false),
         sensor_type(st),
         ci(ci),
         threshold(false),
-        tid(uniset::DefaultThresholdId)
+        tid(uniset3::DefaultThresholdId)
     {
         type            = Message::SensorInfo;
         this->priority     = priority;
@@ -120,7 +120,7 @@ namespace uniset
 
     SensorMessage::SensorMessage( int dummy ) noexcept:
         Message(1), // вызываем dummy-конструктор, который не инициализирует данные (оптимизация)
-        ci(IOController_i::CalibrateInfo())
+        ci(uniset3::CalibrateInfo())
     {
         type    = Message::SensorInfo;
     }
@@ -185,12 +185,12 @@ namespace uniset
     }
     //--------------------------------------------------------------------------------------------
     TimerMessage::TimerMessage():
-        id(uniset::DefaultTimerId)
+        id(uniset3::DefaultTimerId)
     {
         type = Message::Timer;
     }
 
-    TimerMessage::TimerMessage(uniset::TimerId id, Priority prior, ObjectId cons):
+    TimerMessage::TimerMessage(uniset3::TimerId id, Priority prior, ObjectId cons):
         id(id)
     {
         type = Message::Timer;
@@ -211,7 +211,7 @@ namespace uniset
         assert(this->type == Message::Confirm);
     }
     //--------------------------------------------------------------------------------------------
-    ConfirmMessage::ConfirmMessage(uniset::ObjectId in_sensor_id,
+    ConfirmMessage::ConfirmMessage(uniset3::ObjectId in_sensor_id,
                                    const double& in_sensor_value,
                                    const timespec& in_sensor_time,
                                    const timespec& in_confirm_time,
@@ -254,8 +254,8 @@ namespace uniset
 
     TextMessage::TextMessage(const char* msg,
                              int _mtype,
-                             const uniset::Timespec& tm,
-                             const ::uniset::ProducerInfo& pi,
+                             const uniset3::Timespec& tm,
+                             const ::uniset3::ProducerInfo& pi,
                              Priority prior,
                              ObjectId cons) noexcept
     {
@@ -272,11 +272,11 @@ namespace uniset
     //--------------------------------------------------------------------------------------------
     std::shared_ptr<VoidMessage> TextMessage::toLocalVoidMessage() const
     {
-        uniset::ProducerInfo pi;
+        uniset3::ProducerInfo pi;
         pi.id = supplier;
         pi.node = node;
 
-        uniset::Timespec ts;
+        uniset3::Timespec ts;
         ts.sec = tm.tv_sec;
         ts.nsec = tm.tv_nsec;
 
@@ -284,5 +284,5 @@ namespace uniset
         return std::static_pointer_cast<VoidMessage>(tmsg);
     }
     //--------------------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 //--------------------------------------------------------------------------------------------

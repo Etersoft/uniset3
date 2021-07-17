@@ -21,7 +21,7 @@
 #include "modbus/ModbusRTUMaster.h"
 #include "RTUStorage.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
@@ -208,14 +208,14 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    long RTUStorage::getInt( RTUJack jack, uint16_t chan, UniversalIO::IOType t )
+    long RTUStorage::getInt( RTUJack jack, uint16_t chan, uniset3::IOType t )
     {
         return lroundf( getFloat(jack, chan, t) );
     }
     // -----------------------------------------------------------------------------
-    float RTUStorage::getFloat( RTUJack jack, uint16_t chan, UniversalIO::IOType t )
+    float RTUStorage::getFloat( RTUJack jack, uint16_t chan, uniset3::IOType t )
     {
-        if( t == UniversalIO::AI )
+        if( t == uniset3::AI )
         {
             switch( jack )
             {
@@ -241,7 +241,7 @@ namespace uniset
             return 0;
         }
 
-        if( t == UniversalIO::AO )
+        if( t == uniset3::AO )
         {
             switch( jack )
             {
@@ -270,9 +270,9 @@ namespace uniset
         return 0;
     }
     // -----------------------------------------------------------------------------
-    bool RTUStorage::getState( RTUJack jack, uint16_t chan, UniversalIO::IOType t )
+    bool RTUStorage::getState( RTUJack jack, uint16_t chan, uniset3::IOType t )
     {
-        if( t == UniversalIO::DI )
+        if( t == uniset3::DI )
         {
             switch( jack )
             {
@@ -298,7 +298,7 @@ namespace uniset
             return false;
         }
 
-        if( t == UniversalIO::DO )
+        if( t == uniset3::DO )
         {
             switch( jack )
             {
@@ -321,9 +321,9 @@ namespace uniset
         return false;
     }
     // -----------------------------------------------------------------------------
-    ModbusRTU::ModbusData RTUStorage::getRegister( RTUJack jack, uint16_t chan, UniversalIO::IOType t )
+    ModbusRTU::ModbusData RTUStorage::getRegister( RTUJack jack, uint16_t chan, uniset3::IOType t )
     {
-        if( t == UniversalIO::AI )
+        if( t == uniset3::AI )
         {
             switch( jack )
             {
@@ -349,7 +349,7 @@ namespace uniset
             return -1;
         }
 
-        if( t == UniversalIO::AO )
+        if( t == uniset3::AO )
         {
             switch( jack )
             {
@@ -375,7 +375,7 @@ namespace uniset
             return -1;
         }
 
-        if( t == UniversalIO::DI )
+        if( t == uniset3::DI )
         {
             switch( jack )
             {
@@ -401,7 +401,7 @@ namespace uniset
             return -1;
         }
 
-        if( t == UniversalIO::DO )
+        if( t == uniset3::DO )
         {
             switch( jack )
             {
@@ -424,9 +424,9 @@ namespace uniset
         return -1;
     }
     // -----------------------------------------------------------------------------
-    ModbusRTU::SlaveFunctionCode RTUStorage::getFunction( RTUJack jack, uint16_t chan, UniversalIO::IOType t )
+    ModbusRTU::SlaveFunctionCode RTUStorage::getFunction( RTUJack jack, uint16_t chan, uniset3::IOType t )
     {
-        if( t == UniversalIO::AI )
+        if( t == uniset3::AI )
         {
             switch( jack )
             {
@@ -444,7 +444,7 @@ namespace uniset
             return ModbusRTU::fnUnknown;
         }
 
-        if( t == UniversalIO::AO )
+        if( t == uniset3::AO )
         {
             switch( jack )
             {
@@ -464,7 +464,7 @@ namespace uniset
             return ModbusRTU::fnUnknown;
         }
 
-        if( t == UniversalIO::DI )
+        if( t == uniset3::DI )
         {
             switch( jack )
             {
@@ -482,7 +482,7 @@ namespace uniset
             return ModbusRTU::fnUnknown;
         }
 
-        if( t == UniversalIO::DO )
+        if( t == uniset3::DO )
         {
             switch( jack )
             {
@@ -738,4 +738,4 @@ namespace uniset
         return "";
     }
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -20,7 +20,7 @@
 #include "SMInterface.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 #define BEG_FUNC(name) \
     try \
@@ -38,7 +38,7 @@ using namespace uniset;
                 if( CORBA::is_nil(oref) ) \
                     continue;\
                 \
-                shm = IONotifyController_i::_narrow(oref); \
+                shm = uniset3::_narrow(oref); \
                 if( CORBA::is_nil(shm) ) \
                 { \
                     oref = CORBA::Object::_nil();\
@@ -66,11 +66,11 @@ using namespace uniset;
     msleep(conf->getRepeatTimeout());    \
     }\
     } \
-    catch( const IOController_i::NameNotFound &ex ) \
+    catch( const uniset3::NameNotFound &ex ) \
     { \
         uwarn << "(" << __STRING(fname) << "): " << ex.err << endl; \
     } \
-    catch( const IOController_i::IOBadParam &ex ) \
+    catch( const uniset3::IOBadParam &ex ) \
     { \
         uwarn << "(" << __STRING(fname) << "): " << ex.err << endl; \
     } \
@@ -79,23 +79,23 @@ using namespace uniset;
         uwarn << "(" << __STRING(fname) << "): CORBA::SystemException: " \
               << ex.NP_minorString() << endl; \
     } \
-    catch( const uniset::Exception& ex ) \
+    catch( const uniset3::Exception& ex ) \
     { \
         uwarn << "(" << __STRING(fname) << "): " << ex << endl; \
     } \
     oref = CORBA::Object::_nil(); \
-    throw uniset::TimeOut(); \
+    throw uniset3::TimeOut(); \
 
 #define CHECK_IC_PTR(fname) \
     if( !ic )  \
     { \
         uwarn << "(" << __STRING(fname) << "): function NOT DEFINED..." << endl; \
-        throw uniset::TimeOut(); \
+        throw uniset3::TimeOut(); \
     } \
 
 // --------------------------------------------------------------------------
-SMInterface::SMInterface( uniset::ObjectId _shmID, const std::shared_ptr<UInterface>& _ui,
-                          uniset::ObjectId _myid, const std::shared_ptr<IONotifyController> ic ):
+SMInterface::SMInterface( uniset3::ObjectId _shmID, const std::shared_ptr<UInterface>& _ui,
+                          uniset3::ObjectId _myid, const std::shared_ptr<IONotifyController> ic ):
     ic(ic),
     ui(_ui),
     oref( CORBA::Object::_nil() ),
@@ -103,7 +103,7 @@ SMInterface::SMInterface( uniset::ObjectId _shmID, const std::shared_ptr<UInterf
     myid(_myid)
 {
     if( shmID == DefaultObjectId )
-        throw uniset::SystemError("(SMInterface): Unknown shmID!" );
+        throw uniset3::SystemError("(SMInterface): Unknown shmID!" );
 }
 // --------------------------------------------------------------------------
 SMInterface::~SMInterface()
@@ -111,7 +111,7 @@ SMInterface::~SMInterface()
 
 }
 // --------------------------------------------------------------------------
-void SMInterface::setValue( uniset::ObjectId id, long value )
+void SMInterface::setValue( uniset3::ObjectId id, long value )
 {
     if( ic )
     {
@@ -121,7 +121,7 @@ void SMInterface::setValue( uniset::ObjectId id, long value )
         END_FUNC(SMInterface::setValue)
     }
 
-    IOController_i::SensorInfo si;
+    uniset3::SensorInfo si;
     si.id = id;
     si.node = ui->getConf()->getLocalNode();
 
@@ -131,7 +131,7 @@ void SMInterface::setValue( uniset::ObjectId id, long value )
     END_FUNC(SMInterface::setValue)
 }
 // --------------------------------------------------------------------------
-long SMInterface::getValue( uniset::ObjectId id )
+long SMInterface::getValue( uniset3::ObjectId id )
 {
     if( ic )
     {
@@ -145,7 +145,7 @@ long SMInterface::getValue( uniset::ObjectId id )
     END_FUNC(SMInterface::getValue)
 }
 // --------------------------------------------------------------------------
-void SMInterface::askSensor( uniset::ObjectId id, UniversalIO::UIOCommand cmd, uniset::ObjectId backid )
+void SMInterface::askSensor( uniset3::ObjectId id, uniset3::UIOCommand cmd, uniset3::ObjectId backid )
 {
     ConsumerInfo_var ci;
     ci->id   = (backid == DefaultObjectId) ? myid : backid;
@@ -165,7 +165,7 @@ void SMInterface::askSensor( uniset::ObjectId id, UniversalIO::UIOCommand cmd, u
     END_FUNC(SMInterface::askSensor)
 }
 // --------------------------------------------------------------------------
-IOController_i::SensorInfoSeq* SMInterface::getSensorsMap()
+uniset3::SensorInfoSeq* SMInterface::getSensorsMap()
 {
     if( ic )
     {
@@ -179,7 +179,7 @@ IOController_i::SensorInfoSeq* SMInterface::getSensorsMap()
     END_FUNC(SMInterface::getSensorsMap)
 }
 // --------------------------------------------------------------------------
-IONotifyController_i::ThresholdsListSeq* SMInterface::getThresholdsList()
+uniset3::ThresholdsListSeq* SMInterface::getThresholdsList()
 {
     if( ic )
     {
@@ -193,8 +193,8 @@ IONotifyController_i::ThresholdsListSeq* SMInterface::getThresholdsList()
     END_FUNC(SMInterface::getThresholdsList)
 }
 // --------------------------------------------------------------------------
-void SMInterface::setUndefinedState( const IOController_i::SensorInfo& si, bool undefined,
-                                     uniset::ObjectId sup_id )
+void SMInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefined,
+                                     uniset3::ObjectId sup_id )
 {
     if( ic )
     {
@@ -229,8 +229,8 @@ IOController::IOStateList::iterator SMInterface::ioEnd()
 }
 // --------------------------------------------------------------------------
 void SMInterface::localSetValue( IOController::IOStateList::iterator& it,
-                                 uniset::ObjectId sid,
-                                 CORBA::Long value, uniset::ObjectId sup_id )
+                                 uniset3::ObjectId sid,
+                                 CORBA::Long value, uniset3::ObjectId sup_id )
 {
     if( !ic )
         return setValue(sid, value);
@@ -238,7 +238,7 @@ void SMInterface::localSetValue( IOController::IOStateList::iterator& it,
     ic->localSetValueIt(it, sid, value, sup_id);
 }
 // --------------------------------------------------------------------------
-long SMInterface::localGetValue( IOController::IOStateList::iterator& it, uniset::ObjectId sid )
+long SMInterface::localGetValue( IOController::IOStateList::iterator& it, uniset3::ObjectId sid )
 {
     if( !ic )
         return getValue( sid );
@@ -249,12 +249,12 @@ long SMInterface::localGetValue( IOController::IOStateList::iterator& it, uniset
 // --------------------------------------------------------------------------
 void SMInterface::localSetUndefinedState( IOController::IOStateList::iterator& it,
         bool undefined,
-        uniset::ObjectId sid )
+        uniset3::ObjectId sid )
 {
     //    CHECK_IC_PTR(localSetUndefinedState)
     if( !ic )
     {
-        IOController_i::SensorInfo si;
+        uniset3::SensorInfo si;
         si.id     = sid;
         si.node = ui->getConf()->getLocalNode();
         setUndefinedState(si, undefined, myid);
@@ -276,7 +276,7 @@ bool SMInterface::waitSMready( int ready_timeout, int pmsec )
     return waitSMreadyWithCancellation(ready_timeout, cancelFlag, pmsec);
 }
 // --------------------------------------------------------------------------
-bool SMInterface::waitSMworking( uniset::ObjectId sid, int msec, int pmsec )
+bool SMInterface::waitSMworking( uniset3::ObjectId sid, int msec, int pmsec )
 {
     PassiveTimer ptSMready(msec);
     bool sm_ready = false;

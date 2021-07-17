@@ -42,7 +42,7 @@
 #include "UHttpServer.h"
 #include "UTCPCore.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //------------------------------------------------------------------------------------------
     /*!
@@ -191,8 +191,8 @@ namespace uniset
 #endif
     {
         public:
-            UWebSocketGate( uniset::ObjectId id, xmlNode* cnode
-                            , uniset::ObjectId shmID
+            UWebSocketGate( uniset3::ObjectId id, xmlNode* cnode
+                            , uniset3::ObjectId shmID
                             , const std::shared_ptr<SharedMemory>& ic = nullptr
                             , const std::string& prefix = "-ws" );
 
@@ -200,7 +200,7 @@ namespace uniset
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<UWebSocketGate> init_wsgate( int argc, const char* const* argv
-                    , uniset::ObjectId shmID
+                    , uniset3::ObjectId shmID
                     , const std::shared_ptr<SharedMemory>& ic = nullptr
                     , const std::string& prefix = "ws-" );
 
@@ -249,8 +249,8 @@ namespace uniset
             std::shared_ptr<ev::async> wscmd;
 
             void checkMessages( ev::timer& t, int revents );
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
             ev::timer iocheck;
             double check_sec = { 0.05 };
             int maxMessagesProcessing  = { 100 };
@@ -269,7 +269,7 @@ namespace uniset
             size_t wsMaxSend = { 5000 };
             size_t wsMaxCmd = { 200 };
 
-            static Poco::JSON::Object::Ptr to_json( const uniset::SensorMessage* sm, const std::string& err );
+            static Poco::JSON::Object::Ptr to_json( const uniset3::SensorMessage* sm, const std::string& err );
             static Poco::JSON::Object::Ptr error_to_json( const std::string& err );
 
             /*! класс реализует работу с websocket через eventloop
@@ -300,17 +300,17 @@ namespace uniset
                     struct sinfo
                     {
                         std::string err; // ошибка при работе с датчиком (например при заказе)
-                        uniset::ObjectId id = { uniset::DefaultObjectId };
+                        uniset3::ObjectId id = { uniset3::DefaultObjectId };
                         std::string cmd = "";
                         long value = { 0 }; // set value
                     };
 
 
-                    void ask( uniset::ObjectId id );
-                    void del( uniset::ObjectId id );
-                    void get( uniset::ObjectId id );
-                    void set( uniset::ObjectId id, long value );
-                    void sensorInfo( const uniset::SensorMessage* sm );
+                    void ask( uniset3::ObjectId id );
+                    void del( uniset3::ObjectId id );
+                    void get( uniset3::ObjectId id );
+                    void set( uniset3::ObjectId id, long value );
+                    void sensorInfo( const uniset3::SensorMessage* sm );
                     void doCommand( const std::shared_ptr<SMInterface>& ui );
                     static Poco::JSON::Object::Ptr to_short_json( sinfo* si );
 
@@ -354,7 +354,7 @@ namespace uniset
 
                     std::atomic_bool cancelled = { false };
 
-                    std::unordered_map<uniset::ObjectId, sinfo> smap;
+                    std::unordered_map<uniset3::ObjectId, sinfo> smap;
                     std::queue<sinfo> qcmd; // очередь команд
 
                     Poco::Net::HTTPServerRequest* req;
@@ -364,7 +364,7 @@ namespace uniset
                     std::queue<Poco::JSON::Object::Ptr> jbuf;
 
                     // очередь данных на посылку..
-                    std::queue<uniset::UTCPCore::Buffer*> wbuf;
+                    std::queue<uniset3::UTCPCore::Buffer*> wbuf;
                     size_t maxsize; // рассчитывается сходя из max_send (см. конструктор)
             };
 
@@ -389,7 +389,7 @@ namespace uniset
             friend class UWebSocketGuard;
 
             std::list<std::shared_ptr<UWebSocket>> wsocks;
-            uniset::uniset_rwmutex wsocksMutex;
+            uniset3::uniset_rwmutex wsocksMutex;
             size_t maxwsocks = { 50 }; // максимальное количество websocket-ов
 
 
@@ -411,6 +411,6 @@ namespace uniset
 
     };
     // ----------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 //------------------------------------------------------------------------------------------
 #endif

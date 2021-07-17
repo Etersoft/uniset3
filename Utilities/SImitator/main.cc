@@ -3,7 +3,7 @@
 #include "UInterface.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 void help_print()
 {
@@ -14,13 +14,13 @@ void help_print()
     cout << "--max val       - Верхняя граница датчика. По умолчанию 100 " << endl;
     cout << "--step val      - Шаг датчика. По умолчанию 1" << endl;
     cout << "--pause msec    - Пауза. По умолчанию 200 мсек" << endl << endl;
-    cout << uniset::Configuration::help() << endl;
+    cout << uniset3::Configuration::help() << endl;
 }
 // -----------------------------------------------------------------------------
 struct ExtInfo:
-    public uniset::ParamSInfo
+    public uniset3::ParamSInfo
 {
-    UniversalIO::IOType iotype;
+    uniset3::IOType iotype;
 };
 // -----------------------------------------------------------------------------
 int main( int argc, char** argv )
@@ -50,7 +50,7 @@ int main( int argc, char** argv )
             return 1;
         }
 
-        auto lst = uniset::getSInfoList(sid, conf);
+        auto lst = uniset3::getSInfoList(sid, conf);
 
         if( lst.empty() )
         {
@@ -62,9 +62,9 @@ int main( int argc, char** argv )
 
         for( auto&& it : lst )
         {
-            UniversalIO::IOType t = conf->getIOType( it.si.id );
+            uniset3::IOType t = conf->getIOType( it.si.id );
 
-            if( t != UniversalIO::AI && t != UniversalIO::AO )
+            if( t != uniset3::AI && t != uniset3::AO )
             {
                 cerr << endl << "WARNING! Неверный типа датчика '" << t << "' для id='" << it.fname << "'. Тип должен быть AI или AO." << endl << endl;
                 // return 1;
@@ -135,7 +135,7 @@ int main( int argc, char** argv )
                     {
                         ui.setValue(it.si, j, DefaultObjectId);
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         cerr << endl << "save id=" << it.fname << " " << ex << endl;
                     }
@@ -162,7 +162,7 @@ int main( int argc, char** argv )
                     {
                         ui.setValue(it->si, i, DefaultObjectId);
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         cerr << endl << "save id=" << it->fname << " " << ex << endl;
                     }
@@ -172,7 +172,7 @@ int main( int argc, char** argv )
             msleep(amsec);
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << endl << "(simitator): " << ex << endl;
         return 1;

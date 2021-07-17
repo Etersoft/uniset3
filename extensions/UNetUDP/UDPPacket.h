@@ -23,7 +23,7 @@
 #include "UniSetTypes.h"
 #include "proto/unet.pb.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     namespace UniSetUDP
@@ -63,11 +63,11 @@ namespace uniset
             //!\return true - successful
             bool setDData( size_t index, bool val ) noexcept;
 
-            //! \return uniset::DefaultObjectId if not found
+            //! \return uniset3::DefaultObjectId if not found
             long dID( size_t index ) const noexcept;
             bool dValue( size_t index ) const noexcept;
 
-            //! \return uniset::DefaultObjectId if not found
+            //! \return uniset3::DefaultObjectId if not found
             long aID(size_t i) const noexcept;
             long aValue(size_t i) const noexcept;
 
@@ -98,7 +98,7 @@ namespace uniset
         uint16_t makeCRC( unsigned char* buf, size_t len ) noexcept;
     }
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // UDPPacket_H_
 // -----------------------------------------------------------------------------

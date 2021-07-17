@@ -28,9 +28,9 @@
 #include <string>
 #include <ostream>
 #include "UniSetTypes.h"
-#include "IOController_i.hh"
+#include "IOController.pb.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     class Message
     {
@@ -56,9 +56,9 @@ namespace uniset
             };
 
             Priority priority = { Medium };
-            ObjectId node = { uniset::DefaultObjectId };      // откуда
-            ObjectId supplier = { uniset::DefaultObjectId };  // от кого
-            ObjectId consumer = { uniset::DefaultObjectId };  // кому
+            ObjectId node = { uniset3::DefaultObjectId };      // откуда
+            ObjectId supplier = { uniset3::DefaultObjectId };  // от кого
+            ObjectId consumer = { uniset3::DefaultObjectId };  // кому
             struct timespec tm = { 0, 0 };
 
             Message( Message&& ) noexcept = default;
@@ -76,7 +76,7 @@ namespace uniset
             static const TransportMessage transport(const In& msg) noexcept
             {
                 TransportMessage tmsg;
-                assert(sizeof(uniset::RawDataOfTransportMessage) >= sizeof(msg));
+                assert(sizeof(uniset3::RawDataOfTransportMessage) >= sizeof(msg));
                 std::memcpy(&tmsg.data, &msg, sizeof(msg));
                 tmsg.consumer = msg.consumer;
                 return tmsg;
@@ -118,7 +118,7 @@ namespace uniset
                 return transport(*this);
             }
 
-            uniset::ByteOfMessage data[sizeof(uniset::RawDataOfTransportMessage) - sizeof(Message)];
+            uniset3::ByteOfMessage data[sizeof(uniset3::RawDataOfTransportMessage) - sizeof(Message)];
     };
 
     // ------------------------------------------------------------------------
@@ -127,19 +127,19 @@ namespace uniset
     {
         public:
 
-            ObjectId id = { uniset::DefaultObjectId };
+            ObjectId id = { uniset3::DefaultObjectId };
             long value = { 0 };
             bool undefined = { false };
 
             // время изменения состояния датчика
             struct timespec sm_tv = { 0, 0 };
 
-            UniversalIO::IOType sensor_type = { UniversalIO::DI };
-            IOController_i::CalibrateInfo ci;
+            uniset3::IOType sensor_type = { uniset3::DI };
+            uniset3::CalibrateInfo ci;
 
             // для пороговых датчиков
             bool threshold = { false };  /*!< TRUE - сработал порог, FALSE - порог отключился */
-            uniset::ThresholdId tid = { uniset::DefaultThresholdId };
+            uniset3::ThresholdId tid = { uniset3::DefaultThresholdId };
 
             SensorMessage( SensorMessage&& m) noexcept = default;
             SensorMessage& operator=(SensorMessage&& m) noexcept = default;
@@ -147,10 +147,10 @@ namespace uniset
             SensorMessage& operator=( const SensorMessage& ) noexcept = default;
 
             SensorMessage() noexcept;
-            SensorMessage(ObjectId id, long value, const IOController_i::CalibrateInfo& ci = IOController_i::CalibrateInfo(),
+            SensorMessage(ObjectId id, long value, const uniset3::CalibrateInfo& ci = uniset3::CalibrateInfo(),
                           Priority priority = Message::Medium,
-                          UniversalIO::IOType st = UniversalIO::AI,
-                          ObjectId consumer = uniset::DefaultObjectId) noexcept;
+                          uniset3::IOType st = uniset3::AI,
+                          ObjectId consumer = uniset3::DefaultObjectId) noexcept;
 
             // специальный конструктор, для оптимизации
             // он не инициализирует поля по умолчанию
@@ -194,7 +194,7 @@ namespace uniset
 
             SystemMessage() noexcept;
             SystemMessage(Command command, Priority priority = Message::High,
-                          ObjectId consumer = uniset::DefaultObjectId) noexcept;
+                          ObjectId consumer = uniset3::DefaultObjectId) noexcept;
             SystemMessage(const VoidMessage* msg) noexcept;
 
             inline TransportMessage transport_msg() const noexcept
@@ -219,15 +219,15 @@ namespace uniset
             TimerMessage& operator=( const TimerMessage& ) noexcept = default;
 
             TimerMessage();
-            TimerMessage(uniset::TimerId id, Priority prior = Message::High,
-                         ObjectId cons = uniset::DefaultObjectId);
+            TimerMessage(uniset3::TimerId id, Priority prior = Message::High,
+                         ObjectId cons = uniset3::DefaultObjectId);
             TimerMessage(const VoidMessage* msg) noexcept ;
             inline TransportMessage transport_msg() const noexcept
             {
                 return transport(*this);
             }
 
-            uniset::TimerId id; /*!< id сработавшего таймера */
+            uniset3::TimerId id; /*!< id сработавшего таймера */
     };
 
     // ------------------------------------------------------------------------
@@ -255,7 +255,7 @@ namespace uniset
             ConfirmMessage( const ConfirmMessage& ) noexcept = default;
             ConfirmMessage& operator=( const ConfirmMessage& ) noexcept = default;
 
-            ObjectId sensor_id = { uniset::DefaultObjectId };   /* ID датчика (события) */
+            ObjectId sensor_id = { uniset3::DefaultObjectId };   /* ID датчика (события) */
             double sensor_value = { 0.0 };  /* значение датчика (события) */
             struct timespec sensor_time = { 0, 0 }; /* время срабатывания датчика (события), который квитируем */
             struct timespec confirm_time = { 0, 0 }; /* * время прошедшее до момента квитирования */
@@ -288,10 +288,10 @@ namespace uniset
             TextMessage( const VoidMessage* msg ) noexcept;
             TextMessage( const char* msg,
                          int mtype,
-                         const ::uniset::Timespec& tm,
-                         const ::uniset::ProducerInfo& pi,
+                         const ::uniset3::Timespec& tm,
+                         const ::uniset3::ProducerInfo& pi,
                          Priority prior = Message::Medium,
-                         ObjectId cons = uniset::DefaultObjectId ) noexcept;
+                         ObjectId cons = uniset3::DefaultObjectId ) noexcept;
 
             std::shared_ptr<VoidMessage> toLocalVoidMessage() const;
 

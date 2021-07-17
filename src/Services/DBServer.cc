@@ -31,7 +31,7 @@
 #include "UniXML.h"
 #include "DBLogSugar.h"
 // ------------------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 DBServer::DBServer( ObjectId id, const std::string& _prefix ):
@@ -85,12 +85,12 @@ DBServer::~DBServer()
 {
 }
 //--------------------------------------------------------------------------------------------
-void DBServer::processingMessage( const uniset::VoidMessage* msg )
+void DBServer::processingMessage( const uniset3::VoidMessage* msg )
 {
 	switch(msg->type)
 	{
 		case Message::Confirm:
-			confirmInfo( reinterpret_cast<const uniset::ConfirmMessage*>(msg) );
+			confirmInfo( reinterpret_cast<const uniset3::ConfirmMessage*>(msg) );
 			break;
 
 		default:
@@ -107,7 +107,7 @@ bool DBServer::activateObject()
 	return true;
 }
 //--------------------------------------------------------------------------------------------
-void DBServer::sysCommand( const uniset::SystemMessage* sm )
+void DBServer::sysCommand( const uniset3::SystemMessage* sm )
 {
 	UniSetObject::sysCommand(sm);
 
@@ -143,7 +143,7 @@ std::string DBServer::help_print()
 //--------------------------------------------------------------------------------------------
 SimpleInfo* DBServer::getInfo( const char* userparam )
 {
-	uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+	uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
 
 	const std::string inf = getMonitInfo( std::string(userparam) );
 	i->info = inf.c_str();

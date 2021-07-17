@@ -4,7 +4,7 @@
 #include "Configuration.h"
 #include "SMonitor.h"
 // -----------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------
 int main( int argc, const char** argv )
@@ -19,7 +19,7 @@ int main( int argc, const char** argv )
                  << "Args: " << endl
                  << "--name XXX - name for smonit. Default: TestProc" << endl;
             //                 << " --script scriptname \n"
-            cout << uniset::Configuration::help() << endl;
+            cout << uniset3::Configuration::help() << endl;
             return 0;
         }
 
@@ -30,7 +30,7 @@ int main( int argc, const char** argv )
 
         ID = conf->getObjectID(name);
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(main): идентификатор '" << name
                  << "' не найден в конф. файле!"
@@ -47,7 +47,7 @@ int main( int argc, const char** argv )
         act->run(false);
         return 0;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cout << "(main):" << ex << endl;
     }

@@ -41,7 +41,7 @@
 
 // ------------------------------------------------------------------------------------------
 using namespace std;
-namespace uniset
+namespace uniset3
 {
 
 #define CREATE_TIMER    unisetstd::make_unique<PassiveCondTimer>();
@@ -53,10 +53,10 @@ namespace uniset
         regOK(false),
         active(0),
         threadcreate(false),
-        myid(uniset::DefaultObjectId),
+        myid(uniset3::DefaultObjectId),
         oref(0)
     {
-        ui = make_shared<UInterface>(uniset::DefaultObjectId);
+        ui = make_shared<UInterface>(uniset3::DefaultObjectId);
 
         tmr = CREATE_TIMER;
         myname = "noname";
@@ -91,10 +91,10 @@ namespace uniset
         regOK(false),
         active(0),
         threadcreate(true),
-        myid(uniset::DefaultObjectId),
+        myid(uniset3::DefaultObjectId),
         oref(0)
     {
-        ui = make_shared<UInterface>(uniset::DefaultObjectId);
+        ui = make_shared<UInterface>(uniset3::DefaultObjectId);
 
         /*! \warning UniversalInterface не инициализируется идентификатором объекта */
         tmr = CREATE_TIMER;
@@ -151,7 +151,7 @@ namespace uniset
         return true;
     }
     // ------------------------------------------------------------------------------------------
-    void UniSetObject::setID( uniset::ObjectId id )
+    void UniSetObject::setID( uniset3::ObjectId id )
     {
         if( isActive() )
             throw ObjectNameAlready("Set ID error: ObjectId is active..");
@@ -214,7 +214,7 @@ namespace uniset
     {
         ulogrep << myname << ": registration..." << endl;
 
-        if( myid == uniset::DefaultObjectId )
+        if( myid == uniset3::DefaultObjectId )
         {
             ulogrep << myname << "(registration): Don`t registration. myid=DefaultObjectId \n";
             return;
@@ -230,7 +230,7 @@ namespace uniset
         }
 
         {
-            uniset::uniset_rwmutex_rlock lock(refmutex);
+            uniset3::uniset_rwmutex_rlock lock(refmutex);
 
             if( !oref )
             {
@@ -265,12 +265,12 @@ namespace uniset
                 uwarn << myname << "(registration): replace object (ObjectNameAlready)" << endl;
                 unregistration();
             }
-            catch( const uniset::ORepFailed& ex )
+            catch( const uniset3::ORepFailed& ex )
             {
                 uwarn << myname << "(registration): don`t registration in object reposotory "
                       << " err: " << ex << endl;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 uwarn << myname << "(registration):  " << ex << endl;
             }
@@ -294,7 +294,7 @@ namespace uniset
             return;
         }
 
-        if( myid == uniset::DefaultObjectId ) // -V547
+        if( myid == uniset3::DefaultObjectId ) // -V547
         {
             uinfo << myname << "(unregister): myid=DefaultObjectId \n";
             regOK = false;
@@ -302,7 +302,7 @@ namespace uniset
         }
 
         {
-            uniset::uniset_rwmutex_rlock lock(refmutex);
+            uniset3::uniset_rwmutex_rlock lock(refmutex);
 
             if( !oref )
             {
@@ -403,12 +403,12 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     void UniSetObject::pushMessage(const char* msg,
                                    ::CORBA::Long mtype,
-                                   const ::uniset::Timespec& tm,
-                                   const ::uniset::ProducerInfo& pi,
+                                   const ::uniset3::Timespec& tm,
+                                   const ::uniset3::ProducerInfo& pi,
                                    ::CORBA::Long priority,
                                    ::CORBA::Long consumer )
     {
-        uniset::TextMessage tmsg(msg, mtype, tm, pi, (uniset::Message::Priority)priority, consumer);
+        uniset3::TextMessage tmsg(msg, mtype, tm, pi, (uniset3::Message::Priority)priority, consumer);
         auto vm = tmsg.toLocalVoidMessage();
 
         if( vm->priority == Message::Medium )
@@ -433,15 +433,15 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     Poco::JSON::Object::Ptr UniSetObject::httpHelp( const Poco::URI::QueryParameters& p )
     {
-        uniset::json::help::object myhelp(myname);
+        uniset3::json::help::object myhelp(myname);
 
         {
-            uniset::json::help::item cmd("params/get", "get value for parameter");
+            uniset3::json::help::item cmd("params/get", "get value for parameter");
             cmd.param("param1,param2,...", "paremeter names. Default: all");
             myhelp.add(cmd);
         }
         {
-            uniset::json::help::item cmd("params/set", "set value for parameter");
+            uniset3::json::help::item cmd("params/set", "set value for parameter");
             cmd.param("param1=val1,param2=val2,...", "paremeters");
             myhelp.add(cmd);
         }
@@ -451,7 +451,7 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     Poco::JSON::Object::Ptr UniSetObject::httpGetMyInfo( Poco::JSON::Object::Ptr root )
     {
-        Poco::JSON::Object::Ptr my = uniset::json::make_child(root, "object");
+        Poco::JSON::Object::Ptr my = uniset3::json::make_child(root, "object");
         my->set("name", myname);
         my->set("id", getId());
         my->set("msgCount", countMessages());
@@ -470,7 +470,7 @@ namespace uniset
 
         ostringstream err;
         err << "(request_conf):  BAD REQUEST: Unknown command..";
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
     // ------------------------------------------------------------------------------------------
     // обработка запроса вида: /params/xxxx
@@ -484,30 +484,30 @@ namespace uniset
 
         ostringstream err;
         err << "(request_conf):  BAD REQUEST: Unknown command..";
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
     // ------------------------------------------------------------------------------------------
     // обработка запроса вида: /configure/get?[ID|NAME]&props=testname,name] from configure.xml
     Poco::JSON::Object::Ptr UniSetObject::request_configure_get( const std::string& req, const Poco::URI::QueryParameters& params )
     {
         Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
-        Poco::JSON::Array::Ptr jdata = uniset::json::make_child_array(json, "conf");
+        Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "conf");
         auto my = httpGetMyInfo(json);
 
         if( params.empty() )
         {
             ostringstream err;
             err << "(request_conf):  BAD REQUEST: Unknown id or name...";
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
-        auto idlist = uniset::explode_str(params[0].first, ',');
+        auto idlist = uniset3::explode_str(params[0].first, ',');
 
         if( idlist.empty() )
         {
             ostringstream err;
             err << "(request_conf):  BAD REQUEST: Unknown id or name in '" << params[0].first << "'";
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         string props = {""};
@@ -566,7 +566,7 @@ namespace uniset
 
         if( !props.empty() )
         {
-            auto lst = uniset::explode_str(props, ',');
+            auto lst = uniset3::explode_str(props, ',');
 
             for( const auto& p : lst )
                 jdata->set(p, it.getProp(p));
@@ -587,7 +587,7 @@ namespace uniset
     {
         ostringstream err;
         err << "(request_params): 'set' not realized yet";
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
     // ------------------------------------------------------------------------------------------
     // обработка запроса вида: /conf/get?prop1&prop2&prop3
@@ -595,15 +595,15 @@ namespace uniset
     {
         ostringstream err;
         err << "(request_params): 'get' not realized yet";
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
     // ------------------------------------------------------------------------------------------
 #endif
     // ------------------------------------------------------------------------------------------
     ObjectPtr UniSetObject::getRef() const
     {
-        uniset::uniset_rwmutex_rlock lock(refmutex);
-        return (uniset::ObjectPtr)CORBA::Object::_duplicate(oref);
+        uniset3::uniset_rwmutex_rlock lock(refmutex);
+        return (uniset3::ObjectPtr)CORBA::Object::_duplicate(oref);
     }
     // ------------------------------------------------------------------------------------------
     size_t UniSetObject::countMessages()
@@ -715,7 +715,7 @@ namespace uniset
         {
             uwarn << myname << "(deactivate): " << "поймали CORBA::Exception." << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             uwarn << myname << "(deactivate): " << ex << endl;
         }
@@ -766,9 +766,9 @@ namespace uniset
                 }
                 else
                 {
-                    // А если myid==uniset::DefaultObjectId
+                    // А если myid==uniset3::DefaultObjectId
                     // то myname = noname. ВСЕГДА!
-                    if( myid == uniset::DefaultObjectId )
+                    if( myid == uniset3::DefaultObjectId )
                     {
                         uwarn << myname << "(activate): Не задан ID!!! IGNORE ACTIVATE..." << endl;
                         // вызываем на случай если она переопределена в дочерних классах
@@ -794,7 +794,7 @@ namespace uniset
                     ostringstream err;
                     err << myname << "(activate): ACTIVATE ERROR: " << ex._name();
                     ucrit << myname << "(activate): " << err.str() << endl;
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
 
                 uwarn << myname << "(activate): IGNORE.. catch " << ex._name() << endl;
@@ -808,11 +808,11 @@ namespace uniset
             ostringstream err;
             err << myname << "(activate): DON`T ACTIVATE..";
             ucrit << myname << "(activate): " << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         {
-            uniset::uniset_rwmutex_wrlock lock(refmutex);
+            uniset3::uniset_rwmutex_wrlock lock(refmutex);
             oref = poa->servant_to_reference(static_cast<PortableServer::ServantBase*>(this) );
         }
 
@@ -821,7 +821,7 @@ namespace uniset
         // Запускаем поток обработки сообщений
         setActive(true);
 
-        if( myid != uniset::DefaultObjectId && threadcreate )
+        if( myid != uniset3::DefaultObjectId && threadcreate )
         {
             thr = unisetstd::make_unique< ThreadCreator<UniSetObject> >(this, &UniSetObject::work);
             //thr->setCancel(ost::Thread::cancelDeferred);
@@ -890,13 +890,13 @@ namespace uniset
 
             sleepTime = checkTimers(this);
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             ucrit << myname << "(callback): " << ex << endl;
         }
     }
     // ------------------------------------------------------------------------------------------
-    void UniSetObject::processingMessage( const uniset::VoidMessage* msg )
+    void UniSetObject::processingMessage( const uniset3::VoidMessage* msg )
     {
         try
         {
@@ -943,7 +943,7 @@ namespace uniset
                                << " mesg: " << fe.errmsg() << endl;
             }
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             ucrit  << myname << "(processingMessage): " << ex << endl;
         }
@@ -972,13 +972,13 @@ namespace uniset
     }
     // ------------------------------------------------------------------------------------------
 
-    uniset::SimpleInfo* UniSetObject::getInfo( const char* userparam )
+    uniset3::SimpleInfo* UniSetObject::getInfo( const char* userparam )
     {
         ostringstream info;
         info.setf(ios::left, ios::adjustfield);
         info << "(" << myid << ")" << setw(40) << myname
-             << " date: " << uniset::dateToString()
-             << " time: " << uniset::timeToString()
+             << " date: " << uniset3::dateToString()
+             << " time: " << uniset3::timeToString()
              << "\n===============================================================================\n"
              << "pid=" << setw(10) << Poco::Process::id()
              << " tid=" << setw(10);
@@ -1007,20 +1007,19 @@ namespace uniset
              << " maxMsg=" << mqueueLow.getMaxQueueMessages()
              << " qFull(" << mqueueLow.getMaxSizeOfMessageQueue() << ")=" << mqueueLow.getCountOfLostMessages();
 
-        SimpleInfo* res = new SimpleInfo();
-        res->info =  info.str().c_str(); // CORBA::string_dup(info.str().c_str());
-        res->id   =  myid;
-
-        return res; // ._retn();
+        SimpleInfo res;
+        res.set_info(info.str());
+        res.set_id(myid);
+        return res;
     }
     // ------------------------------------------------------------------------------------------
-    SimpleInfo* UniSetObject::apiRequest( const char* request )
+    SimpleInfo UniSetObject::apiRequest( const char* request )
     {
 #ifdef DISABLE_REST_API
         return getInfo(request);
 #else
-        SimpleInfo* ret = new SimpleInfo();
-        ret->id = getId();
+        SimpleInfo ret;
+        ret.set_id(getId());
         ostringstream err;
 
         try
@@ -1096,14 +1095,14 @@ namespace uniset
                 reply->stringify(out);
             }
 
-            ret->info = out.str().c_str(); // CORBA::string_dup(..)
+            ret->set_info(out.str());
             return ret;
         }
         catch( Poco::SyntaxException& ex )
         {
             err << ex.displayText();
         }
-        catch( uniset::SystemError& ex )
+        catch( uniset3::SystemError& ex )
         {
             err << ex;
         }
@@ -1119,7 +1118,7 @@ namespace uniset
 
         ostringstream out;
         jdata.stringify(out);
-        ret->info = out.str().c_str(); // CORBA::string_dup(..)
+        ret->set_info(out.str());
         return ret;
 
 #endif
@@ -1127,9 +1126,9 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     ostream& operator<<(ostream& os, UniSetObject& obj )
     {
-        SimpleInfo_var si = obj.getInfo();
-        return os << si->info;
+        SimpleInfo si = obj.getInfo();
+        return os << si->info();
     }
     // ------------------------------------------------------------------------------------------
 #undef CREATE_TIMER
-} // end of namespace uniset
+} // end of namespace uniset3

@@ -31,7 +31,7 @@
 #include "LogServerTypes.h"
 #include "LogAgregator.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
@@ -745,4 +745,4 @@ namespace uniset
 		return caddr;
 	}
 	// ---------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

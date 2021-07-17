@@ -19,7 +19,7 @@
 #include "MessageType.h"
 #include "MQMutex.h"
 //--------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 //--------------------------------------------------------------------------
 MQMutex::MQMutex( size_t qsize ):

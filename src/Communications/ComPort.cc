@@ -34,7 +34,7 @@
 #define CMSPAR    010000000000          /* mark or space (stick) parity */
 #endif
 // --------------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------------
 ComPort::~ComPort()
@@ -64,7 +64,7 @@ void ComPort::openPort()
 	if( fd == -1 )
 	{
 		const string strErr = "Unable to open " + dev + " [Error: " + strerror(errno) + "]";
-		throw uniset::SystemError(strErr.c_str());
+		throw uniset3::SystemError(strErr.c_str());
 	}
 
 	/* Get the current options for the port */
@@ -253,7 +253,7 @@ unsigned char ComPort::m_receiveByte( bool wait )
 
 		if( bufLength <= 0 )
 		{
-			throw uniset::TimeOut();
+			throw uniset3::TimeOut();
 		}
 	}
 
@@ -269,7 +269,7 @@ void ComPort::setBlocking(bool blocking)
 		{
 			string str = "setBlocking: err: ";
 			str += strerror(errno);
-			throw uniset::SystemError(str.c_str());
+			throw uniset3::SystemError(str.c_str());
 		}
 	}
 	else
@@ -278,7 +278,7 @@ void ComPort::setBlocking(bool blocking)
 		{
 			string str = "setBlocking: err: ";
 			str += strerror(errno);
-			throw uniset::SystemError(str.c_str());
+			throw uniset3::SystemError(str.c_str());
 		}
 	}
 }
@@ -291,7 +291,7 @@ void ComPort::sendByte(unsigned char x)
 	{
 		string str = "Write Error: ";
 		str += strerror(errno);
-		throw uniset::SystemError(str.c_str());
+		throw uniset3::SystemError(str.c_str());
 	}
 
 	//    fcntl(fd,F_SETFL,O_NONBLOCK);
@@ -322,7 +322,7 @@ ssize_t ComPort::sendBlock( unsigned char* msg, size_t len )
 	{
 		string str = "Write Error: ";
 		str += strerror(errno);
-		throw uniset::SystemError(str.c_str());
+		throw uniset3::SystemError(str.c_str());
 	}
 
 	return sndLen;
@@ -343,7 +343,7 @@ size_t ComPort::receiveBlock(unsigned char* msg, size_t len)
 		{
 			msg[k] = m_receiveByte(waiting);
 		}
-		catch( const uniset::TimeOut& ex )
+		catch( const uniset3::TimeOut& ex )
 		{
 			break;
 		}
@@ -351,7 +351,7 @@ size_t ComPort::receiveBlock(unsigned char* msg, size_t len)
 
 	if(!k)
 	{
-		throw uniset::TimeOut();
+		throw uniset3::TimeOut();
 	}
 
 	return k;

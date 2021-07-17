@@ -28,7 +28,7 @@
 #include "modbus/ModbusTypes.h"
 #include "ComPort.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     class ModbusClient;
@@ -64,8 +64,8 @@ namespace uniset
         const ModbusRTU::ModbusData regModelNumber  = 0x01;
         const ModbusRTU::ModbusData regSerialNumber = 0x09;
 
-        std::string getModelNumber( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr );
-        std::string getSerialNumber(uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr );
+        std::string getModelNumber( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr );
+        std::string getSerialNumber(uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr );
         // -------------------------------------------------------------------------
         // Настройки связи (чтение - read03, запись - write06)
         const ModbusRTU::ModbusData regUpdateConfiguration = 53;
@@ -100,11 +100,11 @@ namespace uniset
             db7Bits = 1
         };
 
-        bool setAddress( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, ModbusRTU::ModbusAddr newAddr );
-        bool setBaudRate(uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrBaudRate br );
-        bool setStopBit(uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, bool state );
-        bool setParity(uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrParity p );
-        bool setDataBits( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrDataBits d );
+        bool setAddress( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, ModbusRTU::ModbusAddr newAddr );
+        bool setBaudRate(uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrBaudRate br );
+        bool setStopBit(uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, bool state );
+        bool setParity(uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrParity p );
+        bool setDataBits( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrDataBits d );
         ComPort::Parity get_parity( ModbusRTU::ModbusData data );
         ComPort::Speed get_speed( ModbusRTU::ModbusData data );
         // -------------------------------------------------------------------------
@@ -118,7 +118,7 @@ namespace uniset
         };
         std::ostream& operator<<(std::ostream& os, MTRError& e );
         // Настройка из конф. файла
-        MTRError update_configuration( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr,
+        MTRError update_configuration( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr,
                                        const std::string& mtrconfile, int verbose = 0 );
         // ---------------------------
         // вспомогательные функции и типы данных
@@ -127,11 +127,11 @@ namespace uniset
         const int attempts = 3; //
         static const ModbusRTU::ModbusData skip[] = {48, 49, 59};  // registers which should not write
 
-        bool send_param( uniset::ModbusClient* mb, DataMap& dmap, ModbusRTU::ModbusAddr addr, int verb );
+        bool send_param( uniset3::ModbusClient* mb, DataMap& dmap, ModbusRTU::ModbusAddr addr, int verb );
         bool read_param( const std::string& str, std::string& str1, std::string& str2 );
         DataMap read_confile( const std::string& f );
         void update_communication_params( ModbusRTU::ModbusAddr reg, ModbusRTU::ModbusData data,
-                                          uniset::ModbusClient* mb, ModbusRTU::ModbusAddr& addr, int verb );
+                                          uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr& addr, int verb );
         // -------------------------------------------------------------------------
         static const size_t u2size = 2;
         // -------------------------------------------------------------------------
@@ -914,7 +914,7 @@ namespace uniset
         // --------------------------------------------------------------------------
     } // end of namespace MTR
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // --------------------------------------------------------------------------
 #endif // _MTR_H_
 // -----------------------------------------------------------------------------

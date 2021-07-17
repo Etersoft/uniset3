@@ -36,7 +36,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     typedef std::vector< std::pair<const std::string, const std::string> > UniXMLPropList;
 

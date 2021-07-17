@@ -34,8 +34,8 @@ static struct option longopts[] =
 };
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::UniSetUDP;
+using namespace uniset3;
+using namespace uniset3::UniSetUDP;
 using namespace std::chrono;
 // --------------------------------------------------------------------------
 enum Command
@@ -225,7 +225,7 @@ int main(int argc, char* argv[])
 
                 UniSetUDP::UDPMessage pack;
                 unsigned long prev_num = 1;
-                uint8_t rbuf[uniset::UniSetUDP::MessageBufSize];
+                uint8_t rbuf[uniset3::UniSetUDP::MessageBufSize];
 
                 int nc = 1;
 
@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
 
                 if( !a_data.empty() )
                 {
-                    auto vlist = uniset::getSInfoList(a_data, nullptr);
+                    auto vlist = uniset3::getSInfoList(a_data, nullptr);
 
                     for( const auto& v : vlist )
                         mypack.addAData(v.si.id, v.val);
@@ -344,7 +344,7 @@ int main(int argc, char* argv[])
 
                 if( !d_data.empty() )
                 {
-                    auto vlist = uniset::getSInfoList(d_data, nullptr);
+                    auto vlist = uniset3::getSInfoList(d_data, nullptr);
 
                     for( const auto& v : vlist )
                         mypack.addDData(v.si.id, v.val);

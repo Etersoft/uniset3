@@ -29,7 +29,7 @@
 #include "UniSetTypes.h"
 #include "IOConfig.h"
 // ------------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // ------------------------------------------------------------------------------------------
     /*! Реализация интерфейса конфигурирования на основе XML */
@@ -107,7 +107,7 @@ namespace uniset
                 \return true - если идентификаторы определены
             */
             bool getConsumerInfo( UniXML::iterator& it,
-                                  uniset::ObjectId& cid, uniset::ObjectId& cnode ) const;
+                                  uniset3::ObjectId& cid, uniset3::ObjectId& cnode ) const;
 
             /*! Установить фильтр на чтение списка 'порогов' */
             void setThresholdsFilter( const std::string& filterField, const std::string& filterValue = "" );
@@ -140,7 +140,7 @@ namespace uniset
             void init_thresholds( xmlNode* node, IOController::IOStateList& iolist );
             void init_depends_signals( IOController::IOStateList& lst );
 
-            bool getBaseInfo( xmlNode* it, IOController_i::SensorInfo& si ) const;
+            bool getBaseInfo( xmlNode* it, uniset3::SensorInfo& si ) const;
             bool getSensorInfo( xmlNode* snode, std::shared_ptr<IOController::USensorInfo>& si ) const;
             bool getThresholdInfo(xmlNode* tnode, std::shared_ptr<IOController::UThresholdInfo>& ti) const;
             //          bool getConsumerList( const std::shared_ptr<UniXML>& xml, xmlNode* node, IONotifyController::ConsumerListInfo& lst) const;

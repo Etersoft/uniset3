@@ -26,12 +26,12 @@
 #include "Exceptions.h"
 #include "modbus/ModbusServer.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
 	using namespace ModbusRTU;
-	using namespace uniset;
+	using namespace uniset3;
 	// -------------------------------------------------------------------------
 	ModbusServer::ModbusServer():
 		recvTimeOut_ms(50),
@@ -681,16 +681,16 @@ namespace uniset
 
 			return recv_pdu(rbuf, timeout);
 		}
-		catch( const uniset::TimeOut& ex )
+		catch( const uniset3::TimeOut& ex )
 		{
 			//        cout << "(recv): catch TimeOut " << endl;
 		}
-		catch( const uniset::CommFailed& ex )
+		catch( const uniset3::CommFailed& ex )
 		{
 			cleanupChannel();
 			return erSessionClosed;
 		}
-		catch( const uniset::Exception& ex ) // SystemError
+		catch( const uniset3::Exception& ex ) // SystemError
 		{
 			dlog->crit() << "(recv): " << ex << endl;
 			cleanupChannel();
@@ -1535,11 +1535,11 @@ namespace uniset
 			cleanupChannel();
 			return ex.err;
 		}
-		catch( const uniset::TimeOut& ex )
+		catch( const uniset3::TimeOut& ex )
 		{
 			//        cout << "(recv): catch TimeOut " << endl;
 		}
-		catch( const uniset::Exception& ex ) // SystemError
+		catch( const uniset3::Exception& ex ) // SystemError
 		{
 			if( dlog->is_crit() )
 				dlog->crit() << "(recv): " << ex << endl;
@@ -1614,7 +1614,7 @@ namespace uniset
 		return m_post_signal;
 	}
 	// -------------------------------------------------------------------------
-	void ModbusServer::initLog( uniset::Configuration* conf,
+	void ModbusServer::initLog( uniset3::Configuration* conf,
 								const std::string& lname, const string& logfile )
 	{
 		conf->initLogStream(dlog, lname);
@@ -1832,7 +1832,7 @@ namespace uniset
 			sendData(msg.buf(), len);
 			msg.swapHead(); // обратно, т.к. потом ещё будет post_send_request
 		}
-		catch( const uniset::Exception& ex ) // SystemError
+		catch( const uniset3::Exception& ex ) // SystemError
 		{
 			if( dlog->is_crit() )
 				dlog->crit() << "(ModbusServer::send): " << ex << endl;
@@ -1848,4 +1848,4 @@ namespace uniset
 	}
 
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

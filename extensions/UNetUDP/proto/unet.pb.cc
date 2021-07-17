@@ -12,7 +12,7 @@
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 extern PROTOBUF_INTERNAL_EXPORT_unet_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_UNetData_unet_2eproto;
-namespace uniset
+namespace uniset3
 {
     namespace unet
     {
@@ -27,14 +27,14 @@ namespace uniset
                 ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<UNetPacket> _instance;
         } _UNetPacket_default_instance_;
     }  // namespace unet
-}  // namespace uniset
+}  // namespace uniset3
 static void InitDefaultsscc_info_UNetData_unet_2eproto()
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     {
-        void* ptr = &::uniset::unet::_UNetData_default_instance_;
-        new (ptr) ::uniset::unet::UNetData();
+        void* ptr = &::uniset3::unet::_UNetData_default_instance_;
+        new (ptr) ::uniset3::unet::UNetData();
         ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
     }
 }
@@ -47,8 +47,8 @@ static void InitDefaultsscc_info_UNetPacket_unet_2eproto()
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     {
-        void* ptr = &::uniset::unet::_UNetPacket_default_instance_;
-        new (ptr) ::uniset::unet::UNetPacket();
+        void* ptr = &::uniset3::unet::_UNetPacket_default_instance_;
+        new (ptr) ::uniset3::unet::UNetPacket();
         ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
     }
 }
@@ -60,7 +60,7 @@ static void InitDefaultsscc_info_UNetPacket_unet_2eproto()
     }
 };
 
-namespace uniset
+namespace uniset3
 {
     namespace unet
     {
@@ -466,7 +466,7 @@ namespace uniset
                 {
                     (*has_bits)[0] |= 8u;
                 }
-                static const ::uniset::unet::UNetData& data(const UNetPacket* msg);
+                static const ::uniset3::unet::UNetData& data(const UNetPacket* msg);
                 static void set_has_data(HasBits* has_bits)
                 {
                     (*has_bits)[0] |= 1u;
@@ -477,7 +477,7 @@ namespace uniset
                 }
         };
 
-        const ::uniset::unet::UNetData&
+        const ::uniset3::unet::UNetData&
         UNetPacket::_Internal::data(const UNetPacket* msg)
         {
             return *msg->data_;
@@ -497,7 +497,7 @@ namespace uniset
 
             if (from._internal_has_data())
             {
-                data_ = new ::uniset::unet::UNetData(*from.data_);
+                data_ = new ::uniset3::unet::UNetData(*from.data_);
             }
             else
             {
@@ -845,7 +845,7 @@ namespace uniset
             {
                 if (cached_has_bits & 0x00000001u)
                 {
-                    _internal_mutable_data()->::uniset::unet::UNetData::MergeFrom(from._internal_data());
+                    _internal_mutable_data()->::uniset3::unet::UNetData::MergeFrom(from._internal_data());
                 }
 
                 if (cached_has_bits & 0x00000002u)
@@ -909,15 +909,15 @@ namespace uniset
 
         // @@protoc_insertion_point(namespace_scope)
     }  // namespace unet
-}  // namespace uniset
+}  // namespace uniset3
 PROTOBUF_NAMESPACE_OPEN
-template<> PROTOBUF_NOINLINE ::uniset::unet::UNetData* Arena::CreateMaybeMessage< ::uniset::unet::UNetData >(Arena* arena)
+template<> PROTOBUF_NOINLINE ::uniset3::unet::UNetData* Arena::CreateMaybeMessage< ::uniset3::unet::UNetData >(Arena* arena)
 {
-    return Arena::CreateMessageInternal< ::uniset::unet::UNetData >(arena);
+    return Arena::CreateMessageInternal< ::uniset3::unet::UNetData >(arena);
 }
-template<> PROTOBUF_NOINLINE ::uniset::unet::UNetPacket* Arena::CreateMaybeMessage< ::uniset::unet::UNetPacket >(Arena* arena)
+template<> PROTOBUF_NOINLINE ::uniset3::unet::UNetPacket* Arena::CreateMaybeMessage< ::uniset3::unet::UNetPacket >(Arena* arena)
 {
-    return Arena::CreateMessageInternal< ::uniset::unet::UNetPacket >(arena);
+    return Arena::CreateMessageInternal< ::uniset3::unet::UNetPacket >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

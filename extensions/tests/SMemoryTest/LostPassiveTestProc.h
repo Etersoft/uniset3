@@ -11,20 +11,20 @@ class LostPassiveTestProc:
     public LostTestProc_SK
 {
     public:
-        LostPassiveTestProc( uniset::ObjectId id, xmlNode* confnode = uniset::uniset_conf()->getNode("LostPassiveTestProc") );
+        LostPassiveTestProc( uniset3::ObjectId id, xmlNode* confnode = uniset3::uniset_conf()->getNode("LostPassiveTestProc") );
         virtual ~LostPassiveTestProc();
 
         bool emptyQueue();
-        long checkValue( uniset::ObjectId sid );
+        long checkValue( uniset3::ObjectId sid );
 
     protected:
         LostPassiveTestProc();
 
-        virtual void askSensors( UniversalIO::UIOCommand cmd ) override;
-        virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
+        virtual void askSensors( uniset3::UIOCommand cmd ) override;
+        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
 
         std::mutex mut;
-        std::unordered_map<uniset::ObjectId, long> slist;
+        std::unordered_map<uniset3::ObjectId, long> slist;
 
     private:
 };

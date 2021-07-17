@@ -6,13 +6,13 @@
 #include "ModbusRTUErrors.h"
 #include "UTCPStream.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     /*!    ModbusTCP core functions */
     namespace ModbusTCPCore
     {
-        // Если соединение закрыто (другой стороной), функции выкидывают исключение uniset::CommFailed
+        // Если соединение закрыто (другой стороной), функции выкидывают исключение uniset3::CommFailed
 
         // t - msec (сколько ждать)
         size_t readNextData(UTCPStream* tcp, std::queue<unsigned char>& qrecv, size_t max = 100);
@@ -25,7 +25,7 @@ namespace uniset
         ModbusRTU::mbErrCode sendDataFD( int fd, unsigned char* buf, size_t len );
     }
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // ModbusTCPCore_H_
 // -------------------------------------------------------------------------

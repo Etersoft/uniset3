@@ -9,7 +9,7 @@
 #include "TA2D.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static shared_ptr<UInterface> ui;
 

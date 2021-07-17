@@ -22,7 +22,7 @@
 #ifndef UNITRIGGER_H_
 #define UNITRIGGER_H_
 //--------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // header only
 

@@ -33,22 +33,26 @@
 #include <chrono>
 #include <thread>
 
-#include <omniORB4/CORBA.h>
-#include "UniSetTypes_i.hh"
-#include "IOController_i.hh"
+#include "UniSetTypes.pb.h"
+#include "IOController.pb.h"
 #include "Mutex.h"
 #include "UniXML.h"
 #include "PassiveTimer.h" // for typedef timeout_t
 // -----------------------------------------------------------------------------------------
 /*! Задержка в миллисекундах */
-inline void msleep( uniset::timeout_t m )
+inline void msleep( uniset3::timeout_t m )
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(m));
 }
 
-/*! Определения базовых типов библиотеки UniSet (вспомогательные типы данных, константы, полезные функции) */
-namespace uniset
+/*! Определения базовых (вспомогательные типы данных, константы, полезные функции) */
+namespace uniset3
 {
+    typedef int64_t ObjectId;
+    typedef int64_t ThresholdId;
+    typedef int64_t TimerId;
+    typedef std::string ObjectType;
+
     class Configuration;
     // ---------------------------------------------------------------
     // Вспомогательные типы данных и константы
@@ -57,14 +61,13 @@ namespace uniset
     const char BadSymbols[] = {'.', '/'};
 
     /*! Проверка на наличие недопустимых символов
-     * Запрещенные символы см. uniset::BadSymbols[]
+     * Запрещенные символы см. uniset3::BadSymbols[]
      * \return Если не найдено запрещённых символов то будет возвращен 0, иначе найденный символ
      */
     char checkBadSymbols(const std::string& str);
 
     /*! Получение запрещенных символов в виде строки '.', '/', и т.д. */
     std::string BadSymbolsToStr();
-
 
     const ObjectId DefaultObjectId = -1;    /*!< Идентификатор объекта по умолчанию */
     const ThresholdId DefaultThresholdId = -1;      /*!< идентификатор порогов по умолчанию */
@@ -79,20 +82,17 @@ namespace uniset
      *  \todo Желательно продумать что-нибудь с использованием хэш.
      *  \warning Уникальность не гарантирована, возможны коллизии
     */
-    KeyType key( const uniset::ObjectId id, const uniset::ObjectId node );
-    KeyType key( const IOController_i::SensorInfo& si );
+    KeyType key( const uniset3::ObjectId id, const uniset3::ObjectId node );
+    KeyType key( const uniset3::SensorInfo& si );
 
     typedef std::list<std::string> ListObjectName;    /*!< Список объектов типа ObjectName */
 
-    typedef CORBA::Object_ptr ObjectPtr;    /*!< Ссылка на объект, регистрируемый в ObjectRepository */
-    typedef CORBA::Object_var ObjectVar;    /*!< Ссылка на объект, регистрируемый в ObjectRepository */
-
-    UniversalIO::IOType getIOType( const std::string& s ) noexcept;
-    std::string iotype2str( const UniversalIO::IOType& t ) noexcept;
-    std::ostream& operator<<( std::ostream& os, const UniversalIO::IOType t );
-    std::ostream& operator<<( std::ostream& os, const IONotifyController_i::ThresholdInfo& ti );
-    std::ostream& operator<<( std::ostream& os, const IOController_i::ShortIOInfo& s );
-    std::ostream& operator<<( std::ostream& os, const IONotifyController_i::ThresholdState& s);
+    uniset3::IOType getIOType( const std::string& s ) noexcept;
+    std::string iotype2str( const uniset3::IOType& t ) noexcept;
+    std::ostream& operator<<( std::ostream& os, const uniset3::IOType t );
+    std::ostream& operator<<( std::ostream& os, const uniset3::ThresholdInfo& ti );
+    std::ostream& operator<<( std::ostream& os, const uniset3::ShortIOInfo& s );
+    std::ostream& operator<<( std::ostream& os, const uniset3::ThresholdState& s);
 
     /*! Команды для управления лампочками */
     enum LampCommand
@@ -130,7 +130,7 @@ namespace uniset
 
             // за освобождение выделенной памяти
             // отвечает вызывающий!
-            IDSeq* getIDSeq() const;
+            uniset3::IDSeq getIDSeq() const;
 
             //
             ObjectId getFirst() const noexcept;
@@ -154,8 +154,6 @@ namespace uniset
         }
     };
 
-    typedef std::list<NodeInfo> ListOfNode;
-
     // ---------------------------------------------------------------
     // Различные преобразования
 
@@ -175,8 +173,8 @@ namespace uniset
     struct timespec to_timespec( const std::chrono::system_clock::duration& d ); /*!< конвертирование std::chrono в posix timespec */
     struct timespec now_to_timespec(); /*!< получение текущего времени */
 
-    uniset::Timespec_var to_uniset_timespec( const std::chrono::system_clock::duration& d );
-    uniset::Timespec_var now_to_uniset_timespec(); /*!< получение текущего времени */
+    uniset3::Timespec to_uniset_timespec( const std::chrono::system_clock::duration& d );
+    uniset3::Timespec now_to_uniset_timespec(); /*!< получение текущего времени */
 
     inline bool operator==( const struct timespec& r1,  const struct timespec& r2 )
     {
@@ -194,7 +192,7 @@ namespace uniset
 
     struct ParamSInfo
     {
-        IOController_i::SensorInfo si;
+        uniset3::SensorInfo si;
         long val;
         std::string fname; // fullname id@node or id
     };
@@ -202,12 +200,12 @@ namespace uniset
     /*! Функция разбора строки вида: id1@node1=val1,id2@node2=val2,...
        Если '=' не указано, возвращается val=0
        Если @node не указано, возвращается node=DefaultObjectId */
-    std::list<ParamSInfo> getSInfoList( const std::string& s, std::shared_ptr<uniset::Configuration> conf = nullptr );
+    std::list<ParamSInfo> getSInfoList( const std::string& s, std::shared_ptr<uniset3::Configuration> conf = nullptr );
 
 
     /*! Функция разбора строки вида: id1@node1,id2@node2,...
       Если @node не указано, возвращается node=DefaultObjectId */
-    std::list<uniset::ConsumerInfo> getObjectsList( const std::string& s, std::shared_ptr<uniset::Configuration> conf = nullptr );
+    std::list<uniset3::ConsumerInfo> getObjectsList( const std::string& s, std::shared_ptr<uniset3::Configuration> conf = nullptr );
 
     /*! проверка является текст в строке - числом..
      * \warning Числом будет считаться только строка ПОЛНОСТЬЮ состоящая из чисел.
@@ -247,7 +245,7 @@ namespace uniset
                                     int _argc, const char* const* _argv,
                                     const std::string& defval, const std::string& defval2 = "") noexcept
     {
-        std::string s(uniset::getArgParam(name, _argc, _argv, ""));
+        std::string s(uniset3::getArgParam(name, _argc, _argv, ""));
 
         if( !s.empty() )
             return s;
@@ -269,12 +267,12 @@ namespace uniset
                            int _argc, const char* const* _argv,
                            const std::string& strdefval, int defval ) noexcept
     {
-        std::string param = uniset::getArgParam(name, _argc, _argv, strdefval);
+        std::string param = uniset3::getArgParam(name, _argc, _argv, strdefval);
 
         if( param.empty() && strdefval.empty() )
             return defval;
 
-        return uniset::uni_atoi(param);
+        return uniset3::uni_atoi(param);
     }
 
 
@@ -301,7 +299,7 @@ namespace uniset
     // ---------------------------------------------------------------
     // Калибровка
 
-    std::ostream& operator<<( std::ostream& os, const IOController_i::CalibrateInfo& c );
+    std::ostream& operator<<( std::ostream& os, const uniset3::CalibrateInfo& c );
 
     // Функции калибровки значений
     // raw      - преобразуемое значение
@@ -353,6 +351,6 @@ namespace uniset
     };
 
     // -----------------------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------------------
 #endif

@@ -22,8 +22,8 @@
 #include "Extensions.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 int main( int argc, const char** argv )
 {
@@ -81,7 +81,7 @@ int main( int argc, const char** argv )
         act->run(false);
         return 0;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(mbtcpmultimaster): " << ex << std::endl;
     }

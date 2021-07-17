@@ -27,7 +27,7 @@
 #include "IOController.h"
 #include "SMInterface.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*! Свойства переменной в/в */
@@ -47,7 +47,7 @@ namespace uniset
 
         ~IOBase();
         IOBase():
-            stype(UniversalIO::UnknownIOType),
+            stype(uniset3::UnknownIOType),
             cdiagram(nullptr),
             breaklim(0),
             value(0),
@@ -68,25 +68,25 @@ namespace uniset
             debounce_state(false),
             ondelay_state(false),
             offdelay_state(false),
-            d_id(uniset::DefaultObjectId),
+            d_id(uniset3::DefaultObjectId),
             d_value(1),
             d_off_value(0),
-            d_iotype(UniversalIO::UnknownIOType),
-            t_ai(uniset::DefaultObjectId),
+            d_iotype(uniset3::UnknownIOType),
+            t_ai(uniset3::DefaultObjectId),
             front(false),
             front_type(ftUnknown),
             front_prev_state(false),
             front_state(false),
             rawdata(false)
         {
-            si.id = uniset::DefaultObjectId;
-            si.node = uniset::DefaultObjectId;
+            si.id = uniset3::DefaultObjectId;
+            si.node = uniset3::DefaultObjectId;
             cal.minRaw = cal.maxRaw = cal.minCal = cal.maxCal = cal.precision = 0;
             ti.invert = false;
             ti.hilimit = 0;
             ti.lowlimit = 0;
-            ti.id = uniset::DefaultObjectId;
-            ti.state = IONotifyController_i::NormalThreshold;
+            ti.id = uniset3::DefaultObjectId;
+            ti.state = uniset3::NormalThreshold;
             ti.tv_sec = 0;
             ti.tv_nsec = 0;
         }
@@ -99,9 +99,9 @@ namespace uniset
         bool check_front( bool val );       /*!< реализация срабатывания по фронту сигнала */
         bool check_depend( const std::shared_ptr<SMInterface>& shm ); /*!< проверка разрешения(зависимости) от другого датчика */
 
-        IOController_i::SensorInfo si;
-        UniversalIO::IOType stype;           /*!< тип канала (DI,DO,AI,AO) */
-        IOController_i::CalibrateInfo cal;   /*!< калибровочные параметры */
+        uniset3::SensorInfo si;
+        uniset3::IOType stype;           /*!< тип канала (DI,DO,AI,AO) */
+        uniset3::CalibrateInfo cal;   /*!< калибровочные параметры */
         Calibration* cdiagram;               /*!< специальная калибровочная диаграмма */
 
         long breaklim;  /*!< значение задающее порог определяющий обрыв (задаётся 'сырое' значение) */
@@ -137,18 +137,18 @@ namespace uniset
         bool offdelay_state;    /*!< значение для задержки отключения */
 
         // Зависимость (d - depend)
-        uniset::ObjectId d_id;  /*!< идентификатор датчика, от которого зависит данный */
+        uniset3::ObjectId d_id;  /*!< идентификатор датчика, от которого зависит данный */
         IOController::IOStateList::iterator d_it; /*! итератор на датчик от которого зависит данный */
         long d_value; /*!< разрешающее работу значение датчика от которого зависит данный */
         long d_off_value; /*!< блокирующее значение */
-        UniversalIO::IOType d_iotype;
+        uniset3::IOType d_iotype;
 
         // Порог
-        uniset::ObjectId t_ai; /*!< если данный датчик дискретный,
+        uniset3::ObjectId t_ai; /*!< если данный датчик дискретный,
                                         и является пороговым, то в данном поле
                                         хранится идентификатор аналогового датчика
                                         с которым он связан */
-        IONotifyController_i::ThresholdInfo ti;
+        uniset3::ThresholdInfo ti;
         IOController::IOStateList::iterator t_ait; // итератор для аналогового датчика
 
         // Работа по фронтам сигнала
@@ -169,7 +169,7 @@ namespace uniset
         bool rawdata; // флаг для сохранения данный в таком виде в каком они пришли (4байта просто копируются в long). Актуально для Vtypes::F4.
 
         IOController::IOStateList::iterator ioit;
-        uniset::uniset_rwmutex val_lock;     /*!< блокировка на время "работы" со значением */
+        uniset3::uniset_rwmutex val_lock;     /*!< блокировка на время "работы" со значением */
 
         IOBase make_iobase_copy();
         void create_from_iobase( const IOBase& b );
@@ -203,7 +203,7 @@ namespace uniset
         static timeout_t initTimeoutProp( UniXML::iterator& it, const std::string& prop, const std::string& prefix, bool prefonly, const timeout_t defval);
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // IOBase_H_
 // -----------------------------------------------------------------------------

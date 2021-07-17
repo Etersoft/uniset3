@@ -25,7 +25,7 @@
 #include <omnithread.h>
 #include <memory>
 //----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! \class OmniThreadCreator
      * \par

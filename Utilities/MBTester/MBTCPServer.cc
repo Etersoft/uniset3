@@ -12,7 +12,7 @@
 #endif
 // -------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 using namespace ModbusRTU;
 // -------------------------------------------------------------------------
 MBTCPServer::MBTCPServer(const std::unordered_set<ModbusAddr>& myaddr, const string& inetaddr, int port, bool verb ):

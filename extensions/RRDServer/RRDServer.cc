@@ -23,10 +23,10 @@ extern "C" {
 #include "RRDServer.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-RRDServer::RRDServer(uniset::ObjectId objId, xmlNode* cnode, uniset::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
+RRDServer::RRDServer(uniset3::ObjectId objId, xmlNode* cnode, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                      const string& prefix ):
     UObject_SK(objId, cnode, string(prefix + "-")),
     prefix(prefix)
@@ -169,7 +169,7 @@ void RRDServer::initRRD( xmlNode* cnode, int tmID )
 
         for(; it1.getCurrent(); it1.goNext() )
         {
-            if( !uniset::check_filter(it1, ff, fv) )
+            if( !uniset3::check_filter(it1, ff, fv) )
                 continue;
 
             std::string a(it1.getProp(cf));
@@ -290,7 +290,7 @@ void RRDServer::help_print( int argc, const char* const* argv )
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<RRDServer> RRDServer::init_rrdstorage(int argc, const char* const* argv,
-        uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+        uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
         const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -305,7 +305,7 @@ std::shared_ptr<RRDServer> RRDServer::init_rrdstorage(int argc, const char* cons
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         dcrit << "(RRDServer): Not found ID for '" << name
               << " in '" << conf->getObjectsSection() << "' section" << endl;
@@ -325,7 +325,7 @@ std::shared_ptr<RRDServer> RRDServer::init_rrdstorage(int argc, const char* cons
     return make_shared<RRDServer>(ID, cnode, icID, ic, prefix);
 }
 // -----------------------------------------------------------------------------
-void RRDServer::askSensors( UniversalIO::UIOCommand cmd )
+void RRDServer::askSensors( uniset3::UIOCommand cmd )
 {
     UObject_SK::askSensors(cmd);
 
@@ -352,7 +352,7 @@ void RRDServer::askSensors( UniversalIO::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::sysCommand( const uniset::SystemMessage* sm )
+void RRDServer::sysCommand( const uniset3::SystemMessage* sm )
 {
     UObject_SK::sysCommand(sm);
 
@@ -372,7 +372,7 @@ void RRDServer::sysCommand( const uniset::SystemMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::sensorInfo( const uniset::SensorMessage* sm )
+void RRDServer::sensorInfo( const uniset3::SensorMessage* sm )
 {
     for( const auto& it : rrdlist )
     {
@@ -385,7 +385,7 @@ void RRDServer::sensorInfo( const uniset::SensorMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::timerInfo( const uniset::TimerMessage* tm )
+void RRDServer::timerInfo( const uniset3::TimerMessage* tm )
 {
     for( const auto& it : rrdlist )
     {

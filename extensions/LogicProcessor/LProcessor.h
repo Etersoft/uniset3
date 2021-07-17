@@ -113,7 +113,7 @@
 #include "Element.h"
 #include "Schema.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // --------------------------------------------------------------------------
     class LProcessor
@@ -146,7 +146,7 @@ namespace uniset
 
             struct EXTInfo
             {
-                uniset::ObjectId sid = { uniset::DefaultObjectId };
+                uniset3::ObjectId sid = { uniset3::DefaultObjectId };
                 long value = { 0 };
                 std::shared_ptr<Element> el = { nullptr };
                 int numInput = { -1 };
@@ -154,7 +154,7 @@ namespace uniset
 
             struct EXTOutInfo
             {
-                uniset::ObjectId sid = { uniset::DefaultObjectId };
+                uniset3::ObjectId sid = { uniset3::DefaultObjectId };
                 std::shared_ptr<Element> el = { nullptr };
             };
 
@@ -177,6 +177,6 @@ namespace uniset
         private:
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // ---------------------------------------------------------------------------
 #endif

@@ -19,7 +19,7 @@ using Poco::Net::HTTPResponse;
 using Poco::Net::HTTPMessage;
 using Poco::Net::WebSocket;
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static int port = 8081;
 static string addr("127.0.0.1");

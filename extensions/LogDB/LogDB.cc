@@ -33,7 +33,7 @@
 #include "UniXML.h"
 #include "LogDBSugar.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 LogDB::LogDB( const string& name, int argc, const char* const* argv, const string& prefix ):
@@ -43,10 +43,10 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
 
     std::string specconfig;
 
-    int i = uniset::findArgParam("--" + prefix + "single-confile", argc, argv);
+    int i = uniset3::findArgParam("--" + prefix + "single-confile", argc, argv);
 
     if( i != -1 )
-        specconfig = uniset::getArgParam("--" + prefix + "single-confile", argc, argv, "");
+        specconfig = uniset3::getArgParam("--" + prefix + "single-confile", argc, argv, "");
 
     std::shared_ptr<UniXML> xml;
 
@@ -80,7 +80,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
         ostringstream err;
         err << name << "(init): Not found confnode <LogDB name='" << name << "'...>";
         dbcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     UniXML::iterator it(cnode);
@@ -90,26 +90,26 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
     else
     {
         // инициализируем сами, т.к. conf нету..
-        const std::string loglevels = uniset::getArg2Param("--" + prefix + "log-add-levels", argc, argv, it.getProp("log"), "");
+        const std::string loglevels = uniset3::getArg2Param("--" + prefix + "log-add-levels", argc, argv, it.getProp("log"), "");
 
         if( !loglevels.empty() )
             dblog->level(Debug::value(loglevels));
     }
 
 
-    qbufSize = uniset::getArgPInt("--" + prefix + "db-buffer-size", argc, argv, it.getProp("dbBufferSize"), qbufSize);
-    maxdbRecords = uniset::getArgPInt("--" + prefix + "db-max-records", argc, argv, it.getProp("dbMaxRecords"), qbufSize);
+    qbufSize = uniset3::getArgPInt("--" + prefix + "db-buffer-size", argc, argv, it.getProp("dbBufferSize"), qbufSize);
+    maxdbRecords = uniset3::getArgPInt("--" + prefix + "db-max-records", argc, argv, it.getProp("dbMaxRecords"), qbufSize);
 
-    string tformat = uniset::getArg2Param("--" + prefix + "db-timestamp-format", argc, argv, it.getProp("dbTeimastampFormat"), "localtime");
+    string tformat = uniset3::getArg2Param("--" + prefix + "db-timestamp-format", argc, argv, it.getProp("dbTeimastampFormat"), "localtime");
 
     if( tformat == "localtime" || tformat == "utc" )
         tmsFormat = tformat;
 
-    double checkConnection_sec = atof( uniset::getArg2Param("--" + prefix + "ls-check-connection-sec", argc, argv, it.getProp("lsCheckConnectionSec"), "5").c_str());
+    double checkConnection_sec = atof( uniset3::getArg2Param("--" + prefix + "ls-check-connection-sec", argc, argv, it.getProp("lsCheckConnectionSec"), "5").c_str());
 
-    int bufSize = uniset::getArgPInt("--" + prefix + "ls-read-buffer-size", argc, argv, it.getProp("lsReadBufferSize"), 10001);
+    int bufSize = uniset3::getArgPInt("--" + prefix + "ls-read-buffer-size", argc, argv, it.getProp("lsReadBufferSize"), 10001);
 
-    std::string s_overflow = uniset::getArg2Param("--" + prefix + "db-overflow-factor", argc, argv, it.getProp("dbOverflowFactor"), "1.3");
+    std::string s_overflow = uniset3::getArg2Param("--" + prefix + "db-overflow-factor", argc, argv, it.getProp("dbOverflowFactor"), "1.3");
     float ovf = atof(s_overflow.c_str());
 
     numOverflow = lroundf( (float)maxdbRecords * ovf );
@@ -125,7 +125,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
     sigQUIT.set<LogDB, &LogDB::onTerminate>(this);
     sigINT.set<LogDB, &LogDB::onTerminate>(this);
 
-    bool dbDisabled = ( uniset::findArgParam("--" + prefix + "db-disable", argc, argv) != -1 );
+    bool dbDisabled = ( uniset3::findArgParam("--" + prefix + "db-disable", argc, argv) != -1 );
 
     if( dbDisabled )
         dbinfo << myname << "(init): save to database DISABLED.." << endl;
@@ -137,7 +137,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
         ostringstream err;
         err << name << "(init): Not found confnode list of log servers for <LogDB name='" << name << "'...>";
         dbcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     for( ; sit.getCurrent(); sit++ )
@@ -159,7 +159,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
             ostringstream err;
             err << name << "(init): Unknown name for logserver..";
             dbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         if( l->ip.empty()  )
@@ -167,7 +167,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
             ostringstream err;
             err << name << "(init): Unknown 'ip' for '" << l->name << "'..";
             dbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         if( l->port == 0 )
@@ -175,7 +175,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
             ostringstream err;
             err << name << "(init): Unknown 'port' for '" << l->name << "'..";
             dbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         //      l->tcp = make_shared<UTCPStream>();
@@ -207,20 +207,20 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
         ostringstream err;
         err << name << "(init): empty list of log servers for <LogDB name='" << name << "'...>";
         dbcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
 
     if( !dbDisabled )
     {
-        const std::string dbfile = uniset::getArgParam("--" + prefix + "dbfile", argc, argv, it.getProp("dbfile"));
+        const std::string dbfile = uniset3::getArgParam("--" + prefix + "dbfile", argc, argv, it.getProp("dbfile"));
 
         if( dbfile.empty() )
         {
             ostringstream err;
             err << name << "(init): dbfile (sqlite) not defined. Use: <LogDB name='" << name << "' dbfile='..' ...>";
             dbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         db = unisetstd::make_unique<SQLiteInterface>();
@@ -232,36 +232,36 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
                 << "(init): DB connection error: "
                 << db->error();
             dbcrit << err.str() << endl;
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
     }
 
 #ifndef DISABLE_REST_API
-    wsHeartbeatTime_sec = (float)uniset::getArgPInt("--" + prefix + "ws-heartbeat-time", argc, argv, it.getProp("wsPingTime"), wsHeartbeatTime_sec) / 1000.0;
-    wsSendTime_sec = (float)uniset::getArgPInt("--" + prefix + "ws-send-time", argc, argv, it.getProp("wsSendTime"), wsSendTime_sec) / 1000.0;
-    wsMaxSend = uniset::getArgPInt("--" + prefix + "ws-max-send", argc, argv, it.getProp("wsMaxSend"), wsMaxSend);
+    wsHeartbeatTime_sec = (float)uniset3::getArgPInt("--" + prefix + "ws-heartbeat-time", argc, argv, it.getProp("wsPingTime"), wsHeartbeatTime_sec) / 1000.0;
+    wsSendTime_sec = (float)uniset3::getArgPInt("--" + prefix + "ws-send-time", argc, argv, it.getProp("wsSendTime"), wsSendTime_sec) / 1000.0;
+    wsMaxSend = uniset3::getArgPInt("--" + prefix + "ws-max-send", argc, argv, it.getProp("wsMaxSend"), wsMaxSend);
 
-    httpHost = uniset::getArgParam("--" + prefix + "httpserver-host", argc, argv, "localhost");
-    httpPort = uniset::getArgInt("--" + prefix + "httpserver-port", argc, argv, "8080");
-    httpCORS_allow = uniset::getArgParam("--" + prefix + "httpserver-cors-allow", argc, argv, httpCORS_allow);
-    httpReplyAddr = uniset::getArgParam("--" + prefix + "httpserver-reply-addr", argc, argv, "");
+    httpHost = uniset3::getArgParam("--" + prefix + "httpserver-host", argc, argv, "localhost");
+    httpPort = uniset3::getArgInt("--" + prefix + "httpserver-port", argc, argv, "8080");
+    httpCORS_allow = uniset3::getArgParam("--" + prefix + "httpserver-cors-allow", argc, argv, httpCORS_allow);
+    httpReplyAddr = uniset3::getArgParam("--" + prefix + "httpserver-reply-addr", argc, argv, "");
 
     dblog1 << myname << "(init): http server parameters " << httpHost << ":" << httpPort << endl;
     Poco::Net::SocketAddress sa(httpHost, httpPort);
 
-    maxwsocks = uniset::getArgPInt("--" + prefix + "ws-max", argc, argv, it.getProp("wsMax"), maxwsocks);
-    bgColor = uniset::getArg2Param("--" + prefix + "bg-color", argc, argv, it.getProp("bgColor"), bgColor);
-    fgColor = uniset::getArg2Param("--" + prefix + "fg-color", argc, argv, it.getProp("fgColor"), fgColor);
-    fgColorTitle = uniset::getArg2Param("--" + prefix + "fg-color-title", argc, argv, it.getProp("fgColorTitle"), fgColorTitle);
-    bgColorTitle = uniset::getArg2Param("--" + prefix + "bg-color-title", argc, argv, it.getProp("bgColorTitle"), bgColorTitle);
+    maxwsocks = uniset3::getArgPInt("--" + prefix + "ws-max", argc, argv, it.getProp("wsMax"), maxwsocks);
+    bgColor = uniset3::getArg2Param("--" + prefix + "bg-color", argc, argv, it.getProp("bgColor"), bgColor);
+    fgColor = uniset3::getArg2Param("--" + prefix + "fg-color", argc, argv, it.getProp("fgColor"), fgColor);
+    fgColorTitle = uniset3::getArg2Param("--" + prefix + "fg-color-title", argc, argv, it.getProp("fgColorTitle"), fgColorTitle);
+    bgColorTitle = uniset3::getArg2Param("--" + prefix + "bg-color-title", argc, argv, it.getProp("bgColorTitle"), bgColorTitle);
 
 
     try
     {
         Poco::Net::HTTPServerParams* httpParams = new Poco::Net::HTTPServerParams;
 
-        int maxQ = uniset::getArgPInt("--" + prefix + "httpserver-max-queued", argc, argv, it.getProp("httpMaxQueued"), 100);
-        int maxT = uniset::getArgPInt("--" + prefix + "httpserver-max-threads", argc, argv, it.getProp("httpMaxThreads"), 3);
+        int maxQ = uniset3::getArgPInt("--" + prefix + "httpserver-max-queued", argc, argv, it.getProp("httpMaxQueued"), 100);
+        int maxT = uniset3::getArgPInt("--" + prefix + "httpserver-max-threads", argc, argv, it.getProp("httpMaxThreads"), 3);
 
         httpParams->setMaxQueued(maxQ);
         httpParams->setMaxThreads(maxT);
@@ -271,7 +271,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
     {
         std::stringstream err;
         err << myname << "(init): " << httpHost << ":" << httpPort << " ERROR: " << ex.what();
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
 #endif
@@ -407,7 +407,7 @@ void LogDB::rotateDB()
 //--------------------------------------------------------------------------------------------
 void LogDB::addLog( LogDB::Log* log, const string& txt )
 {
-    auto tm = uniset::now_to_timespec();
+    auto tm = uniset3::now_to_timespec();
 
     ostringstream q;
 
@@ -460,7 +460,7 @@ size_t LogDB::getFirstOfOldRecord( size_t maxnum )
 //--------------------------------------------------------------------------------------------
 std::shared_ptr<LogDB> LogDB::init_logdb( int argc, const char* const* argv, const std::string& prefix )
 {
-    string name = uniset::getArgParam("--" + prefix + "name", argc, argv, "LogDB");
+    string name = uniset3::getArgParam("--" + prefix + "name", argc, argv, "LogDB");
 
     if( name.empty() )
     {
@@ -912,12 +912,12 @@ void LogDB::handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPSer
         // example: http://host:port/api/version/logdb/..
         if( seg.size() < 4
                 || seg[0] != "api"
-                || seg[1] != uniset::UHttp::UHTTP_API_VERSION
+                || seg[1] != uniset3::UHttp::UHTTP_API_VERSION
                 || seg[2].empty()
                 || seg[2] != "logdb")
         {
             ostringstream err;
-            err << "Bad request structure. Must be /api/" << uniset::UHttp::UHTTP_API_VERSION << "/logdb/xxx";
+            err << "Bad request structure. Must be /api/" << uniset3::UHttp::UHTTP_API_VERSION << "/logdb/xxx";
             auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, err.str());
             jdata->stringify(out);
             out.flush();
@@ -941,8 +941,8 @@ void LogDB::handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPSer
 
         if( cmd == "help" )
         {
-            using uniset::json::help::item;
-            uniset::json::help::object myhelp("help");
+            using uniset3::json::help::item;
+            uniset3::json::help::object myhelp("help");
             myhelp.emplace(item("help", "this help"));
             myhelp.emplace(item("list", "list of logs"));
             myhelp.emplace(item("count?logname", "count of logs for logname"));
@@ -999,7 +999,7 @@ Poco::JSON::Object::Ptr LogDB::httpGetRequest( const string& cmd, const Poco::UR
 
     ostringstream err;
     err << "Unknown command '" << cmd << "'";
-    throw uniset::SystemError(err.str());
+    throw uniset3::SystemError(err.str());
 }
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr LogDB::httpGetList( const Poco::URI::QueryParameters& p )
@@ -1008,12 +1008,12 @@ Poco::JSON::Object::Ptr LogDB::httpGetList( const Poco::URI::QueryParameters& p 
     {
         ostringstream err;
         err << "DB unavailable..";
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
 
-    Poco::JSON::Array::Ptr jlist = uniset::json::make_child_array(jdata, "logs");
+    Poco::JSON::Array::Ptr jlist = uniset3::json::make_child_array(jdata, "logs");
 
 #if 0
     // Получение из БД
@@ -1069,7 +1069,7 @@ Poco::JSON::Object::Ptr LogDB::httpGetLogs( const Poco::URI::QueryParameters& pa
     {
         ostringstream err;
         err << "BAD REQUEST: unknown logname";
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     std::string logname = params[0].first;
@@ -1093,7 +1093,7 @@ Poco::JSON::Object::Ptr LogDB::httpGetLogs( const Poco::URI::QueryParameters& pa
             q_where.push_back(qLast(p.second));
     }
 
-    Poco::JSON::Array::Ptr jlist = uniset::json::make_child_array(jdata, "logs");
+    Poco::JSON::Array::Ptr jlist = uniset3::json::make_child_array(jdata, "logs");
 
     ostringstream q;
 

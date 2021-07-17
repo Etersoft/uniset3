@@ -33,7 +33,7 @@
 
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 
 struct equals
 {
@@ -512,7 +512,7 @@ void openXML()
 // --------------------------------------------------------------------------
 void dispDiagram()
 {
-    uniset::ios_fmt_restorer l(cout);
+    uniset3::ios_fmt_restorer l(cout);
     cout.setf( ios::right, ios::adjustfield );
     cout << endl << "=================================" << endl;
     cout << "|      data    |   calibrated    |" << endl;

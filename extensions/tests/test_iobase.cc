@@ -6,8 +6,8 @@
 #include "IOBase.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 TEST_CASE("[IOBase]: default constructor", "[iobase][extensions]")
 {
@@ -16,7 +16,7 @@ TEST_CASE("[IOBase]: default constructor", "[iobase][extensions]")
     IOBase ib;
     CHECK( ib.si.id == DefaultObjectId );
     CHECK( ib.si.node == DefaultObjectId );
-    CHECK( ib.stype == UniversalIO::UnknownIOType );
+    CHECK( ib.stype == uniset3::UnknownIOType );
 
     CHECK( ib.cal.minRaw == 0 );
     CHECK( ib.cal.maxRaw == 0 );
@@ -51,7 +51,7 @@ TEST_CASE("[IOBase]: default constructor", "[iobase][extensions]")
     CHECK( ib.d_id == DefaultObjectId );  /*!< идентификатор датчика, от которого зависит данный */
     REQUIRE( ib.d_value == 1 ) ; /*!< разрешающее работу значение датчика от которого зависит данный */
     REQUIRE( ib.d_off_value == 0); /*!< блокирующее значение */
-    REQUIRE( ib.d_iotype == UniversalIO::UnknownIOType );
+    REQUIRE( ib.d_iotype == uniset3::UnknownIOType );
 
     // Порог
     REQUIRE( ib.t_ai == DefaultObjectId );

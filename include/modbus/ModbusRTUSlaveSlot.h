@@ -7,7 +7,7 @@
 #include "ModbusRTUSlave.h"
 #include "ModbusServerSlot.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     /*!
@@ -75,7 +75,7 @@ namespace uniset
         private:
     };
     // ---------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // ModbusRTUSlaveSlot_H_
 // -------------------------------------------------------------------------

@@ -32,7 +32,7 @@
 #include "UniXML.h"
 #include "DBLogSugar.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 DBServer_MySQL::DBServer_MySQL(ObjectId id, const std::string& prefix ):
@@ -62,7 +62,7 @@ DBServer_MySQL::~DBServer_MySQL()
         db->close();
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_MySQL::sysCommand( const uniset::SystemMessage* sm )
+void DBServer_MySQL::sysCommand( const uniset3::SystemMessage* sm )
 {
     DBServer::sysCommand(sm);
 
@@ -91,7 +91,7 @@ void DBServer_MySQL::sysCommand( const uniset::SystemMessage* sm )
 }
 
 //--------------------------------------------------------------------------------------------
-void DBServer_MySQL::confirmInfo( const uniset::ConfirmMessage* cem )
+void DBServer_MySQL::confirmInfo( const uniset3::ConfirmMessage* cem )
 {
     try
     {
@@ -111,7 +111,7 @@ void DBServer_MySQL::confirmInfo( const uniset::ConfirmMessage* cem )
             dbcrit << myname << "(update_confirm):  db error: " << db->error() << endl;
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dbcrit << myname << "(update_confirm): " << ex << endl;
     }
@@ -153,7 +153,7 @@ void DBServer_MySQL::onTextMessage( const TextMessage* msg )
             dbcrit << myname << "(insert_main_messages): error: " << db->error() << endl;
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dbcrit << myname << "(insert_main_messages): " << ex << endl;
     }
@@ -232,7 +232,7 @@ void DBServer_MySQL::flushBuffer()
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_MySQL::sensorInfo( const uniset::SensorMessage* si )
+void DBServer_MySQL::sensorInfo( const uniset3::SensorMessage* si )
 {
     try
     {
@@ -268,7 +268,7 @@ void DBServer_MySQL::sensorInfo( const uniset::SensorMessage* si )
             dbcrit << myname << "(insert) sensor msg error: " << db->error() << endl;
         }
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         dbcrit << myname << "(insert_main_history): " << ex << endl;
     }
@@ -292,7 +292,7 @@ void DBServer_MySQL::initDBServer()
 
     auto conf = uniset_conf();
 
-    if( conf->getDBServer() == uniset::DefaultObjectId )
+    if( conf->getDBServer() == uniset3::DefaultObjectId )
     {
         ostringstream msg;
         msg << myname << "(init): DBServer OFF for this node.."
@@ -314,9 +314,9 @@ void DBServer_MySQL::initDBServer()
     string user(conf->getProp(node, "dbuser"));
     string password(conf->getProp(node, "dbpass"));
 
-    tblMap[uniset::Message::SensorInfo] = "main_history";
-    tblMap[uniset::Message::Confirm] = "main_history";
-    tblMap[uniset::Message::TextMessage] = "main_messages";
+    tblMap[uniset3::Message::SensorInfo] = "main_history";
+    tblMap[uniset3::Message::Confirm] = "main_history";
+    tblMap[uniset3::Message::TextMessage] = "main_messages";
 
     PingTime = conf->getPIntProp(node, "pingTime", PingTime);
     ReconnectTime = conf->getPIntProp(node, "reconnectTime", ReconnectTime);
@@ -388,7 +388,7 @@ void DBServer_MySQL::createTables( MySQLInterface* db )
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_MySQL::timerInfo( const uniset::TimerMessage* tm )
+void DBServer_MySQL::timerInfo( const uniset3::TimerMessage* tm )
 {
     DBServer::timerInfo(tm);
 
@@ -452,7 +452,7 @@ std::shared_ptr<DBServer_MySQL> DBServer_MySQL::init_dbserver( int argc, const c
     {
         ObjectId ID = conf->getObjectID(name);
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(DBServer_MySQL): Unknown ObjectID for '" << name << endl;
             return 0;

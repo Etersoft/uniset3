@@ -35,7 +35,7 @@
 #define BE32_TO_H(x) x = be32toh(x)
 #endif
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
@@ -156,7 +156,7 @@ namespace uniset
 	{
 		vector<lsMessage> vcmd;
 
-		auto v = uniset::explode_str(cmd, ' ');
+		auto v = uniset3::explode_str(cmd, ' ');
 
 		if( v.empty() )
 			return vcmd;
@@ -200,4 +200,4 @@ namespace uniset
 	// -------------------------------------------------------------------------
 
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

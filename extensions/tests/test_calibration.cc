@@ -6,8 +6,8 @@
 #include "Calibration.h"
 
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 
 TEST_CASE("Calibration", "[calibration]")
 {

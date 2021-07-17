@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include "UniSetTypes.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     class DBResult;
 

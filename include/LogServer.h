@@ -34,7 +34,7 @@
 #include <Poco/JSON/Object.h>
 #endif
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     class LogSession;
@@ -142,7 +142,7 @@ namespace uniset
 
             typedef std::vector< std::shared_ptr<LogSession> > SessionList;
             SessionList slist;
-            uniset::uniset_rwmutex mutSList;
+            uniset3::uniset_rwmutex mutSList;
 
             DebugStream mylog;
             ev::io io;

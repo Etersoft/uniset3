@@ -26,7 +26,7 @@
 #include "UniSetObject.h"
 
 //----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //----------------------------------------------------------------------------
     class PassiveObject;
@@ -46,24 +46,24 @@ namespace uniset
     {
 
         public:
-            ProxyManager( uniset::ObjectId id );
+            ProxyManager( uniset3::ObjectId id );
             ~ProxyManager();
 
-            void attachObject( PassiveObject* po, uniset::ObjectId id );
-            void detachObject( uniset::ObjectId id );
+            void attachObject( PassiveObject* po, uniset3::ObjectId id );
+            void detachObject( uniset3::ObjectId id );
 
             std::shared_ptr<UInterface> uin;
 
         protected:
             ProxyManager();
-            virtual void processingMessage( const uniset::VoidMessage* msg ) override;
-            virtual void allMessage( const uniset::VoidMessage* msg );
+            virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
+            virtual void allMessage( const uniset3::VoidMessage* msg );
 
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
 
         private:
-            typedef std::unordered_map<uniset::ObjectId, PassiveObject*> PObjectMap;
+            typedef std::unordered_map<uniset3::ObjectId, PassiveObject*> PObjectMap;
             PObjectMap omap;
     };
     // -------------------------------------------------------------------------

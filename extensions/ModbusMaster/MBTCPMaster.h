@@ -25,7 +25,7 @@
 #include "MBExchange.h"
 #include "modbus/ModbusTCPMaster.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -257,24 +257,24 @@ namespace uniset
         public MBExchange
     {
         public:
-            MBTCPMaster( uniset::ObjectId objId, uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+            MBTCPMaster( uniset3::ObjectId objId, uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                          const std::string& prefix = "mbtcp" );
             virtual ~MBTCPMaster();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<MBTCPMaster> init_mbmaster( int argc, const char* const* argv,
-                    uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "mbtcp" );
 
             static void help_print( int argc, const char* const* argv );
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
         protected:
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
             virtual std::shared_ptr<ModbusClient> initMB( bool reopen = false ) override;
             virtual bool deactivateObject() override;
-            virtual bool reconfigure( const std::shared_ptr<uniset::UniXML>& xml, const std::shared_ptr<uniset::MBConfig>& mbconf ) override;
+            virtual bool reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& mbconf ) override;
 
             std::string iaddr;
             int port;
@@ -293,7 +293,7 @@ namespace uniset
             std::unique_ptr<ThreadCreator<MBTCPMaster>> pollThread; /*!< поток опроса */
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // _MBTCPMaster_H_
 // -----------------------------------------------------------------------------

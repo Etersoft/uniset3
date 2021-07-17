@@ -20,7 +20,7 @@
 #include "VTypes.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset::VTypes;
+using namespace uniset3::VTypes;
 // --------------------------------------------------------------------------
 static void print_help()
 {
@@ -86,34 +86,34 @@ int main( int argc, const char** argv )
     }
 
     type = argv[1];
-    v[0] = uniset::uni_atoi(argv[2]);
+    v[0] = uniset3::uni_atoi(argv[2]);
 
     if( argc > 3 )
-        v[1] = uniset::uni_atoi(argv[3]);
+        v[1] = uniset3::uni_atoi(argv[3]);
 
     if( argc > 4 )
-        v[2] = uniset::uni_atoi(argv[4]);
+        v[2] = uniset3::uni_atoi(argv[4]);
 
     if( argc > 5 )
-        v[3] = uniset::uni_atoi(argv[5]);
+        v[3] = uniset3::uni_atoi(argv[5]);
 
     if( !strcmp(type, "F2") )
     {
-        uniset::VTypes::F2 f(v, sizeof(v));
+        uniset3::VTypes::F2 f(v, sizeof(v));
         cout << "(F2): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " --> (float) " << (float)f << endl;
     }
     else if( !strcmp(type, "F2r") )
     {
-        uniset::VTypes::F2r f(v, sizeof(v));
+        uniset3::VTypes::F2r f(v, sizeof(v));
         cout << "(F2r): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " --> (float) " << (float)f << endl;
     }
     else if( !strcmp(type, "F4") )
     {
-        uniset::VTypes::F4 f(v, sizeof(v));
+        uniset3::VTypes::F4 f(v, sizeof(v));
         cout << "(F4): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " v[2]=" << v[2]
@@ -122,28 +122,28 @@ int main( int argc, const char** argv )
     }
     else if( !strcmp(type, "I2") )
     {
-        uniset::VTypes::I2 i(v, sizeof(v));
+        uniset3::VTypes::I2 i(v, sizeof(v));
         cout << "(I2): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " --> (int) " << (int)i << endl;
     }
     else if( !strcmp(type, "I2r") )
     {
-        uniset::VTypes::I2r i(v, sizeof(v));
+        uniset3::VTypes::I2r i(v, sizeof(v));
         cout << "(I2r): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " --> (int) " << (int)i << endl;
     }
     else if( !strcmp(type, "U2") )
     {
-        uniset::VTypes::U2 i(v, sizeof(v));
+        uniset3::VTypes::U2 i(v, sizeof(v));
         cout << "(U2): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " --> (unsigned int) " << (unsigned int)i << endl;
     }
     else if( !strcmp(type, "U2r") )
     {
-        uniset::VTypes::U2r i(v, sizeof(v));
+        uniset3::VTypes::U2r i(v, sizeof(v));
         cout << "(U2r): v[0]=" << v[0]
              << " v[1]=" << v[1]
              << " --> (unsigned int) " << (unsigned int)i << endl;

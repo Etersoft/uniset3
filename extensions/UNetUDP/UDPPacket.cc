@@ -17,7 +17,7 @@
 #include <cstdint>
 #include "UDPPacket.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // ---------------------------------------------------------------------
     using namespace std;
@@ -228,7 +228,7 @@ namespace uniset
     long UDPMessage::dID( size_t index ) const noexcept
     {
         if( index >= (size_t)pb.data().did_size() )
-            return uniset::DefaultObjectId;
+            return uniset3::DefaultObjectId;
 
         return pb.data().did(index);
     }
@@ -246,7 +246,7 @@ namespace uniset
     long UDPMessage::aID(size_t index) const noexcept
     {
         if( index >= (size_t)pb.data().aid_size() )
-            return uniset::DefaultObjectId;
+            return uniset3::DefaultObjectId;
 
         return pb.data().aid(index);
     }
@@ -309,4 +309,4 @@ namespace uniset
         return pb.data().aid_size();
     }
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

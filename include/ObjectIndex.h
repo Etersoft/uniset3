@@ -25,7 +25,7 @@
 #include <string>
 #include "UniSetTypes.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! Базовый интерфейс для работы с преобразованиями ObjectID <--> ObjectName */
     class ObjectIndex
@@ -36,36 +36,36 @@ namespace uniset
 
             // info
             // \return nullptr if not found
-            virtual const ObjectInfo* getObjectInfo( const uniset::ObjectId ) const noexcept = 0;
+            virtual const ObjectInfo* getObjectInfo( const uniset3::ObjectId ) const noexcept = 0;
             virtual const ObjectInfo* getObjectInfo( const std::string& name ) const noexcept = 0;
 
             static std::string getBaseName( const std::string& fname ) noexcept;
 
             // object id
 
-            //! \return uniset::DefaultObjectId if not found
+            //! \return uniset3::DefaultObjectId if not found
             virtual ObjectId getIdByName(const std::string& name) const noexcept = 0;
 
             //! \return "" if not found
-            virtual std::string getNameById( const uniset::ObjectId id ) const noexcept;
+            virtual std::string getNameById( const uniset3::ObjectId id ) const noexcept;
 
             // node
             //! \return "" if not found
-            std::string getNodeName( const uniset::ObjectId id ) const noexcept;
+            std::string getNodeName( const uniset3::ObjectId id ) const noexcept;
 
-            //! \return uniset::DefaultObjectId if not found
+            //! \return uniset3::DefaultObjectId if not found
             ObjectId getNodeId( const std::string& name ) const noexcept;
 
             // src name
             //! \return "" if not found
-            virtual std::string getMapName( const uniset::ObjectId id ) const noexcept = 0;
+            virtual std::string getMapName( const uniset3::ObjectId id ) const noexcept = 0;
             //! \return "" if not found
-            virtual std::string getTextName( const uniset::ObjectId id ) const noexcept = 0;
+            virtual std::string getTextName( const uniset3::ObjectId id ) const noexcept = 0;
 
             //
             virtual std::ostream& printMap(std::ostream& os) const noexcept = 0;
 
-            void initLocalNode( const uniset::ObjectId nodeid ) noexcept;
+            void initLocalNode( const uniset3::ObjectId nodeid ) noexcept;
 
         protected:
             std::string nmLocalNode = {""};  // поле для оптимизации получения LocalNode

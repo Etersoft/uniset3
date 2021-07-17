@@ -25,7 +25,7 @@
 // ----------------------------------------------------------------------------
 using namespace std;
 // ----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // ----------------------------------------------------------------------------
     const Calibration::TypeOfValue Calibration::ValueOutOfRange = std::numeric_limits<Calibration::TypeOfValue>::max();
@@ -242,7 +242,7 @@ namespace uniset
                 rightVal = end->right_y();
             }
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             dcrit << myname << "(Calibration::build): Failed open " << confile << endl;
             throw;
@@ -399,4 +399,4 @@ namespace uniset
         return os;
     }
     // ----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

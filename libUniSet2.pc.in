@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libUniSet2
 Description: Support library for UniSet
-Requires: libxml-2.0 sigc++-2.0 omniORB4 libev
+Requires: libxml-2.0 sigc++-2.0 libev
 Version: @VERSION@
 Libs: -L${libdir} -lUniSet2 -lPocoFoundation -lPocoNet @REST_API_CLIBS@
-Cflags: -I${includedir}/@PACKAGE@ -D__OMNIORB4 @REST_API_CFLAGS@
+Cflags: -I${includedir}/@PACKAGE@ @REST_API_CFLAGS@

@@ -24,7 +24,7 @@
 #include "UniSetTypes.h"
 #include "DebugStream.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace ModbusRTU;
@@ -212,7 +212,7 @@ namespace uniset
 
 	std::ostream& ModbusRTU::mbPrintMessage( std::ostream& os, ModbusByte* m, size_t len )
 	{
-		uniset::ios_fmt_restorer ifs(os);
+		uniset3::ios_fmt_restorer ifs(os);
 
 		// << setiosflags(ios::showbase) // для вывода в формате 0xNN
 		ostringstream s;
@@ -2955,7 +2955,7 @@ namespace uniset
 		if( val.empty() )
 			return 0;
 
-		return (ModbusAddr)uniset::uni_atoi(val);
+		return (ModbusAddr)uniset3::uni_atoi(val);
 	}
 	// -------------------------------------------------------------------------
 	ModbusData ModbusRTU::str2mbData( const std::string& val )
@@ -2963,7 +2963,7 @@ namespace uniset
 		if( val.empty() )
 			return 0;
 
-		return (ModbusData)uniset::uni_atoi(val);
+		return (ModbusData)uniset3::uni_atoi(val);
 	}
 	// -------------------------------------------------------------------------
 	std::string ModbusRTU::dat2str( const ModbusData dat )
@@ -3068,7 +3068,7 @@ namespace uniset
 	// -------------------------------------------------------------------------
 	std::ostream& ModbusRTU::operator<<(std::ostream& os, SetDateTimeMessage& m )
 	{
-		uniset::ios_fmt_restorer ifs(os);
+		uniset3::ios_fmt_restorer ifs(os);
 
 		ostringstream s;
 		s << setfill('0')
@@ -3681,4 +3681,4 @@ namespace uniset
 		return bcnt;
 	}
 	// -----------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

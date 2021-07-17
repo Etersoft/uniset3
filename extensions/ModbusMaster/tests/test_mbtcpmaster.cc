@@ -12,7 +12,7 @@
 #include "UniSetActivator.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static ModbusRTU::ModbusAddr slaveADDR = 0x01; // conf->getArgInt("--mbs-my-addr");
 static int port = 20048; // conf->getArgInt("--mbs-inet-port");
@@ -762,7 +762,7 @@ TEST_CASE("MBTCPMaster: udefined value", "[modbus][undefined][mbmaster][mbtcpmas
     {
         ui->getValue(1070);
     }
-    catch( IOController_i::Undefined& ex )
+    catch( uniset3::Undefined& ex )
     {
         REQUIRE( ex.value == 65535 );
     }
@@ -794,7 +794,7 @@ TEST_CASE("MBTCPMaster: reload config (HTTP API)", "[modbus][reload-api][mbmaste
 
     // default reconfigure
     std::string request = "/api/v01/reload";
-    uniset::SimpleInfo_var ret = mbm->apiRequest(request.c_str());
+    uniset3::SimpleInfo_var ret = mbm->apiRequest(request.c_str());
 
     ostringstream sinfo;
     sinfo << ret->info;

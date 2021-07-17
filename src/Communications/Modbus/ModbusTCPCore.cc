@@ -18,7 +18,7 @@
 #include "modbus/ModbusTCPCore.h"
 #include "Exceptions.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
@@ -97,7 +97,7 @@ namespace uniset
 #endif
 
 		if( commfail )
-			throw uniset::CommFailed();
+			throw uniset3::CommFailed();
 
 		return i;
 	}
@@ -121,7 +121,7 @@ namespace uniset
 				if( ret == 0 )
 					return 0;
 			}
-			catch( uniset::CommFailed& ex )
+			catch( uniset3::CommFailed& ex )
 			{
 				if( qrecv.empty() )
 					return 0;
@@ -201,7 +201,7 @@ namespace uniset
 #endif
 
 		if( commfail )
-			throw uniset::CommFailed();
+			throw uniset3::CommFailed();
 
 		return std::min(qrecv.size(), max);
 	}
@@ -221,7 +221,7 @@ namespace uniset
 				if( ret == 0 && qrecv.empty() )
 					return 0;
 			}
-			catch( uniset::CommFailed& ex )
+			catch( uniset3::CommFailed& ex )
 			{
 				if( qrecv.empty() )
 					return 0;
@@ -273,4 +273,4 @@ namespace uniset
 		return erHardwareError;
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

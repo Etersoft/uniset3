@@ -7,7 +7,7 @@ class TestObject:
     public UObject_SK
 {
     public:
-        TestObject( uniset::ObjectId objId, xmlNode* cnode );
+        TestObject( uniset3::ObjectId objId, xmlNode* cnode );
         virtual ~TestObject();
 
 

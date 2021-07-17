@@ -28,7 +28,7 @@
 #include "Exceptions.h"
 #include "ObjectIndex.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*!
      * DEPRECATED!

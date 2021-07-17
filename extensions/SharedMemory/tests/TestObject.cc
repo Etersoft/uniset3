@@ -2,9 +2,9 @@
 #include "TestObject.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-TestObject::TestObject( uniset::ObjectId objId, xmlNode* cnode ):
+TestObject::TestObject( uniset3::ObjectId objId, xmlNode* cnode ):
     TestObject_SK(objId, cnode)
 {
     vmonit(evntIsOK);
@@ -16,20 +16,20 @@ TestObject::~TestObject()
 // -----------------------------------------------------------------------------
 void TestObject::askDoNotNotify()
 {
-    preAskSensors(UniversalIO::UIODontNotify);
+    preAskSensors(uniset3::UIODontNotify);
 }
 // -----------------------------------------------------------------------------
 void TestObject::askNotifyChange()
 {
-    preAskSensors(UniversalIO::UIONotifyChange);
+    preAskSensors(uniset3::UIONotifyChange);
 }
 // -----------------------------------------------------------------------------
 void TestObject::askNotifyFirstNotNull()
 {
-    preAskSensors(UniversalIO::UIONotifyFirstNotNull);
+    preAskSensors(uniset3::UIONotifyFirstNotNull);
 }
 // -----------------------------------------------------------------------------
-void TestObject::sysCommand( const uniset::SystemMessage* sm )
+void TestObject::sysCommand( const uniset3::SystemMessage* sm )
 {
     // фиксируем что SM прислала WDT при своём запуске
     if( sm->command == SystemMessage::WatchDog )
@@ -74,7 +74,7 @@ void TestObject::runHeartbeat( int max )
 // -----------------------------------------------------------------------------
 void TestObject::askMonotonic()
 {
-    askSensor(monotonic_s, UniversalIO::UIONotify);
+    askSensor(monotonic_s, uniset3::UIONotify);
 }
 // -----------------------------------------------------------------------------
 void TestObject::startMonitonicTest()

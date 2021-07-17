@@ -21,7 +21,7 @@
 #include "MTR.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset::MTR;
+using namespace uniset3::MTR;
 // --------------------------------------------------------------------------
 static void print_help()
 {
@@ -42,12 +42,12 @@ int main( int argc, const char** argv )
     }
 
     type = argv[1];
-    v1 = uniset::uni_atoi(argv[2]);
+    v1 = uniset3::uni_atoi(argv[2]);
 
     if( argc >= 4 )
     {
-        v1 = uniset::uni_atoi(argv[3]);
-        v2 = uniset::uni_atoi(argv[2]);
+        v1 = uniset3::uni_atoi(argv[3]);
+        v2 = uniset3::uni_atoi(argv[2]);
     }
 
 

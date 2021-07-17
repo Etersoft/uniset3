@@ -11,8 +11,8 @@
 #include "SMInterface.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 std::shared_ptr<SharedMemory> shm;
 std::shared_ptr<MBTCPMaster> mbm;
@@ -74,7 +74,7 @@ int main( int argc, const char* argv[] )
 
         return session.run();
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(tests_mbtcpmaster): " << ex << endl;
     }

@@ -3,10 +3,10 @@
 # See doc: http://www.gnu.org/software/hello/manual/autoconf/Generic-Programs.html
 
 # AC_PREREQ(2.59)
-AC_INIT([uniset2], [2.13.1], pv@etersoft.ru)
+AC_INIT([uniset2], [3.0.0], pv@etersoft.ru)
 AM_INIT_AUTOMAKE([subdir-objects])
 
-LIBVER=15:1:13
+LIBVER=0:0:3
 AC_SUBST(LIBVER)
 
 # AC_CONFIG_MACRO_DIR([m4])
@@ -38,9 +38,11 @@ AC_SUBST(ASTYLE_OPT)
 
 # Checks for libraries.
 PKG_CHECK_MODULES(XML, libxml-2.0)
-PKG_CHECK_MODULES(OMNI, omniORB4)
 PKG_CHECK_MODULES(SIGC, sigc++-2.0)
 PKG_CHECK_MODULES(PROTOBUF, protobuf)
+
+AC_PATH_PROG([PROTOC], [protoc])
+test "x$PROTOC" = "x" && AC_MSG_ERROR([*** protoc not found.])
 
 checklibev=true
 PKG_CHECK_MODULES(EV, libev, [ checklibev=false; ], [ checklibev=true; ])
@@ -125,12 +127,6 @@ AM_CONDITIONAL(ENABLE_SQLITE, test ${buildsqlite} = true)
 # check xsltproc
 AC_CHECK_PROG([XSLTPROC],[xsltproc],[yes])
 test "x$XSLTPROC" = "x" && AC_MSG_ERROR([*** xsltproc not found.])
-
-# check IDL compiler
-AC_PATH_PROG([IDL], [omniidl])
-test "x$IDL" = "x" && AC_MSG_ERROR([*** omniidl not found.])
-#UNISET_IDLFLAGS=$(pkg-config omniORB4 --variable=idldir"
-#AC_SUBST(UNISET_IDLFLAGS)
 
 #check mysql support
 AC_MSG_CHECKING([mysql support])
@@ -485,9 +481,9 @@ AM_CONDITIONAL(HAVE_TESTS, test ${buildtests} = true)
 CXX_EXTRA_FLAGS="-Wnon-virtual-dtor -Woverloaded-virtual -Woverflow -D_GLIBCXX_USE_NANOSLEEP -fstack-protector"
 
 # export
-LDFLAGS="$LDFLAGS ${OMNI_LIBS} ${XML_LIBS} ${SIGC_LIBS} ${COV_LIBS} ${POCO_LIBS} ${EV_LIBS}"
+LDFLAGS="$LDFLAGS ${PROTOBUF_LIBS} ${XML_LIBS} ${SIGC_LIBS} ${COV_LIBS} ${POCO_LIBS} ${EV_LIBS}"
 # all developer liked options add to autogen.sh, please
-CXXFLAGS="-I\$(top_builddir)/include $CXXFLAGS -funsigned-char -g -DCATCH_VERSION_MAJOR=${CATCH_VERSION_MAJOR} -D_GNU_SOURCE ${REST_API_CFLAGS} ${COMPORT_485F_CFLAGS} ${OMNI_CFLAGS} ${XML_CFLAGS} ${SIGC_CFLAGS} ${COV_CFLAGS} ${POCO_CFLAGS} ${EV_CFLAGS} $CXX_EXTRA_FLAGS"
+CXXFLAGS="-I\$(top_builddir)/include $CXXFLAGS -funsigned-char -g -DCATCH_VERSION_MAJOR=${CATCH_VERSION_MAJOR} -D_GNU_SOURCE ${REST_API_CFLAGS} ${COMPORT_485F_CFLAGS} ${PROTOBUF_CFLAGS} ${XML_CFLAGS} ${SIGC_CFLAGS} ${COV_CFLAGS} ${POCO_CFLAGS} ${EV_CFLAGS} $CXX_EXTRA_FLAGS"
 
 AC_SUBST(LDFLAGS)
 AC_SUBST(CXXFLAGS)
@@ -528,10 +524,9 @@ AC_CHECK_FUNCS([atexit getcwd])
 AC_CONFIG_FILES([Makefile
 				 libUniSet2.pc
 				 lib/Makefile
-				 IDL/Makefile
-				 IDL/UniSetTypes/Makefile
-				 IDL/UniSetTypes/UniSetBaseConstants.idl
-				 IDL/Processes/Makefile
+				 proto/Makefile
+				 proto/UniSetTypes/Makefile
+				 proto/Processes/Makefile
 				 src/Core/Makefile
 				 src/Communications/Makefile
 				 src/Communications/Modbus/Makefile
@@ -592,8 +587,6 @@ AC_CONFIG_FILES([Makefile
 				 extensions/LogicProcessor/libUniSet2LogicProcessor.pc
 				 extensions/LogicProcessor/tests/Makefile
 				 extensions/SMViewer/Makefile
-				 extensions/UniNetwork/Makefile
-				 extensions/UniNetwork/libUniSet2Network.pc
 				 extensions/UNetUDP/Makefile
 				 extensions/UNetUDP/libUniSet2UNetUDP.pc
 				 extensions/UNetUDP/tests/Makefile

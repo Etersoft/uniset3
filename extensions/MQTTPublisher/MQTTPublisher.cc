@@ -19,10 +19,10 @@
 #include "MQTTPublisher.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
-MQTTPublisher::MQTTPublisher(uniset::ObjectId objId, xmlNode* cnode, uniset::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
+MQTTPublisher::MQTTPublisher(uniset3::ObjectId objId, xmlNode* cnode, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                              const string& prefix ):
     mosquittopp(NULL),
     UObject_SK(objId, cnode, string(prefix + "-")),
@@ -79,7 +79,7 @@ MQTTPublisher::MQTTPublisher(uniset::ObjectId objId, xmlNode* cnode, uniset::Obj
 
     for( ; sit.getCurrent(); sit++ )
     {
-        if( !uniset::check_filter(sit, ff, fv) )
+        if( !uniset3::check_filter(sit, ff, fv) )
             continue;
 
         std::string sname = sit.getProp("name");
@@ -197,7 +197,7 @@ void MQTTPublisher::on_connect(int rc)
     myinfo << myname << "(on_connect): connect to " << host << ":" <<  port << " " << ( connectOK ? "OK" : "FAIL" ) << endl;
 
     if( connectOK )
-        askSensors(UniversalIO::UIONotify);
+        askSensors(uniset3::UIONotify);
 
     //  else
     //  {
@@ -216,7 +216,7 @@ void MQTTPublisher::on_subscribe( int mid, int qos_count, const int* granted_qos
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<MQTTPublisher> MQTTPublisher::init_mqttpublisher(int argc, const char* const* argv,
-        uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+        uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
         const std::string& prefix )
 {
     auto conf = uniset_conf();
@@ -231,7 +231,7 @@ std::shared_ptr<MQTTPublisher> MQTTPublisher::init_mqttpublisher(int argc, const
 
     ObjectId ID = conf->getObjectID(name);
 
-    if( ID == uniset::DefaultObjectId )
+    if( ID == uniset3::DefaultObjectId )
     {
         dcrit << "(MQTTPublisher): Not found ID for '" << name
               << " in '" << conf->getObjectsSection() << "' section" << endl;
@@ -251,7 +251,7 @@ std::shared_ptr<MQTTPublisher> MQTTPublisher::init_mqttpublisher(int argc, const
     return make_shared<MQTTPublisher>(ID, cnode, icID, ic, prefix);
 }
 // -----------------------------------------------------------------------------
-void MQTTPublisher::askSensors( UniversalIO::UIOCommand cmd )
+void MQTTPublisher::askSensors( uniset3::UIOCommand cmd )
 {
     UObject_SK::askSensors(cmd);
 
@@ -268,7 +268,7 @@ void MQTTPublisher::askSensors( UniversalIO::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void MQTTPublisher::sensorInfo( const uniset::SensorMessage* sm )
+void MQTTPublisher::sensorInfo( const uniset3::SensorMessage* sm )
 {
     auto i = publist.find(sm->id);
 

@@ -3,9 +3,9 @@
 #include "TestProc.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-TestProc::TestProc( uniset::ObjectId id, xmlNode* confnode ):
+TestProc::TestProc( uniset3::ObjectId id, xmlNode* confnode ):
     TestProc_SK( id, confnode )
 {
     loglevels.push_back(Debug::INFO);
@@ -36,7 +36,7 @@ void TestProc::step()
 {
 }
 // -----------------------------------------------------------------------------
-void TestProc::sysCommand( const uniset::SystemMessage* sm )
+void TestProc::sysCommand( const uniset3::SystemMessage* sm )
 {
     TestProc_SK::sysCommand(sm);
 
@@ -167,16 +167,16 @@ void TestProc::test_thresholds()
     try
     {
         setValue(t_set_c, 0);
-        uniset::ThresholdId tid = 100;
-        ui->askThreshold( t_set_c, tid, UniversalIO::UIONotify, 10, 20 );
+        uniset3::ThresholdId tid = 100;
+        ui->askThreshold( t_set_c, tid, uniset3::UIONotify, 10, 20 );
 
-        IONotifyController_i::ThresholdInfo ti = ui->getThresholdInfo(t_set_c, tid);
-        cerr << myname << ": ask OFF threshold: " << ( ti.state == IONotifyController_i::NormalThreshold  ? "ok" : "FAIL" ) << endl;
+        uniset3::ThresholdInfo ti = ui->getThresholdInfo(t_set_c, tid);
+        cerr << myname << ": ask OFF threshold: " << ( ti.state == uniset3::NormalThreshold  ? "ok" : "FAIL" ) << endl;
         setValue(t_set_c, 25);
         ti = ui->getThresholdInfo(t_set_c, tid);
-        cerr << myname << ": ask ON threshold: " << ( ti.state == IONotifyController_i::HiThreshold  ? "ok" : "FAIL" ) << endl;
+        cerr << myname << ": ask ON threshold: " << ( ti.state == uniset3::HiThreshold  ? "ok" : "FAIL" ) << endl;
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         mylog2 << myname << ": CHECK 'ask and get threshold' FAILED: " << ex << endl;
     }

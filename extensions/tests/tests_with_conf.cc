@@ -10,7 +10,7 @@ int main( int argc, const char* argv[] )
     {
         Catch::Session session;
 
-        uniset::uniset_init(argc, argv);
+        uniset3::uniset_init(argc, argv);
 
         int returnCode = session.applyCommandLine( argc, argv, Catch::Session::OnUnusedOptions::Ignore );
 

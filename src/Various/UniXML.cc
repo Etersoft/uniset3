@@ -31,7 +31,7 @@
 #include "Exceptions.h"
 #include <libxml/xinclude.h>
 // -----------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------
 /* FIXME:
@@ -206,7 +206,7 @@ string UniXML::getProp(const xmlNode* node, const string& name) noexcept
 // -----------------------------------------------------------------------------
 int UniXML::getIntProp(const xmlNode* node, const string& name ) noexcept
 {
-	return uniset::uni_atoi(getProp(node, name));
+	return uniset3::uni_atoi(getProp(node, name));
 }
 // -----------------------------------------------------------------------------
 int UniXML::getPIntProp(const xmlNode* node, const string& name, int def ) noexcept
@@ -216,7 +216,7 @@ int UniXML::getPIntProp(const xmlNode* node, const string& name, int def ) noexc
 	if( param.empty() )
 		return def;
 
-	return uniset::uni_atoi(param);
+	return uniset3::uni_atoi(param);
 }
 // -----------------------------------------------------------------------------
 void UniXML::setProp(xmlNode* node, const string& name, const string& text )
@@ -606,7 +606,7 @@ UniXML_iterator::operator xmlNode* () const noexcept
 // -------------------------------------------------------------------------
 int UniXML_iterator::getIntProp( const string& name ) const noexcept
 {
-	return uniset::uni_atoi(UniXML::getProp(curNode, name));
+	return uniset3::uni_atoi(UniXML::getProp(curNode, name));
 }
 
 int UniXML_iterator::getPIntProp( const string& name, int def ) const noexcept
@@ -616,7 +616,7 @@ int UniXML_iterator::getPIntProp( const string& name, int def ) const noexcept
 	if( param.empty() )
 		return def;
 
-	return uniset::uni_atoi(param);
+	return uniset3::uni_atoi(param);
 }
 
 // -------------------------------------------------------------------------

@@ -11,7 +11,7 @@
 #include <queue>
 #include <future>
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
 

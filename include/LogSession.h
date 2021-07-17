@@ -31,7 +31,7 @@
 #include <Poco/JSON/Object.h>
 #endif
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     /*! Реализация "сессии" для клиентов LogServer. */

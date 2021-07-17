@@ -2,9 +2,9 @@
 #include "TestObject.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
-TestObject::TestObject( uniset::ObjectId objId, xmlNode* cnode ):
+TestObject::TestObject( uniset3::ObjectId objId, xmlNode* cnode ):
     UObject_SK(objId, cnode)
 {
 }

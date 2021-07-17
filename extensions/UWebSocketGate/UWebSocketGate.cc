@@ -36,12 +36,12 @@
 #include "UWebSocketGateSugar.h"
 #include "SMonitor.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
-UWebSocketGate::UWebSocketGate( uniset::ObjectId id
+UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
                                 , xmlNode* cnode
-                                , uniset::ObjectId shmID
+                                , uniset3::ObjectId shmID
                                 , const std::shared_ptr<SharedMemory>& ic
                                 , const string& prefix ):
     UniSetObject(id)
@@ -116,7 +116,7 @@ UWebSocketGate::UWebSocketGate( uniset::ObjectId id
     {
         std::stringstream err;
         err << myname << "(init): " << httpHost << ":" << httpPort << " ERROR: " << ex.what();
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
 #endif
@@ -190,9 +190,9 @@ void UWebSocketGate::sensorInfo( const SensorMessage* sm )
         s->sensorInfo(sm);
 }
 //--------------------------------------------------------------------------------------------
-uniset::SimpleInfo* UWebSocketGate::getInfo( const char* userparam )
+uniset3::SimpleInfo* UWebSocketGate::getInfo( const char* userparam )
 {
-    uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+    uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
 
     ostringstream inf;
 
@@ -232,17 +232,17 @@ Poco::JSON::Object::Ptr UWebSocketGate::to_json( const SensorMessage* sm, const 
     json->set("error", err);
     json->set("id", sm->id);
     json->set("value", sm->value);
-    json->set("name", uniset::ORepHelpers::getShortName(uniset_conf()->oind->getMapName(sm->id)));
+    json->set("name", uniset3::ORepHelpers::getShortName(uniset_conf()->oind->getMapName(sm->id)));
     json->set("sm_tv_sec", sm->sm_tv.tv_sec);
     json->set("sm_tv_nsec", sm->sm_tv.tv_nsec);
-    json->set("iotype", uniset::iotype2str(sm->sensor_type));
+    json->set("iotype", uniset3::iotype2str(sm->sensor_type));
     json->set("undefined", sm->undefined );
     json->set("supplier", sm->supplier );
     json->set("tv_sec", sm->tm.tv_sec);
     json->set("tv_nsec", sm->tm.tv_nsec);
     json->set("node", sm->node);
 
-    Poco::JSON::Object::Ptr calibr = uniset::json::make_child(json, "calibration");
+    Poco::JSON::Object::Ptr calibr = uniset3::json::make_child(json, "calibration");
     calibr->set("cmin", sm->ci.minCal);
     calibr->set("cmax", sm->ci.maxCal);
     calibr->set("rmin", sm->ci.minRaw);
@@ -263,11 +263,11 @@ Poco::JSON::Object::Ptr UWebSocketGate::error_to_json( const std::string& err )
 }
 //--------------------------------------------------------------------------------------------
 std::shared_ptr<UWebSocketGate> UWebSocketGate::init_wsgate( int argc, const char* const* argv
-        , uniset::ObjectId shmID
+        , uniset3::ObjectId shmID
         , const std::shared_ptr<SharedMemory>& ic
         , const std::string& prefix )
 {
-    string name = uniset::getArgParam("--" + prefix + "name", argc, argv, "UWebSocketGate");
+    string name = uniset3::getArgParam("--" + prefix + "name", argc, argv, "UWebSocketGate");
 
     if( name.empty() )
     {
@@ -275,7 +275,7 @@ std::shared_ptr<UWebSocketGate> UWebSocketGate::init_wsgate( int argc, const cha
         return nullptr;
     }
 
-    return uniset::make_object<UWebSocketGate>(name, "UWebSocketGate", shmID, ic, prefix);
+    return uniset3::make_object<UWebSocketGate>(name, "UWebSocketGate", shmID, ic, prefix);
 }
 // -----------------------------------------------------------------------------
 void UWebSocketGate::help_print()
@@ -594,7 +594,7 @@ std::shared_ptr<UWebSocketGate::UWebSocket> UWebSocketGate::newWebSocket( Poco::
     if( qp.size() == 1 && qp[0].first.empty() )
         slist = qp[0].first;
 
-    auto idlist = uniset::explode(slist);
+    auto idlist = uniset3::explode(slist);
 
     {
         ws = make_shared<UWebSocket>(req, resp);
@@ -656,7 +656,7 @@ UWebSocketGate::UWebSocket::UWebSocket( Poco::Net::HTTPServerRequest* _req,
 
     maxsize = maxsend * Kbuf;
 
-    setReceiveTimeout(uniset::PassiveTimer::millisecToPoco(recvTimeout));
+    setReceiveTimeout(uniset3::PassiveTimer::millisecToPoco(recvTimeout));
     setMaxPayloadSize(sizeof(rbuf));
 }
 // -----------------------------------------------------------------------------
@@ -875,7 +875,7 @@ void UWebSocketGate::UWebSocket::read( ev::io& io, int revents )
     }
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::ask( uniset::ObjectId id )
+void UWebSocketGate::UWebSocket::ask( uniset3::ObjectId id )
 {
     sinfo s;
     s.id = id;
@@ -883,7 +883,7 @@ void UWebSocketGate::UWebSocket::ask( uniset::ObjectId id )
     qcmd.push(s);
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::del( uniset::ObjectId id )
+void UWebSocketGate::UWebSocket::del( uniset3::ObjectId id )
 {
     sinfo s;
     s.id = id;
@@ -891,7 +891,7 @@ void UWebSocketGate::UWebSocket::del( uniset::ObjectId id )
     qcmd.push(s);
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::set( uniset::ObjectId id, long value )
+void UWebSocketGate::UWebSocket::set( uniset3::ObjectId id, long value )
 {
     sinfo s;
     s.id = id;
@@ -900,7 +900,7 @@ void UWebSocketGate::UWebSocket::set( uniset::ObjectId id, long value )
     qcmd.push(s);
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::get( uniset::ObjectId id )
+void UWebSocketGate::UWebSocket::get( uniset3::ObjectId id )
 {
     sinfo s;
     s.id = id;
@@ -908,7 +908,7 @@ void UWebSocketGate::UWebSocket::get( uniset::ObjectId id )
     qcmd.push(s);
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::sensorInfo( const uniset::SensorMessage* sm )
+void UWebSocketGate::UWebSocket::sensorInfo( const uniset3::SensorMessage* sm )
 {
     if( cancelled )
         return;
@@ -952,12 +952,12 @@ void UWebSocketGate::UWebSocket::doCommand( const std::shared_ptr<SMInterface>& 
 
             if( s.cmd == "ask" )
             {
-                ui->askSensor(s.id, UniversalIO::UIONotify);
+                ui->askSensor(s.id, uniset3::UIONotify);
                 smap[s.id] = s;
             }
             else if( s.cmd == "del" )
             {
-                ui->askSensor(s.id, UniversalIO::UIODontNotify);
+                ui->askSensor(s.id, uniset3::UIODontNotify);
                 auto it = smap.find(s.id);
 
                 if( it != smap.end() )
@@ -1005,7 +1005,7 @@ void UWebSocketGate::UWebSocket::sendShortResponse( sinfo& si )
 // -----------------------------------------------------------------------------
 void UWebSocketGate::UWebSocket::sendResponse( sinfo& si )
 {
-    uniset::SensorMessage sm(si.id, si.value);
+    uniset3::SensorMessage sm(si.id, si.value);
 
     if( jbuf.size() > maxsize )
     {
@@ -1055,7 +1055,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(set): " << params << endl;
 
-        auto idlist = uniset::getSInfoList(params, uniset_conf());
+        auto idlist = uniset3::getSInfoList(params, uniset_conf());
 
         for( const auto& i : idlist )
             set(i.si.id, i.val);
@@ -1068,7 +1068,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(ask): " << params << endl;
 
-        auto idlist = uniset::explode(params);
+        auto idlist = uniset3::explode(params);
 
         for( const auto& id : idlist.getList() )
             ask(id);
@@ -1081,7 +1081,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(del): " << params << endl;
 
-        auto idlist = uniset::explode(params);
+        auto idlist = uniset3::explode(params);
 
         for( const auto& id : idlist.getList() )
             del(id);
@@ -1094,7 +1094,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(get): " << params << endl;
 
-        auto idlist = uniset::explode(params);
+        auto idlist = uniset3::explode(params);
 
         for( const auto& id : idlist.getList() )
             get(id);

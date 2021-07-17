@@ -16,7 +16,7 @@
 // -------------------------------------------------------------------------
 #include "modbus/ModbusServerSlot.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace ModbusRTU;
@@ -106,4 +106,4 @@ namespace uniset
 		slFileTransfer = sl;
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

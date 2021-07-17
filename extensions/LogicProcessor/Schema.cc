@@ -19,11 +19,11 @@
 #include "Extensions.h"
 #include "Schema.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -------------------------------------------------------------------------
 
     Schema::Schema()
@@ -222,4 +222,4 @@ namespace uniset
         return nullptr;
     }
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

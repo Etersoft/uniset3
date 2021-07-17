@@ -7,7 +7,7 @@ class TestObject:
     public TestObject_SK
 {
     public:
-        TestObject( uniset::ObjectId objId, xmlNode* cnode );
+        TestObject( uniset3::ObjectId objId, xmlNode* cnode );
         virtual ~TestObject();
 
         void askDoNotNotify();
@@ -22,7 +22,7 @@ class TestObject:
         void stopHeartbeat();
         void runHeartbeat( int max = 3 );
 
-        inline uniset::timeout_t getHeartbeatTime()
+        inline uniset3::timeout_t getHeartbeatTime()
         {
             return ptHeartBeat.getInterval();
         }
@@ -42,9 +42,9 @@ class TestObject:
     protected:
         TestObject();
 
-        virtual void sysCommand( const uniset::SystemMessage* sm ) override;
-        virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-        virtual void onTextMessage( const uniset::TextMessage* msg ) override;
+        virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+        virtual void onTextMessage( const uniset3::TextMessage* msg ) override;
 
     private:
         bool evntIsOK = { false };

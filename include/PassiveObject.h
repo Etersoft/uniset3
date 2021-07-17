@@ -27,7 +27,7 @@
 #include "MessageType.h"
 #include "ProxyManager.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     /*!
@@ -42,16 +42,16 @@ namespace uniset
     {
         public:
             PassiveObject();
-            PassiveObject( uniset::ObjectId id );
-            PassiveObject( uniset::ObjectId id, ProxyManager* mngr );
+            PassiveObject( uniset3::ObjectId id );
+            PassiveObject( uniset3::ObjectId id, ProxyManager* mngr );
             virtual ~PassiveObject();
 
-            virtual void processingMessage( const uniset::VoidMessage* msg );
+            virtual void processingMessage( const uniset3::VoidMessage* msg );
 
-            void setID( uniset::ObjectId id );
+            void setID( uniset3::ObjectId id );
             void init(ProxyManager* mngr);
 
-            inline uniset::ObjectId getId() const
+            inline uniset3::ObjectId getId() const
             {
                 return id;
             }
@@ -61,16 +61,16 @@ namespace uniset
             }
 
         protected:
-            virtual void sysCommand( const uniset::SystemMessage* sm );
-            virtual void askSensors( UniversalIO::UIOCommand cmd ) {}
-            virtual void timerInfo( const uniset::TimerMessage* tm ) {}
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) {}
+            virtual void sysCommand( const uniset3::SystemMessage* sm );
+            virtual void askSensors( uniset3::UIOCommand cmd ) {}
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) {}
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) {}
 
             std::string myname = { "" };
             ProxyManager* mngr = { nullptr };
 
         private:
-            uniset::ObjectId id = { uniset::DefaultObjectId };
+            uniset3::ObjectId id = { uniset3::DefaultObjectId };
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace

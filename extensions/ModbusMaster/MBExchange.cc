@@ -24,13 +24,13 @@
 #include "MBExchange.h"
 #include "modbus/MBLogSugar.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -----------------------------------------------------------------------------
-    MBExchange::MBExchange(uniset::ObjectId objId, uniset::ObjectId shmId,
+    MBExchange::MBExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId,
                            const std::shared_ptr<SharedMemory>& _ic, const std::string& prefix ):
         UniSetObject(objId),
         allInitOK(false),
@@ -45,7 +45,7 @@ namespace uniset
         ic(_ic)
     {
         if( objId == DefaultObjectId )
-            throw uniset::SystemError("(MBExchange): objId=-1?!! Use --" + prefix + "-name" );
+            throw uniset3::SystemError("(MBExchange): objId=-1?!! Use --" + prefix + "-name" );
 
         auto conf = uniset_conf();
         mutex_start.setName(myname + "_mutgc7vdgchex_start");
@@ -55,7 +55,7 @@ namespace uniset
         cnode = conf->getNode(conf_name);
 
         if( cnode == NULL )
-            throw uniset::SystemError("(MBExchange): Not found node <" + conf_name + " ...> for " + myname );
+            throw uniset3::SystemError("(MBExchange): Not found node <" + conf_name + " ...> for " + myname );
 
         shm = make_shared<SMInterface>(shmId, ui, objId, ic);
         mbconf = make_shared<MBConfig>(conf, cnode, shm);
@@ -301,7 +301,7 @@ namespace uniset
                 shm->localSetValue(itHeartBeat, sidHeartBeat, maxHeartBeat, getId());
                 ptHeartBeat.reset();
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 mbcrit << myname << "(step): (hb) " << ex << std::endl;
             }
@@ -332,7 +332,7 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     bool MBExchange::readItem( const std::shared_ptr<UniXML>& xml, UniXML::iterator& it, xmlNode* sec )
     {
-        if( uniset::check_filter(it, mbconf->s_field, mbconf->s_fvalue) )
+        if( uniset3::check_filter(it, mbconf->s_field, mbconf->s_fvalue) )
         {
             try
             {
@@ -626,8 +626,8 @@ namespace uniset
 
                 if( p->rnum <= 1 )
                 {
-                    if( p->stype == UniversalIO::DI ||
-                            p->stype == UniversalIO::DO )
+                    if( p->stype == uniset3::DI ||
+                            p->stype == uniset3::DO )
                     {
                         IOBase::processingAsDI( p, data[0], shm, true );
                     }
@@ -644,8 +644,8 @@ namespace uniset
             }
             else if( p->vType == VTypes::vtSigned )
             {
-                if( p->stype == UniversalIO::DI ||
-                        p->stype == UniversalIO::DO )
+                if( p->stype == uniset3::DI ||
+                        p->stype == uniset3::DO )
                 {
                     IOBase::processingAsDI( p, data[0], shm, true );
                 }
@@ -656,8 +656,8 @@ namespace uniset
             }
             else if( p->vType == VTypes::vtUnsigned )
             {
-                if( p->stype == UniversalIO::DI ||
-                        p->stype == UniversalIO::DO )
+                if( p->stype == uniset3::DI ||
+                        p->stype == uniset3::DO )
                 {
                     IOBase::processingAsDI( p, data[0], shm, true );
                 }
@@ -717,15 +717,15 @@ namespace uniset
 
             return true;
         }
-        catch(IOController_i::NameNotFound& ex)
+        catch(uniset3::NameNotFound& ex)
         {
             mblog3 << myname << "(initSMValue):(NameNotFound) " << ex.err << endl;
         }
-        catch(IOController_i::IOBadParam& ex )
+        catch(uniset3::IOBadParam& ex )
         {
             mblog3 << myname << "(initSMValue):(IOBadParam) " << ex.err << endl;
         }
-        catch(IONotifyController_i::BadRange& ex )
+        catch(uniset3::BadRange& ex )
         {
             mblog3 << myname << "(initSMValue): (BadRange)..." << endl;
         }
@@ -734,7 +734,7 @@ namespace uniset
             mblog3 << myname << "(initSMValue): CORBA::SystemException: "
                    << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             mblog3 << myname << "(initSMValue): " << ex << endl;
         }
@@ -977,15 +977,15 @@ namespace uniset
                     if( !shm->isLocalwork() )
                         d->mode = shm->localGetValue(d->mode_it, d->mode_id);
                 }
-                catch(IOController_i::NameNotFound& ex)
+                catch(uniset3::NameNotFound& ex)
                 {
                     mblog3 << myname << "(updateSM):(NameNotFound) " << ex.err << endl;
                 }
-                catch(IOController_i::IOBadParam& ex )
+                catch(uniset3::IOBadParam& ex )
                 {
                     mblog3 << myname << "(updateSM):(IOBadParam) " << ex.err << endl;
                 }
-                catch( IONotifyController_i::BadRange& ex )
+                catch( uniset3::BadRange& ex )
                 {
                     mblog3 << myname << "(updateSM): (BadRange)..." << endl;
                 }
@@ -994,7 +994,7 @@ namespace uniset
                     mblog3 << myname << "(updateSM): CORBA::SystemException: "
                            << ex.NP_minorString() << endl;
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mblog3 << myname << "(updateSM): " << ex << endl;
                 }
@@ -1015,15 +1015,15 @@ namespace uniset
                                 d->safeMode = MBConfig::safeNone;
                         }
                     }
-                    catch(IOController_i::NameNotFound& ex)
+                    catch(uniset3::NameNotFound& ex)
                     {
                         mblog3 << myname << "(updateSM):(NameNotFound) " << ex.err << endl;
                     }
-                    catch(IOController_i::IOBadParam& ex )
+                    catch(uniset3::IOBadParam& ex )
                     {
                         mblog3 << myname << "(updateSM):(IOBadParam) " << ex.err << endl;
                     }
-                    catch( IONotifyController_i::BadRange& ex )
+                    catch( uniset3::BadRange& ex )
                     {
                         mblog3 << myname << "(updateSM): (BadRange)..." << endl;
                     }
@@ -1032,7 +1032,7 @@ namespace uniset
                         mblog3 << myname << "(updateSM): CORBA::SystemException: "
                                << ex.NP_minorString() << endl;
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         mblog3 << myname << "(updateSM): " << ex << endl;
                     }
@@ -1063,15 +1063,15 @@ namespace uniset
                         else if( d->dtype == MBConfig::dtRTU188 )
                             updateRTU188(it);
                     }
-                    catch(IOController_i::NameNotFound& ex)
+                    catch(uniset3::NameNotFound& ex)
                     {
                         mblog3 << myname << "(updateSM):(NameNotFound) " << ex.err << endl;
                     }
-                    catch(IOController_i::IOBadParam& ex )
+                    catch(uniset3::IOBadParam& ex )
                     {
                         mblog3 << myname << "(updateSM):(IOBadParam) " << ex.err << endl;
                     }
-                    catch(IONotifyController_i::BadRange& ex )
+                    catch(uniset3::BadRange& ex )
                     {
                         mblog3 << myname << "(updateSM): (BadRange)..." << endl;
                     }
@@ -1080,7 +1080,7 @@ namespace uniset
                         mblog3 << myname << "(updateSM): CORBA::SystemException: "
                                << ex.NP_minorString() << endl;
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         mblog3 << myname << "(updateSM): " << ex << endl;
                     }
@@ -1176,7 +1176,7 @@ namespace uniset
                                 r->mbval = p->safeval;
                             else
                             {
-                                if( p->stype == UniversalIO::DI || p->stype == UniversalIO::DO )
+                                if( p->stype == uniset3::DI || p->stype == uniset3::DO )
                                     r->mbval = IOBase::processingAsDO( p, shm, force_out );
                                 else
                                     r->mbval = IOBase::processingAsAO( p, shm, force_out );
@@ -1187,8 +1187,8 @@ namespace uniset
                     }
                     else
                     {
-                        if( p->stype == UniversalIO::DI ||
-                                p->stype == UniversalIO::DO )
+                        if( p->stype == uniset3::DI ||
+                                p->stype == uniset3::DO )
                         {
                             if( useSafeval )
                                 IOBase::processingAsDI( p, p->safeval, shm, force );
@@ -1221,7 +1221,7 @@ namespace uniset
                             r->mbval = p->safeval;
                         else
                         {
-                            if( p->stype == UniversalIO::DI || p->stype == UniversalIO::DO )
+                            if( p->stype == uniset3::DI || p->stype == uniset3::DO )
                                 r->mbval = (int16_t)IOBase::processingAsDO( p, shm, force_out );
                             else
                                 r->mbval = (int16_t)IOBase::processingAsAO( p, shm, force_out );
@@ -1232,7 +1232,7 @@ namespace uniset
                 }
                 else
                 {
-                    if( p->stype == UniversalIO::DI || p->stype == UniversalIO::DO )
+                    if( p->stype == uniset3::DI || p->stype == uniset3::DO )
                     {
                         if( useSafeval )
                             IOBase::processingAsDI( p, p->safeval, shm, force );
@@ -1260,7 +1260,7 @@ namespace uniset
                             r->mbval = p->safeval;
                         else
                         {
-                            if( p->stype == UniversalIO::DI || p->stype == UniversalIO::DO )
+                            if( p->stype == uniset3::DI || p->stype == uniset3::DO )
                                 r->mbval = (uint16_t)IOBase::processingAsDO( p, shm, force_out );
                             else
                                 r->mbval = (uint16_t)IOBase::processingAsAO( p, shm, force_out );
@@ -1271,7 +1271,7 @@ namespace uniset
                 }
                 else
                 {
-                    if( p->stype == UniversalIO::DI || p->stype == UniversalIO::DO )
+                    if( p->stype == uniset3::DI || p->stype == uniset3::DO )
                         IOBase::processingAsDI( p, useSafeval ? p->safeval : r->mbval, shm, force );
                     else
                         IOBase::processingAsAI( p, useSafeval ? p->safeval : (uint16_t)r->mbval, shm, force );
@@ -1528,15 +1528,15 @@ namespace uniset
 
             return;
         }
-        catch(IOController_i::NameNotFound& ex)
+        catch(uniset3::NameNotFound& ex)
         {
             mblog3 << myname << "(updateRSProperty):(NameNotFound) " << ex.err << endl;
         }
-        catch(IOController_i::IOBadParam& ex )
+        catch(uniset3::IOBadParam& ex )
         {
             mblog3 << myname << "(updateRSProperty):(IOBadParam) " << ex.err << endl;
         }
-        catch(IONotifyController_i::BadRange& ex )
+        catch(uniset3::BadRange& ex )
         {
             mblog3 << myname << "(updateRSProperty): (BadRange)..." << endl;
         }
@@ -1545,7 +1545,7 @@ namespace uniset
             mblog3 << myname << "(updateRSProperty): CORBA::SystemException: "
                    << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             mblog3 << myname << "(updateRSProperty): " << ex << endl;
         }
@@ -1868,15 +1868,15 @@ namespace uniset
                     continue;
                 }
             }
-            catch(IOController_i::NameNotFound& ex)
+            catch(uniset3::NameNotFound& ex)
             {
                 mblog3 << myname << "(updateMTR):(NameNotFound) " << ex.err << endl;
             }
-            catch(IOController_i::IOBadParam& ex )
+            catch(uniset3::IOBadParam& ex )
             {
                 mblog3 << myname << "(updateMTR):(IOBadParam) " << ex.err << endl;
             }
-            catch(IONotifyController_i::BadRange& ex )
+            catch(uniset3::BadRange& ex )
             {
                 mblog3 << myname << "(updateMTR): (BadRange)..." << endl;
             }
@@ -1885,7 +1885,7 @@ namespace uniset
                 mblog3 << myname << "(updateMTR): CORBA::SystemException: "
                        << ex.NP_minorString() << endl;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 mblog3 << myname << "(updateMTR): " << ex << endl;
             }
@@ -1924,26 +1924,26 @@ namespace uniset
             {
                 bool safeMode = isSafeMode(r->dev) && it->safevalDefined;
 
-                if( it->stype == UniversalIO::DI )
+                if( it->stype == uniset3::DI )
                 {
                     bool set = safeMode ? (bool)it->safeval : r->dev->rtu188->getState(r->rtuJack, r->rtuChan, it->stype);
                     IOBase::processingAsDI( &(*it), set, shm, force );
                 }
-                else if( it->stype == UniversalIO::AI )
+                else if( it->stype == uniset3::AI )
                 {
                     long val = safeMode ? it->safeval : r->dev->rtu188->getInt(r->rtuJack, r->rtuChan, it->stype);
                     IOBase::processingAsAI( &(*it), val, shm, force );
                 }
             }
-            catch(IOController_i::NameNotFound& ex)
+            catch(uniset3::NameNotFound& ex)
             {
                 mblog3 << myname << "(updateRTU188):(NameNotFound) " << ex.err << endl;
             }
-            catch(IOController_i::IOBadParam& ex )
+            catch(uniset3::IOBadParam& ex )
             {
                 mblog3 << myname << "(updateRTU188):(IOBadParam) " << ex.err << endl;
             }
-            catch(IONotifyController_i::BadRange& ex )
+            catch(uniset3::BadRange& ex )
             {
                 mblog3 << myname << "(updateRTU188): (BadRange)..." << endl;
             }
@@ -1952,7 +1952,7 @@ namespace uniset
                 mblog3 << myname << "(updateRTU188): CORBA::SystemException: "
                        << ex.NP_minorString() << endl;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 mblog3 << myname << "(updateRTU188): " << ex << endl;
             }
@@ -1970,7 +1970,7 @@ namespace uniset
         // см. sysCommand()
         {
             setProcActive(false);
-            uniset::uniset_rwmutex_rlock l(mutex_start);
+            uniset3::uniset_rwmutex_rlock l(mutex_start);
             UniSetObject::activateObject();
 
             if( !shm->isLocalwork() )
@@ -1983,7 +1983,7 @@ namespace uniset
         return true;
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::sysCommand( const uniset::SystemMessage* sm )
+    void MBExchange::sysCommand( const uniset3::SystemMessage* sm )
     {
         switch( sm->command )
         {
@@ -2038,8 +2038,8 @@ namespace uniset
                 }
 
                 {
-                    uniset::uniset_rwmutex_rlock l(mutex_start);
-                    askSensors(UniversalIO::UIONotify);
+                    uniset3::uniset_rwmutex_rlock l(mutex_start);
+                    askSensors(uniset3::UIONotify);
                     initOutput();
                 }
 
@@ -2051,7 +2051,7 @@ namespace uniset
 
             case SystemMessage::FoldUp:
             case SystemMessage::Finish:
-                askSensors(UniversalIO::UIODontNotify);
+                askSensors(uniset3::UIODontNotify);
                 break;
 
             case SystemMessage::WatchDog:
@@ -2064,7 +2064,7 @@ namespace uniset
                 if( shm->isLocalwork() )
                     break;
 
-                askSensors(UniversalIO::UIONotify);
+                askSensors(uniset3::UIONotify);
                 initOutput();
                 initValues();
 
@@ -2102,7 +2102,7 @@ namespace uniset
         }
     }
     // ------------------------------------------------------------------------------------------
-    bool MBExchange::reconfigure( const std::shared_ptr<uniset::UniXML>& xml, const std::shared_ptr<uniset::MBConfig>& mbconf )
+    bool MBExchange::reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& mbconf )
     {
         return true;
     }
@@ -2111,7 +2111,7 @@ namespace uniset
     {
         mbinfo << myname << ": relaod from " << confile << endl;
 
-        uniset::uniset_rwmutex_wrlock lock(mutex_conf);
+        uniset3::uniset_rwmutex_wrlock lock(mutex_conf);
 
         auto oldConf = mbconf;
 
@@ -2172,7 +2172,7 @@ namespace uniset
     {
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::askSensors( UniversalIO::UIOCommand cmd )
+    void MBExchange::askSensors( uniset3::UIOCommand cmd )
     {
         if( !shm->waitSMworking(test_id, activateTimeout, 50) )
         {
@@ -2192,7 +2192,7 @@ namespace uniset
             if( sidExchangeMode != DefaultObjectId )
                 shm->askSensor(sidExchangeMode, cmd);
         }
-        catch( uniset::Exception& ex )
+        catch( uniset3::Exception& ex )
         {
             mbwarn << myname << "(askSensors): " << ex << std::endl;
         }
@@ -2213,7 +2213,7 @@ namespace uniset
                 if( d->safemode_id != DefaultObjectId )
                     shm->askSensor(d->safemode_id, cmd);
             }
-            catch( uniset::Exception& ex )
+            catch( uniset3::Exception& ex )
             {
                 mbwarn << myname << "(askSensors): " << ex << std::endl;
             }
@@ -2244,7 +2244,7 @@ namespace uniset
                         {
                             shm->askSensor(i->si.id, cmd);
                         }
-                        catch( uniset::Exception& ex )
+                        catch( uniset3::Exception& ex )
                         {
                             mbwarn << myname << "(askSensors): " << ex << std::endl;
                         }
@@ -2258,7 +2258,7 @@ namespace uniset
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::sensorInfo( const uniset::SensorMessage* sm )
+    void MBExchange::sensorInfo( const uniset3::SensorMessage* sm )
     {
         if( sm->id == sidExchangeMode )
         {
@@ -2329,7 +2329,7 @@ namespace uniset
     // -----------------------------------------------------------------------------
     bool MBExchange::poll()
     {
-        uniset::uniset_rwmutex_rlock lock(mutex_conf);
+        uniset3::uniset_rwmutex_rlock lock(mutex_conf);
 
         if( !mb )
         {
@@ -2460,7 +2460,7 @@ namespace uniset
     // -----------------------------------------------------------------------------
     void MBExchange::updateRespondSensors()
     {
-        uniset::uniset_rwmutex_rlock lock(mutex_conf);
+        uniset3::uniset_rwmutex_rlock lock(mutex_conf);
 
         for( const auto& it1 : mbconf->devices )
         {
@@ -2485,7 +2485,7 @@ namespace uniset
 
                     shm->localSetValue(d->resp_it, d->resp_id, ( set ? 1 : 0 ), getId());
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbcrit << myname << "(step): (respond) " << ex << std::endl;
                 }
@@ -2513,7 +2513,7 @@ namespace uniset
             {
                 step();
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 mbcrit << myname << "(execute): " << ex << std::endl;
             }
@@ -2526,9 +2526,9 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    uniset::SimpleInfo* MBExchange::getInfo( const char* userparam )
+    uniset3::SimpleInfo* MBExchange::getInfo( const char* userparam )
     {
-        uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+        uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
 
         ostringstream inf;
 
@@ -2555,11 +2555,11 @@ namespace uniset
 #ifndef DISABLE_REST_API
     Poco::JSON::Object::Ptr MBExchange::httpHelp( const Poco::URI::QueryParameters& p )
     {
-        uniset::json::help::object myhelp(myname, UniSetObject::httpHelp(p));
+        uniset3::json::help::object myhelp(myname, UniSetObject::httpHelp(p));
 
         {
             // 'reload'
-            uniset::json::help::item cmd("reload", "reload config from file");
+            uniset3::json::help::item cmd("reload", "reload config from file");
             cmd.param("confile", "Absolute path for config file. Optional parameter.");
             myhelp.add(cmd);
         }
@@ -2580,11 +2580,11 @@ namespace uniset
             {
                 confile = p[0].second;
 
-                if( !uniset::file_exist(confile) )
+                if( !uniset3::file_exist(confile) )
                 {
                     ostringstream err;
                     err << myname << "(reload): Not found config file '" << confile << "'";
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
 
@@ -2598,7 +2598,7 @@ namespace uniset
 
             ostringstream err;
             err << myname << "(reload): Failed reload from '" << confile << "'";
-            throw uniset::SystemError(err.str());
+            throw uniset3::SystemError(err.str());
         }
 
         return UniSetObject::httpRequest(req, p);
@@ -2606,4 +2606,4 @@ namespace uniset
     // ----------------------------------------------------------------------------
 #endif
 
-} // end of namespace uniset
+} // end of namespace uniset3

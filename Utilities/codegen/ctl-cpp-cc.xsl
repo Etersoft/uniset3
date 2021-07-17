@@ -91,7 +91,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::callback() noexept
 				ui->setValue(idHeartBeat,maxHeartBeat);
 				ptHeartBeat.reset();
 			}
-			catch( const uniset::Exception&amp; ex )
+			catch( const uniset3::Exception&amp; ex )
 			{
 				mycrit &lt;&lt; myname &lt;&lt; "(execute): " &lt;&lt; ex &lt;&lt; endl;
 			}
@@ -101,7 +101,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::callback() noexept
 		updateOutputs(forceOut);
 		updatePreviousValues();
 	}
-	catch( const uniset::Exception&amp; ex )
+	catch( const uniset3::Exception&amp; ex )
 	{
         mycrit &lt;&lt; myname &lt;&lt; "(execute): " &lt;&lt; ex &lt;&lt; endl;
 	}
@@ -121,9 +121,9 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::callback() noexept
 	msleep( sleep_msec );
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::setValue( uniset::ObjectId sid, long val )
+void <xsl:value-of select="$CLASSNAME"/>_SK::setValue( uniset3::ObjectId sid, long val )
 {
-    if( _sid == uniset::DefaultObjectId )
+    if( _sid == uniset3::DefaultObjectId )
         return;
         
 	<xsl:for-each select="//smap/item">
@@ -157,7 +157,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::updateOutputs( bool force )
 -->
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::preAskSensors( UniversalIO::UIOCommand cmd )
+void <xsl:value-of select="$CLASSNAME"/>_SK::preAskSensors( uniset3::UIOCommand cmd )
 {
 	<xsl:for-each select="//smap/item">
 		<xsl:choose>
@@ -166,22 +166,22 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preAskSensors( UniversalIO::UIOComm
 	</xsl:for-each>
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::askSensor( uniset::ObjectId sid, UniversalIO::UIOCommand cmd, uniset::ObjectId node )
+void <xsl:value-of select="$CLASSNAME"/>_SK::askSensor( uniset3::ObjectId sid, uniset3::UIOCommand cmd, uniset3::ObjectId node )
 {
-	if( cmd == UniversalIO::UIONotify )
+	if( cmd == uniset3::UIONotify )
 	{
 		// приходится искуственно использовать третий параметр, 
 		// что-бы компилятор выбрал
 		// правильный(для аналоговых) конструктор у SensorMessage
-		IOController_i::CalibrateInfo _ci;
+		uniset3::CalibrateInfo _ci;
 		SensorMessage sm( sid, (long)ui->getValue(sid,node), _ci );
-		sm.sensor_type = UniversalIO::AI;
+		sm.sensor_type = uniset3::AI;
 		sm.node = node;
 		sensorInfo(&amp;sm);
 	}
 }
 // -----------------------------------------------------------------------------
-long <xsl:value-of select="$CLASSNAME"/>_SK::getValue( uniset::ObjectId _sid )
+long <xsl:value-of select="$CLASSNAME"/>_SK::getValue( uniset3::ObjectId _sid )
 {
 	<xsl:for-each select="//smap/item">
 	if( _sid == <xsl:value-of select="@name"/> )
@@ -191,7 +191,7 @@ long <xsl:value-of select="$CLASSNAME"/>_SK::getValue( uniset::ObjectId _sid )
 	return ui->getValue(_sid);
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::preSensorInfo( const uniset::SensorMessage* sm )
+void <xsl:value-of select="$CLASSNAME"/>_SK::preSensorInfo( const uniset3::SensorMessage* sm )
 {
 	sensorInfo(sm);
 }
@@ -200,7 +200,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::initFromSM()
 {
 	<xsl:for-each select="//smap/item">
 	<xsl:if test="normalize-space(@initFromSM)!=''">
-	if( <xsl:value-of select="@name"/> != uniset::DefaultObjectId )
+	if( <xsl:value-of select="@name"/> != uniset3::DefaultObjectId )
 	{
 		try
 		{
@@ -224,7 +224,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::initFromSM()
 		if( <xsl:value-of select="@name"/> != DefaultObjectId )
             priv_<xsl:call-template name="setprefix"/><xsl:value-of select="@name"/> = ui->getValue(<xsl:value-of select="@name"/>,node_<xsl:value-of select="@name"/>);
 	}
-	catch( const uniset::Exception&amp; ex )
+	catch( const uniset3::Exception&amp; ex )
 	{
         mycrit &lt;&lt; myname &lt;&lt; "(getdata): " &lt;&lt; ex &lt;&lt; endl;
 		throw;
@@ -241,7 +241,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::initFromSM()
 			ui->setValue( si, <xsl:call-template name="setprefix"/><xsl:value-of select="@name"/>, getId() );
 		}
 	}
-	catch( const uniset::Exception&amp; ex )
+	catch( const uniset3::Exception&amp; ex )
 	{
         mycrit &lt;&lt; myname &lt;&lt; "(setdata): " &lt;&lt; ex &lt;&lt; endl;
 		throw;
@@ -259,7 +259,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::initFromSM()
 			ui->setValue( si,<xsl:value-of select="$setval"/>, getId() );
 		}
 	}
-	catch( const uniset::Exception&amp; ex )
+	catch( const uniset3::Exception&amp; ex )
 	{
         mycrit &lt;&lt; myname &lt;&lt; "(setdata): " &lt;&lt; ex &lt;&lt; endl;
 		throw;
@@ -276,7 +276,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::initFromSM()
 			ui->setValue( si,(long)m_<xsl:value-of select="@name"/>, getId() );
 		}
 	}
-	catch( const uniset::Exception&amp; ex )
+	catch( const uniset3::Exception&amp; ex )
 	{
         mycrit &lt;&lt; myname &lt;&lt; "(setmsg): " &lt;&lt; ex &lt;&lt; endl;
 		throw;

@@ -23,11 +23,11 @@
 #include "ORepHelpers.h"
 #include "SMLogSugar.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -----------------------------------------------------------------------------
     void SharedMemory::help_print( int argc, const char* const* argv )
     {
@@ -417,7 +417,7 @@ namespace uniset
                     }
                 }
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 smcrit << myname << "(checkHeartBeat): " << ex << endl;
             }
@@ -524,7 +524,7 @@ namespace uniset
         auto conf = uniset_conf();
         string dfile = conf->getArgParam("--datfile", "");
 
-        std::shared_ptr<uniset::IOConfig_XML> ioconf;
+        std::shared_ptr<uniset3::IOConfig_XML> ioconf;
 
         if( !dfile.empty() )
         {
@@ -540,9 +540,9 @@ namespace uniset
             ioconf = make_shared<IOConfig_XML>(conf->getConfXML(), conf, conf->getXMLSensorsSection());
         }
 
-        uniset::ObjectId ID = conf->getControllerID(conf->getArgParam("--smemory-id", "SharedMemory"));
+        uniset3::ObjectId ID = conf->getControllerID(conf->getArgParam("--smemory-id", "SharedMemory"));
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(smemory): Not found ID for SharedMemory in section "
                  << conf->getControllersSection()
@@ -597,7 +597,7 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    void SharedMemory::sendEvent( uniset::SystemMessage& sm )
+    void SharedMemory::sendEvent( uniset3::SystemMessage& sm )
     {
         TransportMessage tm( sm.transport_msg() );
 
@@ -767,7 +767,7 @@ namespace uniset
                 {
                     hit.add( localGetValue( hit.ioit, hit.id ), it.size );
                 }
-                catch( IOController_i::Undefined& ex )
+                catch( uniset3::Undefined& ex )
                 {
                     hit.add( ex.value, it.size );
                     // hit.add( numeric_limits<long>::max(), it.size );
@@ -806,8 +806,8 @@ namespace uniset
         {
             History::iterator it = it1;
 
-            if( usi->type == UniversalIO::DI ||
-                    usi->type == UniversalIO::DO )
+            if( usi->type == uniset3::DI ||
+                    usi->type == uniset3::DO )
             {
                 bool st = (bool)value;
 
@@ -823,8 +823,8 @@ namespace uniset
                     m_historySignal.emit( (*it) );
                 }
             }
-            else if( usi->type == UniversalIO::AI ||
-                     usi->type == UniversalIO::AO )
+            else if( usi->type == uniset3::AI ||
+                     usi->type == uniset3::AO )
             {
                 if( !it->fuse_use_val )
                 {
@@ -955,19 +955,19 @@ namespace uniset
         smwarn << myname << "(initFromReserv): FAILED INIT FROM <ReservList>" << endl;
     }
     // ----------------------------------------------------------------------------
-    bool SharedMemory::initFromSM( uniset::ObjectId sm_id, uniset::ObjectId sm_node )
+    bool SharedMemory::initFromSM( uniset3::ObjectId sm_id, uniset3::ObjectId sm_node )
     {
         sminfo << myname << "(initFromSM): init from sm_id='" << sm_id << "' sm_node='" << sm_node << "'" << endl;
 
         // SENSORS MAP
         try
         {
-            IOController_i::SensorInfoSeq_var amap = ui->getSensorsMap(sm_id, sm_node);
+            uniset3::SensorInfoSeq_var amap = ui->getSensorsMap(sm_id, sm_node);
             int size = amap->length();
 
             for( int i = 0; i < size; i++ )
             {
-                IOController_i::SensorIOInfo& ii(amap[i]);
+                uniset3::SensorIOInfo& ii(amap[i]);
 
                 try
                 {
@@ -996,11 +996,11 @@ namespace uniset
 
 #endif
                 }
-                catch( const IOController_i::NameNotFound& ex )
+                catch( const uniset3::NameNotFound& ex )
                 {
                     smcrit << myname << "(initFromSM): not found sensor id=" << ii.si.id << "'" << endl;
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     smcrit << myname << "(initFromSM): " << ex << endl;
                 }
@@ -1008,7 +1008,7 @@ namespace uniset
 
             return true;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             smwarn << myname << "(initFromSM): " << ex << endl;
         }
@@ -1016,9 +1016,9 @@ namespace uniset
         return false;
     }
     // ----------------------------------------------------------------------------
-    uniset::SimpleInfo* SharedMemory::getInfo( const char* userparam )
+    uniset3::SimpleInfo* SharedMemory::getInfo( const char* userparam )
     {
-        uniset::SimpleInfo_var i = IONotifyController::getInfo(userparam);
+        uniset3::SimpleInfo_var i = IONotifyController::getInfo(userparam);
 
         ostringstream inf;
 
@@ -1034,4 +1034,4 @@ namespace uniset
         return i._retn();
     }
     // ----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

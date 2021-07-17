@@ -25,14 +25,14 @@
 #include "modbus/ModbusTCPServerSlot.h"
 #include "modbus/MBLogSugar.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     using namespace ModbusRTU;
     // -----------------------------------------------------------------------------
-    MBSlave::MBSlave(uniset::ObjectId objId, uniset::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic, const string& prefix ):
+    MBSlave::MBSlave(uniset3::ObjectId objId, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic, const string& prefix ):
         UniSetObject(objId),
         initPause(3000),
         test_id(DefaultObjectId),
@@ -50,7 +50,7 @@ namespace uniset
         prop_prefix("")
     {
         if( objId == DefaultObjectId )
-            throw uniset::SystemError("(MBSlave): objId=-1?!! Use --" + prefix + "-name" );
+            throw uniset3::SystemError("(MBSlave): objId=-1?!! Use --" + prefix + "-name" );
 
         auto conf = uniset_conf();
         mutex_start.setName(myname + "_mutex_start");
@@ -68,7 +68,7 @@ namespace uniset
         cnode = conf->getNode(conf_name);
 
         if( cnode == NULL )
-            throw uniset::SystemError("(MBSlave): Not found conf-node for " + myname );
+            throw uniset3::SystemError("(MBSlave): Not found conf-node for " + myname );
 
         shm = make_shared<SMInterface>(shmId, ui, objId, ic);
 
@@ -163,7 +163,7 @@ namespace uniset
             string dev    = conf->getArgParam("--" + prefix + "-dev", it.getProp("device"));
 
             if( dev.empty() )
-                throw uniset::SystemError(myname + "(MBSlave): Unknown device...");
+                throw uniset3::SystemError(myname + "(MBSlave): Unknown device...");
 
             string speed     = conf->getArgParam("--" + prefix + "-speed", it.getProp("speed"));
 
@@ -203,7 +203,7 @@ namespace uniset
             string iaddr = conf->getArgParam("--" + prefix + "-inet-addr", it.getProp("iaddr"));
 
             if( iaddr.empty() )
-                throw uniset::SystemError(myname + "(MBSlave): Unknown TCP server address. Use: --prefix-inet-addr [ XXX.XXX.XXX.XXX| hostname ]");
+                throw uniset3::SystemError(myname + "(MBSlave): Unknown TCP server address. Use: --prefix-inet-addr [ XXX.XXX.XXX.XXX| hostname ]");
 
             int port = conf->getArgPInt("--" + prefix + "-inet-port", it.getProp("iport"), 502);
 
@@ -258,7 +258,7 @@ namespace uniset
             sesscount_id = conf->getSensorID( conf->getArgParam("--" + prefix + "-session-count-id", it.getProp("sesscount")) );
         }
         else
-            throw uniset::SystemError(myname + "(MBSlave): Unknown slave type. Use: --" + prefix + "-type [RTU|TCP]");
+            throw uniset3::SystemError(myname + "(MBSlave): Unknown slave type. Use: --" + prefix + "-type [RTU|TCP]");
 
         mbslot->connectReadCoil( sigc::mem_fun(this, &MBSlave::readCoilStatus) );
         mbslot->connectReadInputStatus( sigc::mem_fun(this, &MBSlave::readInputStatus) );
@@ -749,7 +749,7 @@ namespace uniset
                     shm->localSetValue(itHeartBeat, sidHeartBeat, maxHeartBeat, getId());
                     ptHeartBeat.reset();
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbcrit << myname << "(updateStatistics): (hb) " << ex << std::endl;
                 }
@@ -766,7 +766,7 @@ namespace uniset
                 {
                     shm->localSetValue(itRespond, respond_id, (state ? 1 : 0), getId());
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbcrit << myname << "(updateStatistics): (respond) " << ex << std::endl;
                 }
@@ -778,7 +778,7 @@ namespace uniset
                 {
                     shm->localSetValue(itAskCount, askcount_id, connCount, getId());
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbcrit << myname << "(updateStatistics): (askCount) " << ex << std::endl;
                 }
@@ -790,7 +790,7 @@ namespace uniset
                 {
                     shm->localSetValue(sesscount_it, sesscount_id, tcpserver->getCountSessions(), getId());
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbcrit << myname << "(updateStatistics): (sessCount) " << ex << std::endl;
                 }
@@ -885,7 +885,7 @@ namespace uniset
                         bool st = c.invert ? c.ptTimeout.checkTime() : !c.ptTimeout.checkTime();
                         shm->localSetValue(c.respond_it, c.respond_s, st, getId());
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         mbcrit << myname << "(updateStatistics): " << ex << std::endl;
                     }
@@ -897,7 +897,7 @@ namespace uniset
                     {
                         shm->localSetValue(c.askcount_it, c.askcount_s, c.askCount, getId());
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         mbcrit << myname << "(updateStatistics): " << ex << std::endl;
                     }
@@ -939,7 +939,7 @@ namespace uniset
         updateThresholds();
     }
     // -------------------------------------------------------------------------
-    void MBSlave::sysCommand( const uniset::SystemMessage* sm )
+    void MBSlave::sysCommand( const uniset3::SystemMessage* sm )
     {
         switch( sm->command )
         {
@@ -990,8 +990,8 @@ namespace uniset
                 }
                 else
                 {
-                    uniset::uniset_rwmutex_rlock l(mutex_start);
-                    askSensors(UniversalIO::UIONotify);
+                    uniset3::uniset_rwmutex_rlock l(mutex_start);
+                    askSensors(uniset3::UIONotify);
 
                     if( mbtype == "RTU" && thr )
                         thr->start();
@@ -1006,7 +1006,7 @@ namespace uniset
 
             case SystemMessage::FoldUp:
             case SystemMessage::Finish:
-                askSensors(UniversalIO::UIODontNotify);
+                askSensors(uniset3::UIODontNotify);
                 break;
 
             case SystemMessage::WatchDog:
@@ -1040,7 +1040,7 @@ namespace uniset
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBSlave::askSensors( UniversalIO::UIOCommand cmd )
+    void MBSlave::askSensors( uniset3::UIOCommand cmd )
     {
         if( !shm->waitSMworking(test_id, activateTimeout, 50) )
         {
@@ -1067,7 +1067,7 @@ namespace uniset
                 {
                     shm->askSensor(p->si.id, cmd);
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     mbwarn << myname << "(askSensors): " << ex << std::endl;
                 }
@@ -1076,7 +1076,7 @@ namespace uniset
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBSlave::sensorInfo( const uniset::SensorMessage* sm )
+    void MBSlave::sensorInfo( const uniset3::SensorMessage* sm )
     {
         for( auto&& regs : iomap )
         {
@@ -1088,14 +1088,14 @@ namespace uniset
                 {
                     IOProperty* p(&it->second);
 
-                    if( p->stype == UniversalIO::DO ||
-                            p->stype == UniversalIO::DI )
+                    if( p->stype == uniset3::DO ||
+                            p->stype == uniset3::DI )
                     {
                         uniset_rwmutex_wrlock lock(p->val_lock);
                         p->value = sm->value ? 1 : 0;
                     }
-                    else if( p->stype == UniversalIO::AO ||
-                             p->stype == UniversalIO::AI )
+                    else if( p->stype == uniset3::AO ||
+                             p->stype == uniset3::AI )
                     {
                         uniset_rwmutex_wrlock lock(p->val_lock);
                         p->value = sm->value;
@@ -1154,7 +1154,7 @@ namespace uniset
         // см. sysCommand()
         {
             activated = false;
-            uniset::uniset_rwmutex_wrlock l(mutex_start);
+            uniset3::uniset_rwmutex_wrlock l(mutex_start);
             UniSetObject::activateObject();
             initIterators();
             activated = true;
@@ -1223,7 +1223,7 @@ namespace uniset
 
         for( ; it.getCurrent(); it.goNext() )
         {
-            if( uniset::check_filter(it, s_field, s_fvalue) )
+            if( uniset3::check_filter(it, s_field, s_fvalue) )
                 initItem(it);
         }
 
@@ -1232,7 +1232,7 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     bool MBSlave::readItem( const std::shared_ptr<UniXML>& xml, UniXML::iterator& it, xmlNode* sec )
     {
-        if( uniset::check_filter(it, s_field, s_fvalue) )
+        if( uniset3::check_filter(it, s_field, s_fvalue) )
             initItem(it);
 
         return true;
@@ -1493,7 +1493,7 @@ namespace uniset
         return fn;
     }
     // ------------------------------------------------------------------------------------------
-    bool MBSlave::BitRegProperty::check( const IOController_i::SensorInfo& si )
+    bool MBSlave::BitRegProperty::check( const uniset3::SensorInfo& si )
     {
         for( const auto& i : bvec )
         {
@@ -1612,7 +1612,7 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    std::shared_ptr<MBSlave> MBSlave::init_mbslave(int argc, const char* const* argv, uniset::ObjectId icID,
+    std::shared_ptr<MBSlave> MBSlave::init_mbslave(int argc, const char* const* argv, uniset3::ObjectId icID,
             const std::shared_ptr<SharedMemory>& ic, const string& prefix )
     {
         auto conf = uniset_conf();
@@ -1626,7 +1626,7 @@ namespace uniset
 
         ObjectId ID = conf->getObjectID(name);
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(mbslave): идентификатор '" << name
                  << "' не найден в конф. файле!"
@@ -1666,7 +1666,7 @@ namespace uniset
             << " invert=" << p.invert
             << " regID=" << p.regID;
 
-        if( p.stype == UniversalIO::AI || p.stype == UniversalIO::AO )
+        if( p.stype == uniset3::AI || p.stype == uniset3::AO )
         {
             os     << p.cal
                    << " cdiagram=" << ( p.cdiagram ? "yes" : "no" );
@@ -1901,8 +1901,8 @@ namespace uniset
 
             if( p->vtype == VTypes::vtUnknown )
             {
-                if( p->stype == UniversalIO::DI ||
-                        p->stype == UniversalIO::DO )
+                if( p->stype == uniset3::DI ||
+                        p->stype == uniset3::DO )
                 {
                     IOBase::processingAsDI( p, mbval, shm, force );
                 }
@@ -2043,14 +2043,14 @@ namespace uniset
             }
 
             /*
-                    if( p->stype == UniversalIO::DI ||
-                        p->stype == UniversalIO::DO )
+                    if( p->stype == uniset3::DI ||
+                        p->stype == uniset3::DO )
                     {
                         bool set = val ? true : false;
                         IOBase::processingAsDI(p,set,shm,force);
                     }
-                    else if( p->stype == UniversalIO::AI ||
-                             p->stype == UniversalIO::AO )
+                    else if( p->stype == uniset3::AI ||
+                             p->stype == uniset3::AO )
                     {
                         IOBase::processingAsAI( p, val, shm, force );
                     }
@@ -2058,12 +2058,12 @@ namespace uniset
             smPingOK = true;
             return ModbusRTU::erNoError;
         }
-        catch( uniset::NameNotFound& ex )
+        catch( uniset3::NameNotFound& ex )
         {
             mbwarn << myname << "(real_write_prop): " << ex << endl;
             return ModbusRTU::erBadDataAddress;
         }
-        catch( uniset::OutOfRange& ex )
+        catch( uniset3::OutOfRange& ex )
         {
             mbwarn << myname << "(real_write_prop): " << ex << endl;
             return ModbusRTU::erBadDataValue;
@@ -2074,7 +2074,7 @@ namespace uniset
                 mbcrit << myname << "(real_write_prop): СORBA::SystemException: "
                        << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( smPingOK )
                 mbcrit << myname << "(real_write_prop): " << ex << endl;
@@ -2092,11 +2092,11 @@ namespace uniset
     // -------------------------------------------------------------------------
     Poco::JSON::Object::Ptr MBSlave::httpHelp( const Poco::URI::QueryParameters& p )
     {
-        uniset::json::help::object myhelp(myname, UniSetObject::httpHelp(p));
+        uniset3::json::help::object myhelp(myname, UniSetObject::httpHelp(p));
 
         {
             // 'regs'
-            uniset::json::help::item cmd("regs", "get registers list");
+            uniset3::json::help::item cmd("regs", "get registers list");
             cmd.param("regs=reg1,reg2,reg3..", "get these registers");
             cmd.param("addr=mbaddr1,mbaddr2,..", "get registers for mbaddr");
             myhelp.add(cmd);
@@ -2116,7 +2116,7 @@ namespace uniset
     Poco::JSON::Object::Ptr MBSlave::request_regs( const string& req, const Poco::URI::QueryParameters& params )
     {
         Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
-        Poco::JSON::Array::Ptr jdata = uniset::json::make_child_array(json, "regs");
+        Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "regs");
         auto my = httpGetMyInfo(json);
         auto oind = uniset_conf()->oind;
 
@@ -2128,9 +2128,9 @@ namespace uniset
             for( const auto& p : params )
             {
                 if( p.first == "regs" )
-                    q_regs = uniset::explode_str(p.second, ',');
+                    q_regs = uniset3::explode_str(p.second, ',');
                 else if( p.first == "addr" )
-                    q_addr = uniset::explode_str(p.second, ',');
+                    q_addr = uniset3::explode_str(p.second, ',');
             }
         }
 
@@ -2343,13 +2343,13 @@ namespace uniset
             if( p->amode == MBSlave::amWO )
                 return ModbusRTU::erBadDataAddress;
 
-            if( p->stype == UniversalIO::DI ||
-                    p->stype == UniversalIO::DO )
+            if( p->stype == uniset3::DI ||
+                    p->stype == uniset3::DO )
             {
                 val = IOBase::processingAsDO(p, shm, force) ? 1 : 0;
             }
-            else if( p->stype == UniversalIO::AI ||
-                     p->stype == UniversalIO::AO )
+            else if( p->stype == uniset3::AI ||
+                     p->stype == uniset3::AO )
             {
                 if( p->vtype == VTypes::vtUnknown )
                 {
@@ -2436,12 +2436,12 @@ namespace uniset
             smPingOK = true;
             return ModbusRTU::erNoError;
         }
-        catch( uniset::NameNotFound& ex )
+        catch( uniset3::NameNotFound& ex )
         {
             mbwarn << myname << "(real_read_prop): " << ex << endl;
             return ModbusRTU::erBadDataAddress;
         }
-        catch( uniset::OutOfRange& ex )
+        catch( uniset3::OutOfRange& ex )
         {
             mbwarn << myname << "(real_read_prop): " << ex << endl;
             return ModbusRTU::erBadDataValue;
@@ -2452,7 +2452,7 @@ namespace uniset
                 mbcrit << myname << "(real_read_prop): CORBA::SystemException: "
                        << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( smPingOK )
                 mbcrit << myname << "(real_read_prop): " << ex << endl;
@@ -2593,7 +2593,7 @@ namespace uniset
             smPingOK = true;
             return ModbusRTU::erNoError;
         }
-        catch( uniset::NameNotFound& ex )
+        catch( uniset3::NameNotFound& ex )
         {
             mbwarn << myname << "(readCoilStatus): " << ex << endl;
             return ModbusRTU::erBadDataAddress;
@@ -2604,7 +2604,7 @@ namespace uniset
                 mbcrit << myname << "(readCoilStatus): СORBA::SystemException: "
                        << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( smPingOK )
                 mbcrit << myname << "(readCoilStatus): " << ex << endl;
@@ -2672,7 +2672,7 @@ namespace uniset
             smPingOK = true;
             return ModbusRTU::erNoError;
         }
-        catch( uniset::NameNotFound& ex )
+        catch( uniset3::NameNotFound& ex )
         {
             mbwarn << myname << "(readInputStatus): " << ex << endl;
             return ModbusRTU::erBadDataAddress;
@@ -2683,7 +2683,7 @@ namespace uniset
                 mbcrit << myname << "(readInputStatus): СORBA::SystemException: "
                        << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             if( smPingOK )
                 mbcrit << myname << "(readInputStatus): " << ex << endl;
@@ -2841,9 +2841,9 @@ namespace uniset
         return s.str();
     }
     // -------------------------------------------------------------------------
-    uniset::SimpleInfo* MBSlave::getInfo( const char* userparam )
+    uniset3::SimpleInfo* MBSlave::getInfo( const char* userparam )
     {
-        uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+        uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
 
         auto sslot = dynamic_pointer_cast<ModbusTCPServerSlot>(mbslot);
 
@@ -2973,4 +2973,4 @@ namespace uniset
         }
     }
     // ----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

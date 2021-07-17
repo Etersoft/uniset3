@@ -31,7 +31,7 @@
 #include <Poco/Timespan.h>
 #include "Mutex.h"
 //----------------------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //----------------------------------------------------------------------------------------
     typedef Poco::Timespan::TimeDiff timeout_t;

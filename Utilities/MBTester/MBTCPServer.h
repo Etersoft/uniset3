@@ -10,7 +10,7 @@
 class MBTCPServer
 {
     public:
-        MBTCPServer( const std::unordered_set<uniset::ModbusRTU::ModbusAddr>& myaddr, const std::string& inetaddr, int port = 502, bool verbose = false );
+        MBTCPServer( const std::unordered_set<uniset3::ModbusRTU::ModbusAddr>& myaddr, const std::string& inetaddr, int port = 502, bool verbose = false );
         ~MBTCPServer();
 
         inline void setVerbose( bool state )
@@ -23,7 +23,7 @@ class MBTCPServer
             replyVal = val;
         }
 
-        inline uniset::timeout_t setAfterSendPause( uniset::timeout_t msec )
+        inline uniset3::timeout_t setAfterSendPause( uniset3::timeout_t msec )
         {
             return sslot->setAfterSendPause(msec);
         }
@@ -38,70 +38,70 @@ class MBTCPServer
         void sigterm( int signo );
 
         /*! обработка 0x01 */
-        uniset::ModbusRTU::mbErrCode readCoilStatus( uniset::ModbusRTU::ReadCoilMessage& query,
-                uniset::ModbusRTU::ReadCoilRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode readCoilStatus( uniset3::ModbusRTU::ReadCoilMessage& query,
+                uniset3::ModbusRTU::ReadCoilRetMessage& reply );
         /*! обработка 0x02 */
-        uniset::ModbusRTU::mbErrCode readInputStatus( uniset::ModbusRTU::ReadInputStatusMessage& query,
-                uniset::ModbusRTU::ReadInputStatusRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode readInputStatus( uniset3::ModbusRTU::ReadInputStatusMessage& query,
+                uniset3::ModbusRTU::ReadInputStatusRetMessage& reply );
 
         /*! обработка 0x03 */
-        uniset::ModbusRTU::mbErrCode readOutputRegisters( uniset::ModbusRTU::ReadOutputMessage& query,
-                uniset::ModbusRTU::ReadOutputRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode readOutputRegisters( uniset3::ModbusRTU::ReadOutputMessage& query,
+                uniset3::ModbusRTU::ReadOutputRetMessage& reply );
 
         /*! обработка 0x04 */
-        uniset::ModbusRTU::mbErrCode readInputRegisters( uniset::ModbusRTU::ReadInputMessage& query,
-                uniset::ModbusRTU::ReadInputRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode readInputRegisters( uniset3::ModbusRTU::ReadInputMessage& query,
+                uniset3::ModbusRTU::ReadInputRetMessage& reply );
 
         /*! обработка 0x05 */
-        uniset::ModbusRTU::mbErrCode forceSingleCoil( uniset::ModbusRTU::ForceSingleCoilMessage& query,
-                uniset::ModbusRTU::ForceSingleCoilRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode forceSingleCoil( uniset3::ModbusRTU::ForceSingleCoilMessage& query,
+                uniset3::ModbusRTU::ForceSingleCoilRetMessage& reply );
 
         /*! обработка 0x0F */
-        uniset::ModbusRTU::mbErrCode forceMultipleCoils( uniset::ModbusRTU::ForceCoilsMessage& query,
-                uniset::ModbusRTU::ForceCoilsRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode forceMultipleCoils( uniset3::ModbusRTU::ForceCoilsMessage& query,
+                uniset3::ModbusRTU::ForceCoilsRetMessage& reply );
 
 
         /*! обработка 0x10 */
-        uniset::ModbusRTU::mbErrCode writeOutputRegisters( uniset::ModbusRTU::WriteOutputMessage& query,
-                uniset::ModbusRTU::WriteOutputRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode writeOutputRegisters( uniset3::ModbusRTU::WriteOutputMessage& query,
+                uniset3::ModbusRTU::WriteOutputRetMessage& reply );
 
         /*! обработка 0x06 */
-        uniset::ModbusRTU::mbErrCode writeOutputSingleRegister( uniset::ModbusRTU::WriteSingleOutputMessage& query,
-                uniset::ModbusRTU::WriteSingleOutputRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode writeOutputSingleRegister( uniset3::ModbusRTU::WriteSingleOutputMessage& query,
+                uniset3::ModbusRTU::WriteSingleOutputRetMessage& reply );
 
 
-        uniset::ModbusRTU::mbErrCode diagnostics( uniset::ModbusRTU::DiagnosticMessage& query,
-                uniset::ModbusRTU::DiagnosticRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode diagnostics( uniset3::ModbusRTU::DiagnosticMessage& query,
+                uniset3::ModbusRTU::DiagnosticRetMessage& reply );
 
-        uniset::ModbusRTU::mbErrCode read4314( uniset::ModbusRTU::MEIMessageRDI& query,
-                                               uniset::ModbusRTU::MEIMessageRetRDI& reply );
+        uniset3::ModbusRTU::mbErrCode read4314( uniset3::ModbusRTU::MEIMessageRDI& query,
+                                               uniset3::ModbusRTU::MEIMessageRetRDI& reply );
 
         /*! обработка запросов на чтение ошибок */
-        uniset::ModbusRTU::mbErrCode journalCommand( uniset::ModbusRTU::JournalCommandMessage& query,
-                uniset::ModbusRTU::JournalCommandRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode journalCommand( uniset3::ModbusRTU::JournalCommandMessage& query,
+                uniset3::ModbusRTU::JournalCommandRetMessage& reply );
 
         /*! обработка запроса на установку времени */
-        uniset::ModbusRTU::mbErrCode setDateTime( uniset::ModbusRTU::SetDateTimeMessage& query,
-                uniset::ModbusRTU::SetDateTimeRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode setDateTime( uniset3::ModbusRTU::SetDateTimeMessage& query,
+                uniset3::ModbusRTU::SetDateTimeRetMessage& reply );
 
         /*! обработка запроса удалённого сервиса */
-        uniset::ModbusRTU::mbErrCode remoteService( uniset::ModbusRTU::RemoteServiceMessage& query,
-                uniset::ModbusRTU::RemoteServiceRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode remoteService( uniset3::ModbusRTU::RemoteServiceMessage& query,
+                uniset3::ModbusRTU::RemoteServiceRetMessage& reply );
 
-        uniset::ModbusRTU::mbErrCode fileTransfer( uniset::ModbusRTU::FileTransferMessage& query,
-                uniset::ModbusRTU::FileTransferRetMessage& reply );
+        uniset3::ModbusRTU::mbErrCode fileTransfer( uniset3::ModbusRTU::FileTransferMessage& query,
+                uniset3::ModbusRTU::FileTransferRetMessage& reply );
 
 
         /*! интерфейс ModbusSlave для обмена по RS */
-        uniset::ModbusTCPServerSlot* sslot;
-        std::unordered_set<uniset::ModbusRTU::ModbusAddr> vaddr; /*!< адреса данного узла */
+        uniset3::ModbusTCPServerSlot* sslot;
+        std::unordered_set<uniset3::ModbusRTU::ModbusAddr> vaddr; /*!< адреса данного узла */
 
         bool verbose = { false };
         long replyVal = { -1 };
 #if 0
-        typedef std::unordered_map<uniset::ModbusRTU::mbErrCode, unsigned int> ExchangeErrorMap;
+        typedef std::unordered_map<uniset3::ModbusRTU::mbErrCode, unsigned int> ExchangeErrorMap;
         ExchangeErrorMap errmap;     /*!< статистика обмена */
-        uniset::ModbusRTU::mbErrCode prev;
+        uniset3::ModbusRTU::mbErrCode prev;
 
 
         // можно было бы сделать unsigned, но аналоговые датчики у нас имеют

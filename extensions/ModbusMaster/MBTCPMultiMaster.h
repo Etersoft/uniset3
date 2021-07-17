@@ -24,7 +24,7 @@
 #include "MBExchange.h"
 #include "modbus/ModbusTCPMaster.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -272,33 +272,33 @@ namespace uniset
         public MBExchange
     {
         public:
-            MBTCPMultiMaster( uniset::ObjectId objId, uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+            MBTCPMultiMaster( uniset3::ObjectId objId, uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                               const std::string& prefix = "mbtcp" );
             virtual ~MBTCPMultiMaster();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<MBTCPMultiMaster> init_mbmaster(int argc, const char* const* argv,
-                    uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "mbtcp" );
 
             static void help_print( int argc, const char* const* argv );
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
         protected:
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
             virtual void initIterators() override;
             virtual std::shared_ptr<ModbusClient> initMB( bool reopen = false ) override;
             virtual bool deactivateObject() override;
-            virtual bool reconfigure( const std::shared_ptr<uniset::UniXML>& xml, const std::shared_ptr<uniset::MBConfig>& mbconf ) override;
+            virtual bool reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& mbconf ) override;
             void initCheckConnectionParameters();
-            void initGateList( uniset::UniXML::iterator it, const std::shared_ptr<uniset::MBConfig>& mbconf );
+            void initGateList( uniset3::UniXML::iterator it, const std::shared_ptr<uniset3::MBConfig>& mbconf );
 
             void poll_thread();
             void check_thread();
             void final_thread();
 
-            uniset::uniset_rwmutex mbMutex;
+            uniset3::uniset_rwmutex mbMutex;
             bool force_disconnect;
             timeout_t checktime;
             timeout_t defaultIgnoreTimeout;
@@ -310,7 +310,7 @@ namespace uniset
             struct MBSlaveInfo
             {
                 MBSlaveInfo(): ip(""), port(0), mbtcp(0), priority(0),
-                    respond(false), respond_id(uniset::DefaultObjectId), respond_invert(false),
+                    respond(false), respond_id(uniset3::DefaultObjectId), respond_invert(false),
                     recv_timeout(200), aftersend_pause(0), sleepPause_usec(100),
                     force_disconnect(true),
                     myname(""), use(false), initOK(false), ignore(false) {}
@@ -326,7 +326,7 @@ namespace uniset
                 ModbusRTU::ModbusData checkReg = { 0 };
 
                 bool respond;
-                uniset::ObjectId respond_id;
+                uniset3::ObjectId respond_id;
                 IOController::IOStateList::iterator respond_it;
                 bool respond_invert;
                 bool respond_init = { false };
@@ -371,7 +371,7 @@ namespace uniset
             std::unique_ptr< ThreadCreator<MBTCPMultiMaster> > checkThread; /*!< поток проверки связи по другим каналам */
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // _MBTCPMultiMaster_H_
 // -----------------------------------------------------------------------------

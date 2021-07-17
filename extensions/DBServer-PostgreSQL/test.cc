@@ -3,7 +3,7 @@
 #include "Exceptions.h"
 #include "PostgreSQLInterface.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 int main(int argc, char** argv)
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
         db.close();
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(test): " << ex << endl;
     }

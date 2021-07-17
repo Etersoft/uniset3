@@ -5,8 +5,8 @@
 #include "DigitalFilter.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
-using namespace uniset::extensions;
+using namespace uniset3;
+using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 TEST_CASE("[DigitalFilter]: default", "[DigitalFilter]")
 {

@@ -44,7 +44,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // ---------------------------------------------------------------------
     /*!
@@ -151,11 +151,11 @@ namespace uniset
                <br>&nbsp;&nbsp;   J2
         <br>\b lamp            - признак, что данный аналоговый датчик является "лампочкой".
                   <br>        Т.е. на самом деле дискретный выход, который может иметь состояния:
-                  <br>uniset::lmpOFF      - выключен
-                  <br>uniset::lmpON       - включен
-                  <br>uniset::lmpBLINK    - мигание с частотой 1
-                  <br>uniset::lmpBLINK2   - мигание с частотой 2
-                  <br>uniset::lmpBLINK3   - мигание с частотой 3
+                  <br>uniset3::lmpOFF      - выключен
+                  <br>uniset3::lmpON       - включен
+                  <br>uniset3::lmpBLINK    - мигание с частотой 1
+                  <br>uniset3::lmpBLINK2   - мигание с частотой 2
+                  <br>uniset3::lmpBLINK3   - мигание с частотой 3
 
         <br>\b no_iotestlamp  - игнорировать данную лампочку при тесте ламп.
         <br>\b range          - диапазон измерения аналогового входа (см. libcomedi)
@@ -238,17 +238,17 @@ namespace uniset
         public UniSetObject
     {
         public:
-            IOControl( uniset::ObjectId id, uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& shm = nullptr, size_t numcards = 2, const std::string& prefix = "io" );
+            IOControl( uniset3::ObjectId id, uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& shm = nullptr, size_t numcards = 2, const std::string& prefix = "io" );
             virtual ~IOControl();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<IOControl> init_iocontrol( int argc, const char* const* argv,
-                    uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "io" );
             /*! глобальная функция для вывода help-а */
             static void help_print( int argc, const char* const* argv );
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
             /*! Информация о входе/выходе */
             struct IOInfo:
@@ -323,10 +323,10 @@ namespace uniset
             void iothread();
 
             // действия при завершении работы
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
-            virtual void askSensors( UniversalIO::UIOCommand cmd );
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void askSensors( uniset3::UIOCommand cmd );
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
 
@@ -365,7 +365,7 @@ namespace uniset
             std::string s_fvalue;
 
             std::shared_ptr<SMInterface> shm;
-            uniset::ObjectId myid = { uniset::DefaultObjectId };
+            uniset3::ObjectId myid = { uniset3::DefaultObjectId };
             std::string prefix;
 
             typedef std::list<std::shared_ptr<IOInfo>> BlinkList;
@@ -389,13 +389,13 @@ namespace uniset
             PassiveTimer ptBlink3;
             bool blink3_state = { false };
 
-            uniset::ObjectId testLamp_s = { uniset::DefaultObjectId };
+            uniset3::ObjectId testLamp_s = { uniset3::DefaultObjectId };
             Trigger trTestLamp;
             bool isTestLamp = { false };
             IOController::IOStateList::iterator itTestLamp;
 
             PassiveTimer ptHeartBeat;
-            uniset::ObjectId sidHeartBeat;
+            uniset3::ObjectId sidHeartBeat;
             int maxHeartBeat = { 10 };
             IOController::IOStateList::iterator itHeartBeat;
 
@@ -410,9 +410,9 @@ namespace uniset
             std::atomic_bool cancelled = { false };
             bool readconf_ok = { false };
             int activateTimeout;
-            uniset::ObjectId sidTestSMReady = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidTestSMReady = { uniset3::DefaultObjectId };
 
-            uniset::ObjectId testMode_as = { uniset::DefaultObjectId };
+            uniset3::ObjectId testMode_as = { uniset3::DefaultObjectId };
             IOController::IOStateList::iterator itTestMode;
             long testmode = { false };
             long prev_testmode = { false };
@@ -430,7 +430,7 @@ namespace uniset
         private:
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // IOControl_H_
 // -----------------------------------------------------------------------------

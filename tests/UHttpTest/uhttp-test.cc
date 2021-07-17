@@ -6,7 +6,7 @@
 #include "ujson.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 class UTestSupplier:
     public UHttp::IHttpRequest
@@ -28,15 +28,15 @@ class UTestSupplier:
 
         virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override
         {
-            uniset::json::help::object myhelp("test");
+            uniset3::json::help::object myhelp("test");
 
-            uniset::json::help::item cmd1("cmd1", "description for cmd1");
+            uniset3::json::help::item cmd1("cmd1", "description for cmd1");
             cmd1.param("p1", "description of p1");
             cmd1.param("p2", "description of p1");
             cmd1.param("p3", "description of p1");
             myhelp.add(cmd1);
 
-            uniset::json::help::item cmd2("cmd2", "description for cmd2");
+            uniset3::json::help::item cmd2("cmd2", "description for cmd2");
             cmd2.param("p1", "description of p1");
             cmd2.param("p2", "description of p1");
             cmd2.param("p3", "description of p1");
@@ -151,12 +151,12 @@ int main(int argc, const char** argv)
         //      cerr << endl;
         //      return 0;
 
-        //      auto j = uniset::json::make_object("key","weweew");
+        //      auto j = uniset3::json::make_object("key","weweew");
         //      j->set("key2","wefwefefr");
 
-        //      auto j2 = uniset::json::make_object("key",j);
+        //      auto j2 = uniset3::json::make_object("key",j);
 
-        ////        uniset::json j;
+        ////        uniset3::json j;
         ////        j["key"] = "werwe";
         ////        j["key"]["key2"] = "werwe";
 

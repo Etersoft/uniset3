@@ -24,7 +24,7 @@
 #include <string>
 #include "UniSetTypes.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! Класс работы с файлами содержащими IOR объекта
         \todo Для оптимизации можно сделать кэширование id:node > filename

@@ -34,14 +34,14 @@
 #include "modbus/ModbusClient.h"
 #include "Configuration.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*! Конфигурация для ModbusMaster */
     class MBConfig
     {
         public:
-            MBConfig(const std::shared_ptr<uniset::Configuration>& conf
+            MBConfig(const std::shared_ptr<uniset3::Configuration>& conf
                      , xmlNode* cnode
                      , std::shared_ptr<SMInterface> _shm );
 
@@ -169,7 +169,7 @@ namespace uniset
                 DeviceType dtype = { dtUnknown };    /*!< тип устройства */
 
                 // resp - respond..(контроль наличия связи)
-                uniset::ObjectId resp_id = { uniset::DefaultObjectId };
+                uniset3::ObjectId resp_id = { uniset3::DefaultObjectId };
                 IOController::IOStateList::iterator resp_it;
                 DelayTimer resp_Delay; // таймер для формирования задержки на отпускание (пропадание связи)
                 PassiveTimer resp_ptInit; // таймер для формирования задержки на инициализацию связи (задержка на выставление датчика связи после запуска)
@@ -184,13 +184,13 @@ namespace uniset
                 bool ask_every_reg = { false }; /*!< опрашивать ли каждый регистр, независимо от результата опроса предыдущего. По умолчанию false - прервать опрос при первом же timeout */
 
                 // режим работы
-                uniset::ObjectId mode_id = { uniset::DefaultObjectId };
+                uniset3::ObjectId mode_id = { uniset3::DefaultObjectId };
                 IOController::IOStateList::iterator mode_it;
                 long mode = { emNone }; // режим работы с устройством (см. ExchangeMode)
 
                 // safe mode
                 long safeMode = { safeNone }; /*!< режим безопасного состояния см. SafeMode */
-                uniset::ObjectId safemode_id = { uniset::DefaultObjectId }; /*!< идентификатор для датчика безопасного режима */
+                uniset3::ObjectId safemode_id = { uniset3::DefaultObjectId }; /*!< идентификатор для датчика безопасного режима */
                 IOController::IOStateList::iterator safemode_it;
                 long safemode_value = { 1 };
 
@@ -239,7 +239,7 @@ namespace uniset
             RTUDeviceMap devices;
             InitList initRegList;    /*!< список регистров для инициализации */
 
-            void loadConfig( const std::shared_ptr<uniset::UniXML>& xml, UniXML::iterator sensorsSection );
+            void loadConfig( const std::shared_ptr<uniset3::UniXML>& xml, UniXML::iterator sensorsSection );
             void initDeviceList( const std::shared_ptr<UniXML>& xml );
             bool initItem( UniXML::iterator& it );
 
@@ -264,7 +264,7 @@ namespace uniset
             bool mbregFromID = { false };
             bool defaultMBinitOK = { false }; // флаг определяющий нужно ли ждать "первого обмена" или при запуске сохранять в SM значение default.
             bool noQueryOptimization = { false };
-            std::shared_ptr<uniset::Configuration> conf;
+            std::shared_ptr<uniset3::Configuration> conf;
             std::shared_ptr<SMInterface> shm;
 
             void cloneParams( const std::shared_ptr<MBConfig>& conf );
@@ -274,7 +274,7 @@ namespace uniset
 
             bool initSMValue( ModbusRTU::ModbusData* data, int count, RSProperty* p );
 
-            void readConfiguration(const std::shared_ptr<uniset::UniXML>& xml, UniXML::iterator sensorsSection );
+            void readConfiguration(const std::shared_ptr<uniset3::UniXML>& xml, UniXML::iterator sensorsSection );
             void initOffsetList();
 
             std::shared_ptr<RTUDevice> addDev( RTUDeviceMap& dmap, ModbusRTU::ModbusAddr a, UniXML::iterator& it );
@@ -289,7 +289,7 @@ namespace uniset
             bool initDeviceInfo( RTUDeviceMap& m, ModbusRTU::ModbusAddr a, UniXML::iterator& it );
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // _MBConfig_H_
 // -----------------------------------------------------------------------------

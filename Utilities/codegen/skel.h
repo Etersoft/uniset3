@@ -8,16 +8,16 @@ class Skel:
     public Skel_SK
 {
     public:
-        Skel( uniset::ObjectId id, xmlNode* confnode = uniset::uniset_conf()->getNode("Skel") );
+        Skel( uniset3::ObjectId id, xmlNode* confnode = uniset3::uniset_conf()->getNode("Skel") );
         virtual ~Skel();
 
     protected:
         Skel();
 
         virtual void step() override;
-        virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-        virtual void timerInfo( const uniset::TimerMessage* tm ) override;
-        virtual void askSensors( UniversalIO::UIOCommand cmd ) override;
+        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+        virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+        virtual void askSensors( uniset3::UIOCommand cmd ) override;
 
     private:
 };

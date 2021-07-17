@@ -5,7 +5,7 @@
 #include "ORepHelpers.h"
 // --------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // --------------------------------------------------------------------------
 TEST_CASE( "Configuration", "[Configuration]" )
 {
@@ -39,9 +39,9 @@ TEST_CASE( "Configuration", "[Configuration]" )
         CHECK( mn != "" );
         CHECK( conf->oind->getIdByName(mn) != DefaultObjectId );
 
-        CHECK( conf->getIOType(testID) != UniversalIO::UnknownIOType );
-        CHECK( conf->getIOType(mn) != UniversalIO::UnknownIOType );
-        CHECK( conf->getIOType(testSensor) != UniversalIO::UnknownIOType );
+        CHECK( conf->getIOType(testID) != uniset3::UnknownIOType );
+        CHECK( conf->getIOType(mn) != uniset3::UnknownIOType );
+        CHECK( conf->getIOType(testSensor) != uniset3::UnknownIOType );
     }
 
     SECTION( "Arguments" )
@@ -86,7 +86,7 @@ TEST_CASE( "Configuration", "[Configuration]" )
     {
         int t_argc = 0;
         char t_argv[] = {""};
-        REQUIRE_THROWS_AS( Configuration(t_argc, (const char* const*)(t_argv), ""), uniset::SystemError& );
+        REQUIRE_THROWS_AS( Configuration(t_argc, (const char* const*)(t_argv), ""), uniset3::SystemError& );
     }
 
     // SECTION( "ObjectIndex Constructor" )
@@ -98,7 +98,7 @@ TEST_CASE( "Configuration", "[Configuration]" )
         int t_argc = 0;
         char t_argv[] = {""};
         ulog()->level(Debug::NONE);
-        REQUIRE_THROWS_AS( Configuration(t_argc, (const char* const*)(t_argv), "tests_no_objectsmap.xml"), uniset::SystemError& );
+        REQUIRE_THROWS_AS( Configuration(t_argc, (const char* const*)(t_argv), "tests_no_objectsmap.xml"), uniset3::SystemError& );
     }
 
     SECTION( "Bad conf: no <UniSet>" )
@@ -106,7 +106,7 @@ TEST_CASE( "Configuration", "[Configuration]" )
         int t_argc = 0;
         char t_argv[] = {""};
         ulog()->level(Debug::NONE);
-        REQUIRE_THROWS_AS( Configuration(t_argc, (const char* const*)(t_argv), "tests_no_uniset_section.xml"), uniset::SystemError& );
+        REQUIRE_THROWS_AS( Configuration(t_argc, (const char* const*)(t_argv), "tests_no_uniset_section.xml"), uniset3::SystemError& );
     }
 
 }

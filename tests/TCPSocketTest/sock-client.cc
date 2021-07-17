@@ -13,7 +13,7 @@ int main(int argc, const char** argv)
         if( argc > 1 )
             host = std::string(argv[1]);
 
-        uniset::UTCPStream tcp;
+        uniset3::UTCPStream tcp;
 
         while(true)
         {

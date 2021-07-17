@@ -5,7 +5,7 @@
 #include <iostream>
 #include "Exceptions.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     namespace ModbusRTU
@@ -42,13 +42,13 @@ namespace uniset
         std::string mbErr2Str( mbErrCode e );
         // ---------------------------------------------------------------------
         class mbException:
-            public uniset::Exception
+            public uniset3::Exception
         {
             public:
                 mbException():
-                    uniset::Exception("mbException"), err(ModbusRTU::erNoError) {}
+                    uniset3::Exception("mbException"), err(ModbusRTU::erNoError) {}
                 mbException( ModbusRTU::mbErrCode err ):
-                    uniset::Exception(mbErr2Str(err)), err(err) {}
+                    uniset3::Exception(mbErr2Str(err)), err(err) {}
 
 
                 ModbusRTU::mbErrCode err;
@@ -61,7 +61,7 @@ namespace uniset
         // ---------------------------------------------------------------------
     } // end of namespace ModbusRTU
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // ModbusRTUErrors_H_
 // -------------------------------------------------------------------------

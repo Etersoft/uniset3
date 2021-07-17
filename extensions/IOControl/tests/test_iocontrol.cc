@@ -8,11 +8,11 @@
 #include "FakeIOControl.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static shared_ptr<UInterface> ui;
 extern shared_ptr<FakeIOControl> ioc;
-const uniset::timeout_t polltime = 150;
+const uniset3::timeout_t polltime = 150;
 // -----------------------------------------------------------------------------
 static void InitTest()
 {
@@ -91,7 +91,7 @@ TEST_CASE("IOControl: AO (lamp)", "[iocontrol][lamp]")
 
     auto card = ioc->fcard;
 
-    ui->setValue(1004, uniset::lmpBLINK);
+    ui->setValue(1004, uniset3::lmpBLINK);
 
     // считаем количество импульсов "0 -> 1 -> 0"
     size_t npulse = pulseCount(card, 4);

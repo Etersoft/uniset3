@@ -37,14 +37,14 @@
 #include "PassiveTimer.h"
 #include "Exceptions.h"
 #include "UInterface.h"
-#include "UniSetObject_i.hh"
+#include "UniSetObject.pb.h"
 #include "ThreadCreator.h"
 #include "LT_Object.h"
 #include "MQMutex.h"
 #include "UHttpRequestHandler.h"
 
 //---------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     //---------------------------------------------------------------------------
     class UniSetActivator;
@@ -75,43 +75,43 @@ namespace uniset
         public POA_UniSetObject_i,
         public LT_Object
 #ifndef DISABLE_REST_API
-        , public uniset::UHttp::IHttpRequest
+        , public uniset3::UHttp::IHttpRequest
 #endif
     {
         public:
             UniSetObject( const std::string& name, const std::string& section );
-            UniSetObject( uniset::ObjectId id );
+            UniSetObject( uniset3::ObjectId id );
             UniSetObject();
             virtual ~UniSetObject();
 
             // Функции объявленые в IDL
             virtual CORBA::Boolean exist() override;
 
-            virtual uniset::ObjectId getId() override;
+            virtual uniset3::ObjectId getId() override;
 
-            const uniset::ObjectId getId() const;
+            const uniset3::ObjectId getId() const;
             std::string getName() const;
 
-            virtual uniset::ObjectType getType() override
+            virtual uniset3::ObjectType getType() override
             {
-                return uniset::ObjectType("UniSetObject");
+                return uniset3::ObjectType("UniSetObject");
             }
 
             const std::string getStrType();
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = "" ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = "" ) override;
 
             // обёртка для вызова HTTP API через RPC
-            virtual uniset::SimpleInfo* apiRequest( const char* query ) override;
+            virtual uniset3::SimpleInfo* apiRequest( const char* query ) override;
 
             //! поместить сообщение в очередь
-            virtual void push( const uniset::TransportMessage& msg ) override;
+            virtual void push( const uniset3::TransportMessage& msg ) override;
 
             //! поместить текстовое сообщение в очередь
             virtual void pushMessage( const char* msg,
                                       ::CORBA::Long mtype,
-                                      const ::uniset::Timespec& tm,
-                                      const ::uniset::ProducerInfo& pi,
+                                      const ::uniset3::Timespec& tm,
+                                      const ::uniset3::ProducerInfo& pi,
                                       ::CORBA::Long priority,
                                       ::CORBA::Long consumer ) override;
 
@@ -122,12 +122,12 @@ namespace uniset
 #endif
             // -------------- вспомогательные --------------
             /*! получить ссылку (на себя) */
-            uniset::ObjectPtr getRef() const;
+            uniset3::ObjectPtr getRef() const;
             std::shared_ptr<UniSetObject> get_ptr();
 
             /*! заказ таймера (вынесена в public, хотя должна была бы быть в protected */
-            virtual timeout_t askTimer( uniset::TimerId timerid, timeout_t timeMS, clock_t ticks = -1,
-                                        uniset::Message::Priority p = uniset::Message::High ) override;
+            virtual timeout_t askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks = -1,
+                                        uniset3::Message::Priority p = uniset3::Message::High ) override;
 
             friend std::ostream& operator<<(std::ostream& os, UniSetObject& obj );
 
@@ -138,13 +138,13 @@ namespace uniset
             std::weak_ptr<UniSetManager> mymngr;
 
             /*! обработка приходящих сообщений */
-            virtual void processingMessage( const uniset::VoidMessage* msg );
+            virtual void processingMessage( const uniset3::VoidMessage* msg );
 
             // конкретные виды сообщений
-            virtual void sysCommand( const uniset::SystemMessage* sm ) {}
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) {}
-            virtual void timerInfo( const uniset::TimerMessage* tm ) {}
-            virtual void onTextMessage( const uniset::TextMessage* tm ) {}
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) {}
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) {}
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) {}
+            virtual void onTextMessage( const uniset3::TextMessage* tm ) {}
 
             /*! Получить сообщение */
             VoidMessagePtr receiveMessage();
@@ -186,7 +186,7 @@ namespace uniset
 
             // ----- конфигурирование объекта -------
             /*! установка ID объекта */
-            void setID(uniset::ObjectId id);
+            void setID(uniset3::ObjectId id);
 
             /*! установить приоритет для потока обработки сообщений (если позволяют права и система) */
             void setThreadPriority( Poco::Thread::Priority p );
@@ -242,11 +242,11 @@ namespace uniset
 
             bool threadcreate;
             std::unique_ptr<UniSetTimer> tmr;
-            uniset::ObjectId myid;
+            uniset3::ObjectId myid;
             CORBA::Object_var oref;
 
             /*! замок для блокирования совместного доступа к oRef */
-            mutable uniset::uniset_rwmutex refmutex;
+            mutable uniset3::uniset_rwmutex refmutex;
 
             std::unique_ptr< ThreadCreator<UniSetObject> > thr;
 

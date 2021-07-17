@@ -32,7 +32,7 @@
 #include "Configuration.h"
 #include "Mutex.h"
 //---------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     /*! Реализация интерфейса IOController-а
      * Важной особенностью данной реализации является то, что
@@ -50,63 +50,63 @@ namespace uniset
         public:
 
             IOController( const std::string& name, const std::string& section );
-            IOController( const uniset::ObjectId id );
+            IOController( const uniset3::ObjectId id );
             virtual ~IOController();
 
-            virtual uniset::ObjectType getType() override
+            virtual uniset3::ObjectType getType() override
             {
-                return uniset::ObjectType("IOController");
+                return uniset3::ObjectType("IOController");
             }
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = "" ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = "" ) override;
 
             // ----------------------------------------------------------------
             // Публичный (IDL) интерфейс IOController_i
             // ----------------------------------------------------------------
 
-            virtual CORBA::Long getValue( uniset::ObjectId sid ) override;
+            virtual CORBA::Long getValue( uniset3::ObjectId sid ) override;
 
-            virtual void setValue( uniset::ObjectId sid, CORBA::Long value,
-                                   uniset::ObjectId sup_id = uniset::DefaultObjectId ) override;
-            virtual void setUndefinedState( uniset::ObjectId sid,
+            virtual void setValue( uniset3::ObjectId sid, CORBA::Long value,
+                                   uniset3::ObjectId sup_id = uniset3::DefaultObjectId ) override;
+            virtual void setUndefinedState( uniset3::ObjectId sid,
                                             CORBA::Boolean undefined,
-                                            uniset::ObjectId sup_id = uniset::DefaultObjectId ) override;
+                                            uniset3::ObjectId sup_id = uniset3::DefaultObjectId ) override;
 
-            virtual void freezeValue( uniset::ObjectId sid,
+            virtual void freezeValue( uniset3::ObjectId sid,
                                       CORBA::Boolean set,
                                       CORBA::Long value,
-                                      uniset::ObjectId sup_id = uniset::DefaultObjectId ) override;
+                                      uniset3::ObjectId sup_id = uniset3::DefaultObjectId ) override;
 
-            virtual IOController_i::SensorInfoSeq* getSensorSeq( const uniset::IDSeq& lst ) override;
-            virtual uniset::IDSeq* setOutputSeq( const IOController_i::OutSeq& lst, uniset::ObjectId sup_id ) override;
+            virtual uniset3::SensorInfoSeq* getSensorSeq( const uniset3::IDSeq& lst ) override;
+            virtual uniset3::IDSeq* setOutputSeq( const uniset3::OutSeq& lst, uniset3::ObjectId sup_id ) override;
 
             //     ----------------------------------------------------------------
-            virtual UniversalIO::IOType getIOType( uniset::ObjectId sid ) override;
+            virtual uniset3::IOType getIOType( uniset3::ObjectId sid ) override;
 
-            virtual IOController_i::SensorInfoSeq* getSensorsMap() override;
-            virtual IOController_i::SensorIOInfo getSensorIOInfo( uniset::ObjectId sid ) override;
+            virtual uniset3::SensorInfoSeq* getSensorsMap() override;
+            virtual uniset3::SensorIOInfo getSensorIOInfo( uniset3::ObjectId sid ) override;
 
-            virtual CORBA::Long getRawValue( uniset::ObjectId sid ) override;
-            virtual void calibrate( uniset::ObjectId sid,
-                                    const IOController_i::CalibrateInfo& ci,
-                                    uniset::ObjectId adminId ) override;
+            virtual CORBA::Long getRawValue( uniset3::ObjectId sid ) override;
+            virtual void calibrate( uniset3::ObjectId sid,
+                                    const uniset3::CalibrateInfo& ci,
+                                    uniset3::ObjectId adminId ) override;
 
-            IOController_i::CalibrateInfo getCalibrateInfo( uniset::ObjectId sid ) override;
+            uniset3::CalibrateInfo getCalibrateInfo( uniset3::ObjectId sid ) override;
 
-            inline IOController_i::SensorInfo SensorInfo( const uniset::ObjectId sid,
-                    const uniset::ObjectId node = uniset::uniset_conf()->getLocalNode())
+            inline uniset3::SensorInfo SensorInfo( const uniset3::ObjectId sid,
+                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode())
             {
-                IOController_i::SensorInfo si;
+                uniset3::SensorInfo si;
                 si.id = sid;
                 si.node = node;
                 return si;
             };
 
-            uniset::Message::Priority getPriority( const uniset::ObjectId id );
+            uniset3::Message::Priority getPriority( const uniset3::ObjectId id );
 
-            virtual IOController_i::ShortIOInfo getTimeChange( const uniset::ObjectId id ) override;
+            virtual uniset3::ShortIOInfo getTimeChange( const uniset3::ObjectId id ) override;
 
-            virtual IOController_i::ShortMapSeq* getSensors() override;
+            virtual uniset3::ShortMapSeq* getSensors() override;
 
 #ifndef DISABLE_REST_API
             // http API
@@ -118,7 +118,7 @@ namespace uniset
 
             // предварительное объявление..
             struct USensorInfo;
-            typedef std::unordered_map<uniset::ObjectId, std::shared_ptr<USensorInfo>> IOStateList;
+            typedef std::unordered_map<uniset3::ObjectId, std::shared_ptr<USensorInfo>> IOStateList;
 
             static const long not_specified_value = { std::numeric_limits<long>::max() };
 
@@ -132,13 +132,13 @@ namespace uniset
             typedef sigc::signal<void, std::shared_ptr<USensorInfo>&, IOController*> ChangeUndefinedStateSignal;
 
             // signal по изменению определённого датчика
-            ChangeSignal signal_change_value( uniset::ObjectId sid );
+            ChangeSignal signal_change_value( uniset3::ObjectId sid );
 
             // signal по изменению любого датчика
             ChangeSignal signal_change_value();
 
             // сигналы по изменению флага "неопределённое состояние" (обрыв датчика например)
-            ChangeUndefinedStateSignal signal_change_undefined_state( uniset::ObjectId sid );
+            ChangeUndefinedStateSignal signal_change_undefined_state( uniset3::ObjectId sid );
             ChangeUndefinedStateSignal signal_change_undefined_state();
             // -----------------------------------------------------------------------------------------
             // полнейшее нарушение инкапсуляции
@@ -153,7 +153,7 @@ namespace uniset
             {
                 return ioList.end();
             }
-            inline IOStateList::iterator find( uniset::ObjectId k )
+            inline IOStateList::iterator find( uniset3::ObjectId k )
             {
                 return ioList.find(k);
             }
@@ -167,32 +167,32 @@ namespace uniset
 
             // доступ к элементам через итератор
             // return итоговое значение
-            virtual long localSetValueIt( IOStateList::iterator& it, const uniset::ObjectId sid,
-                                          CORBA::Long value, uniset::ObjectId sup_id );
+            virtual long localSetValueIt( IOStateList::iterator& it, const uniset3::ObjectId sid,
+                                          CORBA::Long value, uniset3::ObjectId sup_id );
 
-            virtual long localGetValue( IOStateList::iterator& it, const uniset::ObjectId sid );
+            virtual long localGetValue( IOStateList::iterator& it, const uniset3::ObjectId sid );
 
             /*! функция выставления признака неопределённого состояния для аналоговых датчиков
                 // для дискретных датчиков необходимости для подобной функции нет.
                 // см. логику выставления в функции localSaveState
             */
             virtual void localSetUndefinedState( IOStateList::iterator& it, bool undefined,
-                                                 const uniset::ObjectId sid );
+                                                 const uniset3::ObjectId sid );
 
             virtual void localFreezeValueIt( IOController::IOStateList::iterator& li,
-                                             uniset::ObjectId sid,
+                                             uniset3::ObjectId sid,
                                              CORBA::Boolean set,
                                              CORBA::Long value,
-                                             uniset::ObjectId sup_id );
+                                             uniset3::ObjectId sup_id );
 
             virtual void localFreezeValue( std::shared_ptr<USensorInfo>& usi,
                                            CORBA::Boolean set,
                                            CORBA::Long value,
-                                           uniset::ObjectId sup_id );
+                                           uniset3::ObjectId sup_id );
 
 
             // -- работа через указатель ---
-            virtual long localSetValue( std::shared_ptr<USensorInfo>& usi, CORBA::Long value, uniset::ObjectId sup_id );
+            virtual long localSetValue( std::shared_ptr<USensorInfo>& usi, CORBA::Long value, uniset3::ObjectId sup_id );
             long localGetValue( std::shared_ptr<USensorInfo>& usi) ;
 
 #ifndef DISABLE_REST_API
@@ -223,17 +223,17 @@ namespace uniset
             void ioRegistration(std::shared_ptr<USensorInfo>& usi );
 
             /*! разрегистрация датчика */
-            void ioUnRegistration( const uniset::ObjectId sid );
+            void ioUnRegistration( const uniset3::ObjectId sid );
 
             // ------------------------------
-            inline IOController_i::SensorIOInfo
-            SensorIOInfo(long v, UniversalIO::IOType t, const IOController_i::SensorInfo& si,
-                         uniset::Message::Priority p = uniset::Message::Medium,
-                         long defval = 0, IOController_i::CalibrateInfo* ci = 0,
-                         uniset::ObjectId sup_id = uniset::DefaultObjectId,
-                         uniset::ObjectId depend_sid = uniset::DefaultObjectId )
+            inline uniset3::SensorIOInfo
+            SensorIOInfo(long v, uniset3::IOType t, const uniset3::SensorInfo& si,
+                         uniset3::Message::Priority p = uniset3::Message::Medium,
+                         long defval = 0, uniset3::CalibrateInfo* ci = 0,
+                         uniset3::ObjectId sup_id = uniset3::DefaultObjectId,
+                         uniset3::ObjectId depend_sid = uniset3::DefaultObjectId )
             {
-                IOController_i::SensorIOInfo ai;
+                uniset3::SensorIOInfo ai;
                 ai.si = si;
                 ai.type = t;
                 ai.value = v;
@@ -259,7 +259,7 @@ namespace uniset
             };
 
             //! сохранение информации об изменении состояния датчика
-            virtual void logging( uniset::SensorMessage& sm );
+            virtual void logging( uniset3::SensorMessage& sm );
 
             //! сохранение состояния всех датчиков в БД
             virtual void dumpToDB();
@@ -269,7 +269,7 @@ namespace uniset
             // доступ к списку c изменением только для своих
             IOStateList::iterator myioBegin();
             IOStateList::iterator myioEnd();
-            IOStateList::iterator myiofind( uniset::ObjectId id );
+            IOStateList::iterator myiofind( uniset3::ObjectId id );
 
             void initIOList( const IOStateList&& l );
 
@@ -289,10 +289,10 @@ namespace uniset
             InitSignal sigInit;
 
             IOStateList ioList;    /*!< список с текущим состоянием аналоговых входов/выходов */
-            uniset::uniset_rwmutex ioMutex; /*!< замок для блокирования совместного доступа к ioList */
+            uniset3::uniset_rwmutex ioMutex; /*!< замок для блокирования совместного доступа к ioList */
 
             bool isPingDBServer;    // флаг связи с DBServer-ом
-            uniset::ObjectId dbserverID = { uniset::DefaultObjectId };
+            uniset3::ObjectId dbserverID = { uniset3::DefaultObjectId };
 
             std::mutex loggingMutex; /*!< logging info mutex */
 
@@ -302,7 +302,7 @@ namespace uniset
             typedef std::list<std::shared_ptr<UThresholdInfo>> ThresholdExtList;
 
             struct USensorInfo:
-                public IOController_i::SensorIOInfo
+                public uniset3::SensorIOInfo
             {
                 USensorInfo( const USensorInfo& ) = delete;
                 const USensorInfo& operator=(const USensorInfo& ) = delete;
@@ -312,31 +312,31 @@ namespace uniset
                 USensorInfo();
                 virtual ~USensorInfo() {}
 
-                USensorInfo(IOController_i::SensorIOInfo& r);
-                USensorInfo(IOController_i::SensorIOInfo* r);
-                USensorInfo(const IOController_i::SensorIOInfo& r);
+                USensorInfo(uniset3::SensorIOInfo& r);
+                USensorInfo(uniset3::SensorIOInfo* r);
+                USensorInfo(const uniset3::SensorIOInfo& r);
 
-                USensorInfo& operator=(IOController_i::SensorIOInfo& r);
-                const USensorInfo& operator=(const IOController_i::SensorIOInfo& r);
-                USensorInfo& operator=(IOController_i::SensorIOInfo* r);
+                USensorInfo& operator=(uniset3::SensorIOInfo& r);
+                const USensorInfo& operator=(const uniset3::SensorIOInfo& r);
+                USensorInfo& operator=(uniset3::SensorIOInfo* r);
 
                 // Дополнительные (вспомогательные поля)
-                uniset::uniset_rwmutex val_lock; /*!< флаг блокирующий работу со значением */
+                uniset3::uniset_rwmutex val_lock; /*!< флаг блокирующий работу со значением */
 
                 // userdata (универсальный, но небезопасный способ расширения информации связанной с датчиком)
                 static const size_t MaxUserData = 4;
                 void* userdata[MaxUserData] = { nullptr, nullptr, nullptr, nullptr }; /*!< расширение для возможности хранения своей информации */
-                uniset::uniset_rwmutex userdata_lock; /*!< mutex для работы с userdata */
+                uniset3::uniset_rwmutex userdata_lock; /*!< mutex для работы с userdata */
 
                 void* getUserData( size_t index );
                 void setUserData( size_t index, void* data );
 
                 // сигнал для реализации механизма зависимостей..
                 // (все зависимые датчики подключаются к нему (см. NCRestorer::init_depends_signals)
-                uniset::uniset_rwmutex changeMutex;
+                uniset3::uniset_rwmutex changeMutex;
                 ChangeSignal sigChange;
 
-                uniset::uniset_rwmutex undefMutex;
+                uniset3::uniset_rwmutex undefMutex;
                 ChangeUndefinedStateSignal sigUndefChange;
 
                 long d_value = { 1 }; /*!< разрешающее работу значение датчика от которого зависит данный */
@@ -344,7 +344,7 @@ namespace uniset
                 std::shared_ptr<USensorInfo> d_usi; // shared_ptr на датчик от которого зависит этот.
 
                 // список пороговых датчиков для данного
-                uniset::uniset_rwmutex tmut;
+                uniset3::uniset_rwmutex tmut;
                 ThresholdExtList thresholds;
 
                 size_t nchanges = { 0 }; // количество изменений датчика
@@ -355,27 +355,27 @@ namespace uniset
                 // функция обработки информации об изменении состояния датчика, от которого зависит данный
                 void checkDepend( std::shared_ptr<USensorInfo>& d_usi, IOController* );
 
-                void init( const IOController_i::SensorIOInfo& s );
+                void init( const uniset3::SensorIOInfo& s );
 
-                inline IOController_i::SensorIOInfo makeSensorIOInfo()
+                inline uniset3::SensorIOInfo makeSensorIOInfo()
                 {
-                    uniset::uniset_rwmutex_rlock lock(val_lock);
-                    IOController_i::SensorIOInfo s(*this);
+                    uniset3::uniset_rwmutex_rlock lock(val_lock);
+                    uniset3::SensorIOInfo s(*this);
                     return s;
                 }
 
-                inline uniset::SensorMessage makeSensorMessage( bool with_lock = false )
+                inline uniset3::SensorMessage makeSensorMessage( bool with_lock = false )
                 {
-                    uniset::SensorMessage sm;
+                    uniset3::SensorMessage sm;
                     sm.id           = si.id;
                     sm.node         = si.node; // uniset_conf()->getLocalNode()?
                     sm.sensor_type  = type;
-                    sm.priority     = (uniset::Message::Priority)priority;
+                    sm.priority     = (uniset3::Message::Priority)priority;
 
                     // лочим только изменяемые поля
                     if( with_lock )
                     {
-                        uniset::uniset_rwmutex_rlock lock(val_lock);
+                        uniset3::uniset_rwmutex_rlock lock(val_lock);
                         sm.value        = value;
                         sm.sm_tv.tv_sec    = tv_sec;
                         sm.sm_tv.tv_nsec   = tv_nsec;
@@ -399,21 +399,21 @@ namespace uniset
 
             /*! Информация о пороговом значении */
             struct UThresholdInfo:
-                public IONotifyController_i::ThresholdInfo
+                public uniset3::ThresholdInfo
             {
-                UThresholdInfo( uniset::ThresholdId tid, CORBA::Long low, CORBA::Long hi, bool inv,
-                                uniset::ObjectId _sid = uniset::DefaultObjectId ):
+                UThresholdInfo( uniset3::ThresholdId tid, CORBA::Long low, CORBA::Long hi, bool inv,
+                                uniset3::ObjectId _sid = uniset3::DefaultObjectId ):
                     sid(_sid),
                     invert(inv)
                 {
                     id       = tid;
                     hilimit  = hi;
                     lowlimit = low;
-                    state    = IONotifyController_i::NormalThreshold;
+                    state    = uniset3::NormalThreshold;
                 }
 
                 /*! идентификатор дискретного датчика связанного с данным порогом */
-                uniset::ObjectId sid;
+                uniset3::ObjectId sid;
 
                 /*! итератор в списке датчиков (для быстрого доступа) */
                 IOController::IOStateList::iterator sit;

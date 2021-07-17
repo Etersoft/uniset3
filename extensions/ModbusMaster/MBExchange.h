@@ -47,7 +47,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -57,7 +57,7 @@ namespace uniset
         public UniSetObject
     {
         public:
-            MBExchange( uniset::ObjectId objId, uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+            MBExchange( uniset3::ObjectId objId, uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                         const std::string& prefix = "mb" );
             virtual ~MBExchange();
 
@@ -81,22 +81,22 @@ namespace uniset
                 return mblog;
             }
 
-            virtual uniset::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
             bool reload( const std::string& confile );
 
         protected:
             virtual void step();
-            virtual void sysCommand( const uniset::SystemMessage* msg ) override;
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset::TimerMessage* tm ) override;
-            virtual void askSensors( UniversalIO::UIOCommand cmd );
+            virtual void sysCommand( const uniset3::SystemMessage* msg ) override;
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+            virtual void askSensors( uniset3::UIOCommand cmd );
             virtual void initOutput();
             virtual bool deactivateObject() override;
             virtual bool activateObject() override;
             virtual void initIterators();
             virtual void initValues();
-            virtual bool reconfigure( const std::shared_ptr<uniset::UniXML>& xml, const std::shared_ptr<uniset::MBConfig>& mbconf );
+            virtual bool reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& mbconf );
 #ifndef DISABLE_REST_API
             // http API
             virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
@@ -139,18 +139,18 @@ namespace uniset
             std::shared_ptr<SMInterface> shm;
 
             timeout_t initPause = { 3000 };
-            uniset::uniset_rwmutex mutex_start;
+            uniset3::uniset_rwmutex mutex_start;
 
             bool force =  { false };        /*!< флаг означающий, что надо сохранять в SM, даже если значение не менялось */
             bool force_out = { false };    /*!< флаг означающий, принудительного чтения выходов */
 
             PassiveTimer ptHeartBeat;
-            uniset::ObjectId sidHeartBeat = { uniset::DefaultObjectId };
+            uniset3::ObjectId sidHeartBeat = { uniset3::DefaultObjectId };
             long maxHeartBeat = { 10 };
             IOController::IOStateList::iterator itHeartBeat;
-            uniset::ObjectId test_id = { uniset::DefaultObjectId };
+            uniset3::ObjectId test_id = { uniset3::DefaultObjectId };
 
-            uniset::ObjectId sidExchangeMode = { uniset::DefaultObjectId }; /*!< идентификатор для датчика режима работы */
+            uniset3::ObjectId sidExchangeMode = { uniset3::DefaultObjectId }; /*!< идентификатор для датчика режима работы */
             IOController::IOStateList::iterator itExchangeMode;
             long exchangeMode = { MBConfig::emNone }; /*!< режим работы см. ExchangeMode */
 
@@ -182,15 +182,15 @@ namespace uniset
 
             size_t ncycle = { 0 }; /*!< текущий номер цикла опроса */
 
-            std::shared_ptr<uniset::MBConfig> mbconf;
-            uniset::uniset_rwmutex mutex_conf;
+            std::shared_ptr<uniset3::MBConfig> mbconf;
+            uniset3::uniset_rwmutex mutex_conf;
 
         private:
             MBExchange();
 
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // _MBExchange_H_
 // -----------------------------------------------------------------------------

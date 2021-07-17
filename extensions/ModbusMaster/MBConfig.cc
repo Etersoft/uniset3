@@ -24,13 +24,13 @@
 #include "MBConfig.h"
 #include "modbus/MBLogSugar.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -----------------------------------------------------------------------------
-    MBConfig::MBConfig(const std::shared_ptr<uniset::Configuration>& _conf
+    MBConfig::MBConfig(const std::shared_ptr<uniset3::Configuration>& _conf
                        , xmlNode* _cnode
                        , std::shared_ptr<SMInterface> _shm ):
         cnode(_cnode),
@@ -65,7 +65,7 @@ namespace uniset
         mbregFromID = mbconf->mbregFromID;
     }
     // -----------------------------------------------------------------------------
-    void MBConfig::loadConfig( const std::shared_ptr<uniset::UniXML>& xml, UniXML::iterator sensorsSection )
+    void MBConfig::loadConfig( const std::shared_ptr<uniset3::UniXML>& xml, UniXML::iterator sensorsSection )
     {
         readConfiguration(xml, sensorsSection);
 
@@ -75,7 +75,7 @@ namespace uniset
         initDeviceList(xml);
     }
     // ------------------------------------------------------------------------------------------
-    void MBConfig::readConfiguration( const std::shared_ptr<uniset::UniXML>& xml, UniXML::iterator sensorsSection )
+    void MBConfig::readConfiguration( const std::shared_ptr<uniset3::UniXML>& xml, UniXML::iterator sensorsSection )
     {
         UniXML::iterator it = sensorsSection;
 
@@ -99,7 +99,7 @@ namespace uniset
 
         for( ; it.getCurrent(); it.goNext() )
         {
-            if( uniset::check_filter(it, s_field, s_fvalue) )
+            if( uniset3::check_filter(it, s_field, s_fvalue) )
                 initItem(it);
         }
 
@@ -399,7 +399,7 @@ namespace uniset
 
         if( !sbit.empty() )
         {
-            p.nbit = uniset::uni_atoi(sbit.c_str());
+            p.nbit = uniset3::uni_atoi(sbit.c_str());
 
             if( p.nbit < 0 || p.nbit >= ModbusRTU::BitsPerData )
             {
@@ -410,8 +410,8 @@ namespace uniset
         }
 
         if( p.nbit > 0 &&
-                ( p.stype == UniversalIO::AI ||
-                  p.stype == UniversalIO::AO ) )
+                ( p.stype == uniset3::AI ||
+                  p.stype == uniset3::AO ) )
         {
             mbwarn << "(initRSProperty): (ignore) uncorrect param`s nbit!=0(" << p.nbit << ")"
                    << " for iotype=" << p.stype << " for " << it.getProp("name") << endl;
@@ -421,7 +421,7 @@ namespace uniset
 
         if( !sbyte.empty() )
         {
-            p.nbyte = uniset::uni_atoi(sbyte.c_str());
+            p.nbyte = uniset3::uni_atoi(sbyte.c_str());
 
             if( p.nbyte > VTypes::Byte::bsize )
             {
@@ -479,7 +479,7 @@ namespace uniset
             if( !initRTU188item(it, r) )
                 return false;
 
-            UniversalIO::IOType t = uniset::getIOType(IOBase::initProp(it, "iotype", prop_prefix, false));
+            uniset3::IOType t = uniset3::getIOType(IOBase::initProp(it, "iotype", prop_prefix, false));
             r->mbreg = RTUStorage::getRegister(r->rtuJack, r->rtuChan, t);
             r->mbfunc = RTUStorage::getFunction(r->rtuJack, r->rtuChan, t);
 
@@ -520,7 +520,7 @@ namespace uniset
 
         if( !f.empty() )
         {
-            r->mbfunc = (ModbusRTU::SlaveFunctionCode)uniset::uni_atoi(f.c_str());
+            r->mbfunc = (ModbusRTU::SlaveFunctionCode)uniset3::uni_atoi(f.c_str());
 
             if( r->mbfunc == ModbusRTU::fnUnknown )
             {
@@ -717,7 +717,7 @@ namespace uniset
                     << " conflict with sensors " << sl.str();
 
                 mbcrit  << err.str() << endl;
-                throw uniset::SystemError(err.str());
+                throw uniset3::SystemError(err.str());
             }
 
             if( p.nbit >= 0 && ri->slst.size() == 1 )
@@ -732,7 +732,7 @@ namespace uniset
                         << " IGNORE --> " << it.getProp("name");
 
                     mbcrit  << err.str() << endl;
-                    throw uniset::SystemError(err.str());
+                    throw uniset3::SystemError(err.str());
                 }
             }
 
@@ -785,7 +785,7 @@ namespace uniset
                             << " for " << it.getProp("name");
 
                         mbcrit << err.str() << endl;
-                        throw uniset::SystemError(err.str());
+                        throw uniset3::SystemError(err.str());
                     }
                 }
             }
@@ -812,7 +812,7 @@ namespace uniset
 
             if( !s_mbfunc.empty() )
             {
-                ii.mbfunc = (ModbusRTU::SlaveFunctionCode)uniset::uni_atoi(s_mbfunc);
+                ii.mbfunc = (ModbusRTU::SlaveFunctionCode)uniset3::uni_atoi(s_mbfunc);
 
                 if( ii.mbfunc == ModbusRTU::fnUnknown )
                 {
@@ -899,7 +899,7 @@ namespace uniset
             return false;
         }
 
-        p->rtuChan = uniset::uni_atoi(chan);
+        p->rtuChan = uniset3::uni_atoi(chan);
 
         mblog2 << myname << "(readRTU188Item): add jack='" << jack << "'"
                << " channel='" << p->rtuChan << "'" << endl;
@@ -942,7 +942,7 @@ namespace uniset
                << " safeval=" << p.safeval
                << " invert=" << p.invert;
 
-        if( p.stype == UniversalIO::AI || p.stype == UniversalIO::AO )
+        if( p.stype == uniset3::AI || p.stype == uniset3::AO )
         {
             os     << p.cal
                    << " cdiagram=" << ( p.cdiagram ? "yes" : "no" );
@@ -1019,9 +1019,9 @@ namespace uniset
                 return false;
             }
 
-            UniversalIO::IOType m_iotype = conf->getIOType(dev->mode_id);
+            uniset3::IOType m_iotype = conf->getIOType(dev->mode_id);
 
-            if( m_iotype != UniversalIO::AI )
+            if( m_iotype != uniset3::AI )
             {
                 mbcrit << myname << "(initDeviceInfo): modeSensor='" << mod << "' must be 'AI'" << endl;
                 return false;
@@ -1189,4 +1189,4 @@ namespace uniset
         return s.str();
     }
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

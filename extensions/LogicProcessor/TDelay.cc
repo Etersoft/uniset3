@@ -18,11 +18,11 @@
 #include "Extensions.h"
 #include "TDelay.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     using namespace std;
-    using namespace uniset::extensions;
+    using namespace uniset3::extensions;
     // -------------------------------------------------------------------------
     TDelay::TDelay(Element::ElementID id, timeout_t delayMS, size_t inCount):
         Element(id),
@@ -107,4 +107,4 @@ namespace uniset
         return delay;
     }
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

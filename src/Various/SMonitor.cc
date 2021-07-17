@@ -23,7 +23,7 @@
 #include "UniSetTypes.h"
 // ------------------------------------------------------------------------------------------
 using namespace UniversalIO;
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 SMonitor::SMonitor():
@@ -37,7 +37,7 @@ SMonitor::SMonitor(ObjectId id):
 {
 	const string sid(uniset_conf()->getArgParam("--sid"));
 
-	lst = uniset::getSInfoList(sid, uniset_conf());
+	lst = uniset3::getSInfoList(sid, uniset_conf());
 
 	if( lst.empty() )
 		throw SystemError("Не задан список датчиков (--sid)");
@@ -64,9 +64,9 @@ void SMonitor::sysCommand( const SystemMessage* sm )
 				try
 				{
 					if( it.si.id != DefaultObjectId )
-						ui->askRemoteSensor(it.si.id, UniversalIO::UIONotify, it.si.node);
+						ui->askRemoteSensor(it.si.id, uniset3::UIONotify, it.si.node);
 				}
-				catch( const uniset::Exception& ex )
+				catch( const uniset3::Exception& ex )
 				{
 					cerr << myname << ":(askSensor): " << ex << endl;
 					//					raise(SIGTERM);
@@ -95,14 +95,14 @@ void SMonitor::sysCommand( const SystemMessage* sm )
 	}
 }
 // ------------------------------------------------------------------------------------------
-std::string SMonitor::printEvent( const uniset::SensorMessage* sm )
+std::string SMonitor::printEvent( const uniset3::SensorMessage* sm )
 {
 	auto conf = uniset_conf();
 	ostringstream s;
 
 	string s_sup("");
 
-	if( sm->supplier == uniset::AdminID )
+	if( sm->supplier == uniset3::AdminID )
 		s_sup = "uniset-admin";
 	else
 		s_sup = ORepHelpers::getShortName(conf->oind->getMapName(sm->supplier));

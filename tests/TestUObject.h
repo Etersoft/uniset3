@@ -7,17 +7,17 @@
  * Для наглядности и простоты все функции объявлены здесь же в h-файле
 */
 class TestUObject:
-    public uniset::UniSetObject
+    public uniset3::UniSetObject
 {
     public:
 
-        TestUObject( uniset::ObjectId id, xmlNode* cnode ):
-            uniset::UniSetObject(id) {}
+        TestUObject( uniset3::ObjectId id, xmlNode* cnode ):
+            uniset3::UniSetObject(id) {}
 
         virtual ~TestUObject() {};
 
         // специальные функции для проведения тестирования
-        inline uniset::VoidMessagePtr getOneMessage()
+        inline uniset3::VoidMessagePtr getOneMessage()
         {
             return receiveMessage();
         }

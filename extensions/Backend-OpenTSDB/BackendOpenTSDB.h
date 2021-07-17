@@ -27,7 +27,7 @@
 #include "extensions/Extensions.h"
 #include "UTCPStream.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -104,13 +104,13 @@ namespace uniset
         public UObject_SK
     {
         public:
-            BackendOpenTSDB( uniset::ObjectId objId, xmlNode* cnode, uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+            BackendOpenTSDB( uniset3::ObjectId objId, xmlNode* cnode, uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                              const std::string& prefix = "opentsdb" );
             virtual ~BackendOpenTSDB();
 
             /*! глобальная функция для инициализации объекта */
             static std::shared_ptr<BackendOpenTSDB> init_opendtsdb( int argc, const char* const* argv,
-                    uniset::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
+                    uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic = nullptr,
                     const std::string& prefix = "opentsdb" );
 
             /*! глобальная функция для вывода help-а */
@@ -140,10 +140,10 @@ namespace uniset
             // и убрать не нужную в данном процессе обработку (включая sleep_msec)
             virtual void callback() noexcept override;
 
-            virtual void askSensors( UniversalIO::UIOCommand cmd ) override;
-            virtual void sensorInfo( const uniset::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset::TimerMessage* tm ) override;
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
+            virtual void askSensors( uniset3::UIOCommand cmd ) override;
+            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
             virtual std::string getMonitInfo() const override;
 
             void init( xmlNode* cnode );
@@ -163,7 +163,7 @@ namespace uniset
 
             std::string tsdbPrefix;
             std::string tsdbTags; // теги в виде строки TAG=VAL TAG2=VAL2 ...
-            std::unordered_map<uniset::ObjectId, ParamInfo> tsdbParams;
+            std::unordered_map<uniset3::ObjectId, ParamInfo> tsdbParams;
 
             timeout_t bufSyncTime = { 5000 };
             size_t bufSize = { 500 };
@@ -187,7 +187,7 @@ namespace uniset
             std::string prefix;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // _BackendOpenTSDB_H_
 // -----------------------------------------------------------------------------

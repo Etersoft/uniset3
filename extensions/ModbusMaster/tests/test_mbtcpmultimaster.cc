@@ -8,7 +8,7 @@
 #include "MBTCPMultiMaster.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 #include <catch.hpp>
 // -----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ using namespace uniset;
 #include "MBTCPMultiMaster.h"
 // -----------------------------------------------------------------------------
 using namespace std;
-using namespace uniset;
+using namespace uniset3;
 // -----------------------------------------------------------------------------
 static ModbusRTU::ModbusAddr slaveADDR = 0x01; // conf->getArgInt("--mbs-my-addr");
 static unordered_set<ModbusRTU::ModbusAddr> vaddr = { slaveADDR, 0x02, 0x03 };
@@ -245,7 +245,7 @@ TEST_CASE("MBTCPMultiMaster: udefined value", "[modbus][undefined][mbmaster][mbt
     {
         ui->getValue(1070);
     }
-    catch( IOController_i::Undefined& ex )
+    catch( uniset3::Undefined& ex )
     {
         REQUIRE( ex.value == 65535 );
     }
@@ -279,7 +279,7 @@ TEST_CASE("MBTCPMultiMaster: reload config (HTTP API)", "[modbus][reload-api][mb
 
     // default reconfigure
     std::string request = "/api/v01/reload";
-    uniset::SimpleInfo_var ret = mbmm->apiRequest(request.c_str());
+    uniset3::SimpleInfo_var ret = mbmm->apiRequest(request.c_str());
 
     ostringstream sinfo;
     sinfo << ret->info;

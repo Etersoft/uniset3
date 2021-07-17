@@ -4,7 +4,7 @@
 #include "Debug.h"
 #include "MBTCPServer.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 static struct option longopts[] =
@@ -98,7 +98,7 @@ int main( int argc, char** argv )
             }
         }
 
-        auto avec = uniset::explode_str(myaddr, ',');
+        auto avec = uniset3::explode_str(myaddr, ',');
         std::unordered_set<ModbusRTU::ModbusAddr> vaddr;
 
         for( const auto& a : avec )

@@ -21,7 +21,7 @@
 #include <comedilib.h>
 #include "Exceptions.h"
 //--------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*! Интерфейс для работы с в/в */
@@ -31,16 +31,16 @@ namespace uniset
             explicit ComediInterface( const std::string& dev, const std::string& cname );
             virtual ~ComediInterface();
 
-            // throw uniset::Exception
+            // throw uniset3::Exception
             virtual int getAnalogChannel( int subdev, int channel, int range = 0, int aref = AREF_GROUND, int adelay = 10 * 1000 ) const; // adelay = 10 мкс
 
-            // throw uniset::Exception
+            // throw uniset3::Exception
             virtual void setAnalogChannel( int subdev, int channel, int data, int range = 0, int aref = AREF_GROUND ) const;
 
-            // throw uniset::Exception
+            // throw uniset3::Exception
             virtual bool getDigitalChannel( int subdev, int channel ) const;
 
-            // throw uniset::Exception
+            // throw uniset3::Exception
             virtual void setDigitalChannel( int subdev, int channel, bool bit ) const;
 
             // Конфигурирование входов / выходов
@@ -64,10 +64,10 @@ namespace uniset
             static std::string type2str( SubdevType t );
             static SubdevType str2type( const std::string& s );
 
-            // throw uniset::Exception
+            // throw uniset3::Exception
             virtual void configureSubdev( int subdev, SubdevType type ) const;
 
-            // throw uniset::Exception
+            // throw uniset3::Exception
             virtual void configureChannel( int subdev, int channel, ChannelType type, int range = 0, int aref = 0 ) const;
 
             inline const std::string devname() const
@@ -90,7 +90,7 @@ namespace uniset
         private:
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // ComediInterface_H_
 // -----------------------------------------------------------------------------

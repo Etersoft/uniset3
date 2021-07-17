@@ -3,7 +3,7 @@
 #include "UniSetActivator.h"
 #include "Debug.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 int main(int argc, char** argv)
@@ -19,7 +19,7 @@ int main(int argc, char** argv)
             cout << endl;
             DBServer_PostgreSQL::help_print(argc, argv);
             cout << " Global options:" << endl;
-            cout << uniset::Configuration::help() << endl;
+            cout << uniset3::Configuration::help() << endl;
             return 0;
         }
 
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         act->add(dbs);
         act->run(false);
     }
-    catch( const uniset::Exception& ex )
+    catch( const uniset3::Exception& ex )
     {
         cerr << "(DBServer_PosgreSQL::main): " << ex << endl;
     }

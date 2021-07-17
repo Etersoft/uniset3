@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package uniset3;
+
+option optimize_for = LITE_RUNTIME;
+// option cc_enable_arenas = true;
+
+
+/*! Базовые типы сообщений */
+enum TypeOfMessage
+{
+    mtUnused = 0;       // Сообщение не содержит информации
+    mtSensorInfo = 1;
+    mtSysCommand = 2;   // Сообщение содержит системную команду
+    mtConfirm = 3;      // Сообщение содержит подтверждение
+    mtTimer = 4;        // Сообщения о срабатывании таймера
+    mtTextMessage = 5;  // текстовое сообщение
+    mtTheLastFieldOfTypeOfMessage = 6; // Обязательно оставьте последним
+}
+
+message TransportMessage
+{
+    int32 type = 1;
+    bytes data = 2;
+}
+
+/*!
+ * Информация об узле
+ */
+message NodeInfo
+{
+    int64 id = 1;
+    bool connected = 2;
+    uint64 dbserver = 3;
+    string host = 4;
+    string port = 5;
+}
+
+/*! информация об объекте */
+message SimpleInfo
+{
+    int64 id = 1;
+    string info = 2;
+}
+
+message SimpleInfoSeq
+{
+    repeated SimpleInfo lst = 1;
+}
+
+/*! Информация о заказчике */
+message ConsumerInfo
+{
+    int64 id = 1;    /*!< идентификатор заказчика */
+    int64 node = 2;  /*!< узел, на котором он находится */
+}
+
+/*! Информация о "поставщике" события */
+message ProducerInfo
+{
+    int64 id = 1;    /*!< идентификатор заказчика */
+    int64 node = 2;  /*!< узел, на котором он находится */
+}
+
+/*! Список идентификаторов */
+message IDSeq
+{
+    repeated int64 ids = 1;
+}
+
+
+/*! время  (posix timespec) */
+message Timespec
+{
+     uint64 sec = 1;  /* Seconds.  */
+     uint64 nsec = 2; /* nanoseconds.  */
+}
+
+/*!
+ * Типы входов/выходов
+*/
+enum IOType
+{
+    UnknownIOType = 0;
+    DI = 1; // DigitalInput
+    DO = 2; // DigitalOutput
+    AI = 3; // AnalogInput
+    AO = 4; // AnalogOutput
+}
+
+/*! Разрешенные команды для всех контроллеров ввода/вывода */
+enum UIOCommand
+{
+     UIONotify = 0;    /*!< заказать получение информации */
+     UIODontNotify = 1;/*!< отказаться от получения информации */
+     UIONotifyChange = 2;      /*!< заказ информации, только после изменения (без первого уведомления о текущем состоянии) */
+     UIONotifyFirstNotNull = 3; /*!< заказ информации. Первое уведомление, только если датчик не "0" */
+}

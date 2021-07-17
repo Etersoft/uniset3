@@ -31,7 +31,7 @@
 #include "UDPPacket.h"
 #include "UNetTransport.h"
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset33
 {
     // -----------------------------------------------------------------------------
     /*
@@ -87,14 +87,14 @@ namespace uniset
             struct UItem
             {
                 UItem():
-                    iotype(UniversalIO::UnknownIOType),
-                    id(uniset::DefaultObjectId),
+                    iotype(uniset3::UnknownIOType),
+                    id(uniset3::DefaultObjectId),
                     pack_num(0),
                     pack_ind(0),
                     pack_sendfactor(0) {}
 
-                UniversalIO::IOType iotype;
-                uniset::ObjectId id;
+                uniset3::IOType iotype;
+                uniset3::ObjectId id;
                 IOController::IOStateList::iterator ioit;
                 size_t pack_num;
                 size_t pack_ind;
@@ -103,7 +103,7 @@ namespace uniset
                 friend std::ostream& operator<<( std::ostream& os, UItem& p );
             };
 
-            typedef std::unordered_map<uniset::ObjectId, UItem> UItemMap;
+            typedef std::unordered_map<uniset3::ObjectId, UItem> UItemMap;
 
             size_t getDataPackCount() const;
 
@@ -114,13 +114,13 @@ namespace uniset
 
             struct PackMessage
             {
-                PackMessage( uniset::UniSetUDP::UDPMessage&& m ) noexcept: msg(std::move(m)) {}
-                PackMessage( const uniset::UniSetUDP::UDPMessage& m ) = delete;
+                PackMessage( uniset3::UniSetUDP::UDPMessage&& m ) noexcept: msg(std::move(m)) {}
+                PackMessage( const uniset3::UniSetUDP::UDPMessage& m ) = delete;
 
                 PackMessage() noexcept {}
 
-                uniset::UniSetUDP::UDPMessage msg;
-                uniset::uniset_rwmutex mut;
+                uniset3::UniSetUDP::UDPMessage msg;
+                uniset3::uniset_rwmutex mut;
             };
 
             void real_send( PackMessage& mypack ) noexcept;
@@ -129,7 +129,7 @@ namespace uniset
             void updateFromSM();
 
             /*! Обновить значение по ID датчика */
-            void updateSensor( uniset::ObjectId id, long value );
+            void updateSensor( uniset3::ObjectId id, long value );
 
             /*! Обновить значение по итератору */
             void updateItem( UItem& it, long value );
@@ -150,7 +150,7 @@ namespace uniset
             void setCheckConnectionPause( int msec );
 
             /*! заказать датчики */
-            void askSensors( UniversalIO::UIOCommand cmd );
+            void askSensors( uniset3::UIOCommand cmd );
 
             /*! инициализация  итераторов */
             void initIterators();
@@ -210,7 +210,7 @@ namespace uniset
             UItemMap items;
             size_t packetnum = { 1 }; /*!< номер очередного посылаемого пакета */
             uint16_t lastcrc = { 0 };
-            uint8_t sbuf[uniset::UniSetUDP::MessageBufSize];
+            uint8_t sbuf[uniset3::UniSetUDP::MessageBufSize];
 
             size_t maxAData = { UniSetUDP::MaxACount };
             size_t maxDData = { UniSetUDP::MaxDCount };
@@ -221,7 +221,7 @@ namespace uniset
 
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset33
 // -----------------------------------------------------------------------------
 #endif // UNetSender_H_
 // -----------------------------------------------------------------------------

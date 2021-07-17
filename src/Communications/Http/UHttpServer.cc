@@ -22,7 +22,7 @@
 // -------------------------------------------------------------------------
 using namespace Poco::Net;
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	using namespace UHttp;
 	// -------------------------------------------------------------------------
@@ -47,7 +47,7 @@ namespace uniset
 		{
 			std::stringstream err;
 			err << "(UHttpServer::init): " << _host << ":" << _port << " ERROR: " << ex.what();
-			throw uniset::SystemError(err.str());
+			throw uniset3::SystemError(err.str());
 		}
 
 		mylog->info() << "(UHttpServer::init): init " << _host << ":" << _port << std::endl;
@@ -83,6 +83,6 @@ namespace uniset
 		reqFactory->setCORS_allow(allow);
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API

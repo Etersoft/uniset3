@@ -32,7 +32,7 @@
 #include "UniXML.h"
 #include "HttpResolverSugar.h"
 // --------------------------------------------------------------------------
-using namespace uniset;
+using namespace uniset3;
 using namespace std;
 // --------------------------------------------------------------------------
 HttpResolver::HttpResolver( const string& name, int argc, const char* const* argv, const string& prefix ):
@@ -40,12 +40,12 @@ HttpResolver::HttpResolver( const string& name, int argc, const char* const* arg
 {
     rlog = make_shared<DebugStream>();
 
-    auto logLevels = uniset::getArgParam("--" + prefix + "log-add-levels", argc, argv, "crit,warn");
+    auto logLevels = uniset3::getArgParam("--" + prefix + "log-add-levels", argc, argv, "crit,warn");
 
     if( !logLevels.empty() )
         rlog->addLevel( Debug::value(logLevels) );
 
-    std::string config = uniset::getArgParam("--confile", argc, argv, "configure.xml");
+    std::string config = uniset3::getArgParam("--confile", argc, argv, "configure.xml");
 
     if( config.empty() )
         throw SystemError("Unknown config file");
@@ -69,7 +69,7 @@ HttpResolver::HttpResolver( const string& name, int argc, const char* const* arg
         ostringstream err;
         err << name << "(init): Not found confnode <HttpResolver name='" << name << "'...>";
         rcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
     UniXML::iterator it(cnode);
@@ -81,16 +81,16 @@ HttpResolver::HttpResolver( const string& name, int argc, const char* const* arg
         ostringstream err;
         err << name << "(init): Not found confnode <LockDir name='..'/>";
         rcrit << err.str() << endl;
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 
 
     iorfile = make_shared<IORFile>(dirIt.getProp("name"));
     rinfo << myname << "(init): IOR directory: " << dirIt.getProp("name") << endl;
 
-    httpHost = uniset::getArgParam("--" + prefix + "host", argc, argv, it.getProp2("host", "0.0.0.0"));
-    httpPort = uniset::getArgInt("--" + prefix + "port", argc, argv, it.getProp2("port", "8008"));
-    httpCORS_allow = uniset::getArgParam("--" + prefix + "cors-allow", argc, argv, it.getProp2("cors", httpCORS_allow));
+    httpHost = uniset3::getArgParam("--" + prefix + "host", argc, argv, it.getProp2("host", "0.0.0.0"));
+    httpPort = uniset3::getArgInt("--" + prefix + "port", argc, argv, it.getProp2("port", "8008"));
+    httpCORS_allow = uniset3::getArgParam("--" + prefix + "cors-allow", argc, argv, it.getProp2("cors", httpCORS_allow));
 
     rinfo << myname << "(init): http server parameters " << httpHost << ":" << httpPort << endl;
     Poco::Net::SocketAddress sa(httpHost, httpPort);
@@ -99,8 +99,8 @@ HttpResolver::HttpResolver( const string& name, int argc, const char* const* arg
     {
         Poco::Net::HTTPServerParams* httpParams = new Poco::Net::HTTPServerParams;
 
-        int maxQ = uniset::getArgPInt("--" + prefix + "max-queued", argc, argv, it.getProp("maxQueued"), 100);
-        int maxT = uniset::getArgPInt("--" + prefix + "max-threads", argc, argv, it.getProp("maxThreads"), 3);
+        int maxQ = uniset3::getArgPInt("--" + prefix + "max-queued", argc, argv, it.getProp("maxQueued"), 100);
+        int maxT = uniset3::getArgPInt("--" + prefix + "max-threads", argc, argv, it.getProp("maxThreads"), 3);
 
         httpParams->setMaxQueued(maxQ);
         httpParams->setMaxThreads(maxT);
@@ -110,7 +110,7 @@ HttpResolver::HttpResolver( const string& name, int argc, const char* const* arg
     {
         std::stringstream err;
         err << myname << "(init): " << httpHost << ":" << httpPort << " ERROR: " << ex.what();
-        throw uniset::SystemError(err.str());
+        throw uniset3::SystemError(err.str());
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ HttpResolver::~HttpResolver()
 //--------------------------------------------------------------------------------------------
 std::shared_ptr<HttpResolver> HttpResolver::init_resolver( int argc, const char* const* argv, const std::string& prefix )
 {
-    string name = uniset::getArgParam("--" + prefix + "name", argc, argv, "HttpResolver");
+    string name = uniset3::getArgParam("--" + prefix + "name", argc, argv, "HttpResolver");
 
     if( name.empty() )
     {
@@ -223,8 +223,8 @@ void HttpResolver::handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net::
 
         if( cmd == "help" )
         {
-            using uniset::json::help::item;
-            uniset::json::help::object myhelp("help");
+            using uniset3::json::help::item;
+            uniset3::json::help::object myhelp("help");
             myhelp.emplace(item("help", "this help"));
             myhelp.emplace(item("resolve?name", "resolve name"));
             //          myhelp.emplace(item("apidocs", "https://github.com/Etersoft/uniset2"));
@@ -284,10 +284,10 @@ std::string HttpResolver::httpTextResolve(  const std::string& query, const Poco
         return "";
     }
 
-    if( uniset::is_digit(query) )
+    if( uniset3::is_digit(query) )
     {
         uinfo << myname << " resolve " << query << endl;
-        return iorfile->getIOR( uniset::uni_atoi(query) );
+        return iorfile->getIOR( uniset3::uni_atoi(query) );
     }
 
     uwarn << myname << "unknown parameter type '" << query << "'" << endl;

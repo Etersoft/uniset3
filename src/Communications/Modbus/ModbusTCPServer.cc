@@ -21,12 +21,12 @@
 #include "modbus/ModbusTCPServer.h"
 #include "modbus/ModbusTCPCore.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 	// -------------------------------------------------------------------------
 	using namespace std;
 	using namespace ModbusRTU;
-	using namespace uniset;
+	using namespace uniset3;
 	// -------------------------------------------------------------------------
 	ModbusTCPServer::ModbusTCPServer( const std::string& ia, int _port ):
 		port(_port),
@@ -119,14 +119,14 @@ namespace uniset
 			ostringstream err;
 			err << "(ModbusTCPServer::evprepare): connect " << iaddr << ":" << port << " err: " << ex.what();
 			dlog->crit() << err.str() << endl;
-			throw uniset::SystemError(err.str());
+			throw uniset3::SystemError(err.str());
 		}
 		catch( const std::exception& ex )
 		{
 			ostringstream err;
 			err << "(ModbusTCPServer::evprepare): connect " << iaddr << ":" << port << " err: " << ex.what();
 			dlog->crit() << err.str() << endl;
-			throw uniset::SystemError(err.str());
+			throw uniset3::SystemError(err.str());
 		}
 
 		sock->setBlocking(false);
@@ -369,4 +369,4 @@ namespace uniset
 		return m_pre_signal.emit(vaddr, tout);
 	}
 	// -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

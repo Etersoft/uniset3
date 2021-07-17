@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package uniset3;
+
+option optimize_for = LITE_RUNTIME;
+// ---------------------------------------------------------------------------
+import "UniSetTypes.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+message PushParams {
+    string msg = 1;
+    int32 mtype = 2;
+    uniset3.Timespec tm = 3;
+    uniset3.ProducerInfo pi = 4;
+    int32 priority = 5;
+    int64 consumer = 6;
+};
+// ---------------------------------------------------------------------------
+/*!
+ * \interface UniSetObject_i
+ * \brief Базовый интерфейс для всех объектов
+ * \author Pavel Vainerman
+ *
+ * Первичный интерфейс, обязательный для всех объектов в системе.
+ *
+*/
+service UniSetObject_i {
+    rpc getId(google.protobuf.Empty) returns(google.protobuf.Int64Value) {}   /*!< получение идентификатора объекта */
+    rpc getType(google.protobuf.Empty) returns(google.protobuf.StringValue) {}   /*!< получение типа объекта */
+
+    /*! REST API. query: /api/version/query_for_object[?param1&param2...] */
+    rpc request(google.protobuf.StringValue) returns (uniset3.SimpleInfoSeq) {}
+
+    rpc exist(google.protobuf.Empty) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
+
+    /*!  Функция посылки сообщения объекту */
+    rpc push(uniset3.TransportMessage) returns(google.protobuf.Empty) {}
+
+    /*!  Функция посылки текстового сообщения объекту */
+    rpc pushMessage(PushParams) returns(google.protobuf.Empty) {}
+}

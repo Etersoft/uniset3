@@ -15,4 +15,3 @@ update-json:
 	wget -O $(top_builddir)/include/json.hpp https://github.com/nlohmann/json/raw/master/src/json.hpp
 
 include $(top_builddir)/include.mk
-

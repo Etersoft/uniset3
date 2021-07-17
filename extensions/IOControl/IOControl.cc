@@ -22,7 +22,7 @@
 #include "IOControl.h"
 #include "IOLogSugar.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
@@ -47,7 +47,7 @@ namespace uniset
     }
     // -----------------------------------------------------------------------------
 
-    IOControl::IOControl(uniset::ObjectId id, uniset::ObjectId icID,
+    IOControl::IOControl(uniset3::ObjectId id, uniset3::ObjectId icID,
                          const std::shared_ptr<SharedMemory>& ic, size_t numcards, const std::string& prefix_ ):
         UniSetObject(id),
         polltime(150),
@@ -61,15 +61,15 @@ namespace uniset
         blink_state(true),
         blink2_state(true),
         blink3_state(true),
-        testLamp_s(uniset::DefaultObjectId),
+        testLamp_s(uniset3::DefaultObjectId),
         isTestLamp(false),
-        sidHeartBeat(uniset::DefaultObjectId),
+        sidHeartBeat(uniset3::DefaultObjectId),
         force(false),
         force_out(false),
         maxCardNum(10),
         activated(false),
         readconf_ok(false),
-        testMode_as(uniset::DefaultObjectId),
+        testMode_as(uniset3::DefaultObjectId),
         testmode(tmNone),
         prev_testmode(tmNone)
     {
@@ -471,7 +471,7 @@ namespace uniset
                 iolog3 << myname << "(execute): CORBA::SystemException: "
                        << ex.NP_minorString() << endl;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 iolog3 << myname << "(execute): " << ex << endl;
             }
@@ -569,13 +569,13 @@ namespace uniset
                 return;
 
             if( testmode == tmOnlyInputs &&
-                    it->stype != UniversalIO::AI &&
-                    it->stype != UniversalIO::DI )
+                    it->stype != uniset3::AI &&
+                    it->stype != uniset3::DI )
                 return;
 
             if( testmode == tmOnlyOutputs &&
-                    it->stype != UniversalIO::AO &&
-                    it->stype != UniversalIO::DO )
+                    it->stype != uniset3::AO &&
+                    it->stype != uniset3::DO )
                 return;
         }
 
@@ -594,7 +594,7 @@ namespace uniset
 
         try
         {
-            if( it->stype == UniversalIO::AI )
+            if( it->stype == uniset3::AI )
             {
                 int val = card->getAnalogChannel(it->subdev, it->channel, it->range, it->aref, it->adelay);
 
@@ -607,7 +607,7 @@ namespace uniset
 
                 IOBase::processingAsAI( ib, val, shm, force );
             }
-            else if( it->stype == UniversalIO::DI )
+            else if( it->stype == uniset3::DI )
             {
                 bool set = card->getDigitalChannel(it->subdev, it->channel);
                 IOBase::processingAsDI( ib, set, shm, force );
@@ -617,7 +617,7 @@ namespace uniset
                 if( it->si.id == testLamp_s )
                     isTestLamp = set;
             }
-            else if( it->stype == UniversalIO::AO )
+            else if( it->stype == uniset3::AO )
             {
                 if( !it->lamp )
                 {
@@ -710,7 +710,7 @@ namespace uniset
                     }
                 }
             }
-            else if( it->stype == UniversalIO::DO )
+            else if( it->stype == uniset3::DO )
             {
                 bool set = IOBase::processingAsDO(ib, shm, force_out);
 
@@ -718,15 +718,15 @@ namespace uniset
                     card->setDigitalChannel(it->subdev, it->channel, set);
             }
         }
-        catch( const IOController_i::NameNotFound& ex )
+        catch( const uniset3::NameNotFound& ex )
         {
             iolog3 << myname << "(iopoll):(NameNotFound) " << ex.err << endl;
         }
-        catch( const IOController_i::IOBadParam& ex )
+        catch( const uniset3::IOBadParam& ex )
         {
             iolog3 << myname << "(iopoll):(IOBadParam) " << ex.err << endl;
         }
-        catch( const IONotifyController_i::BadRange& ex )
+        catch( const uniset3::BadRange& ex )
         {
             iolog3 << myname << "(iopoll): (BadRange)..." << endl;
         }
@@ -735,7 +735,7 @@ namespace uniset
             iolog3 << myname << "(iopoll): СORBA::SystemException: "
                    << ex.NP_minorString() << endl;
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             iolog3 << myname << "(iopoll): " << ex << endl;
         }
@@ -764,7 +764,7 @@ namespace uniset
 
         for( ; it.getCurrent(); it.goNext() )
         {
-            if( uniset::check_filter(it, s_field, s_fvalue) )
+            if( uniset3::check_filter(it, s_field, s_fvalue) )
                 initIOItem(it);
         }
 
@@ -773,7 +773,7 @@ namespace uniset
     // ------------------------------------------------------------------------------------------
     bool IOControl::readItem( const std::shared_ptr<UniXML>& xml, UniXML::iterator& it, xmlNode* sec )
     {
-        if( uniset::check_filter(it, s_field, s_fvalue) )
+        if( uniset3::check_filter(it, s_field, s_fvalue) )
             initIOItem(it);
 
         return true;
@@ -868,7 +868,7 @@ namespace uniset
         inf->range = 0;
         inf->adelay = 10000;
 
-        if( inf->stype == UniversalIO::AI || inf->stype == UniversalIO::AO )
+        if( inf->stype == uniset3::AI || inf->stype == uniset3::AO )
         {
             inf->range = IOBase::initIntProp(it, "range", prop_prefix, false);
 
@@ -940,12 +940,12 @@ namespace uniset
                 if( it->subdev == IOBase::DefaultSubdev || !it->safevalDefined )
                     continue;
 
-                if( it->stype == UniversalIO::DO || it->lamp )
+                if( it->stype == uniset3::DO || it->lamp )
                 {
                     bool set = it->invert ? !((bool)it->safeval) : (bool)it->safeval;
                     card->setDigitalChannel(it->subdev, it->channel, set);
                 }
-                else if( it->stype == UniversalIO::AO )
+                else if( it->stype == uniset3::AO )
                 {
                     card->setAnalogChannel(it->subdev, it->channel, it->safeval, it->range, it->aref);
                 }
@@ -979,12 +979,12 @@ namespace uniset
             {
                 if( it->lamp )
                     card->setDigitalChannel(it->subdev, it->channel, (bool)it->defval);
-                else if( it->stype == UniversalIO::DO )
+                else if( it->stype == uniset3::DO )
                     card->setDigitalChannel(it->subdev, it->channel, (bool)it->defval);
-                else if( it->stype == UniversalIO::AO )
+                else if( it->stype == uniset3::AO )
                     card->setAnalogChannel(it->subdev, it->channel, it->defval, it->range, it->aref);
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 iolog3 << myname << "(initOutput): " << ex << endl;
             }
@@ -1012,20 +1012,20 @@ namespace uniset
                 // или "лампочки" (т.к. они фиктивные аналоговые датчики)
                 if( it->lamp )
                     card->configureChannel(it->subdev, it->channel, ComediInterface::DO);
-                else if( it->stype == UniversalIO::DI )
+                else if( it->stype == uniset3::DI )
                     card->configureChannel(it->subdev, it->channel, ComediInterface::DI);
-                else if( it->stype == UniversalIO::DO )
+                else if( it->stype == uniset3::DO )
                     card->configureChannel(it->subdev, it->channel, ComediInterface::DO);
-                else if( it->stype == UniversalIO::AI )
+                else if( it->stype == uniset3::AI )
                 {
                     card->configureChannel(it->subdev, it->channel, ComediInterface::AI);
                     it->df.init( card->getAnalogChannel(it->subdev, it->channel, it->range, it->aref, it->adelay) );
                 }
-                else if( it->stype == UniversalIO::AO )
+                else if( it->stype == uniset3::AO )
                     card->configureChannel(it->subdev, it->channel, ComediInterface::AO);
 
             }
-            catch( const uniset::Exception& ex)
+            catch( const uniset3::Exception& ex)
             {
                 iocrit << myname << "(initIOCard): sid=" << it->si.id << " " << ex << endl;
             }
@@ -1051,7 +1051,7 @@ namespace uniset
             {
                 card->setDigitalChannel(io->subdev, io->channel, bstate);
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 iocrit << myname << "(blink): " << ex << endl;
             }
@@ -1127,17 +1127,17 @@ namespace uniset
                         if( it->subdev == IOBase::DefaultSubdev || !it->safevalDefined )
                             continue;
 
-                        if( it->stype == UniversalIO::DO || it->lamp )
+                        if( it->stype == uniset3::DO || it->lamp )
                         {
                             bool set = it->invert ? !((bool)it->safeval) : (bool)it->safeval;
                             card->setDigitalChannel(it->subdev, it->channel, set);
                         }
-                        else if( it->stype == UniversalIO::AO )
+                        else if( it->stype == uniset3::AO )
                         {
                             card->setAnalogChannel(it->subdev, it->channel, it->safeval, it->range, it->aref);
                         }
                     }
-                    catch( const uniset::Exception& ex )
+                    catch( const uniset3::Exception& ex )
                     {
                         iolog3 << myname << "(sigterm): " << ex << endl;
                     }
@@ -1146,7 +1146,7 @@ namespace uniset
             }
 
         }
-        catch( const uniset::Exception& ex)
+        catch( const uniset3::Exception& ex)
         {
             iocrit << myname << "(check_testmode): " << ex << endl;
         }
@@ -1178,7 +1178,7 @@ namespace uniset
                 if( !it->lamp || it->no_testlamp )
                     continue;
 
-                if(  it->stype == UniversalIO::AO )
+                if(  it->stype == uniset3::AO )
                 {
                     if( isTestLamp )
                     {
@@ -1199,7 +1199,7 @@ namespace uniset
                         delBlink(it, lstBlink3);
                     }
                 }
-                else if( it->stype == UniversalIO::DO )
+                else if( it->stype == uniset3::DO )
                 {
                     if( isTestLamp )
                         addBlink(it, lstBlink);
@@ -1208,7 +1208,7 @@ namespace uniset
                 }
             }
         }
-        catch( const uniset::Exception& ex)
+        catch( const uniset3::Exception& ex)
         {
             iocrit << myname << "(check_testlamp): " << ex << endl;
         }
@@ -1220,7 +1220,7 @@ namespace uniset
 
     // -----------------------------------------------------------------------------
     std::shared_ptr<IOControl> IOControl::init_iocontrol(int argc, const char* const* argv,
-            uniset::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
+            uniset3::ObjectId icID, const std::shared_ptr<SharedMemory>& ic,
             const std::string& prefix )
     {
         auto conf = uniset_conf();
@@ -1234,7 +1234,7 @@ namespace uniset
 
         ObjectId ID = conf->getObjectID(name);
 
-        if( ID == uniset::DefaultObjectId )
+        if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(iocontrol): Unknown ID for " << name
                  << "' Not found in <objects>" << endl;
@@ -1295,7 +1295,7 @@ namespace uniset
     // -----------------------------------------------------------------------------
     SimpleInfo* IOControl::getInfo( const char* userparam )
     {
-        uniset::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+        uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
 
         ostringstream inf;
 
@@ -1372,13 +1372,13 @@ namespace uniset
                 if( ioThread && !ioThread->isRunning() )
                     ioThread->start();
 
-                askSensors(UniversalIO::UIONotify);
+                askSensors(uniset3::UIONotify);
                 break;
             }
 
             case SystemMessage::FoldUp:
             case SystemMessage::Finish:
-                askSensors(UniversalIO::UIODontNotify);
+                askSensors(uniset3::UIODontNotify);
                 break;
 
             case SystemMessage::WatchDog:
@@ -1391,7 +1391,7 @@ namespace uniset
                 if( shm->isLocalwork() )
                     break;
 
-                askSensors(UniversalIO::UIONotify);
+                askSensors(uniset3::UIONotify);
 
                 // принудительно обновляем состояния...
                 try
@@ -1426,7 +1426,7 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::askSensors( UniversalIO::UIOCommand cmd )
+    void IOControl::askSensors( uniset3::UIOCommand cmd )
     {
         if( force_out )
             return;
@@ -1459,7 +1459,7 @@ namespace uniset
             if( testLamp_s != DefaultObjectId )
                 shm->askSensor(testLamp_s, cmd);
         }
-        catch( const uniset::Exception& ex)
+        catch( const uniset3::Exception& ex)
         {
             iocrit << myname << "(askSensors): " << ex << endl;
         }
@@ -1469,7 +1469,7 @@ namespace uniset
             if( testMode_as != DefaultObjectId )
                 shm->askSensor(testMode_as, cmd);
         }
-        catch( const uniset::Exception& ex )
+        catch( const uniset3::Exception& ex )
         {
             iocrit << myname << "(askSensors): " << ex << endl;
         }
@@ -1484,13 +1484,13 @@ namespace uniset
             if( card == NULL || it->subdev == IOBase::DefaultSubdev || it->channel == IOBase::DefaultChannel )
                 continue;
 
-            if( it->stype == UniversalIO::AO || it->stype == UniversalIO::DO )
+            if( it->stype == uniset3::AO || it->stype == uniset3::DO )
             {
                 try
                 {
                     shm->askSensor(it->si.id, cmd, myid);
                 }
-                catch( const uniset::Exception& ex )
+                catch( const uniset3::Exception& ex )
                 {
                     iocrit << myname << "(askSensors): " << ex << endl;
                 }
@@ -1498,7 +1498,7 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::sensorInfo( const uniset::SensorMessage* sm )
+    void IOControl::sensorInfo( const uniset3::SensorMessage* sm )
     {
         iolog1 << myname << "(sensorInfo): sm->id=" << sm->id
                << " val=" << sm->value << endl;
@@ -1525,7 +1525,7 @@ namespace uniset
                        << " value=" << sm->value
                        << endl;
 
-                if( it->stype == UniversalIO::AO )
+                if( it->stype == uniset3::AO )
                 {
                     long prev_val = 0;
                     long cur_val = 0;
@@ -1621,7 +1621,7 @@ namespace uniset
                         }
                     }
                 }
-                else if( it->stype == UniversalIO::DO )
+                else if( it->stype == uniset3::DO )
                 {
                     iolog1 << myname << "(sensorInfo): DO: sm->id=" << sm->id
                            << " val=" << sm->value << endl;
@@ -1635,7 +1635,7 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::timerInfo( const uniset::TimerMessage* tm )
+    void IOControl::timerInfo( const uniset3::TimerMessage* tm )
     {
 
     }
@@ -1778,7 +1778,7 @@ namespace uniset
                 cards[cardnum] = new ComediInterface(iodev, cname);
                 noCards = false;
             }
-            catch( const uniset::Exception& ex )
+            catch( const uniset3::Exception& ex )
             {
                 iocrit << myname << "(buildCardsList): " << ex << endl;
                 throw;
@@ -1842,4 +1842,4 @@ namespace uniset
         }
     }
     // -----------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3

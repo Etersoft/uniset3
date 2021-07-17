@@ -21,7 +21,7 @@
 #include <UniSetObject.h>
 #include "UniSetTypes.h"
 // -----------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
 
     class SMonitor:
@@ -29,19 +29,19 @@ namespace uniset
     {
         public:
 
-            SMonitor( uniset::ObjectId id );
+            SMonitor( uniset3::ObjectId id );
             ~SMonitor();
 
             // -----
-            static std::string printEvent( const uniset::SensorMessage* sm );
+            static std::string printEvent( const uniset3::SensorMessage* sm );
 
         protected:
-            virtual void sysCommand( const uniset::SystemMessage* sm ) override;
-            virtual void sensorInfo( const uniset::SensorMessage* si ) override;
+            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::SensorMessage* si ) override;
             SMonitor();
 
         private:
-            typedef std::list<uniset::ParamSInfo> MyIDList;
+            typedef std::list<uniset3::ParamSInfo> MyIDList;
             MyIDList lst;
             std::string script;
     };

@@ -26,7 +26,7 @@
 // --------------------------------------------------------------------------
 using namespace std;
 // --------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // --------------------------------------------------------------------------
     namespace MTR
@@ -198,7 +198,7 @@ namespace uniset
             return false;
         }
         // -----------------------------------------------------------------------------
-        bool setBaudRate( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrBaudRate br )
+        bool setBaudRate( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrBaudRate br )
         {
             try
             {
@@ -231,7 +231,7 @@ namespace uniset
             return false;
         }
         // -----------------------------------------------------------------------------
-        bool setParity( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrParity p )
+        bool setParity( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr, mtrParity p )
         {
             try
             {
@@ -263,7 +263,7 @@ namespace uniset
             return false;
         }
         // -----------------------------------------------------------------------------
-        std::string getModelNumber( uniset::ModbusClient* mb, ModbusRTU::ModbusAddr addr )
+        std::string getModelNumber( uniset3::ModbusClient* mb, ModbusRTU::ModbusAddr addr )
         {
             try
             {
@@ -645,7 +645,7 @@ namespace uniset
         }
         std::ostream& operator<<(std::ostream& os, MTR::T8& t )
         {
-            uniset::ios_fmt_restorer l(os);
+            uniset3::ios_fmt_restorer l(os);
             os << setfill('0') << hex
                << setw(2) << t.hour() << ":" << setw(2) << t.min()
                << " " << setw(2) << t.day() << "/" << setw(2) << t.mon();
@@ -653,7 +653,7 @@ namespace uniset
         }
         std::ostream& operator<<(std::ostream& os, MTR::T9& t )
         {
-            uniset::ios_fmt_restorer l(os);
+            uniset3::ios_fmt_restorer l(os);
             os << setfill('0') << hex
                << setw(2) << t.hour() << ":" << setw(2) << t.min()
                << ":" << setw(2) << t.sec() << "." << setw(2) << t.ssec();
@@ -661,7 +661,7 @@ namespace uniset
         }
         std::ostream& operator<<(std::ostream& os, MTR::T10& t )
         {
-            uniset::ios_fmt_restorer l(os);
+            uniset3::ios_fmt_restorer l(os);
             os << setfill('0') << dec
                << setw(4) << t.year() << "/" << setw(2) << t.mon()
                << "/" << setw(2) << t.day();
@@ -689,5 +689,5 @@ namespace uniset
         }
         // ------------------------------------------------------------------------------------------
     } // end of namespace MTR
-} // end of namespace uniset
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------

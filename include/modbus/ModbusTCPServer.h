@@ -16,7 +16,7 @@
 #include "UTCPSocket.h"
 #include "EventLoopServer.h"
 // -------------------------------------------------------------------------
-namespace uniset
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     /*! ModbusTCPServer
@@ -159,7 +159,7 @@ namespace uniset
             ModbusRTU::mbErrCode preReceiveEvent( const std::unordered_set<ModbusRTU::ModbusAddr> vaddr, timeout_t tout );
     };
     // -------------------------------------------------------------------------
-} // end of namespace uniset
+} // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // ModbusTCPServer_H_
 // -------------------------------------------------------------------------
