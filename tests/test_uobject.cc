@@ -28,7 +28,7 @@ void initTest()
     }
 }
 // --------------------------------------------------------------------------
-static void pushMessage( long id, Message::Priority p )
+static void pushMessage( long id, messages::Priority p )
 {
     SensorMessage sm(id, id);
     sm.priority = p;
@@ -46,37 +46,37 @@ TEST_CASE( "UObject: priority messages", "[uobject]" )
      * Хотя в реальности, оно должно совпадать с id объекта получателя.
      */
 
-    pushMessage(100, Message::Low);
-    pushMessage(101, Message::Low);
-    pushMessage(200, Message::Medium);
-    pushMessage(300, Message::High);
-    pushMessage(301, Message::High);
+    pushMessage(100, messages::mpLow);
+    pushMessage(101, messages::mpLow);
+    pushMessage(200, messages::mpMedium);
+    pushMessage(300, messages::mpHigh);
+    pushMessage(301, messages::mpHigh);
 
     // теперь проверяем что сперва вынули Hi
     // но так же контролируем что порядок извлечения правильный
     // в порядке поступления в очередь
     auto m = uobj->getOneMessage();
-    REQUIRE( m->priority == Message::High );
+    REQUIRE( m->priority == messages::mpHigh );
     REQUIRE( m->consumer == 300 );
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == Message::High );
+    REQUIRE( m->priority == messages::mpHigh );
     REQUIRE( m->consumer == 301 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == Message::Medium );
+    REQUIRE( m->priority == messages::mpMedium );
     REQUIRE( m->consumer == 200 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == Message::Low );
+    REQUIRE( m->priority == messages::mpLow );
     REQUIRE( m->consumer == 100 );
 
-    pushMessage(201, Message::Medium);
+    pushMessage(201, messages::mpMedium);
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == Message::Medium );
+    REQUIRE( m->priority == messages::mpMedium );
     REQUIRE( m->consumer == 201 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == Message::Low );
+    REQUIRE( m->priority == messages::mpLow );
     REQUIRE( m->consumer == 101 );
 
     REQUIRE( uobj->mqEmpty() == true );

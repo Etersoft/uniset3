@@ -5,6 +5,7 @@ package uniset3;
 option optimize_for = LITE_RUNTIME;
 // ---------------------------------------------------------------------------
 import "UniSetTypes.proto";
+import "MessageTypes.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 // ---------------------------------------------------------------------------
@@ -17,7 +18,7 @@ import "google/protobuf/empty.proto";
   */
 service UniSetManager_i {
     /*!< распространить сообщение всем подчиненным объектам */
-    rpc broadcast(uniset3.TransportMessage) returns(google.protobuf.Empty) {}
+    rpc broadcast(uniset3.messages.TransportMessage) returns(google.protobuf.Empty) {}
 
     /*! получение информации о состоянии подчиненных объектов(менеджеров)
      * \param userparam - Необязательный пользовательский параметр (см. UniSetObject_i::getInfo()).
@@ -39,6 +40,6 @@ service UniSetManager_i {
 // ---------------------------------------------------------------------------
 message ObjectsInfoParams {
     int32 MaxLength = 1;
-    string userparam = 2;
+    string userparams = 2;
 }
 // ---------------------------------------------------------------------------

@@ -939,7 +939,7 @@ namespace uniset3
         updateThresholds();
     }
     // -------------------------------------------------------------------------
-    void MBSlave::sysCommand( const uniset3::SystemMessage* sm )
+    void MBSlave::sysCommand( const uniset3::messages::SystemMessage* sm )
     {
         switch( sm->command )
         {
@@ -1076,7 +1076,7 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBSlave::sensorInfo( const uniset3::SensorMessage* sm )
+    void MBSlave::sensorInfo( const uniset3::messages::SensorMessage* sm )
     {
         for( auto&& regs : iomap )
         {

@@ -28,11 +28,10 @@
 #include <iomanip>
 #include <string>
 #include <cassert>
-#include <omniORB4/internal/initRefs.h>
 
 #include "Configuration.h"
 #include "Exceptions.h"
-#include "MessageType.h"
+#include "MessageTypes.pb.h"
 #include "ObjectIndex_Array.h"
 #include "ObjectIndex_XML.h"
 #include "ObjectIndex_idXML.h"
@@ -105,9 +104,6 @@ namespace uniset3
     Configuration::Configuration():
         oind(NULL),
         unixml(nullptr),
-        //      _argc(0),
-        //      _argv(nullptr),
-        NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
         localDBServer(uniset3::DefaultObjectId),
         localNode(uniset3::DefaultObjectId),
@@ -137,9 +133,6 @@ namespace uniset3
     Configuration::Configuration( int argc, const char* const* argv, const string& xmlfile ):
         oind(nullptr),
         unixml(nullptr),
-        //      _argc(argc),
-        //      _argv(argv),
-        NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
         localDBServer(uniset3::DefaultObjectId),
         localNode(uniset3::DefaultObjectId),
@@ -153,9 +146,6 @@ namespace uniset3
                                   const string& fileConf ):
         oind(nullptr),
         unixml(nullptr),
-        //      _argc(argc),
-        //      _argv(argv),
-        NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
         localDBServer(uniset3::DefaultObjectId),
         localNode(uniset3::DefaultObjectId),
@@ -169,7 +159,6 @@ namespace uniset3
     Configuration::Configuration( int argc, const char* const* argv, std::shared_ptr<UniXML> xml ):
         oind(nullptr),
         unixml(xml),
-        NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
         localDBServer(uniset3::DefaultObjectId),
         localNode(uniset3::DefaultObjectId),
@@ -182,9 +171,6 @@ namespace uniset3
     Configuration::Configuration( int argc, const char* const* argv, const string& fileConf,
                                   uniset3::ObjectInfo* omap ):
         oind(NULL),
-        //      _argc(argc),
-        //      _argv(argv),
-        NSName("NameService"),
         repeatCount(2), repeatTimeout(100),
         localDBServer(uniset3::DefaultObjectId),
         localNode(uniset3::DefaultObjectId),
@@ -227,12 +213,6 @@ namespace uniset3
             rootDir = "";
         else
             rootDir = string(curdir) + "/";
-
-        {
-            ostringstream s;
-            s << this << "NameService";
-            NSName = s.str();
-        }
 
         try
         {
@@ -297,7 +277,6 @@ namespace uniset3
             initLogStream(ulog(), "ulog");
 
             // default init...
-            transientIOR = false;
             localIOR     = false;
 
             const string lnode( getArgParam("--localNode") );
@@ -316,200 +295,8 @@ namespace uniset3
             if( lior )
                 localIOR = lior;
 
-            // transientIOR
-            int tior = getArgInt("--transientIOR");
-
-            if( tior )
-                transientIOR = tior;
-
-            if( imagesDir[0] != '/' && imagesDir[0] != '.' )
-                imagesDir = dataDir + imagesDir + "/";
-
             // считываем список узлов
             createNodesList();
-
-            std::list< std::pair<string, string> > omniParams;
-            // ---------------------------------------------------------------------------------
-            UniXML::iterator omniIt(unixml->findNode(unixml->getFirstNode(), "omniORB") );
-
-            if( omniIt && omniIt.goChildren() )
-            {
-                for(; omniIt.getCurrent(); omniIt++ )
-                {
-                    const std::string p(omniIt.getProp("name"));
-
-                    if( p.empty() )
-                    {
-                        uwarn << "(Configuration::init): unknown omniORB param...name=''" << endl;
-                    }
-                    else
-                    {
-                        // для endPoint надо отдельно проверить доступность адреса
-                        // иначе инициализация omni не произойдёт, а нужно чтобы
-                        // всё запускалось даже если сеть не вся "поднялась"
-                        if( p == "endPoint" )
-                        {
-                            const string param(omniIt.getProp("arg"));
-                            bool endPointIsAvailable = omniIt.getProp("ignore_checking").empty() ? checkOmniORBendPoint(param) : true;
-
-                            // по умолчанию "недоступность" игнорируется
-                            // но если указан параметр 'error_if_not_available'
-                            // то кидаем исключение при недоступности
-                            if( !endPointIsAvailable && !omniIt.getProp("error_if_not_available").empty() )
-                            {
-                                ostringstream err;
-                                err << "Configuration: ERROR: endpoint '"
-                                    << param
-                                    << "' not available!";
-
-                                ucrit << err.str() << endl;
-                                throw Exception(err.str());
-                            }
-
-                            if( endPointIsAvailable )
-                            {
-                                uinfo << "(Configuration): add omniORB option '" << p << "' " << param << endl;
-                                omniParams.emplace_back( std::make_pair(p, param) );
-                            }
-                        }
-                        else
-                        {
-                            const string a(omniIt.getProp("arg"));
-                            uinfo << "(Configuration): add omniORB option '" << p << "' " << a << endl;
-                            omniParams.emplace_back( std::make_pair(p, a) );
-                        }
-                    }
-                }
-            }
-
-
-            xmlNode* nsnode = getNode("NameService");
-
-            // ---------------------------------------------------------------------------------
-            // формируем options для ORB_init()
-            // Прототип из документации на omniORB4: const char* options[][2] = { { "traceLevel", "1" }, { 0, 0 } };
-            // --------------------------------------------------
-            // + спискок узлов (сформированный из configure.xml)
-            // + список параметров omniORB из секции <omniORB>
-            // +1 для завершающего {0,0}
-            int onum = lnodes.size() + omniParams.size() + 1;
-
-            if( nsnode )
-                onum += 1; // +1 --> IniRef NameService=
-
-            const char* (*omni_options)[2] = new const char* [onum][2];
-
-            int i = 0;
-
-            // формируем новые, используя i в качестве индекса
-            for( const auto& it : lnodes )
-            {
-                // делаем uni_strdup чтобы потом не думая
-                // "где мы выделяли, а где не мы"
-                // делать delete[]
-                omni_options[i][0] = uni_strdup("InitRef");
-
-                string name(oind->getNodeName(it.id));
-                ostringstream o;
-                o << this << name;
-                name = o.str();
-                o << "=corbaname::" << it.host << ":" << it.port;
-                omni_options[i][1] = uni_strdup(o.str());
-
-                uinfo << "(Configuration): add omniORB option 'InitRef' (nodes) " << o.str() << endl;
-                i++;
-
-                ostringstream uri;
-                uri << "corbaname::" << it.host << ":" << it.port;
-
-                if( !omni::omniInitialReferences::setFromArgs(name.c_str(), uri.str().c_str()) )
-                    ucrit << "(Configuration): init omniInitialReferences: FAILED ADD name=" << name << " uri=" << uri.str() << endl;
-
-                assert( i < onum );
-            }
-
-            for( const auto& p : omniParams )
-            {
-                // делаем uni_strdup чтобы потом не думая
-                // "где мы выделяли, а где не мы"
-                // делать delete[]
-                omni_options[i][0] = uni_strdup(p.first);
-                omni_options[i][1] = uni_strdup(p.second);
-                i++;
-                assert( i < onum );
-            }
-
-            // initRef for NameService
-            if( nsnode )
-            {
-                // делаем uni_strdup чтобы потом не думая
-                // "где мы выделяли, а где не мы"
-                // делать delete[]
-                omni_options[i][0] = uni_strdup("InitRef");
-                const string defPort( getPort( getProp(nsnode, "port") ) );
-
-                ostringstream param;
-                param << this << "NameService=corbaname::" << getProp(nsnode, "host") << ":" << defPort;
-                omni_options[i][1] = uni_strdup(param.str());
-                uinfo << "(Configuration): add omniORB option 'InitRef' " << param.str() << endl;
-
-                {
-                    ostringstream ns_name;
-                    ns_name << this << "NameService";
-                    ostringstream uri;
-                    uri << "corbaname::" << getProp(nsnode, "host") << ":" << defPort;
-
-                    if( !omni::omniInitialReferences::setFromArgs(ns_name.str().c_str(), uri.str().c_str()) )
-                        cerr << "**********************!!!! FAILED ADD name=" << ns_name.str() << " uri=" << uri.str() << endl;
-                }
-
-                i++;
-            }
-            else
-                uwarn << "(Configuration): не нашли раздела 'NameService' \n";
-
-            omni_options[i][0] = 0;
-            omni_options[i][1] = 0;
-            // ------------- CORBA INIT -------------
-            // orb init
-            orb = CORBA::ORB_init(_argc, (char**)_argv, "omniORB4", omni_options);
-
-            // освобождаем память..
-            for( int k = 0; k < onum; k++ )
-            {
-                // на самом деле последний элемент = {0,0}
-                // но delete от 0 разрешён и не приводит "к краху"
-                // так что отдельно не обрабатываем этот случай.
-
-                delete[] omni_options[k][0]; // см. uni_strdup()
-                delete[] omni_options[k][1]; // см. uni_strdup()
-            }
-
-            delete[] omni_options;
-
-            // create policy
-            CORBA::Object_var obj = orb->resolve_initial_references("RootPOA");
-            PortableServer::POA_var root_poa = PortableServer::POA::_narrow(obj);
-
-            if( transientIOR == false )
-            {
-                policyList.length(3);
-                policyList[0] = root_poa->create_lifespan_policy(PortableServer::PERSISTENT);
-                policyList[1] = root_poa->create_id_assignment_policy(PortableServer::USER_ID);
-                policyList[2] = root_poa->create_request_processing_policy(PortableServer::USE_ACTIVE_OBJECT_MAP_ONLY);
-                //            policyList[3] = root_poa->create_thread_policy(PortableServer::SINGLE_THREAD_MODEL);
-            }
-            else
-            {
-                policyList.length(3);
-                policyList[0] = root_poa->create_lifespan_policy(PortableServer::TRANSIENT);
-                policyList[1] = root_poa->create_servant_retention_policy(PortableServer::RETAIN);
-                policyList[2] = root_poa->create_request_processing_policy(PortableServer::USE_ACTIVE_OBJECT_MAP_ONLY);
-                //            policyList[3] = root_poa->create_thread_policy(PortableServer::SINGLE_THREAD_MODEL);
-            }
-
-            // ---------------------------------------
-
         }
         catch( const uniset3::Exception& ex )
         {
@@ -611,21 +398,17 @@ namespace uniset3
             {
                 repeatCount = it.getPIntProp("name", 1);
             }
-            else if( name == "ImagesPath" ) // DEPRECATED
-            {
-                imagesDir = dataDir + it.getProp("name") + "/"; // ????????
-            }
             else if( name == "HttpResolver" )
             {
                 httpResolverPort = it.getPIntProp("port", httpResolverPort);
             }
+            else if ( name == "URepository" )
+            {
+                repAddr = it.getProp("addr");
+            }
             else if( name == "LocalIOR" )
             {
                 localIOR = it.getIntProp("name");
-            }
-            else if( name == "TransientIOR" )
-            {
-                transientIOR = it.getIntProp("name");
             }
             else if( name == "DataDir" )
             {
@@ -756,36 +539,6 @@ namespace uniset3
         oind->initLocalNode(localNode);
     }
     // -------------------------------------------------------------------------
-    bool Configuration::checkOmniORBendPoint( const std::string& endPoint )
-    {
-        // проверяем доступность endPoint попыткой создать соединение
-        auto ep = omni::giopEndpoint::str2Endpoint( endPoint.c_str() );
-
-        if( !ep )
-            return false;
-
-        bool ret = false;
-
-        try
-        {
-            ret = ep->Bind();
-
-            if( ret )
-                ep->Shutdown();
-        }
-        catch( std::exception& ex )
-        {
-            uwarn << "(Configuration::checkOmniORBendPoint): " << ex.what() << endl;
-            ret = false;
-        }
-
-        ulogsys << "(Configuration::checkOmniORBendPoint): check " << endPoint << " "
-                << ( ret ? "OK" : "FAILED" )
-                << endl;
-
-        return ret;
-    }
-    // -------------------------------------------------------------------------
     xmlNode* Configuration::getNode(const string& path) const noexcept
     {
         return unixml->findNode(unixml->getFirstNode(), path);
@@ -866,11 +619,6 @@ namespace uniset3
         return localNodeName;    /*!< получение название локального узла */
     }
     // -------------------------------------------------------------------------
-    const string Configuration::getNSName() const noexcept
-    {
-        return NSName;
-    }
-    // -------------------------------------------------------------------------
     string Configuration::getRootSection() const noexcept
     {
         return secRoot;
@@ -895,7 +643,11 @@ namespace uniset3
     {
         return secServices;
     }
-
+    // -------------------------------------------------------------------------
+    std::string Configuration::repositoryAddress() const noexcept
+    {
+        return repAddr;
+    }
     // -------------------------------------------------------------------------
     void Configuration::createNodesList()
     {
@@ -940,45 +692,40 @@ namespace uniset3
             //             nodename = oind->mkFullNodeName(nodename,nodename);
 
             NodeInfo ninf;
-            ninf.id = oind->getIdByName(nodename);
+            ninf.set_id(oind->getIdByName(nodename));
 
-            if( ninf.id == DefaultObjectId )
+            if( ninf.id() == DefaultObjectId )
             {
                 ucrit << "Configuration(createNodesList): Not found ID for node '" << nodename << "'" << endl;
                 throw uniset3::SystemError("Configuration(createNodesList): Not found ID for node '" + nodename + "'");
             }
 
-            ninf.host = getProp(it, "ip").c_str();
-            string tp(getProp(it, "port"));
-
-            if( tp.empty() )
-                ninf.port = defPort.c_str();
-            else
-                ninf.port = tp.c_str();
+            ninf.set_host(it.getProp("ip"));
+            ninf.set_port(it.getProp2("port", defPort));
 
             string tmp(it.getProp("dbserver"));
 
             if( tmp.empty() )
-                ninf.dbserver = uniset3::DefaultObjectId;
+                ninf.set_dbserver(uniset3::DefaultObjectId);
             else
             {
                 string dname(getServicesSection() + "/" + tmp);
-                ninf.dbserver = oind->getIdByName(dname);
+                ninf.set_dbserver(oind->getIdByName(dname));
 
-                if( ninf.dbserver == DefaultObjectId )
+                if( ninf.dbserver() == DefaultObjectId )
                 {
                     ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << dname << "'" << endl;
                     throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
                 }
             }
 
-            if( ninf.id == getLocalNode() )
-                localDBServer = ninf.dbserver;
+            if( ninf.id() == getLocalNode() )
+                localDBServer = ninf.dbserver();
 
-            ninf.connected = false;
+            ninf.set_connected(false);
 
             initNode(ninf, it);
-            uinfo << "Configuration(createNodesList): add to list of nodes: node=" << nodename << " id=" << ninf.id << endl;
+            uinfo << "Configuration(createNodesList): add to list of nodes: node=" << nodename << " id=" << ninf.id() << endl;
             lnodes.emplace_back( std::move(ninf) );
         }
 
@@ -987,10 +734,10 @@ namespace uniset3
     // -------------------------------------------------------------------------
     void Configuration::initNode( uniset3::NodeInfo& ninfo, UniXML::iterator& it ) noexcept
     {
-        if( ninfo.id == getLocalNode() )
-            ninfo.connected = true;
+        if( ninfo.id() == getLocalNode() )
+            ninfo.set_connected(true);
         else
-            ninfo.connected = false;
+            ninfo.set_connected(false);
     }
     // -------------------------------------------------------------------------
     string Configuration::getPropByNodeName(const string& nodename, const string& prop) const noexcept
@@ -1125,16 +872,6 @@ namespace uniset3
     const std::shared_ptr<UniXML> Configuration::getConfXML() const noexcept
     {
         return unixml;
-    }
-    // -------------------------------------------------------------------------
-    CORBA::ORB_ptr Configuration::getORB() const
-    {
-        return CORBA::ORB::_duplicate(orb);
-    }
-    // -------------------------------------------------------------------------
-    const CORBA::PolicyList Configuration::getPolicy() const noexcept
-    {
-        return policyList;
     }
     // -------------------------------------------------------------------------
     static std::string makeSecName( const std::string& sec, const std::string& name ) noexcept
@@ -1323,11 +1060,6 @@ namespace uniset3
         return fileConfName;
     }
     // -------------------------------------------------------------------------
-    string Configuration::getImagesDir() const noexcept
-    {
-        return imagesDir;    // временно
-    }
-    // -------------------------------------------------------------------------
     timeout_t Configuration::getHeartBeatTime() const noexcept
     {
         return heartbeat_msec;
@@ -1376,11 +1108,6 @@ namespace uniset3
     bool Configuration::isLocalIOR() const noexcept
     {
         return localIOR;
-    }
-
-    bool Configuration::isTransientIOR() const noexcept
-    {
-        return transientIOR;
     }
 
     size_t Configuration::getHttpResovlerPort() const noexcept

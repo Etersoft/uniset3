@@ -164,7 +164,7 @@ string LT_Object::getTimerName( int id ) const
 }
 // ------------------------------------------------------------------------------------------
 
-timeout_t LT_Object::askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks, uniset3::Message::Priority p )
+timeout_t LT_Object::askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks, uniset3::messages::Priority p )
 {
 	if( timeMS > 0 ) // заказ
 	{

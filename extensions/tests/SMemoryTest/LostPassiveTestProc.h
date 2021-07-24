@@ -21,7 +21,7 @@ class LostPassiveTestProc:
         LostPassiveTestProc();
 
         virtual void askSensors( uniset3::UIOCommand cmd ) override;
-        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
 
         std::mutex mut;
         std::unordered_map<uniset3::ObjectId, long> slist;

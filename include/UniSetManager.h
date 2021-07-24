@@ -25,7 +25,7 @@
 #include <memory>
 #include "UniSetTypes.h"
 #include "UniSetObject.h"
-#include "UniSetManager.pb.h"
+#include "UniSetManager.grpc.pb.h"
 //---------------------------------------------------------------------------
 namespace uniset3
 {
@@ -55,32 +55,26 @@ namespace uniset3
     */
     class UniSetManager:
         public UniSetObject,
-        public POA_UniSetManager_i
+        public UniSetManager_i::Service
     {
         public:
-            UniSetManager( uniset3::ObjectId id);
-            UniSetManager( const std::string& name, const std::string& section );
+            UniSetManager( uniset3::ObjectId id );
+
             virtual ~UniSetManager();
 
-            virtual uniset3::ObjectType getType() override
-            {
-                return uniset3::ObjectType("UniSetManager");
-            }
 
             // ------  функции объявленые в интерфейсе(IDL) ------
-            virtual void broadcast( const uniset3::TransportMessage& msg) override;
-            virtual uniset3::SimpleInfoSeq* getObjectsInfo( CORBA::Long MaxLength = 300, const char* userparam = 0  ) override ;
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status broadcast(::grpc::ServerContext* context, const ::uniset3::messages::TransportMessage* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status getObjectsInfo(::grpc::ServerContext* context, const ::uniset3::ObjectsInfoParams* request, ::uniset3::SimpleInfoSeq* response) override;
 
             // --------------------------
+            std::shared_ptr<UniSetManager> get_mptr();
             virtual bool add( const std::shared_ptr<UniSetObject>& obj );
             virtual bool remove( const std::shared_ptr<UniSetObject>& obj );
             // --------------------------
             size_t objectsCount() const;    // количество подчинённых объектов
             // ---------------
-
-            PortableServer::POA_ptr getPOA();
-            PortableServer::POAManager_ptr getPOAManager();
-            std::shared_ptr<UniSetManager> get_mptr();
 
         protected:
 
@@ -99,7 +93,7 @@ namespace uniset3
             // работа со списком менеджеров
             void managers(OManagerCommand cmd);
 
-            void initPOA( const std::weak_ptr<UniSetManager>& rmngr );
+            void initGRPC( const std::weak_ptr<UniSetManager>& rmngr );
 
             //! \note Переопределяя, не забывайте вызвать базовую
             virtual bool activateObject() override;
@@ -116,12 +110,6 @@ namespace uniset3
             void getAllObjectsList(std::vector<std::shared_ptr<UniSetObject> >& vec, size_t lim = 1000 );
 
             typedef UniSetManagerList::iterator MListIterator;
-
-            int getObjectsInfo(const std::shared_ptr<UniSetManager>& mngr, uniset3::SimpleInfoSeq* seq,
-                               int begin, const long uplimit, const char* userparam );
-
-            PortableServer::POA_var poa;
-            PortableServer::POAManager_var pman;
 
             // Функции для работы со списками подчинённых объектов
             // ---------------

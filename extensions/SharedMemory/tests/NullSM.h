@@ -15,7 +15,7 @@ class NullSM:
 
     protected:
 
-        virtual void logging( uniset3::SensorMessage& sm ) override {};
+        virtual void logging( uniset3::messages::SensorMessage& sm ) override {};
 
     private:
 

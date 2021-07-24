@@ -23,7 +23,7 @@
 #include <mutex>
 #include "MessageType.h"
 //--------------------------------------------------------------------------
-typedef std::shared_ptr<uniset3::VoidMessage> VoidMessagePtr;
+typedef std::shared_ptr<uniset3::messages::TransportMessage> VoidMessagePtr;
 //--------------------------------------------------------------------------
 namespace uniset3
 {

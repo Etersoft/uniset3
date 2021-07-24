@@ -18,1012 +18,710 @@
  *  \author Pavel Vainerman
 */
 // --------------------------------------------------------------------------
-#include <omniORB4/CORBA.h>
-#include <omniORB4/omniURI.h>
 #include <string>
 #include <unistd.h>
 #include <stdio.h>
 #include <sstream>
 #include <iomanip>
-#include "ORepHelpers.h"
 #include "UInterface.h"
 #include "Configuration.h"
 #include "PassiveTimer.h"
+#include "IOController.grpc.pb.h"
+#include "UniSetObject.grpc.pb.h"
+#include "UniSetManager.grpc.pb.h"
 
 // -----------------------------------------------------------------------------
 namespace uniset3
 {
-	// -----------------------------------------------------------------------------
-	using namespace omni;
-	using namespace UniversalIO;
-	using namespace std;
-	// -----------------------------------------------------------------------------
-	UInterface::UInterface( const std::shared_ptr<uniset3::Configuration>& _uconf ):
-		rep(_uconf),
-		myid(uniset3::DefaultObjectId),
-		orb(CORBA::ORB::_nil()),
-		rcache(100, 20),
-		oind(_uconf->oind),
-		uconf(_uconf)
-	{
-		init();
-	}
-	// -----------------------------------------------------------------------------
-	UInterface::UInterface( const uniset3::ObjectId backid, CORBA::ORB_var orb, const shared_ptr<uniset3::ObjectIndex> _oind ):
-		rep(uniset3::uniset_conf()),
-		myid(backid),
-		orb(orb),
-		rcache(200, 40),
-		oind(_oind),
-		uconf(uniset3::uniset_conf())
-	{
-		if( oind == nullptr )
-			oind = uconf->oind;
-
-		init();
-	}
-
-	UInterface::~UInterface()
-	{
-	}
-
-	void UInterface::init()
-	{
-		// пытаемся получить ссылку на NameService
-		// в любом случае. даже если включён режим
-		// localIOR
-		localctx = CosNaming::NamingContext::_nil();
-
-		try
-		{
-			ostringstream s;
-			s << uconf << oind->getNodeName(uconf->getLocalNode());
-
-			if( CORBA::is_nil(orb) )
-			{
-				CORBA::ORB_var _orb = uconf->getORB();
-				localctx = ORepHelpers::getRootNamingContext( _orb, s.str() );
-			}
-			else
-				localctx = ORepHelpers::getRootNamingContext( orb, s.str() );
-		}
-		catch( const uniset3::Exception& ex )
-		{
-			//        if( !uconf->isLocalIOR() )
-			//            throw ex;
-
-			localctx = CosNaming::NamingContext::_nil();
-		}
-		catch( const std::exception& ex )
-		{
-			//        if( !uconf->isLocalIOR() )
-			//            throw;
-
-			localctx = CosNaming::NamingContext::_nil();
-		}
-	}
-	// ------------------------------------------------------------------------------------------------------------
-	void UInterface::initBackId( const uniset3::ObjectId backid )
-	{
-		myid = backid;
-	}
-	// ------------------------------------------------------------------------------------------------------------
-	/*!
-	 * \param id - идентификатор датчика
-	 * \return текущее значение датчика
-	 * \exception IOBadParam - генерируется если указано неправильное имя датчика или секции
-	 * \exception IOTimeOut - генерируется если в течение времени timeout не был получен ответ
-	*/
-	long UInterface::getValue( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
-	{
-		if ( id == uniset3::DefaultObjectId )
-			throw uniset3::ORepFailed("UI(getValue): error id=uniset3::DefaultObjectId");
-
-		if( node == uniset3::DefaultObjectId )
-		{
-			ostringstream err;
-			err << "UI(getValue): id='" << id << "' error: node=uniset3::DefaultObjectId";
-			throw uniset3::ORepFailed(err.str());
-		}
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(id, node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for( size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( id, node );
-
-					IOController_i_var iom = uniset3::_narrow(oref);
-					return iom->getValue(id);
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch( const uniset3::TimeOut& ) {}
-		catch( const uniset3::NameNotFound& ex )
-		{
-			rcache.erase(id, node);
-			throw uniset3::NameNotFound("UI(getValue): " + string(ex.err));
-		}
-		catch( const uniset3::IOBadParam& ex )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam("UI(getValue): " + string(ex.err));
-		}
-		catch( const uniset3::ORepFailed& )
-		{
-			rcache.erase(id, node);
-			// не смогли получить ссылку на объект
-			throw uniset3::IOBadParam(set_err("UI(getValue): uniset3::ORepFailed", id, node));
-		}
-		catch( const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(getValue): method no implement", id, node));
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(getValue): object not exist", id, node));
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			// ошибка системы коммуникации
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(getValue): CORBA::SystemException" << endl;
-		}
-
-		rcache.erase(id, node);
-		throw uniset3::TimeOut(set_err("UI(getValue): TimeOut", id, node));
-	}
-
-	long UInterface::getValue( const uniset3::ObjectId name ) const
-	{
-		return getValue(name, uconf->getLocalNode());
-	}
-
-
-	// ------------------------------------------------------------------------------------------------------------
-	void UInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefined, uniset3::ObjectId sup_id )
-	{
-		if( si.id == uniset3::DefaultObjectId )
-		{
-			uwarn << "UI(setUndefinedState): ID=uniset3::DefaultObjectId" << endl;
-			return;
-		}
-
-		if( sup_id == uniset3::DefaultObjectId )
-			sup_id = myid;
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(si.id, si.node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( si.id, si.node );
-
-					IOController_i_var iom = uniset3::_narrow(oref);
-					iom->setUndefinedState(si.id, undefined, sup_id );
-					return;
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch( const uniset3::TimeOut& ) {}
-		catch(const uniset3::NameNotFound&  ex)
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(setUndefinedState):" + string(ex.err), si.id, si.node) << endl;
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(si.id, si.node);
-			throw uniset3::IOBadParam("UI(setUndefinedState): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(si.id, si.node);
-			// не смогли получить ссылку на объект
-			uwarn << set_err("UI(setUndefinedState): resolve failed", si.id, si.node) << endl;
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(setUndefinedState): method no implement", si.id, si.node) << endl;
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(setUndefinedState): object not exist", si.id, si.node) << endl;
-		}
-		catch( const CORBA::COMM_FAILURE& ) {}
-		catch( const CORBA::SystemException& ex ) {}
-		catch(...) {}
-
-		rcache.erase(si.id, si.node);
-		uwarn << set_err("UI(setUndefinedState): Timeout", si.id, si.node) << endl;
-	}
-	// ------------------------------------------------------------------------------------------------------------
-	void UInterface::freezeValue( const uniset3::SensorInfo& si, bool set, long value, uniset3::ObjectId sup_id )
-	{
-		if( si.id == uniset3::DefaultObjectId )
-		{
-			uwarn << "UI(freezeValue): ID=uniset3::DefaultObjectId" << endl;
-			return;
-		}
-
-		if( sup_id == uniset3::DefaultObjectId )
-			sup_id = myid;
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(si.id, si.node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( si.id, si.node );
-
-					IOController_i_var iom = uniset3::_narrow(oref);
-					iom->freezeValue(si.id, set, value, sup_id );
-					return;
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch( const uniset3::TimeOut& ) {}
-		catch(const uniset3::NameNotFound&  ex)
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(freezeValue):" + string(ex.err), si.id, si.node) << endl;
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(si.id, si.node);
-			throw uniset3::IOBadParam("UI(freezeValue): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(si.id, si.node);
-			// не смогли получить ссылку на объект
-			uwarn << set_err("UI(freezeValue): resolve failed", si.id, si.node) << endl;
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(freezeValue): method no implement", si.id, si.node) << endl;
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(freezeValue): object not exist", si.id, si.node) << endl;
-		}
-		catch( const CORBA::COMM_FAILURE& ) {}
-		catch( const CORBA::SystemException& ex ) {}
-		catch(...) {}
-
-		rcache.erase(si.id, si.node);
-		uwarn << set_err("UI(freezeValue): Timeout", si.id, si.node) << endl;
-	}
-	// ------------------------------------------------------------------------------------------------------------
-	/*!
-	 * \param id - идентификатор датчика
-	 * \param value - значение, которое необходимо установить
-	 * \return текущее значение датчика
-	 * \exception IOBadParam - генерируется, если указано неправильное имя вывода или секции
-	*/
-	void UInterface::setValue( const uniset3::ObjectId id, long value, const uniset3::ObjectId node, const uniset3::ObjectId sup_id ) const
-	{
-		if ( id == uniset3::DefaultObjectId )
-			throw uniset3::ORepFailed("UI(setValue): error: id=uniset3::DefaultObjectId");
-
-		if ( node == uniset3::DefaultObjectId )
-		{
-			ostringstream err;
-			err << "UI(setValue): id='" << id << "' error: node=uniset3::DefaultObjectId";
-			throw uniset3::ORepFailed(err.str());
-		}
-
-		/*
-			if ( sup_id == uniset3::DefaultObjectId )
-			{
-				ostringstream err;
-				err << "UI(setValue): id='" << id << "' error: supplier=uniset3::DefaultObjectId";
-				throw uniset3::ORepFailed(err.str());
-			}
-		*/
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(id, node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( id, node );
-
-					IOController_i_var iom = uniset3::_narrow(oref);
-					iom->setValue(id, value, sup_id);
-					return;
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch( const uniset3::TimeOut& ) {}
-		catch(const uniset3::NameNotFound&  ex)
-		{
-			rcache.erase(id, node);
-			throw uniset3::NameNotFound(set_err("UI(setValue): const uniset3::NameNotFound&  для объекта", id, node));
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam("UI(setValue): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(id, node);
-			// не смогли получить ссылку на объект
-			throw uniset3::IOBadParam(set_err("UI(setValue): resolve failed ", id, node));
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(setValue): method no implement", id, node));
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(setValue): object not exist", id, node));
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			// ошибка системы коммуникации
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-		}
-
-		rcache.erase(id, node);
-		throw uniset3::TimeOut(set_err("UI(setValue): Timeout", id, node));
-	}
-
-	void UInterface::setValue( const uniset3::ObjectId name, long value ) const
-	{
-		setValue(name, value, uconf->getLocalNode(), myid);
-	}
-
-
-	void UInterface::setValue( const uniset3::SensorInfo& si, long value, const uniset3::ObjectId sup_id ) const
-	{
-		setValue(si.id, value, si.node, sup_id);
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	// функция не вырабатывает исключений!
-	void UInterface::fastSetValue( const uniset3::SensorInfo& si, long value, uniset3::ObjectId sup_id ) const
-	{
-		if ( si.id == uniset3::DefaultObjectId )
-		{
-			uwarn << "UI(fastSetValue): ID=uniset3::DefaultObjectId" << endl;
-			return;
-		}
-
-		if( sup_id == uniset3::DefaultObjectId )
-			sup_id = myid;
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(si.id, si.node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( si.id, si.node );
-
-					IOController_i_var iom = uniset3::_narrow(oref);
-					iom->setValue(si.id, value, sup_id);
-					return;
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch( const uniset3::TimeOut& ) {}
-		catch(const uniset3::NameNotFound&  ex)
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(fastSetValue): const uniset3::NameNotFound&  для объекта", si.id, si.node) << endl;
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(si.id, si.node);
-			throw uniset3::IOBadParam("UI(fastSetValue): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(si.id, si.node);
-			// не смогли получить ссылку на объект
-			uwarn << set_err("UI(fastSetValue): resolve failed ", si.id, si.node) << endl;
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(fastSetValue): method no implement", si.id, si.node) << endl;
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(si.id, si.node);
-			uwarn << set_err("UI(fastSetValue): object not exist", si.id, si.node) << endl;
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			// ошибка системы коммуникации
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(setValue): CORBA::SystemException" << endl;
-		}
-		catch(...) {}
-
-		rcache.erase(si.id, si.node);
-		uwarn << set_err("UI(fastSetValue): Timeout", si.id, si.node) << endl;
-	}
-
-
-	// ------------------------------------------------------------------------------------------------------------
-	/*!
-	 * \param id     - идентификатор датчика
-	 * \param node        - идентификатор узла на котором заказывается датчик
-	 * \param cmd - команда см. \ref uniset3::UIOCommand
-	 * \param backid - обратный адрес (идентификатор заказчика)
-	*/
-	void UInterface::askRemoteSensor( const uniset3::ObjectId id, uniset3::UIOCommand cmd,
-									  const uniset3::ObjectId node,
-									  uniset3::ObjectId backid ) const
-	{
-		if( backid == uniset3::DefaultObjectId )
-			backid = myid;
-
-		if( backid == uniset3::DefaultObjectId )
-			throw uniset3::IOBadParam("UI(askRemoteSensor): unknown back ID");
-
-		if ( id == uniset3::DefaultObjectId )
-			throw uniset3::ORepFailed("UI(askRemoteSensor): error: id=uniset3::DefaultObjectId");
-
-		if ( node == uniset3::DefaultObjectId )
-		{
-			ostringstream err;
-			err << "UI(askRemoteSensor): id='" << id << "' error: node=uniset3::DefaultObjectId";
-			throw uniset3::ORepFailed(err.str());
-		}
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(id, node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( id, node );
-
-					IONotifyController_i_var inc = uniset3::_narrow(oref);
-					uniset3::ConsumerInfo_var ci;
-					ci->id = backid;
-					ci->node = uconf->getLocalNode();
-					inc->askSensor(id, ci, cmd );
-					return;
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch( const uniset3::TimeOut& ) {}
-		catch(const uniset3::NameNotFound&  ex)
-		{
-			rcache.erase(id, node);
-			throw uniset3::NameNotFound("UI(askSensor): " + string(ex.err) );
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam("UI(askSensor): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(id, node);
-			// не смогли получить ссылку на объект
-			throw uniset3::IOBadParam(set_err("UI(askSensor): resolve failed ", id, node));
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(askSensor): method no implement", id, node));
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(askSensor): object not exist", id, node));
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(askSensor): ошибка системы коммуникации" << endl;
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(askSensor): CORBA::SystemException" << endl;
-		}
-
-		rcache.erase(id, node);
-		throw uniset3::TimeOut(set_err("UI(askSensor): Timeout", id, node));
-	}
-
-	void UInterface::askSensor( const uniset3::ObjectId name, uniset3::UIOCommand cmd, const uniset3::ObjectId backid ) const
-	{
-		askRemoteSensor(name, cmd, uconf->getLocalNode(), backid);
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	/*!
-	 * \param id - идентификатор объекта
-	 * \param node - идентификатор узла
-	*/
-	IOType UInterface::getIOType( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
-	{
-		if ( id == uniset3::DefaultObjectId )
-			throw uniset3::ORepFailed("UI(getIOType): error: id=uniset3::DefaultObjectId");
-
-		if( node == uniset3::DefaultObjectId )
-		{
-			ostringstream err;
-			err << "UI(getIOType): id='" << id << "' error: node=uniset3::DefaultObjectId";
-			throw uniset3::ORepFailed(err.str());
-		}
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(id, node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve(id, node);
-
-					IOController_i_var inc = uniset3::_narrow(oref);
-					return inc->getIOType(id);
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch(const uniset3::NameNotFound& ex)
-		{
-			rcache.erase(id, node);
-			throw uniset3::NameNotFound("UI(getIOType): " + string(ex.err));
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam("UI(getIOType): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(id, node);
-			// не смогли получить ссылку на объект
-			throw uniset3::IOBadParam(set_err("UI(getIOType): resolve failed ", id, node));
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(getIOType): method no implement", id, node));
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(id, node);
-			throw uniset3::IOBadParam(set_err("UI(getIOType): object not exist", id, node));
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(getIOType): ошибка системы коммуникации" << endl;
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(getIOType): CORBA::SystemException" << endl;
-		}
-
-		rcache.erase(id, node);
-		throw uniset3::TimeOut(set_err("UI(getIOType): Timeout", id, node));
-	}
-
-	IOType UInterface::getIOType( const uniset3::ObjectId id ) const
-	{
-		return getIOType(id, uconf->getLocalNode() );
-	}
-	// ------------------------------------------------------------------------------------------------------------
-	/*!
-	 * \param id - идентификатор объекта
-	 * \param node - идентификатор узла
-	*/
-	uniset3::ObjectType UInterface::getType( const uniset3::ObjectId name, const uniset3::ObjectId node) const
-	{
-		if ( name == uniset3::DefaultObjectId )
-			throw uniset3::ORepFailed("UI(getType): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
-
-		if( node == uniset3::DefaultObjectId )
-		{
-			ostringstream err;
-			err << "UI(getType): id='" << name << "' error: node=uniset3::DefaultObjectId";
-			throw uniset3::ORepFailed(err.str());
-		}
-
-		try
-		{
-			CORBA::Object_var oref;
-
-			try
-			{
-				oref = rcache.resolve(name, node);
-			}
-			catch( const uniset3::NameNotFound&  ) {}
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					if( CORBA::is_nil(oref) )
-						oref = resolve( name, node );
-
-					UniSetObject_i_var uo = UniSetObject_i::_narrow(oref);
-					return uo->getType();
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-				catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-				catch( const CORBA::SystemException& ex ) {}
-
-				msleep(uconf->getRepeatTimeout());
-				oref = CORBA::Object::_nil();
-			}
-		}
-		catch(const uniset3::NameNotFound& ex)
-		{
-			rcache.erase(name, node);
-			throw uniset3::NameNotFound("UI(getType): " + string(ex.err));
-		}
-		catch(const uniset3::IOBadParam& ex)
-		{
-			rcache.erase(name, node);
-			throw uniset3::IOBadParam("UI(getType): " + string(ex.err));
-		}
-		catch(const uniset3::ORepFailed& )
-		{
-			rcache.erase(name, node);
-			// не смогли получить ссылку на объект
-			throw uniset3::IOBadParam(set_err("UI(getType): resolve failed ", name, node));
-		}
-		catch(const CORBA::NO_IMPLEMENT& )
-		{
-			rcache.erase(name, node);
-			throw uniset3::IOBadParam(set_err("UI(getType): method no implement", name, node));
-		}
-		catch( const CORBA::OBJECT_NOT_EXIST& )
-		{
-			rcache.erase(name, node);
-			throw uniset3::IOBadParam(set_err("UI(getType): object not exist", name, node));
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(getType): ошибка системы коммуникации" << endl;
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(getType): CORBA::SystemException" << endl;
-		}
-		catch( const uniset3::TimeOut& ) {}
-
-		rcache.erase(name, node);
-		throw uniset3::TimeOut(set_err("UI(getType): Timeout", name, node));
-	}
-
-	uniset3::ObjectType UInterface::getType( const uniset3::ObjectId name ) const
-	{
-		return getType(name, uconf->getLocalNode());
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	void UInterface::registered( const uniset3::ObjectId id, const uniset3::ObjectPtr oRef, bool force ) const
-	{
-		// если включён режим использования локальных файлов
-		// то пишем IOR в файл
-		if( uconf->isLocalIOR() )
-		{
-			if( CORBA::is_nil(orb) )
-				orb = uconf->getORB();
-
-			uconf->iorfile->setIOR(id, orb->object_to_string(oRef));
-			return;
-		}
-
-		try
-		{
-			rep.registration( oind->getNameById(id), oRef, force );
-		}
-		catch( const uniset3::Exception& ex )
-		{
-			throw;
-		}
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	void UInterface::unregister( const uniset3::ObjectId id )
-	{
-		if( uconf->isLocalIOR() )
-		{
-			uconf->iorfile->unlinkIOR(id);
-			return;
-		}
-
-		try
-		{
-			rep.unregistration( oind->getNameById(id) );
-		}
-		catch( const uniset3::Exception& ex )
-		{
-			throw;
-		}
-	}
-
-	// ------------------------------------------------------------------------------------------------------------
-	uniset3::ObjectPtr UInterface::resolve( const uniset3::ObjectId rid, const uniset3::ObjectId node ) const
-	{
-		if( rid == uniset3::DefaultObjectId )
-			throw uniset3::ResolveNameError("UI(resolve): ID=uniset3::DefaultObjectId");
-
-		if( node == uniset3::DefaultObjectId )
-		{
-			ostringstream err;
-			err << "UI(resolve): id='" << rid << "' error: node=uniset3::DefaultObjectId";
-			throw uniset3::ResolveNameError(err.str());
-		}
-
-		CosNaming::NamingContext_var ctx;
-		rcache.erase(rid, node);
-
-		try
-		{
-			if( uconf->isLocalIOR() )
-			{
-				if( CORBA::is_nil(orb) )
-					orb = uconf->getORB();
-
-				string sior;
-
-				if( node == uconf->getLocalNode() )
-					sior = uconf->iorfile->getIOR(rid);
-				else
-					sior = httpResolve(rid, node);
-
-				if( !sior.empty() )
-				{
-					CORBA::Object_var nso = orb->string_to_object(sior.c_str());
-					rcache.cache(rid, node, nso); // заносим в кэш
-					return nso._retn();
-				}
-
-				uwarn << "not found IOR-file for " << uconf->oind->getNameById(rid)
-					  << " node=" << uconf->oind->getNameById(node)
-					  << endl;
-				throw uniset3::ResolveNameError();
-			}
-
-			if( node != uconf->getLocalNode() )
-			{
-				// Получаем доступ к NameService на данном узле
-				ostringstream s;
-				s << uconf << oind->getNodeName(node);
-				string nodeName(s.str());
-				const string bname(nodeName); // сохраняем базовое название
-
-				for( size_t curNet = 1; curNet <= uconf->getCountOfNet(); curNet++)
-				{
-					try
-					{
-						if( CORBA::is_nil(orb) )
-							orb = uconf->getORB();
-
-						ctx = ORepHelpers::getRootNamingContext( orb, nodeName );
-						break;
-					}
-					//                catch( const CORBA::COMM_FAILURE& ex )
-					catch( const uniset3::ORepFailed& ex )
-					{
-						// нет связи с этим узлом
-						// пробуем связаться по другой сети
-						// ПО ПРАВИЛАМ узел в другой должен иметь имя NodeName1...NodeNameX
-						ostringstream s;
-						s << bname << curNet;
-						nodeName = s.str();
-					}
-				}
-
-				if( CORBA::is_nil(ctx) )
-				{
-					// uwarn << "NameService недоступен на узле "<< node << endl;
-					throw uniset3::NSResolveError();
-				}
-			}
-			else
-			{
-				if( CORBA::is_nil(localctx) )
-				{
-					ostringstream s;
-					s << uconf << oind->getNodeName(node);
-					const string nodeName(s.str());
-
-					if( CORBA::is_nil(orb) )
-					{
-						CORBA::ORB_var _orb = uconf->getORB();
-						localctx = ORepHelpers::getRootNamingContext( _orb, nodeName );
-					}
-					else
-						localctx = ORepHelpers::getRootNamingContext( orb, nodeName );
-				}
-
-				ctx = localctx;
-			}
-
-			CosNaming::Name_var oname = omniURI::stringToName( oind->getNameById(rid).c_str() );
-
-			for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-			{
-				try
-				{
-					CORBA::Object_var nso = ctx->resolve(oname);
-
-					if( CORBA::is_nil(nso) )
-						throw uniset3::ResolveNameError();
-
-					// Для var
-					rcache.cache(rid, node, nso); // заносим в кэш
-					return nso._retn();
-				}
-				catch( const CORBA::TRANSIENT& ) {}
-
-				msleep(uconf->getRepeatTimeout());
-			}
-
-			throw uniset3::TimeOut();
-		}
-		catch(const CosNaming::NamingContext::NotFound& nf) {}
-		catch(const CosNaming::NamingContext::InvalidName& nf) {}
-		catch(const CosNaming::NamingContext::CannotProceed& cp) {}
-		catch( const CORBA::OBJECT_NOT_EXIST& ex )
-		{
-			throw uniset3::ResolveNameError("ObjectNOTExist");
-		}
-		catch( const CORBA::COMM_FAILURE& ex )
-		{
-			throw uniset3::ResolveNameError("CORBA::CommFailure");
-		}
-		catch( const CORBA::SystemException& ex )
-		{
-			// ошибка системы коммуникации
-			// uwarn << "UI(resolve): CORBA::SystemException" << endl;
-			throw uniset3::TimeOut();
-		}
-		catch( const uniset3::Exception& ex ) {}
-		catch( std::exception& ex )
-		{
-			ucrit << "UI(resolve): myID=" << myid <<  ": resolve id=" << rid << "@" << node
-				  << " catch " << ex.what() << endl;
-		}
-
-		throw uniset3::ResolveNameError();
-	}
-
-	// -------------------------------------------------------------------------------------------
-	std::string UInterface::httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
-	{
+    // -----------------------------------------------------------------------------
+    using namespace std;
+    // -----------------------------------------------------------------------------
+    UInterface::UInterface( const std::shared_ptr<uniset3::Configuration>& _uconf ):
+        myid(uniset3::DefaultObjectId),
+        rcache(100, 20),
+        oind(_uconf->oind),
+        uconf(_uconf)
+    {
+        init();
+    }
+    // -----------------------------------------------------------------------------
+    UInterface::UInterface( const uniset3::ObjectId backid, const shared_ptr<uniset3::ObjectIndex> _oind ):
+        myid(backid),
+        rcache(200, 40),
+        oind(_oind),
+        uconf(uniset3::uniset_conf())
+    {
+        if( oind == nullptr )
+            oind = uconf->oind;
+
+        init();
+    }
+
+    UInterface::~UInterface()
+    {
+    }
+
+    void UInterface::init()
+    {
+    }
+    // ------------------------------------------------------------------------------------------------------------
+    void UInterface::initBackId( const uniset3::ObjectId backid )
+    {
+        myid = backid;
+    }
+    // ------------------------------------------------------------------------------------------------------------
+    /*!
+     * \param id - идентификатор датчика
+     * \return текущее значение датчика
+     * \exception IOBadParam - генерируется если указано неправильное имя датчика или секции
+     * \exception IOTimeOut - генерируется если в течение времени timeout не был получен ответ
+    */
+    long UInterface::getValue( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
+    {
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(getValue): error id=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(getValue): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            google::protobuf::Int64Value request;
+            request.set_value(id);
+            google::protobuf::Int64Value reply;
+            grpc::ClientContext ctx;
+
+            for( size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve( id, node );
+
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getValue(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply.value();
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(getValue): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(getValue): TimeOut", id, node));
+    }
+
+    long UInterface::getValue( const uniset3::ObjectId name ) const
+    {
+        return getValue(name, uconf->getLocalNode());
+    }
+
+
+    // ------------------------------------------------------------------------------------------------------------
+    void UInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefined, uniset3::ObjectId sup_id )
+    {
+        if( si.id() == uniset3::DefaultObjectId )
+        {
+            uwarn << "UI(setUndefinedState): ID=uniset3::DefaultObjectId" << endl;
+            return;
+        }
+
+        if( sup_id == uniset3::DefaultObjectId )
+            sup_id = myid;
+
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            SetUndefinedParams request;
+            request.set_id(si.id());
+            request.set_sup_id(sup_id);
+            request.set_undefined(undefined);
+            grpc::ClientContext ctx;
+
+            try
+            {
+                chan = rcache.resolve(si.id(), si.node());
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve( si.id(), si.node() );
+
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->setUndefinedState(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return;
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(si.id(), si.node());
+            throw uniset3::SystemError("UI(setUndefinedState): " + string(ex.what()));
+        }
+
+        rcache.erase(si.id(), si.node());
+        uwarn << set_err("UI(setUndefinedState): Timeout", si.id(), si.node()) << endl;
+    }
+    // ------------------------------------------------------------------------------------------------------------
+    void UInterface::freezeValue( const uniset3::SensorInfo& si, bool set, long value, uniset3::ObjectId sup_id )
+    {
+        if( si.id() == uniset3::DefaultObjectId )
+        {
+            uwarn << "UI(freezeValue): ID=uniset3::DefaultObjectId" << endl;
+            return;
+        }
+
+        if( sup_id == uniset3::DefaultObjectId )
+            sup_id = myid;
+
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            FreezeValueParams request;
+            request.set_id(si.id());
+            request.set_sup_id(sup_id);
+            request.set_set(set);
+            request.set_value(value);
+            grpc::ClientContext ctx;
+
+            try
+            {
+                chan = rcache.resolve(si.id(), si.node());
+            }
+            catch( const uniset3::NameNotFound& ) {}
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve(si.id(), si.node());
+
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->freezeValue(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return;
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(si.id(), si.node());
+            throw uniset3::SystemError("UI(freezeValue): " + string(ex.what()));
+        }
+
+        rcache.erase(si.id(), si.node());
+        uwarn << set_err("UI(freezeValue): Timeout", si.id(), si.node()) << endl;
+    }
+    // ------------------------------------------------------------------------------------------------------------
+    /*!
+     * \param id - идентификатор датчика
+     * \param value - значение, которое необходимо установить
+     * \return текущее значение датчика
+     * \exception IOBadParam - генерируется, если указано неправильное имя вывода или секции
+    */
+    void UInterface::setValue( const uniset3::ObjectId id, long value, const uniset3::ObjectId node, const uniset3::ObjectId sup_id ) const
+    {
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(setValue): error: id=uniset3::DefaultObjectId");
+
+        if ( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(setValue): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        /*
+            if ( sup_id == uniset3::DefaultObjectId )
+            {
+                ostringstream err;
+                err << "UI(setValue): id='" << id << "' error: supplier=uniset3::DefaultObjectId";
+                throw uniset3::ORepFailed(err.str());
+            }
+        */
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            SetValueParams request;
+            request.set_id(id);
+            request.set_sup_id(sup_id);
+            request.set_value(value);
+            grpc::ClientContext ctx;
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve(id, node);
+
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->setValue(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return;
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(setValue): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(setValue): Timeout", id, node));
+    }
+
+    void UInterface::setValue( const uniset3::ObjectId name, long value ) const
+    {
+        setValue(name, value, uconf->getLocalNode(), myid);
+    }
+
+    void UInterface::setValue( const uniset3::SensorInfo& si, long value, const uniset3::ObjectId sup_id ) const
+    {
+        setValue(si.id(), value, si.node(), sup_id);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    /*!
+     * \param id     - идентификатор датчика
+     * \param node        - идентификатор узла на котором заказывается датчик
+     * \param cmd - команда см. \ref uniset3::UIOCommand
+     * \param backid - обратный адрес (идентификатор заказчика)
+    */
+    void UInterface::askRemoteSensor( const uniset3::ObjectId id, uniset3::UIOCommand cmd,
+                                      const uniset3::ObjectId node,
+                                      uniset3::ObjectId backid ) const
+    {
+        if( backid == uniset3::DefaultObjectId )
+            backid = myid;
+
+        if( backid == uniset3::DefaultObjectId )
+            throw uniset3::IOBadParam("UI(askRemoteSensor): unknown back ID");
+
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(askRemoteSensor): error: id=uniset3::DefaultObjectId");
+
+        if ( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(askRemoteSensor): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            AskParams request;
+            request.set_sid(id);
+            request.mutable_ci()->set_id(backid);
+            request.mutable_ci()->set_node(uconf->getLocalNode());
+            grpc::ClientContext ctx;
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = rcache.resolve(id, node);
+
+                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
+                grpc::Status st = stub->askSensor(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return;
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(askSensor): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(askSensor): Timeout", id, node));
+    }
+
+    void UInterface::askSensor( const uniset3::ObjectId name, uniset3::UIOCommand cmd, const uniset3::ObjectId backid ) const
+    {
+        askRemoteSensor(name, cmd, uconf->getLocalNode(), backid);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    /*!
+     * \param id - идентификатор объекта
+     * \param node - идентификатор узла
+    */
+    IOType UInterface::getIOType( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
+    {
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(getIOType): error: id=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(getIOType): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+            RetIOType reply;
+            google::protobuf::Int64Value request;
+            request.set_value(id);
+            grpc::ClientContext ctx;
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve(id, node);
+
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getIOType(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply.type();
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(getIOType): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(getIOType): Timeout", id, node));
+    }
+
+    IOType UInterface::getIOType( const uniset3::ObjectId id ) const
+    {
+        return getIOType(id, uconf->getLocalNode() );
+    }
+    // ------------------------------------------------------------------------------------------------------------
+    /*!
+     * \param id - идентификатор объекта
+     * \param node - идентификатор узла
+    */
+    uniset3::ObjectType UInterface::getType( const uniset3::ObjectId id, const uniset3::ObjectId node) const
+    {
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(getType): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(getType): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        try
+        {
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::StringValue reply;
+            google::protobuf::Empty request;
+            grpc::ClientContext ctx;
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve(id, node);
+
+                std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+                grpc::Status st = stub->getType(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply.value();
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(getType): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(getType): Timeout", id, node));
+    }
+
+    uniset3::ObjectType UInterface::getType( const uniset3::ObjectId id ) const
+    {
+        return getType(id, uconf->getLocalNode());
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    void UInterface::registered( const uniset3::ObjectId id, const uniset3::ObjectRef oRef, bool force ) const
+    {
+        // если включён режим использования локальных файлов
+        // то пишем IOR в файл
+        if( uconf->isLocalIOR() )
+        {
+            uconf->iorfile->setIOR(id, IORFile::makeIOR(oRef));
+            return;
+        }
+
+        google::protobuf::Empty reply;
+        grpc::ClientContext ctx;
+
+        for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
+        {
+            if( !rep )
+                rep = grpc::CreateChannel(uconf->repositoryAddress(), grpc::InsecureChannelCredentials());
+
+            std::unique_ptr<Repository_i::Stub> stub(Repository_i::NewStub(rep));
+            grpc::Status st = stub->registration(&ctx, oRef, &reply);
+
+            if( st.ok() )
+                return;
+
+            msleep(uconf->getRepeatTimeout());
+            rep = nullptr;
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    void UInterface::unregister( const uniset3::ObjectId id )
+    {
+        if( uconf->isLocalIOR() )
+        {
+            uconf->iorfile->unlinkIOR(id);
+            return;
+        }
+
+        google::protobuf::Empty reply;
+        google::protobuf::Int64Value request;
+        request.set_value(id);
+        grpc::ClientContext ctx;
+
+        for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
+        {
+            if( !rep )
+                rep = grpc::CreateChannel(uconf->repositoryAddress(), grpc::InsecureChannelCredentials());
+
+            std::unique_ptr<Repository_i::Stub> stub(Repository_i::NewStub(rep));
+            grpc::Status st = stub->unregistration(&ctx, request, &reply);
+
+            if( st.ok() )
+                return;
+
+            msleep(uconf->getRepeatTimeout());
+            rep = nullptr;
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------------------
+    std::shared_ptr<grpc::Channel> UInterface::resolve( const uniset3::ObjectId rid, const uniset3::ObjectId node ) const
+    {
+        if( rid == uniset3::DefaultObjectId )
+            throw uniset3::ResolveNameError("UI(resolve): ID=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(resolve): id='" << rid << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ResolveNameError(err.str());
+        }
+
+        rcache.erase(rid, node);
+#if 0
+
+        try
+        {
+            if( uconf->isLocalIOR() )
+            {
+                if( CORBA::is_nil(orb) )
+                    orb = uconf->getORB();
+
+                string sior;
+
+                if( node == uconf->getLocalNode() )
+                    sior = uconf->iorfile->getIOR(rid);
+                else
+                    sior = httpResolve(rid, node);
+
+                if( !sior.empty() )
+                {
+                    CORBA::Object_var nso = orb->string_to_object(sior.c_str());
+                    rcache.cache(rid, node, nso); // заносим в кэш
+                    return nso._retn();
+                }
+
+                uwarn << "not found IOR-file for " << uconf->oind->getNameById(rid)
+                      << " node=" << uconf->oind->getNameById(node)
+                      << endl;
+                throw uniset3::ResolveNameError();
+            }
+
+            if( node != uconf->getLocalNode() )
+            {
+                // Получаем доступ к NameService на данном узле
+                ostringstream s;
+                s << uconf << oind->getNodeName(node);
+                string nodeName(s.str());
+                const string bname(nodeName); // сохраняем базовое название
+
+                for( size_t curNet = 1; curNet <= uconf->getCountOfNet(); curNet++)
+                {
+                    try
+                    {
+                        if( CORBA::is_nil(orb) )
+                            orb = uconf->getORB();
+
+                        ctx = ORepHelpers::getRootNamingContext( orb, nodeName );
+                        break;
+                    }
+                    //                catch( const CORBA::COMM_FAILURE& ex )
+                    catch( const uniset3::ORepFailed& ex )
+                    {
+                        // нет связи с этим узлом
+                        // пробуем связаться по другой сети
+                        // ПО ПРАВИЛАМ узел в другой должен иметь имя NodeName1...NodeNameX
+                        ostringstream s;
+                        s << bname << curNet;
+                        nodeName = s.str();
+                    }
+                }
+
+                if( CORBA::is_nil(ctx) )
+                {
+                    // uwarn << "NameService недоступен на узле "<< node << endl;
+                    throw uniset3::NSResolveError();
+                }
+            }
+            else
+            {
+                if( CORBA::is_nil(localctx) )
+                {
+                    ostringstream s;
+                    s << uconf << oind->getNodeName(node);
+                    const string nodeName(s.str());
+
+                    if( CORBA::is_nil(orb) )
+                    {
+                        CORBA::ORB_var _orb = uconf->getORB();
+                        localctx = ORepHelpers::getRootNamingContext( _orb, nodeName );
+                    }
+                    else
+                        localctx = ORepHelpers::getRootNamingContext( orb, nodeName );
+                }
+
+                ctx = localctx;
+            }
+
+            CosNaming::Name_var oname = omniURI::stringToName( oind->getNameById(rid).c_str() );
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                try
+                {
+                    CORBA::Object_var nso = ctx->resolve(oname);
+
+                    if( CORBA::is_nil(nso) )
+                        throw uniset3::ResolveNameError();
+
+                    // Для var
+                    rcache.cache(rid, node, nso); // заносим в кэш
+                    return nso._retn();
+                }
+                catch( const CORBA::TRANSIENT& ) {}
+
+                msleep(uconf->getRepeatTimeout());
+            }
+
+            throw uniset3::TimeOut();
+        }
+        catch(const CosNaming::NamingContext::NotFound& nf) {}
+        catch(const CosNaming::NamingContext::InvalidName& nf) {}
+        catch(const CosNaming::NamingContext::CannotProceed& cp) {}
+        catch( const CORBA::OBJECT_NOT_EXIST& ex )
+        {
+            throw uniset3::ResolveNameError("ObjectNOTExist");
+        }
+        catch( const CORBA::COMM_FAILURE& ex )
+        {
+            throw uniset3::ResolveNameError("CORBA::CommFailure");
+        }
+        catch( const CORBA::SystemException& ex )
+        {
+            // ошибка системы коммуникации
+            // uwarn << "UI(resolve): CORBA::SystemException" << endl;
+            throw uniset3::TimeOut();
+        }
+        catch( const uniset3::Exception& ex ) {}
+        catch( std::exception& ex )
+        {
+            ucrit << "UI(resolve): myID=" << myid <<  ": resolve id=" << rid << "@" << node
+                  << " catch " << ex.what() << endl;
+        }
+
+#endif
+        throw uniset3::ResolveNameError();
+    }
+
+    // -------------------------------------------------------------------------------------------
+    std::string UInterface::httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
+    {
 #ifndef DISABLE_REST_API
         size_t port = uconf->getHttpResovlerPort();
 
@@ -1052,80 +750,55 @@ namespace uniset3
         return "";
     }
     // -------------------------------------------------------------------------------------------
-    void UInterface::send( const uniset3::ObjectId name, const uniset3::TransportMessage& msg, const uniset3::ObjectId node )
+    void UInterface::send(const uniset3::messages::TransportMessage& msg, uniset3::ObjectId node)
     {
-        if ( name == uniset3::DefaultObjectId )
+        ObjectId id = msg.header().consumer();
+
+        if( id == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(send): ERROR: id=uniset3::DefaultObjectId");
 
         if( node == uniset3::DefaultObjectId )
         {
             ostringstream err;
-            err << "UI(send): id='" << name << "' error: node=uniset3::DefaultObjectId";
+            err << "UI(send): id='" << id << "' error: node=uniset3::DefaultObjectId";
             throw uniset3::ORepFailed(err.str());
         }
 
         try
         {
-            CORBA::Object_var oref;
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            grpc::ClientContext ctx;
 
             try
             {
-                oref = rcache.resolve(name, node);
+                chan = rcache.resolve(id, node);
             }
-            catch( const uniset3::NameNotFound& ) {}
+            catch( const uniset3::NameNotFound&  ) {}
 
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( name, node );
+                if( !chan )
+                    chan = resolve(id, node);
 
-                    UniSetObject_i_var obj = UniSetObject_i::_narrow(oref);
-                    obj->push(msg);
+                std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+                grpc::Status st = stub->push(&ctx, msg, &reply);
+
+                if( st.ok() )
                     return;
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ) {}
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::ORepFailed& )
+        catch( const std::exception& ex )
         {
-            rcache.erase(name, node);
-            throw uniset3::IOBadParam(set_err("UI(send): resolve failed ", name, node));
-        }
-        catch( const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(name, node);
-            throw uniset3::IOBadParam(set_err("UI(send): method no implement", name, node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(name, node);
-            throw uniset3::IOBadParam(set_err("UI(send): object not exist", name, node));
-        }
-        catch( const CORBA::COMM_FAILURE& )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(send): ошибка системы коммуникации" << endl;
-        }
-        catch( const CORBA::SystemException& )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(send): CORBA::SystemException" << endl;
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(send): " + string(ex.what()));
         }
 
-        rcache.erase(name, node);
-        throw uniset3::TimeOut(set_err("UI(send): Timeout", name, node));
-    }
-
-    void UInterface::send( const uniset3::ObjectId name, const uniset3::TransportMessage& msg )
-    {
-        send(name, msg, uconf->getLocalNode());
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(send): Timeout", id, node));
     }
     // ------------------------------------------------------------------------------------------------------------
     void UInterface::sendText(const ObjectId name, const std::string& txt, int mtype, const ObjectId node )
@@ -1135,143 +808,38 @@ namespace uniset3
 
         uniset3::ObjectId onode = (node == uniset3::DefaultObjectId) ? uconf->getLocalNode() : node;
 
-        uniset3::Timespec_var ts = uniset3::now_to_uniset_timespec();
-
-        uniset3::ProducerInfo_var pi;
-        pi->id = myid;
-        pi->node = uconf->getLocalNode();
-
-        try
-        {
-            CORBA::Object_var oref;
-
-            try
-            {
-                oref = rcache.resolve(name, onode);
-            }
-            catch( const uniset3::NameNotFound& ) {}
-
-            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( name, onode );
-
-                    UniSetObject_i_var obj = UniSetObject_i::_narrow(oref);
-                    obj->pushMessage(txt.c_str(), mtype, ts, pi, Message::Medium, uniset3::DefaultObjectId);
-                    return;
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ) {}
-
-                msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
-            }
-        }
-        catch( const uniset3::ORepFailed& )
-        {
-            rcache.erase(name, onode);
-            throw uniset3::IOBadParam(set_err("UI(sendText): resolve failed ", name, onode));
-        }
-        catch( const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(name, onode);
-            throw uniset3::IOBadParam(set_err("UI(sendText): method no implement", name, onode));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(name, onode);
-            throw uniset3::IOBadParam(set_err("UI(sendText): object not exist", name, onode));
-        }
-        catch( const CORBA::COMM_FAILURE& )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(sendText): ошибка системы коммуникации" << endl;
-        }
-        catch( const CORBA::SystemException& )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(sendText): CORBA::SystemException" << endl;
-        }
-
-        rcache.erase(name, onode);
-        throw uniset3::TimeOut(set_err("UI(sendText): Timeout", name, onode));
+        uniset3::messages::TextMessage msg;
+        auto header = msg.mutable_header();
+        header->set_type(uniset3::messages::mtTextInfo);
+        header->set_priority(uniset3::messages::mpMedium);
+        header->set_node(uconf->getLocalNode());
+        header->set_supplier(myid);
+        header->set_consumer(name);
+        auto ts = uniset3::now_to_uniset_timespec();
+        (*header->mutable_ts()) = ts;
+        msg.set_msg(txt);
+        msg.set_mtype(mtype);
+        sendText(msg, onode);
     }
     // ------------------------------------------------------------------------------------------------------------
-    void UInterface::sendText( const ObjectId name, const TextMessage& msg, const ObjectId node )
+    void UInterface::sendText( const uniset3::messages::TextMessage& msg, uniset3::ObjectId node )
     {
-        if ( name == uniset3::DefaultObjectId )
-            throw uniset3::ORepFailed("UI(sendText): ERROR: id=uniset3::DefaultObjectId");
+        if( msg.header().consumer() == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(sendText): ERROR: consumer=uniset3::DefaultObjectId");
 
-        uniset3::ObjectId onode = (node == uniset3::DefaultObjectId) ? uconf->getLocalNode() : node;
+        ObjectId id = msg.header().consumer();
 
-        uniset3::Timespec_var ts;
-        ts->sec = msg.tm.tv_sec;
-        ts->nsec = msg.tm.tv_nsec;
-
-        uniset3::ProducerInfo_var pi;
-        pi->id = msg.supplier;
-        pi->node = msg.node;
-
-        try
-        {
-            CORBA::Object_var oref;
-
-            try
-            {
-                oref = rcache.resolve(name, onode);
-            }
-            catch( const uniset3::NameNotFound& ) {}
-
-            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( name, onode );
-
-                    UniSetObject_i_var obj = UniSetObject_i::_narrow(oref);
-                    obj->pushMessage(msg.txt.c_str(), msg.mtype, ts, pi, msg.priority, msg.consumer);
-                    return;
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ) {}
-
-                msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
-            }
-        }
-        catch( const uniset3::ORepFailed& )
-        {
-            rcache.erase(name, node);
-            throw uniset3::IOBadParam(set_err("UI(sendText): resolve failed ", name, node));
-        }
-        catch( const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(name, node);
-            throw uniset3::IOBadParam(set_err("UI(sendText): method no implement", name, node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(name, node);
-            throw uniset3::IOBadParam(set_err("UI(sendText): object not exist", name, node));
-        }
-        catch( const CORBA::COMM_FAILURE& )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(sendText): ошибка системы коммуникации" << endl;
-        }
-        catch( const CORBA::SystemException& )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(sendText): CORBA::SystemException" << endl;
-        }
-
-        rcache.erase(name, node);
-        throw uniset3::TimeOut(set_err("UI(sendText): Timeout", name, node));
+        uniset3::messages::TransportMessage tm;
+        auto header = tm.mutable_header();
+        header->set_type(msg.header().type());
+        header->set_priority(msg.header().priority());
+        header->set_node(uconf->getLocalNode());
+        header->set_supplier(myid);
+        header->set_consumer(id);
+        auto ts = uniset3::now_to_uniset_timespec();
+        (*header->mutable_ts()) = ts;
+        tm.set_data(msg.SerializeAsString());
+        send(tm, node);
     }
 
     // ------------------------------------------------------------------------------------------------------------
@@ -1289,72 +857,43 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            std::shared_ptr<grpc::Channel> chan;
+            ShortIOInfo reply;
+            google::protobuf::Int64Value request;
+            request.set_value(id);
+            grpc::ClientContext ctx;
 
             try
             {
-                oref = rcache.resolve(id, node);
+                chan = rcache.resolve(id, node);
             }
-            catch( const uniset3::NameNotFound& ) {}
+            catch( const uniset3::NameNotFound&  ) {}
 
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( id, node );
+                if( !chan )
+                    chan = resolve(id, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getTimeChange(id);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getTimeChange(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch( const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            uwarn << "UI(getTimeChange): " << ex.err << endl;
-        }
-        catch( const uniset3::IOBadParam& ex )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam("UI(getTimeChange): " + string(ex.err));
-        }
-        catch( const uniset3::ORepFailed& )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(getTimeChange): resolve failed ", id, node) << endl;
-        }
-        catch( const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(getTimeChange): method no implement", id, node) << endl;
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& e )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(getTimeChange): object not exist", id, node) << endl;
-        }
-        catch( const CORBA::COMM_FAILURE& e )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(saveState): CORBA::COMM_FAILURE " << endl;
-        }
-        catch( const CORBA::SystemException& ex)
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(saveState): CORBA::SystemException" << endl;
+            throw uniset3::SystemError("UI(getTimeChange): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
         throw uniset3::TimeOut(set_err("UI(getTimeChange): Timeout", id, node));
     }
+
     // ------------------------------------------------------------------------------------------------------------
     std::string UInterface::getObjectInfo( const ObjectId id, const std::string& params, const ObjectId node ) const
     {
@@ -1370,64 +909,37 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::StringValue reply;
+            google::protobuf::StringValue request;
+            request.set_value(params);
+            grpc::ClientContext ctx;
 
             try
             {
-                oref = rcache.resolve(id, node);
+                chan = rcache.resolve(id, node);
             }
-            catch( const uniset3::NameNotFound& ) {}
+            catch( const uniset3::NameNotFound&  ) {}
 
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( id, node );
+                if( !chan )
+                    chan = resolve(id, node);
 
-                    UniSetObject_i_var u = UniSetObject_i::_narrow(oref);
-                    SimpleInfo_var i = u->getInfo( params.c_str() );
-                    return std::string(i->info);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+                grpc::Status st = stub->getInfo(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply.value();
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch( const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            uwarn << "UI(getInfo): " << ex.err << endl;
-        }
-        catch( const uniset3::IOBadParam& ex )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam("UI(getInfo): " + string(ex.err));
-        }
-        catch( const uniset3::ORepFailed& )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(getInfo): resolve failed ", id, node) << endl;
-        }
-        catch( const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(getInfo): method no implement", id, node) << endl;
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& e )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(getInfo): object not exist", id, node) << endl;
-        }
-        catch( const CORBA::COMM_FAILURE& e )
-        {
-        }
-        catch( const CORBA::SystemException& ex)
-        {
+            throw uniset3::SystemError("UI(getTimeChange): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
@@ -1448,74 +960,53 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::StringValue reply;
+            google::protobuf::StringValue request;
+            request.set_value(query);
+            grpc::ClientContext ctx;
 
             try
             {
-                oref = rcache.resolve(id, node);
+                chan = rcache.resolve(id, node);
             }
-            catch( const uniset3::NameNotFound& ) {}
+            catch( const uniset3::NameNotFound&  ) {}
 
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( id, node );
+                if( !chan )
+                    chan = resolve(id, node);
 
-                    UniSetObject_i_var u = UniSetObject_i::_narrow(oref);
-                    SimpleInfo_var i = u->apiRequest(query.c_str());
-                    return std::string(i->info);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+                grpc::Status st = stub->request(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply.value();
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch( const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            uwarn << "UI(apiRequest): " << ex.err << endl;
-        }
-        catch( const uniset3::IOBadParam& ex )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam("UI(apiRequest): " + string(ex.err));
-        }
-        catch( const uniset3::ORepFailed& )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(apiRequest): resolve failed ", id, node) << endl;
-        }
-        catch( const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(apiRequest): method no implement", id, node) << endl;
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& e )
-        {
-            rcache.erase(id, node);
-            uwarn << set_err("UI(apiRequest): object not exist", id, node) << endl;
-        }
-        catch( const CORBA::COMM_FAILURE& e )
-        {
-        }
-        catch( const CORBA::SystemException& ex)
-        {
+            throw uniset3::SystemError("UI(apiRequest): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
         throw uniset3::TimeOut(set_err("UI(apiRequest): Timeout", id, node));
     }
     // ------------------------------------------------------------------------------------------------------------
-    uniset3::ObjectPtr UInterface::resolve( const std::string& name ) const
+    std::shared_ptr<grpc::Channel> UInterface::resolve( const std::string& name ) const
     {
+#warning Not realized yet!
+        return nullptr;
+#if 0
+
         if( uconf->isLocalIOR() )
         {
+            params
+
             if( CORBA::is_nil(orb) )
                 orb = uconf->getORB();
 
@@ -1526,10 +1017,15 @@ namespace uniset3
         }
 
         return rep.resolve( name );
+#endif
     }
     // ------------------------------------------------------------------------------------------------------------
-    uniset3::ObjectPtr UInterface::resolve( const uniset3::ObjectId id ) const
+    std::shared_ptr<grpc::Channel> UInterface::resolve( const uniset3::ObjectId id ) const
     {
+#warning Not realized yet!
+        return nullptr;
+#if 0
+
         if( uconf->isLocalIOR() )
         {
             if( CORBA::is_nil(orb) )
@@ -1542,9 +1038,10 @@ namespace uniset3
         }
 
         return rep.resolve( oind->getNameById(id) );
+#endif
     }
     // ------------------------------------------------------------------------------------------------------------
-    uniset3::ObjectPtr UInterface::CacheOfResolve::resolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
+    std::shared_ptr<grpc::Channel> UInterface::CacheOfResolve::resolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
     {
         try
         {
@@ -1555,12 +1052,7 @@ namespace uniset3
             if( it != mcache.end() )
             {
                 it->second.ncall++;
-
-                // т.к. функция возвращает указатель
-                // и тот кто вызывает отвечает за освобождение памяти
-                // то мы делаем _duplicate....
-                if( !CORBA::is_nil(it->second.ptr) )
-                    return CORBA::Object::_duplicate(it->second.ptr);
+                return it->second.chan;
             }
         }
         catch( std::exception& ex )
@@ -1572,7 +1064,7 @@ namespace uniset3
         throw uniset3::NameNotFound();
     }
     // ------------------------------------------------------------------------------------------------------------
-    void UInterface::CacheOfResolve::cache( const uniset3::ObjectId id, const uniset3::ObjectId node, uniset3::ObjectVar& ptr ) const
+    void UInterface::CacheOfResolve::cache( const uniset3::ObjectId id, const uniset3::ObjectId node, std::shared_ptr<grpc::Channel>& chan ) const
     {
         uniset3::uniset_rwmutex_wrlock l(cmutex);
 
@@ -1581,10 +1073,10 @@ namespace uniset3
         auto it = mcache.find(k);
 
         if( it == mcache.end() )
-            mcache.emplace(k, Item(ptr));
+            mcache.emplace(k, Item(chan));
         else
         {
-            it->second.ptr = ptr; // CORBA::Object::_duplicate(ptr);
+            it->second.chan = chan;
             it->second.ncall++;
         }
     }
@@ -1603,6 +1095,7 @@ namespace uniset3
                 {
                     try
                     {
+                        it->second.chan = nullptr;
                         mcache.erase(it++);
                     }
                     catch(...) {}
@@ -1632,7 +1125,10 @@ namespace uniset3
             auto it = mcache.find( uniset3::key(id, node) );
 
             if( it != mcache.end() )
+            {
+                it->second.chan = nullptr;
                 mcache.erase(it);
+            }
         }
         catch( std::exception& ex )
         {
@@ -1643,6 +1139,8 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------------------------
     bool UInterface::isExist( const uniset3::ObjectId id ) const noexcept
     {
+#warning Not realized yet!
+#if 0
         try
         {
             if( uconf->isLocalIOR() )
@@ -1669,6 +1167,7 @@ namespace uniset3
         }
         catch(...) {}
 
+#endif
         return false;
     }
     // ------------------------------------------------------------------------------------------------------------
@@ -1677,6 +1176,8 @@ namespace uniset3
         if( node == uconf->getLocalNode() )
             return isExist(id);
 
+#warning Not realized yet!
+#if 0
         CORBA::Object_var oref;
 
         try
@@ -1694,6 +1195,7 @@ namespace uniset3
         }
         catch(...) {}
 
+#endif
         return false;
     }
     // --------------------------------------------------------------------------------------------
@@ -1740,72 +1242,45 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            AskThresholdParams request;
+            request.set_sid(sid);
+            request.set_tid(tid);
+            request.set_lowlimit(lowLimit);
+            request.set_hilimit(hiLimit);
+            request.set_invert(invert);
+            request.set_cmd(cmd);
+            auto ci = request.mutable_ci();
+            ci->set_id(backid);
+            ci->set_id(uconf->getLocalNode());
 
             try
             {
-                oref = rcache.resolve(sid, node);
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( sid, node );
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IONotifyController_i_var inc = uniset3::_narrow(oref);
-                    uniset3::ConsumerInfo_var ci;
-                    ci->id = backid;
-                    ci->node = uconf->getLocalNode();
+                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
+                grpc::Status st = stub->askThreshold(&ctx, request, &reply);
 
-                    inc->askThreshold(sid, ci, tid, lowLimit, hiLimit, invert, cmd);
+                if( st.ok() )
                     return;
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound& ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(sid, node);
-            throw uniset3::NameNotFound("UI(askThreshold): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(sid, node);
-            throw uniset3::IOBadParam("UI(askThreshold): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(sid, node);
-            throw uniset3::IOBadParam(set_err("UI(askThreshold): resolve failed ", sid, node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(sid, node);
-            throw uniset3::IOBadParam(set_err("UI(askThreshold): method no implement", sid, node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(sid, node);
-            throw uniset3::IOBadParam(set_err("UI(askThreshold): object not exist", sid, node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(askThreshold): ошибка системы коммуникации" << endl;
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(askThreshold): CORBA::SystemException" << endl;
+            throw uniset3::SystemError("UI(askThreshold): " + string(ex.what()));
         }
 
         rcache.erase(sid, node);
@@ -1817,172 +1292,119 @@ namespace uniset3
     UInterface::getThresholdInfo( const uniset3::ObjectId sid, const uniset3::ThresholdId tid ) const
     {
         uniset3::SensorInfo si;
-        si.id = sid;
-        si.node = uconf->getLocalNode();
+        si.set_id(sid);
+        si.set_node(uconf->getLocalNode());
         return getThresholdInfo(si, tid);
     }
     // --------------------------------------------------------------------------------------------------------------
     uniset3::ThresholdInfo
     UInterface::getThresholdInfo( const uniset3::SensorInfo& si, const uniset3::ThresholdId tid ) const
     {
-        if ( si.id == uniset3::DefaultObjectId )
+        if ( si.id() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getThresholdInfo): error: id=uniset3::DefaultObjectId");
 
-        if( si.node == uniset3::DefaultObjectId )
+        if( si.node() == uniset3::DefaultObjectId )
         {
             ostringstream err;
-            err << "UI(getThresholdInfo): id='" << si.id << "' error: node=uniset3::DefaultObjectId";
+            err << "UI(getThresholdInfo): id='" << si.id() << "' error: node=uniset3::DefaultObjectId";
             throw uniset3::ORepFailed(err.str());
         }
 
+        ObjectId sid = si.id();
+        ObjectId node = si.node();
+
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            ThresholdInfo reply;
+            GetThresholdInfoParams request;
+            request.set_sid(sid);
+            request.set_tid(tid);
 
             try
             {
-                oref = rcache.resolve(si.id, si.node);
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( si.id, si.node );
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IONotifyController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getThresholdInfo(si.id, tid);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
+                grpc::Status st = stub->getThresholdInfo(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(si.id, si.node);
-            throw uniset3::NameNotFound("UI(getThresholdInfo): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam("UI(getThresholdInfo): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(si.id, si.node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getThresholdInfo): resolve failed ", si.id, si.node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getThresholdInfo): method no implement", si.id, si.node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getThresholdInfo): object not exist", si.id, si.node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(getThresholdInfo): " + string(ex.what()));
         }
 
-        rcache.erase(si.id, si.node);
-        throw uniset3::TimeOut(set_err("UI(getThresholdInfo): Timeout", si.id, si.node));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(getThresholdInfo): Timeout", sid, node));
     }
     // --------------------------------------------------------------------------------------------
     long UInterface::getRawValue( const uniset3::SensorInfo& si )
     {
-        if ( si.id == uniset3::DefaultObjectId )
+        if( si.id() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getRawValue): error: id=uniset3::DefaultObjectId");
 
-        if( si.node == uniset3::DefaultObjectId )
+        if( si.node() == uniset3::DefaultObjectId )
         {
             ostringstream err;
-            err << "UI(getRawValue): id='" << si.id << "' error: node=uniset3::DefaultObjectId";
+            err << "UI(getRawValue): id='" << si.id() << "' error: node=uniset3::DefaultObjectId";
             throw uniset3::ORepFailed(err.str());
         }
 
+        ObjectId sid = si.id();
+        ObjectId node = si.node();
+
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Int64Value reply;
+            google::protobuf::Int64Value request;
+            request.set_value(sid);
 
             try
             {
-                oref = rcache.resolve(si.id, si.node);
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( si.id, si.node );
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getRawValue(si.id);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getRawValue(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply.value();
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(si.id, si.node);
-            throw uniset3::NameNotFound("UI(getRawValue): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam("UI(getRawValue): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(si.id, si.node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getRawValue): resolve failed ", si.id, si.node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getRawValue): method no implement", si.id, si.node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getRawValue): object not exist", si.id, si.node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(getRawValue): " + string(ex.what()));
         }
 
-        rcache.erase(si.id, si.node);
-        throw uniset3::TimeOut(set_err("UI(getRawValue): Timeout", si.id, si.node));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(getRawValue): Timeout", sid, node));
     }
     // --------------------------------------------------------------------------------------------
     void UInterface::calibrate(const uniset3::SensorInfo& si,
@@ -1995,408 +1417,272 @@ namespace uniset3
         //    if( admId==uniset3::DefaultObjectId )
         //        throw uniset3::IOBadParam("UI(askTreshold): неизвестен ID администратора");
 
-        if( si.id == uniset3::DefaultObjectId )
+        if( si.id() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(calibrate): error: id=uniset3::DefaultObjectId");
 
-        if( si.node == uniset3::DefaultObjectId )
+        if( si.node() == uniset3::DefaultObjectId )
         {
             ostringstream err;
-            err << "UI(calibrate): id='" << si.id << "' error: node=uniset3::DefaultObjectId";
+            err << "UI(calibrate): id='" << si.id() << "' error: node=uniset3::DefaultObjectId";
             throw uniset3::ORepFailed(err.str());
         }
 
+        ObjectId sid = si.id();
+        ObjectId node = si.node();
+
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            google::protobuf::Empty reply;
+            CalibrateParams request;
+            request.set_id(sid);
+            request.set_adminid(admId);
+            *(request.mutable_ci()) = ci;
 
             try
             {
-                oref = rcache.resolve(si.id, si.node);
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( si.id, si.node );
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    iom->calibrate(si.id, ci, admId);
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->calibrate(&ctx, request, &reply);
+
+                if( st.ok() )
                     return;
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(si.id, si.node);
-            throw uniset3::NameNotFound("UI(calibrate): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam("UI(calibrate): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(si.id, si.node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(calibrate): resolve failed ", si.id, si.node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(calibrate): method no implement", si.id, si.node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(calibrate): object not exist", si.id, si.node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(calibrate): " + string(ex.what()));
         }
 
-        rcache.erase(si.id, si.node);
-        throw uniset3::TimeOut(set_err("UI(calibrate): Timeout", si.id, si.node));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(calibrate): Timeout", sid, node));
     }
     // --------------------------------------------------------------------------------------------
     uniset3::CalibrateInfo UInterface::getCalibrateInfo( const uniset3::SensorInfo& si )
     {
-        if ( si.id == uniset3::DefaultObjectId )
+        if ( si.id() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getCalibrateInfo): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
 
-        if( si.node == uniset3::DefaultObjectId )
+        if( si.node() == uniset3::DefaultObjectId )
         {
             ostringstream err;
-            err << "UI(getCalibrateInfo): id='" << si.id << "' error: node=uniset3::DefaultObjectId";
+            err << "UI(getCalibrateInfo): id='" << si.id() << "' error: node=uniset3::DefaultObjectId";
             throw uniset3::ORepFailed(err.str());
         }
 
+        ObjectId sid = si.id();
+        ObjectId node = si.node();
+
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            CalibrateInfo reply;
+            google::protobuf::Int64Value request;
+            request.set_value(sid);
 
             try
             {
-                oref = rcache.resolve(si.id, si.node);
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
+
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve( si.id, si.node );
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getCalibrateInfo(si.id);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getCalibrateInfo(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(si.id, si.node);
-            throw uniset3::NameNotFound("UI(getCalibrateInfo): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam("UI(getCalibrateInfo): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(si.id, si.node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getCalibrateInfo): resolve failed ", si.id, si.node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getCalibrateInfo): method no implement", si.id, si.node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getCalibrateInfo): object not exist", si.id, si.node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(getCalibrateInfo): " + string(ex.what()));
         }
 
-        rcache.erase(si.id, si.node);
-        throw uniset3::TimeOut(set_err("UI(getCalibrateInfo): Timeout", si.id, si.node));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(getCalibrateInfo): Timeout", sid, node));
     }
     // --------------------------------------------------------------------------------------------
-    uniset3::SensorInfoSeq_var UInterface::getSensorSeq( const uniset3::IDList& lst )
+    uniset3::SensorIOInfoSeq UInterface::getSensorSeq( const uniset3::IDList& lst )
     {
         if( lst.empty() )
-            return uniset3::SensorInfoSeq_var();
+            return uniset3::SensorIOInfoSeq();
 
         uniset3::ObjectId sid = lst.getFirst();
+        uniset3::ObjectId node = uconf->getLocalNode();
 
         if ( sid == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getSensorSeq): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
 
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            SensorIOInfoSeq reply;
+            IDSeq request(lst.getIDSeq());
 
             try
             {
-                oref = rcache.resolve(sid, uconf->getLocalNode());
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(sid, uconf->getLocalNode());
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getSensorSeq(&ctx, request, &reply);
 
-                    uniset3::IDSeq_var seq(lst.getIDSeq());
-                    return iom->getSensorSeq(seq);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::NameNotFound("UI(getSensorSeq): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::IOBadParam("UI(getSensorSeq): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getSensorSeq): resolve failed ", sid, uconf->getLocalNode()));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::IOBadParam(set_err("UI(getSensorSeq): method no implement", sid, uconf->getLocalNode()));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::IOBadParam(set_err("UI(getSensorSeq): object not exist", sid, uconf->getLocalNode()));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(getCalibrateInfo): " + string(ex.what()));
         }
 
-        rcache.erase(sid, uconf->getLocalNode());
-        throw uniset3::TimeOut(set_err("UI(getSensorSeq): Timeout", sid, uconf->getLocalNode()));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(getSensorSeq): Timeout", sid, node));
 
     }
     // --------------------------------------------------------------------------------------------
     uniset3::SensorIOInfo UInterface::getSensorIOInfo( const uniset3::SensorInfo& si )
     {
-        if ( si.id == uniset3::DefaultObjectId )
+        if ( si.id() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getSensorIOInfo): error node=uniset3::DefaultObjectId");
 
-        if ( si.node == uniset3::DefaultObjectId )
+        if ( si.node() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getSensorIOInfo): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
 
+        ObjectId sid = si.id();
+        ObjectId node = si.node();
+
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            SensorIOInfo reply;
+            google::protobuf::Int64Value request;
+            request.set_value(sid);
 
             try
             {
-                oref = rcache.resolve(si.id, si.node);
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(si.id, si.node);
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getSensorIOInfo(si.id);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getSensorIOInfo(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(si.id, si.node);
-            throw uniset3::NameNotFound("UI(getSensorIOInfo): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam("UI(getSensorIOInfo): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(si.id, si.node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getSensorIOInfo): resolve failed ", si.id, si.node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getSensorIOInfo): method no implement", si.id, si.node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(si.id, si.node);
-            throw uniset3::IOBadParam(set_err("UI(getSensorIOInfo): object not exist", si.id, si.node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(getSensorIOInfo): " + string(ex.what()));
         }
 
-        rcache.erase(si.id, si.node);
-        throw uniset3::TimeOut(set_err("UI(getSensorIOInfo): Timeout", si.id, si.node));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(getSensorIOInfo): Timeout", sid, node));
     }
     // --------------------------------------------------------------------------------------------
-    uniset3::IDSeq_var UInterface::setOutputSeq( const uniset3::OutSeq& lst, uniset3::ObjectId sup_id )
+    uniset3::IDSeq UInterface::setOutputSeq( const uniset3::OutSeq& seq, uniset3::ObjectId sup_id )
     {
-        if( lst.length() == 0 )
-            return uniset3::IDSeq_var();
+        if( seq.sensors().size() == 0 )
+            return uniset3::IDSeq();
 
 
-        if ( lst[0].si.id == uniset3::DefaultObjectId )
+        if ( seq.sensors(0).si().id() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(setOutputSeq): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
 
+        ObjectId sid = seq.sensors(0).si().id();
+        ObjectId node = seq.sensors(0).si().node();
+
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            IDSeq reply;
+            SetOutputParams request;
+            request.set_supplier(sid);
+            *(request.mutable_lst()) = seq;
 
             try
             {
-                oref = rcache.resolve(lst[0].si.id, lst[0].si.node);
+                chan = rcache.resolve(sid, node);
             }
-            catch( const uniset3::NameNotFound&  ) {}
+            catch( const uniset3::NameNotFound& ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(lst[0].si.id, lst[0].si.node);
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IONotifyController_i_var iom = uniset3::_narrow(oref);
-                    return iom->setOutputSeq(lst, sup_id);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->setOutputSeq(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(lst[0].si.id, lst[0].si.node);
-            throw uniset3::NameNotFound("UI(setOutputSeq): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(lst[0].si.id, lst[0].si.node);
-            throw uniset3::IOBadParam("UI(setOutputSeq): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(lst[0].si.id, lst[0].si.node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(setOutputSeq): resolve failed ", lst[0].si.id, lst[0].si.node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(lst[0].si.id, lst[0].si.node);
-            throw uniset3::IOBadParam(set_err("UI(setOutputSeq): method no implement", lst[0].si.id, lst[0].si.node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(lst[0].si.id, lst[0].si.node);
-            throw uniset3::IOBadParam(set_err("UI(setOutputSeq): object not exist", lst[0].si.id, lst[0].si.node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(setOutputSeq): " + string(ex.what()));
         }
 
-        rcache.erase(lst[0].si.id, lst[0].si.node);
-        throw uniset3::TimeOut(set_err("UI(setOutputSeq): Timeout", lst[0].si.id, lst[0].si.node));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(setOutputSeq): Timeout", sid, node));
     }
     // --------------------------------------------------------------------------------------------
-    uniset3::IDSeq_var UInterface::askSensorsSeq( const uniset3::IDList& lst,
+    uniset3::IDSeq UInterface::askSensorsSeq( const uniset3::IDList& lst,
             uniset3::UIOCommand cmd, uniset3::ObjectId backid )
     {
         if( lst.empty() )
-            return uniset3::IDSeq_var();
+            return uniset3::IDSeq();
 
         if( backid == uniset3::DefaultObjectId )
             backid = myid;
@@ -2404,87 +1690,56 @@ namespace uniset3
         if( backid == uniset3::DefaultObjectId )
             throw uniset3::IOBadParam("UI(askSensorSeq): unknown back ID");
 
-        uniset3::ObjectId sid = lst.getFirst();
+        ObjectId sid = lst.getFirst();
+        ObjectId node = uconf->getLocalNode();
 
         if ( sid == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(askSensorSeq): попытка обратиться к объекту с id=uniset3::DefaultObjectId");
 
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            IDSeq reply;
+            AskSeqParams request;
+            request.set_cmd(cmd);
+            *request.mutable_ids() = lst.getIDSeq();
+            auto ci = request.mutable_ci();
+            ci->set_id(backid);
+            ci->set_node(uconf->getLocalNode());
 
             try
             {
-                oref = rcache.resolve(sid, uconf->getLocalNode());
+                chan = rcache.resolve(sid, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(sid, uconf->getLocalNode());
+                if( !chan )
+                    chan = rcache.resolve(sid, node);
 
-                    IONotifyController_i_var iom = uniset3::_narrow(oref);
+                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
+                grpc::Status st = stub->askSensorsSeq(&ctx, request, &reply);
 
-                    uniset3::ConsumerInfo_var ci;
-                    ci->id = backid;
-                    ci->node = uconf->getLocalNode();
-                    uniset3::IDSeq_var seq = lst.getIDSeq();
-
-                    return iom->askSensorsSeq(seq, ci, cmd);
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::NameNotFound("UI(getSensorSeq): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::IOBadParam("UI(getSensorSeq): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(askSensorSeq): resolve failed ", sid, uconf->getLocalNode()));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::IOBadParam(set_err("UI(askSensorSeq): method no implement", sid, uconf->getLocalNode()));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(sid, uconf->getLocalNode());
-            throw uniset3::IOBadParam(set_err("UI(askSensorSeq): object not exist", sid, uconf->getLocalNode()));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            rcache.erase(sid, node);
+            throw uniset3::SystemError("UI(askSensorsSeq): " + string(ex.what()));
         }
 
-        rcache.erase(sid, uconf->getLocalNode());
-        throw uniset3::TimeOut(set_err("UI(askSensorSeq): Timeout", sid, uconf->getLocalNode()));
+        rcache.erase(sid, node);
+        throw uniset3::TimeOut(set_err("UI(askSensorsSeq): Timeout", sid, node));
     }
     // -----------------------------------------------------------------------------
-    uniset3::ShortMapSeq* UInterface::getSensors( const uniset3::ObjectId id, uniset3::ObjectId node )
+    uniset3::ShortMapSeq UInterface::getSensors( const uniset3::ObjectId id, uniset3::ObjectId node )
     {
         if ( id == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getSensors): error node=uniset3::DefaultObjectId");
@@ -2498,74 +1753,44 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            ShortMapSeq reply;
+            google::protobuf::Empty request;
 
             try
             {
-                oref = rcache.resolve(id, node);
+                chan = rcache.resolve(id, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
+
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(id, node);
+                if( !chan )
+                    chan = rcache.resolve(id, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getSensors();
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getSensors(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            throw uniset3::NameNotFound("UI(getSensors): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam("UI(getSensors): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(id, node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getSensors): resolve failed ", id, node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam(set_err("UI(getSensors): method no implement", id, node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam(set_err("UI(getSensors): object not exist", id, node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(getValue): CORBA::SystemException" << endl;
+            throw uniset3::SystemError("UI(getSensors): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
         throw uniset3::TimeOut(set_err("UI(getSensors): Timeout", id, node));
     }
     // -----------------------------------------------------------------------------
-    uniset3::SensorInfoSeq* UInterface::getSensorsMap( const uniset3::ObjectId id, const uniset3::ObjectId node )
+    uniset3::SensorIOInfoSeq UInterface::getSensorsMap( const uniset3::ObjectId id, const uniset3::ObjectId node )
     {
         if ( id == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getSensorsMap): error node=uniset3::DefaultObjectId");
@@ -2579,73 +1804,43 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            SensorIOInfoSeq reply;
+            google::protobuf::Empty request;
 
             try
             {
-                oref = rcache.resolve(id, node);
+                chan = rcache.resolve(id, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(id, node);
+                if( !chan )
+                    chan = rcache.resolve(id, node);
 
-                    IOController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getSensorsMap();
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
+                grpc::Status st = stub->getSensorsMap(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            throw uniset3::NameNotFound("UI(getSensorsMap): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam("UI(getSensorsMap): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(id, node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getSensorsMap): resolve failed ", id, node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam(set_err("UI(getSensorsMap): method no implement", id, node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam(set_err("UI(getSensorsMap): object not exist", id, node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
+            throw uniset3::SystemError("UI(getSensorsMap): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
         throw uniset3::TimeOut(set_err("UI(getSensorsMap): Timeout", id, node));
     }
     // -----------------------------------------------------------------------------
-    uniset3::ThresholdsListSeq* UInterface::getThresholdsList( const uniset3::ObjectId id, const uniset3::ObjectId node )
+    uniset3::ThresholdsListSeq UInterface::getThresholdsList( const uniset3::ObjectId id, const uniset3::ObjectId node )
     {
         if ( id == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(getThresholdsList): error node=uniset3::DefaultObjectId");
@@ -2659,66 +1854,36 @@ namespace uniset3
 
         try
         {
-            CORBA::Object_var oref;
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan;
+            ThresholdsListSeq reply;
+            google::protobuf::Empty request;
 
             try
             {
-                oref = rcache.resolve(id, node);
+                chan = rcache.resolve(id, node);
             }
             catch( const uniset3::NameNotFound&  ) {}
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
-                try
-                {
-                    if( CORBA::is_nil(oref) )
-                        oref = resolve(id, node);
+                if( !chan )
+                    chan = rcache.resolve(id, node);
 
-                    IONotifyController_i_var iom = uniset3::_narrow(oref);
-                    return iom->getThresholdsList();
-                }
-                catch( const CORBA::TRANSIENT& ) {}
-                catch( const CORBA::OBJECT_NOT_EXIST& ) {}
-                catch( const CORBA::SystemException& ex ) {}
+                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
+                grpc::Status st = stub->getThresholdsList(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
 
                 msleep(uconf->getRepeatTimeout());
-                oref = CORBA::Object::_nil();
+                chan = nullptr;
             }
         }
-        catch( const uniset3::TimeOut& ) {}
-        catch(const uniset3::NameNotFound&  ex)
+        catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            throw uniset3::NameNotFound("UI(getThresholdsList): " + string(ex.err));
-        }
-        catch(const uniset3::IOBadParam& ex)
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam("UI(getThresholdsList): " + string(ex.err));
-        }
-        catch(const uniset3::ORepFailed& )
-        {
-            rcache.erase(id, node);
-            // не смогли получить ссылку на объект
-            throw uniset3::IOBadParam(set_err("UI(getThresholdsList): resolve failed ", id, node));
-        }
-        catch(const CORBA::NO_IMPLEMENT& )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam(set_err("UI(getThresholdsList): method no implement", id, node));
-        }
-        catch( const CORBA::OBJECT_NOT_EXIST& )
-        {
-            rcache.erase(id, node);
-            throw uniset3::IOBadParam(set_err("UI(getThresholdsList): object not exist", id, node));
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            // ошибка системы коммуникации
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
+            throw uniset3::SystemError("UI(getThresholdsList): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
@@ -2776,12 +1941,6 @@ namespace uniset3
 
                 if( ready )
                     break;
-            }
-            catch( const CORBA::OBJECT_NOT_EXIST& )
-            {
-            }
-            catch( const CORBA::COMM_FAILURE& ex )
-            {
             }
             catch(...)
             {

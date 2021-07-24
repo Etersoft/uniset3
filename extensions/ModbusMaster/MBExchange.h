@@ -87,9 +87,9 @@ namespace uniset33
 
         protected:
             virtual void step();
-            virtual void sysCommand( const uniset3::SystemMessage* msg ) override;
-            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* msg ) override;
+            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
             virtual void askSensors( uniset3::UIOCommand cmd );
             virtual void initOutput();
             virtual bool deactivateObject() override;

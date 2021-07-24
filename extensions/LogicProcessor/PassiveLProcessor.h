@@ -59,9 +59,9 @@ namespace uniset33
             virtual void getInputs() override;
             virtual void setOuts() override;
 
-            void sysCommand( const uniset3::SystemMessage* msg ) override;
-            void sensorInfo( const uniset3::SensorMessage* sm ) override;
-            void timerInfo( const uniset3::TimerMessage* tm ) override;
+            void sysCommand( const uniset3::messages::SystemMessage* msg ) override;
+            void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
+            void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
             void askSensors( const uniset3::UIOCommand cmd );
             //        void initOutput();
 

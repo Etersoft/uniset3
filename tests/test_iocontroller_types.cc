@@ -28,7 +28,7 @@ TEST_CASE("IOController: USensorInfo", "[ioc][usi]" )
 
     SECTION( "makeSensorMessage" )
     {
-        uniset3::SensorMessage sm( usi.makeSensorMessage() );
+        uniset3::messages::SensorMessage sm( usi.makeSensorMessage() );
         REQUIRE( sm.supplier == 100 );
         REQUIRE( sm.value == 9 );
     }

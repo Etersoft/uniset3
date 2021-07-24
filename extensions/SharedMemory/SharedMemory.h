@@ -426,11 +426,11 @@ namespace uniset33
             typedef std::list<IOConfig_XML::ReaderSlot> ReadSlotList;
             ReadSlotList lstRSlot;
 
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
-            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
             virtual std::string getTimerName(int id) const override;
 
-            void sendEvent( uniset3::SystemMessage& sm );
+            void sendEvent( uniset3::messages::SystemMessage& sm );
             void initFromReserv();
             bool initFromSM( uniset3::ObjectId sm_id, uniset3::ObjectId sm_node );
 
@@ -496,7 +496,7 @@ namespace uniset33
             int evntPause;
             int activateTimeout;
 
-            virtual void logging( uniset3::SensorMessage& sm ) override;
+            virtual void logging( uniset3::messages::SensorMessage& sm ) override;
 
             bool dblogging = { false };
 

@@ -28,7 +28,6 @@
 #include <string>
 
 #include "UniSetTypes.h"
-#include "IOController_i.hh"
 #include "IOController.h"
 
 //---------------------------------------------------------------------------
@@ -55,7 +54,7 @@ namespace uniset3
     Механизм функционирует по следующей логике:
     "заказчики" уведомляют \b IONC об изменении какого именно датчика они хотят получать уведомление,
     после чего, если данный датчик меняет своё состояние, заказчику посылается
-    сообщение uniset3::SensorMessage содержащее информацию о текущем(новом) состоянии датчика,
+    сообщение uniset3::messages::SensorMessage содержащее информацию о текущем(новом) состоянии датчика,
     времени изменения и т.п. В случае необходимости можно отказаться от уведомления.
     Для заказа датчиков предусмотрен ряд функций. На данный момент рекомендуется
     пользоваться функцией IONotifyController::askSensor.
@@ -131,7 +130,7 @@ namespace uniset3
      */
     class IONotifyController:
         public IOController,
-        public POA_IONotifyController_i
+        public IONotifyController_i::Service
     {
         public:
 
@@ -159,7 +158,7 @@ namespace uniset3
             virtual uniset3::ThresholdsListSeq* getThresholdsList() override;
 
             virtual uniset3::IDSeq* askSensorsSeq(const uniset3::IDSeq& lst,
-                                                 const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd) override;
+                                                  const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd) override;
 
             // --------------------------------------------
 
@@ -218,7 +217,7 @@ namespace uniset3
             virtual void initItem( std::shared_ptr<USensorInfo>& usi, IOController* ic );
 
             //! посылка информации об изменении состояния датчика (всем или указанному заказчику)
-            virtual void send( ConsumerListInfo& lst, const uniset3::SensorMessage& sm, const uniset3::ConsumerInfo* ci = nullptr );
+            virtual void send( ConsumerListInfo& lst, const uniset3::messages::SensorMessage& sm, const uniset3::ConsumerInfo* ci = nullptr );
 
             //! проверка срабатывания пороговых датчиков
             virtual void checkThreshold( std::shared_ptr<USensorInfo>& usi, bool send = true );

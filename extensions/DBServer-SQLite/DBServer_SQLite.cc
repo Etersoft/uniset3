@@ -59,7 +59,7 @@ DBServer_SQLite::~DBServer_SQLite()
         db->close();
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::sysCommand( const uniset3::SystemMessage* sm )
+void DBServer_SQLite::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     DBServer::sysCommand(sm);
 
@@ -210,7 +210,7 @@ void DBServer_SQLite::flushBuffer()
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::sensorInfo( const uniset3::SensorMessage* si )
+void DBServer_SQLite::sensorInfo( const uniset3::messages::SensorMessage* si )
 {
     try
     {
@@ -289,9 +289,9 @@ void DBServer_SQLite::initDBServer()
     dbinfo <<  myname << "(init): init connection.." << endl;
     string dbfile(conf->getProp(node, "dbfile"));
 
-    tblMap[uniset3::Message::SensorInfo] = "main_history";
-    tblMap[uniset3::Message::Confirm] = "main_history";
-    tblMap[uniset3::Message::TextMessage] = "main_messages";
+    tblMap[uniset3::messages::mtSensorInfo] = "main_history";
+    tblMap[uniset3::messages::Confirm] = "main_history";
+    tblMap[uniset3::messages::TextMessage] = "main_messages";
 
     PingTime = conf->getPIntProp(node, "pingTime", PingTime);
     ReconnectTime = conf->getPIntProp(node, "reconnectTime", ReconnectTime);
@@ -358,7 +358,7 @@ void DBServer_SQLite::createTables( SQLiteInterface* db )
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::timerInfo( const uniset3::TimerMessage* tm )
+void DBServer_SQLite::timerInfo( const uniset3::messages::TimerMessage* tm )
 {
     DBServer::timerInfo(tm);
 

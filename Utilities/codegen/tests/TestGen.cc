@@ -89,7 +89,7 @@ void TestGen::httpGetUserData( Poco::JSON::Object::Ptr& jdata )
 // -----------------------------------------------------------------------------
 #endif
 // -----------------------------------------------------------------------------
-void TestGen::sysCommand( const uniset3::SystemMessage* sm )
+void TestGen::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     if( sm->command == SystemMessage::StartUp )
         askTimer(1, 2000);

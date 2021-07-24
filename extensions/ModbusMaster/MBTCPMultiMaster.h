@@ -286,7 +286,7 @@ namespace uniset33
             virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
 
         protected:
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
             virtual void initIterators() override;
             virtual std::shared_ptr<ModbusClient> initMB( bool reopen = false ) override;
             virtual bool deactivateObject() override;

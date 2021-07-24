@@ -352,7 +352,7 @@ void RRDServer::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::sysCommand( const uniset3::SystemMessage* sm )
+void RRDServer::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     UObject_SK::sysCommand(sm);
 
@@ -372,7 +372,7 @@ void RRDServer::sysCommand( const uniset3::SystemMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::sensorInfo( const uniset3::SensorMessage* sm )
+void RRDServer::sensorInfo( const uniset3::messages::SensorMessage* sm )
 {
     for( const auto& it : rrdlist )
     {
@@ -385,7 +385,7 @@ void RRDServer::sensorInfo( const uniset3::SensorMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::timerInfo( const uniset3::TimerMessage* tm )
+void RRDServer::timerInfo( const uniset3::messages::TimerMessage* tm )
 {
     for( const auto& it : rrdlist )
     {

@@ -338,7 +338,7 @@ ModbusRTU::mbErrCode MBTCPServer::setDateTime( ModbusRTU::SetDateTimeMessage& qu
 
     // подтверждаем сохранение
     // в ответе возвращаем установленное время...
-    ModbusRTU::SetDateTimeRetMessage::cpy(reply, query);
+    ModbusRTU::SetDateTimeRetmessages::cpy(reply, query);
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
@@ -373,7 +373,7 @@ ModbusRTU::mbErrCode MBTCPServer::fileTransfer( ModbusRTU::FileTransferMessage& 
         return ModbusRTU::erOperationFailed;
     }
 
-    int seek = query.numpacket * ModbusRTU::FileTransferRetMessage::MaxDataLen;
+    int seek = query.numpacket * ModbusRTU::FileTransferRetmessages::MaxDataLen;
     int ret = lseek(fd, seek, SEEK_SET);
 
     if( ret < 0 )
@@ -383,7 +383,7 @@ ModbusRTU::mbErrCode MBTCPServer::fileTransfer( ModbusRTU::FileTransferMessage& 
         return ModbusRTU::erOperationFailed;
     }
 
-    ModbusRTU::ModbusByte buf[ModbusRTU::FileTransferRetMessage::MaxDataLen];
+    ModbusRTU::ModbusByte buf[ModbusRTU::FileTransferRetmessages::MaxDataLen];
 
     ret = ::read(fd, &buf, sizeof(buf));
 
@@ -396,8 +396,8 @@ ModbusRTU::mbErrCode MBTCPServer::fileTransfer( ModbusRTU::FileTransferMessage& 
 
     // вычисляем общий размер файла в "пакетах"
     //    (void)lseek(fd,0,SEEK_END);
-    //    int numpacks = lseek(fd,0,SEEK_CUR) / ModbusRTU::FileTransferRetMessage::MaxDataLen;
-    //    if( lseek(fd,0,SEEK_CUR) % ModbusRTU::FileTransferRetMessage::MaxDataLen )
+    //    int numpacks = lseek(fd,0,SEEK_CUR) / ModbusRTU::FileTransferRetmessages::MaxDataLen;
+    //    if( lseek(fd,0,SEEK_CUR) % ModbusRTU::FileTransferRetmessages::MaxDataLen )
     //        numpacks++;
 
     struct stat fs;
@@ -412,11 +412,11 @@ ModbusRTU::mbErrCode MBTCPServer::fileTransfer( ModbusRTU::FileTransferMessage& 
     close(fd);
 
     //    cerr << "******************* ret = " << ret << " fsize = " << fs.st_size
-    //        << " maxsize = " << ModbusRTU::FileTransferRetMessage::MaxDataLen << endl;
+    //        << " maxsize = " << ModbusRTU::FileTransferRetmessages::MaxDataLen << endl;
 
-    int numpacks = fs.st_size / ModbusRTU::FileTransferRetMessage::MaxDataLen;
+    int numpacks = fs.st_size / ModbusRTU::FileTransferRetmessages::MaxDataLen;
 
-    if( fs.st_size % ModbusRTU::FileTransferRetMessage::MaxDataLen )
+    if( fs.st_size % ModbusRTU::FileTransferRetmessages::MaxDataLen )
         numpacks++;
 
     if( !reply.set(query.numfile, numpacks, query.numpacket, buf, ret) )

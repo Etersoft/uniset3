@@ -95,7 +95,7 @@ void SMonitor::sysCommand( const SystemMessage* sm )
 	}
 }
 // ------------------------------------------------------------------------------------------
-std::string SMonitor::printEvent( const uniset3::SensorMessage* sm )
+std::string SMonitor::printEvent( const uniset3::messages::SensorMessage* sm )
 {
 	auto conf = uniset_conf();
 	ostringstream s;

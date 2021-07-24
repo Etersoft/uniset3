@@ -1498,7 +1498,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::sensorInfo( const uniset3::SensorMessage* sm )
+    void IOControl::sensorInfo( const uniset3::messages::SensorMessage* sm )
     {
         iolog1 << myname << "(sensorInfo): sm->id=" << sm->id
                << " val=" << sm->value << endl;
@@ -1635,7 +1635,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::timerInfo( const uniset3::TimerMessage* tm )
+    void IOControl::timerInfo( const uniset3::messages::TimerMessage* tm )
     {
 
     }

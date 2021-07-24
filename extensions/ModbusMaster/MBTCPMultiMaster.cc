@@ -437,7 +437,7 @@ bool MBTCPMultiMaster::MBSlaveInfo::init( std::shared_ptr<DebugStream>& mblog )
     return initOK;
 }
 // -----------------------------------------------------------------------------
-void MBTCPMultiMaster::sysCommand( const uniset3::SystemMessage* sm )
+void MBTCPMultiMaster::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     MBExchange::sysCommand(sm);
 

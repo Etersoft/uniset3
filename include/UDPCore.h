@@ -54,32 +54,32 @@ namespace uniset3
     };
     // -------------------------------------------------------------------------
     class MulticastSocketU:
-            public Poco::Net::MulticastSocket
+        public Poco::Net::MulticastSocket
     {
-    public:
+        public:
 
-        MulticastSocketU():
+            MulticastSocketU():
                 Poco::Net::MulticastSocket(Poco::Net::IPAddress::IPv4)
-        {}
+            {}
 
-        MulticastSocketU( int port ):
-               Poco::Net::MulticastSocket(Poco::Net::SocketAddress(Poco::Net::IPAddress(), port), true)
-        {}
+            MulticastSocketU( int port ):
+                Poco::Net::MulticastSocket(Poco::Net::SocketAddress(Poco::Net::IPAddress(), port), true)
+            {}
 
-        MulticastSocketU( const std::string& bind, int port ):
+            MulticastSocketU( const std::string& bind, int port ):
                 Poco::Net::MulticastSocket(Poco::Net::SocketAddress(bind, port), true)
-        {}
+            {}
 
-        MulticastSocketU( const Poco::Net::SocketAddress& addr ):
+            MulticastSocketU( const Poco::Net::SocketAddress& addr ):
                 Poco::Net::MulticastSocket(addr, true)
-        {}
+            {}
 
-        virtual ~MulticastSocketU() {}
+            virtual ~MulticastSocketU() {}
 
-        inline int getSocket() const
-        {
-            return Poco::Net::MulticastSocket::sockfd();
-        }
+            inline int getSocket() const
+            {
+                return Poco::Net::MulticastSocket::sockfd();
+            }
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace

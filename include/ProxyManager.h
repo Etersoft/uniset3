@@ -56,8 +56,8 @@ namespace uniset3
 
         protected:
             ProxyManager();
-            virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
-            virtual void allMessage( const uniset3::VoidMessage* msg );
+            virtual void processingMessage( const uniset3::messages::TransportMessage* msg ) override;
+            virtual void allMessage( const uniset3::messages::TransportMessage* msg );
 
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;

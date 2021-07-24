@@ -31,7 +31,7 @@ using namespace uniset3;
 
 // -----------------------------------------------------------------------------
 float uniset3::fcalibrate( float raw, float rawMin, float rawMax,
-                          float calMin, float calMax, bool limit )
+                           float calMin, float calMax, bool limit )
 {
     if( rawMax == rawMin ) return 0; // деление на 0!!!
 
@@ -62,7 +62,7 @@ float uniset3::fcalibrate( float raw, float rawMin, float rawMax,
 }
 // -----------------------------------------------------------------------------
 double uniset3::dcalibrate( double raw, double rawMin, double rawMax,
-                           double calMin, double calMax, bool limit )
+                            double calMin, double calMax, bool limit )
 {
     if( rawMax == rawMin ) return 0; // деление на 0!!!
 
@@ -215,9 +215,10 @@ uniset3::ObjectId uniset3::IDList::getFirst() const noexcept
 // отвечает вызывающий!
 uniset3::IDSeq uniset3::IDList::getIDSeq() const
 {
-    IDSeq seq
-    for( auto it = lst.begin(); it != lst.end(); ++it, i++ )
-        seq.lst().add(*it);
+    IDSeq seq;
+
+    for( const auto& it : lst )
+        seq.add_ids(it);
 
     return seq;
 }
@@ -272,9 +273,9 @@ std::vector<std::string> uniset3::explode_str( const std::string& str, char sep 
 
         pos = str.find(sep, prev);
 
-		if( pos == string::npos )
-		{
-			const string s(str.substr(prev, sz - prev));
+        if( pos == string::npos )
+        {
+            const string s(str.substr(prev, sz - prev));
 
             if( !s.empty() )
                 v.emplace_back( std::move(s) );
@@ -288,7 +289,7 @@ std::vector<std::string> uniset3::explode_str( const std::string& str, char sep 
             continue;
         }
 
-		const string s(str.substr(prev, pos - prev));
+        const string s(str.substr(prev, pos - prev));
 
         if( !s.empty() )
         {
@@ -318,39 +319,39 @@ bool uniset3::is_digit( const std::string& s ) noexcept
 // --------------------------------------------------------------------------------------
 std::list<uniset3::ParamSInfo> uniset3::getSInfoList( const string& str, std::shared_ptr<Configuration> conf )
 {
-	std::list<uniset3::ParamSInfo> res;
+    std::list<uniset3::ParamSInfo> res;
 
-	auto lst = uniset3::explode_str(str, ',');
+    auto lst = uniset3::explode_str(str, ',');
 
-	for( const auto& it : lst )
-	{
-		uniset3::ParamSInfo item;
+    for( const auto& it : lst )
+    {
+        uniset3::ParamSInfo item;
 
-		auto p = uniset3::explode_str(it, '=');
-		std::string s = "";
+        auto p = uniset3::explode_str(it, '=');
+        std::string s = "";
 
-		if( p.size() == 1 )
-		{
-			s = *(p.begin());
-			item.val = 0;
-		}
-		else if( p.size() == 2 )
-		{
-			s = *(p.begin());
-			item.val = uni_atoi(*(++p.begin()));
-		}
-		else
-		{
-			cerr << "WARNING: parse error for '" << it << "'. IGNORE..." << endl;
-			continue;
-		}
+        if( p.size() == 1 )
+        {
+            s = *(p.begin());
+            item.val = 0;
+        }
+        else if( p.size() == 2 )
+        {
+            s = *(p.begin());
+            item.val = uni_atoi(*(++p.begin()));
+        }
+        else
+        {
+            cerr << "WARNING: parse error for '" << it << "'. IGNORE..." << endl;
+            continue;
+        }
 
-		item.fname = s;
-		auto t = uniset3::explode_str(s, '@');
+        item.fname = s;
+        auto t = uniset3::explode_str(s, '@');
 
-		if( t.size() == 1 )
-		{
-			const std::string s_id = *(t.begin());
+        if( t.size() == 1 )
+        {
+            const std::string s_id = *(t.begin());
 
             if( is_digit(s_id) || !conf )
                 item.si.set_id(uni_atoi(s_id));
@@ -358,32 +359,32 @@ std::list<uniset3::ParamSInfo> uniset3::getSInfoList( const string& str, std::sh
                 item.si.set_id(conf->getSensorID(s_id));
 
             item.si.set_node(DefaultObjectId);
-		}
-		else if( t.size() == 2 )
-		{
-			const std::string s_id = *(t.begin());
-			const std::string s_node = *(++t.begin());
+        }
+        else if( t.size() == 2 )
+        {
+            const std::string s_id = *(t.begin());
+            const std::string s_node = *(++t.begin());
 
-			if( is_digit(s_id) || !conf )
+            if( is_digit(s_id) || !conf )
                 item.si.set_id(uni_atoi(s_id));
-			else
+            else
                 item.si.set_id(conf->getSensorID(s_id));
 
-			if( is_digit(s_node) || !conf )
+            if( is_digit(s_node) || !conf )
                 item.si.set_node(uni_atoi(s_node));
             else
                 item.si.set_node(conf->getNodeID(s_node));
-		}
-		else
-		{
-			cerr << "WARNING: parse error for '" << s << "'. IGNORE..." << endl;
-			continue;
-		}
+        }
+        else
+        {
+            cerr << "WARNING: parse error for '" << s << "'. IGNORE..." << endl;
+            continue;
+        }
 
-		res.emplace_back( std::move(item) );
-	}
+        res.emplace_back( std::move(item) );
+    }
 
-	return res;
+    return res;
 }
 // --------------------------------------------------------------------------------------
 std::list<uniset3::ConsumerInfo> uniset3::getObjectsList( const string& str, std::shared_ptr<Configuration> conf )
@@ -401,9 +402,9 @@ std::list<uniset3::ConsumerInfo> uniset3::getObjectsList( const string& str, std
 
         auto t = uniset3::explode_str(it, '@');
 
-		if( t.size() == 1 )
-		{
-			const std::string s_id(*(t.begin()));
+        if( t.size() == 1 )
+        {
+            const std::string s_id(*(t.begin()));
 
             if( is_digit(s_id) )
                 item.set_id(uni_atoi(s_id));
@@ -419,11 +420,11 @@ std::list<uniset3::ConsumerInfo> uniset3::getObjectsList( const string& str, std
             }
 
             item.set_node(DefaultObjectId);
-		}
-		else if( t.size() == 2 )
-		{
-			const std::string s_id = *(t.begin());
-			const std::string s_node = *(++t.begin());
+        }
+        else if( t.size() == 2 )
+        {
+            const std::string s_id = *(t.begin());
+            const std::string s_node = *(++t.begin());
 
             if( is_digit(s_id) )
                 item.set_id(uni_atoi(s_id));
@@ -588,8 +589,8 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdInf
        << " hilim=" << ti.hilimit()
        << " lowlim=" << ti.lowlimit()
        << " state=" << ti.state()
-       << " tv_sec=" << ti.tv_sec()
-       << " tv_nsec=" << ti.tv_nsec()
+       << " tv_sec=" << ti.tv().sec()
+       << " tv_nsec=" << ti.tv().nsec()
        << " invert=" << ti.invert()
        << " ]";
 
@@ -598,8 +599,8 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdInf
 // -------------------------------------------------------------------------
 std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ShortIOInfo& s )
 {
-    os << setw(10) << dateToString(s.tv_sec())
-       << " " << setw(8) << timeToString(s.tv_sec()) << "." << s.tv_nsec()
+    os << setw(10) << dateToString(s.ts().sec())
+       << " " << setw(8) << timeToString(s.ts().sec()) << "." << s.ts().nsec()
        << " [ value=" << s.value() << " supplier=" << s.supplier() << " ]";
 
     return os;
@@ -686,7 +687,8 @@ uniset3::Timespec uniset3::to_uniset_timespec( const chrono::system_clock::durat
 {
     uniset3::Timespec ts;
 
-    if( d.count() == 0 ) {
+    if( d.count() == 0 )
+    {
         ts.set_sec(0);
         ts.set_nsec(0);
     }

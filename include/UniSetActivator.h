@@ -27,7 +27,7 @@
 #include "UniSetTypes.h"
 #include "UniSetObject.h"
 #include "UniSetManager.h"
-#include "OmniThreadCreator.h"
+//#include "OmniThreadCreator.h"
 #include "UHttpRequestHandler.h"
 #include "UHttpServer.h"
 //----------------------------------------------------------------------------------------
@@ -93,10 +93,7 @@ namespace uniset3
             // прерывание работы
             void terminate();
 
-            virtual uniset3::ObjectType getType() override
-            {
-                return uniset3::ObjectType("UniSetActivator");
-            }
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
 
 
 #ifndef DISABLE_REST_API
@@ -121,9 +118,9 @@ namespace uniset3
             static void on_finish_timeout();
             static void set_signals( bool set );
 
-            std::shared_ptr< OmniThreadCreator<UniSetActivator> > orbthr;
+            std::shared_ptr< ThreadCreator<UniSetActivator> > srvthr;
 
-            CORBA::ORB_var orb;
+            std::unique_ptr<grpc::Server> server;
             bool termControl = { true };
 
 #ifndef DISABLE_REST_API

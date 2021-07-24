@@ -25,8 +25,8 @@
 %define oname uniset2
 
 Name: libuniset2
-Version: 2.13.1
-Release: alt1
+Version: 3.0.0
+Release: alt0.1
 Summary: UniSet - library for building distributed industrial control systems
 
 License: LGPL-2.1
@@ -40,10 +40,10 @@ Source: %name-%version.tar
 
 # Automatically added by buildreq on Fri Aug 26 2016
 # optimized out: fontconfig libgpg-error libsasl2-3 libsqlite3-devel libstdc++-devel libwayland-client libwayland-server perl pkg-config python-base python-devel python-module-omniidl python-modules python3
-BuildRequires: gcc-c++ libev-devel libomniORB-devel libpoco-devel libsigc++2-devel libxml2-devel xsltproc libprotobuf-devel
+BuildRequires: gcc-c++ libev-devel libomniORB-devel libpoco-devel libsigc++2-devel libxml2-devel xsltproc libprotobuf-devel grpc-plugins protobuf-compiler libgrpc++-devel
 
 # for uniset2-codegen
-BuildPreReq: xsltproc
+BuildPreReq: xsltproc 
 
 # due -std=c++11 using
 # BuildPreReq: gcc5 >= 4.8

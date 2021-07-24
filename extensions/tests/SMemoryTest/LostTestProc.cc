@@ -27,7 +27,7 @@ LostTestProc::LostTestProc()
     throw uniset3::Exception(myname + "(init): FAILED..");
 }
 // -----------------------------------------------------------------------------
-void LostTestProc::sysCommand( const uniset3::SystemMessage* sm )
+void LostTestProc::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     LostTestProc_SK::sysCommand(sm);
 

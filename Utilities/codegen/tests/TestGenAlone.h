@@ -14,8 +14,8 @@ class TestGenAlone:
 
     protected:
         virtual void step() override;
-        void sensorInfo( const uniset3::SensorMessage* sm ) override;
-        void timerInfo( const uniset3::TimerMessage* tm ) override;
+        void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
+        void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
 
     private:
 };

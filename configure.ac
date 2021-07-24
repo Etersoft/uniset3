@@ -41,8 +41,15 @@ PKG_CHECK_MODULES(XML, libxml-2.0)
 PKG_CHECK_MODULES(SIGC, sigc++-2.0)
 PKG_CHECK_MODULES(PROTOBUF, protobuf)
 
+AC_PATH_PROG([GRPC_CPP_PLUGIN], [grpc_cpp_plugin])
+test "x$GRPC_CPP_PLUGIN" = "x" && AC_MSG_ERROR([*** grpc_cpp_plugin not found.])
+AC_SUBST(GRPC_CPP_PLUGIN)
+
 AC_PATH_PROG([PROTOC], [protoc])
 test "x$PROTOC" = "x" && AC_MSG_ERROR([*** protoc not found.])
+
+PKG_CHECK_MODULES(GRPC, grpc++)
+
 
 checklibev=true
 PKG_CHECK_MODULES(EV, libev, [ checklibev=false; ], [ checklibev=true; ])
@@ -481,9 +488,9 @@ AM_CONDITIONAL(HAVE_TESTS, test ${buildtests} = true)
 CXX_EXTRA_FLAGS="-Wnon-virtual-dtor -Woverloaded-virtual -Woverflow -D_GLIBCXX_USE_NANOSLEEP -fstack-protector"
 
 # export
-LDFLAGS="$LDFLAGS ${PROTOBUF_LIBS} ${XML_LIBS} ${SIGC_LIBS} ${COV_LIBS} ${POCO_LIBS} ${EV_LIBS}"
+LDFLAGS="$LDFLAGS ${GRPC_LIBS} ${PROTOBUF_LIBS} ${XML_LIBS} ${SIGC_LIBS} ${COV_LIBS} ${POCO_LIBS} ${EV_LIBS}"
 # all developer liked options add to autogen.sh, please
-CXXFLAGS="-I\$(top_builddir)/include $CXXFLAGS -funsigned-char -g -DCATCH_VERSION_MAJOR=${CATCH_VERSION_MAJOR} -D_GNU_SOURCE ${REST_API_CFLAGS} ${COMPORT_485F_CFLAGS} ${PROTOBUF_CFLAGS} ${XML_CFLAGS} ${SIGC_CFLAGS} ${COV_CFLAGS} ${POCO_CFLAGS} ${EV_CFLAGS} $CXX_EXTRA_FLAGS"
+CXXFLAGS="-I\$(top_builddir)/include $CXXFLAGS -funsigned-char -g -DCATCH_VERSION_MAJOR=${CATCH_VERSION_MAJOR} -D_GNU_SOURCE ${REST_API_CFLAGS} ${COMPORT_485F_CFLAGS} ${GRPC_CFLAGS} ${PROTOBUF_CFLAGS} ${XML_CFLAGS} ${SIGC_CFLAGS} ${COV_CFLAGS} ${POCO_CFLAGS} ${EV_CFLAGS} $CXX_EXTRA_FLAGS"
 
 AC_SUBST(LDFLAGS)
 AC_SUBST(CXXFLAGS)

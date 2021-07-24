@@ -33,11 +33,11 @@
 #include <list>
 
 #include "UniSetTypes.h"
-#include "MessageType.h"
 #include "PassiveTimer.h"
 #include "Exceptions.h"
 #include "UInterface.h"
-#include "UniSetObject.pb.h"
+#include "UniSetObject.grpc.pb.h"
+#include "MessageTypes.pb.h"
 #include "ThreadCreator.h"
 #include "LT_Object.h"
 #include "MQMutex.h"
@@ -72,48 +72,32 @@ namespace uniset3
     */
     class UniSetObject:
         public std::enable_shared_from_this<UniSetObject>,
-        public POA_UniSetObject_i,
+        public UniSetObject_i::Service,
         public LT_Object
 #ifndef DISABLE_REST_API
         , public uniset3::UHttp::IHttpRequest
 #endif
     {
         public:
-            UniSetObject( const std::string& name, const std::string& section );
             UniSetObject( uniset3::ObjectId id );
             UniSetObject();
             virtual ~UniSetObject();
 
             // Функции объявленые в IDL
-            virtual CORBA::Boolean exist() override;
+            virtual ::grpc::Status getId(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::Int64Value* response) override;
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status request(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status exist(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response) override;
+            virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::messages::TransportMessage* request, ::google::protobuf::Empty* response) override;
 
-            virtual uniset3::ObjectId getId() override;
-
-            const uniset3::ObjectId getId() const;
+            uniset3::ObjectId getId() const;
             std::string getName() const;
-
-            virtual uniset3::ObjectType getType() override
-            {
-                return uniset3::ObjectType("UniSetObject");
-            }
-
             const std::string getStrType();
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = "" ) override;
-
-            // обёртка для вызова HTTP API через RPC
-            virtual uniset3::SimpleInfo* apiRequest( const char* query ) override;
-
-            //! поместить сообщение в очередь
-            virtual void push( const uniset3::TransportMessage& msg ) override;
-
-            //! поместить текстовое сообщение в очередь
-            virtual void pushMessage( const char* msg,
-                                      ::CORBA::Long mtype,
-                                      const ::uniset3::Timespec& tm,
-                                      const ::uniset3::ProducerInfo& pi,
-                                      ::CORBA::Long priority,
-                                      ::CORBA::Long consumer ) override;
+            //            virtual uniset3::SimpleInfo getInfo( const std::string& userparam = "" );
+            //            // обёртка для вызова HTTP API через RPC
+            //            virtual uniset3::SimpleInfo apiRequest( const char* query );
 
 #ifndef DISABLE_REST_API
             // HTTP API
@@ -122,12 +106,12 @@ namespace uniset3
 #endif
             // -------------- вспомогательные --------------
             /*! получить ссылку (на себя) */
-            uniset3::ObjectPtr getRef() const;
+            uniset3::ObjectRef getRef() const;
             std::shared_ptr<UniSetObject> get_ptr();
 
             /*! заказ таймера (вынесена в public, хотя должна была бы быть в protected */
             virtual timeout_t askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks = -1,
-                                        uniset3::Message::Priority p = uniset3::Message::High ) override;
+                                        uniset3::messages::Priority p = uniset3::messages::mpHigh ) override;
 
             friend std::ostream& operator<<(std::ostream& os, UniSetObject& obj );
 
@@ -138,13 +122,13 @@ namespace uniset3
             std::weak_ptr<UniSetManager> mymngr;
 
             /*! обработка приходящих сообщений */
-            virtual void processingMessage( const uniset3::VoidMessage* msg );
+            virtual void processingMessage( const uniset3::messages::TransportMessage* msg );
 
             // конкретные виды сообщений
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) {}
-            virtual void sensorInfo( const uniset3::SensorMessage* sm ) {}
-            virtual void timerInfo( const uniset3::TimerMessage* tm ) {}
-            virtual void onTextMessage( const uniset3::TextMessage* tm ) {}
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) {}
+            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) {}
+            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) {}
+            virtual void onTextMessage( const uniset3::messages::TextMessage* tm ) {}
 
             /*! Получить сообщение */
             VoidMessagePtr receiveMessage();
@@ -243,7 +227,7 @@ namespace uniset3
             bool threadcreate;
             std::unique_ptr<UniSetTimer> tmr;
             uniset3::ObjectId myid;
-            CORBA::Object_var oref;
+            uniset3::ObjectRef oref;
 
             /*! замок для блокирования совместного доступа к oRef */
             mutable uniset3::uniset_rwmutex refmutex;

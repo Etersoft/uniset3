@@ -28,7 +28,6 @@
 
 #include "UInterface.h"
 #include "IONotifyController.h"
-#include "ORepHelpers.h"
 #include "Debug.h"
 #include "IOConfig.h"
 
@@ -38,395 +37,395 @@ using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 IONotifyController::IONotifyController():
-	askIOMutex("askIOMutex"),
-	trshMutex("trshMutex"),
-	maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
-	sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
+    askIOMutex("askIOMutex"),
+    trshMutex("trshMutex"),
+    maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
+    sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
 {
 
 }
 
 IONotifyController::IONotifyController(const string& name, const string& section, std::shared_ptr<IOConfig> d ):
-	IOController(name, section),
-	restorer(d),
-	askIOMutex(name + "askIOMutex"),
-	trshMutex(name + "trshMutex"),
-	maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
-	sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
+    IOController(name, section),
+    restorer(d),
+    askIOMutex(name + "askIOMutex"),
+    trshMutex(name + "trshMutex"),
+    maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
+    sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
 {
-	conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
-	conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
+    conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
+    conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
 }
 
 IONotifyController::IONotifyController( ObjectId id, std::shared_ptr<IOConfig> d ):
-	IOController(id),
-	restorer(d),
-	askIOMutex(string(uniset_conf()->oind->getMapName(id)) + "_askIOMutex"),
-	trshMutex(string(uniset_conf()->oind->getMapName(id)) + "_trshMutex"),
-	maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
-	sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
+    IOController(id),
+    restorer(d),
+    askIOMutex(string(uniset_conf()->oind->getMapName(id)) + "_askIOMutex"),
+    trshMutex(string(uniset_conf()->oind->getMapName(id)) + "_trshMutex"),
+    maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
+    sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
 {
-	conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
-	conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
+    conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
+    conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
 }
 
 IONotifyController::~IONotifyController()
 {
-	conUndef.disconnect();
-	conInit.disconnect();
+    conUndef.disconnect();
+    conInit.disconnect();
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::showStatisticsForConsumer( ostringstream& inf, const std::string& consumer )
 {
-	ObjectId consumer_id = uniset_conf()->getObjectID(consumer);
+    ObjectId consumer_id = uniset_conf()->getObjectID(consumer);
 
-	if( consumer_id == DefaultObjectId )
-		consumer_id = uniset_conf()->getControllerID(consumer);
+    if( consumer_id == DefaultObjectId )
+        consumer_id = uniset_conf()->getControllerID(consumer);
 
-	if( consumer_id == DefaultObjectId )
-		consumer_id = uniset_conf()->getServiceID(consumer);
+    if( consumer_id == DefaultObjectId )
+        consumer_id = uniset_conf()->getServiceID(consumer);
 
-	if( consumer_id == DefaultObjectId )
-	{
-		inf << "not found consumer '" << consumer << "'" << endl;
-		return;
-	}
+    if( consumer_id == DefaultObjectId )
+    {
+        inf << "not found consumer '" << consumer << "'" << endl;
+        return;
+    }
 
-	// Формируем статистику по каждому датчику..
-	struct StatInfo
-	{
-		StatInfo( ObjectId id, const ConsumerInfoExt& c ): inf(c), sid(id) {}
+    // Формируем статистику по каждому датчику..
+    struct StatInfo
+    {
+        StatInfo( ObjectId id, const ConsumerInfoExt& c ): inf(c), sid(id) {}
 
-		const ConsumerInfoExt inf;
-		ObjectId sid;
-	};
+        const ConsumerInfoExt inf;
+        ObjectId sid;
+    };
 
-	std::list<StatInfo> stat;
+    std::list<StatInfo> stat;
 
-	// общее количество SensorMessage полученное этим заказчиком
-	size_t smCount = 0;
+    // общее количество SensorMessage полученное этим заказчиком
+    size_t smCount = 0;
 
-	{
-		// lock askIOMutex
+    {
+        // lock askIOMutex
 
-		// выводим информацию по конкретному объекту
-		uniset_rwmutex_rlock lock(askIOMutex);
+        // выводим информацию по конкретному объекту
+        uniset_rwmutex_rlock lock(askIOMutex);
 
-		for( auto && a : askIOList )
-		{
-			auto& i = a.second;
+        for( auto&& a : askIOList )
+        {
+            auto& i = a.second;
 
-			uniset_rwmutex_rlock lock(i.mut);
+            uniset_rwmutex_rlock lock(i.mut);
 
-			if( i.clst.empty() )
-				continue;
+            if( i.clst.empty() )
+                continue;
 
-			// ищем среди заказчиков
-			for( const auto& c : i.clst )
-			{
-				if( c.id == consumer_id )
-				{
-					stat.emplace_back(a.first, c);
-					smCount += c.smCount;
-					break;
-				}
-			}
-		}
-	} // unlock askIOMutex
+            // ищем среди заказчиков
+            for( const auto& c : i.clst )
+            {
+                if( c.id == consumer_id )
+                {
+                    stat.emplace_back(a.first, c);
+                    smCount += c.smCount;
+                    break;
+                }
+            }
+        }
+    } // unlock askIOMutex
 
-	{
-		// выводим информацию по конкретному объекту
-		uniset_rwmutex_rlock lock(trshMutex);
+    {
+        // выводим информацию по конкретному объекту
+        uniset_rwmutex_rlock lock(trshMutex);
 
-		for( auto && a : askTMap )
-		{
-			uniset_rwmutex_rlock lock2(a.second.mut);
+        for( auto&& a : askTMap )
+        {
+            uniset_rwmutex_rlock lock2(a.second.mut);
 
-			for( const auto& c : a.second.clst )
-			{
-				if( c.id == consumer_id )
-				{
-					if( a.first->sid != DefaultObjectId )
-						stat.emplace_back(a.first->sid, c);
-					else
-						stat.emplace_back(DefaultObjectId, c);
+            for( const auto& c : a.second.clst )
+            {
+                if( c.id == consumer_id )
+                {
+                    if( a.first->sid != DefaultObjectId )
+                        stat.emplace_back(a.first->sid, c);
+                    else
+                        stat.emplace_back(DefaultObjectId, c);
 
-					smCount += c.smCount;
-					break;
-				}
-			}
-		}
-	}
+                    smCount += c.smCount;
+                    break;
+                }
+            }
+        }
+    }
 
-	// печатаем отчёт
-	inf << "Statisctic for consumer '" << consumer << "'(smCount=" << smCount << "):"
-		<< endl
-		<< "--------------------------------------------"
-		<< endl;
+    // печатаем отчёт
+    inf << "Statisctic for consumer '" << consumer << "'(smCount=" << smCount << "):"
+        << endl
+        << "--------------------------------------------"
+        << endl;
 
-	if( stat.empty() )
-	{
-		inf << "NOT FOUND STATISTIC FOR '" << consumer << "'" << endl;
-	}
-	else
-	{
-		std::ios_base::fmtflags old_flags = inf.flags();
+    if( stat.empty() )
+    {
+        inf << "NOT FOUND STATISTIC FOR '" << consumer << "'" << endl;
+    }
+    else
+    {
+        std::ios_base::fmtflags old_flags = inf.flags();
 
-		inf << std::right;
+        inf << std::right;
 
-		auto oind = uniset_conf()->oind;
+        auto oind = uniset_conf()->oind;
 
-		for( const auto& s : stat )
-		{
-			inf << "        " << "(" << setw(6) << s.sid << ") "
-				<< setw(35) << ORepHelpers::getShortName(oind->getMapName(s.sid))
-				<< " ["
-				<< " lostEvents: " << setw(3) << s.inf.lostEvents
-				<< " attempt: " << setw(3) << s.inf.attempt
-				<< " smCount: " << setw(5) << s.inf.smCount
-				<< " ]"
-				<< endl;
-		}
+        for( const auto& s : stat )
+        {
+            inf << "        " << "(" << setw(6) << s.sid << ") "
+                << setw(35) << ORepHelpers::getShortName(oind->getMapName(s.sid))
+                << " ["
+                << " lostEvents: " << setw(3) << s.inf.lostEvents
+                << " attempt: " << setw(3) << s.inf.attempt
+                << " smCount: " << setw(5) << s.inf.smCount
+                << " ]"
+                << endl;
+        }
 
-		inf.setf(old_flags);
-	}
+        inf.setf(old_flags);
+    }
 
-	inf << "--------------------------------------------" << endl;
+    inf << "--------------------------------------------" << endl;
 
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::showStatisticsForLostConsumers( ostringstream& inf )
 {
-	std::lock_guard<std::mutex> lock(lostConsumersMutex);
+    std::lock_guard<std::mutex> lock(lostConsumersMutex);
 
-	if( lostConsumers.empty() )
-	{
-		inf << "..empty lost consumers list..." << endl;
-		return;
-	}
+    if( lostConsumers.empty() )
+    {
+        inf << "..empty lost consumers list..." << endl;
+        return;
+    }
 
-	inf << "Statistics 'consumers with lost events':"
-		<< endl
-		<< "----------------------------------------"
-		<< endl;
+    inf << "Statistics 'consumers with lost events':"
+        << endl
+        << "----------------------------------------"
+        << endl;
 
-	auto oind = uniset_conf()->oind;
+    auto oind = uniset_conf()->oind;
 
-	for( const auto& l : lostConsumers )
-	{
-		inf << "        " << "(" << setw(6) << l.first << ") "
-			<< setw(35) << std::left << ORepHelpers::getShortName(oind->getMapName(l.first))
-			<< " lostCount=" << l.second.count
-			<< endl;
-	}
+    for( const auto& l : lostConsumers )
+    {
+        inf << "        " << "(" << setw(6) << l.first << ") "
+            << setw(35) << std::left << ORepHelpers::getShortName(oind->getMapName(l.first))
+            << " lostCount=" << l.second.count
+            << endl;
+    }
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::showStatisticsForConsusmers( ostringstream& inf )
 {
-	uniset_rwmutex_rlock lock(askIOMutex);
+    uniset_rwmutex_rlock lock(askIOMutex);
 
-	auto oind = uniset_conf()->oind;
+    auto oind = uniset_conf()->oind;
 
-	for( auto && a : askIOList )
-	{
-		auto& i = a.second;
+    for( auto&& a : askIOList )
+    {
+        auto& i = a.second;
 
-		uniset_rwmutex_rlock lock(i.mut);
+        uniset_rwmutex_rlock lock(i.mut);
 
-		// отображаем только датчики с "не пустым" списком заказчиков
-		if( i.clst.empty() )
-			continue;
+        // отображаем только датчики с "не пустым" списком заказчиков
+        if( i.clst.empty() )
+            continue;
 
-		inf << "(" << setw(6) << a.first << ")[" << oind->getMapName(a.first) << "]" << endl;
+        inf << "(" << setw(6) << a.first << ")[" << oind->getMapName(a.first) << "]" << endl;
 
-		for( const auto& c : i.clst )
-		{
-			inf << "        " << "(" << setw(6) << c.id << ")"
-				<< setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
-				<< " ["
-				<< " lostEvents=" << c.lostEvents
-				<< " attempt=" << c.attempt
-				<< " smCount=" << c.smCount
-				<< "]"
-				<< endl;
-		}
-	}
+        for( const auto& c : i.clst )
+        {
+            inf << "        " << "(" << setw(6) << c.id << ")"
+                << setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
+                << " ["
+                << " lostEvents=" << c.lostEvents
+                << " attempt=" << c.attempt
+                << " smCount=" << c.smCount
+                << "]"
+                << endl;
+        }
+    }
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::showStatisticsForConsumersWithLostEvent( ostringstream& inf )
 {
-	uniset_rwmutex_rlock lock(askIOMutex);
+    uniset_rwmutex_rlock lock(askIOMutex);
 
-	auto oind = uniset_conf()->oind;
-	bool empty = true;
+    auto oind = uniset_conf()->oind;
+    bool empty = true;
 
-	for( auto && a : askIOList )
-	{
-		auto& i = a.second;
+    for( auto&& a : askIOList )
+    {
+        auto& i = a.second;
 
-		uniset_rwmutex_rlock lock(i.mut);
+        uniset_rwmutex_rlock lock(i.mut);
 
-		// отображаем только датчики с "не пустым" списком заказчиков
-		if( i.clst.empty() )
-			continue;
+        // отображаем только датчики с "не пустым" списком заказчиков
+        if( i.clst.empty() )
+            continue;
 
-		// Т.к. сперва выводится имя датчика, а только потом его заказчики
-		// то если надо выводить только тех, у кого есть "потери"(lostEvent>0)
-		// для предварительно смотрим список есть ли там хоть один с "потерями", а потом уже выводим
+        // Т.к. сперва выводится имя датчика, а только потом его заказчики
+        // то если надо выводить только тех, у кого есть "потери"(lostEvent>0)
+        // для предварительно смотрим список есть ли там хоть один с "потерями", а потом уже выводим
 
-		bool lost = false;
+        bool lost = false;
 
-		for( const auto& c : i.clst )
-		{
-			if( c.lostEvents > 0 )
-			{
-				lost = true;
-				break;
-			}
-		}
+        for( const auto& c : i.clst )
+        {
+            if( c.lostEvents > 0 )
+            {
+                lost = true;
+                break;
+            }
+        }
 
-		if( !lost )
-			continue;
+        if( !lost )
+            continue;
 
-		empty = false;
-		// выводим тех у кого lostEvent>0
-		inf << "(" << setw(6) << a.first << ")[" << oind->getMapName(a.first) << "]" << endl;
-		inf << "--------------------------------------------------------------------" << endl;
+        empty = false;
+        // выводим тех у кого lostEvent>0
+        inf << "(" << setw(6) << a.first << ")[" << oind->getMapName(a.first) << "]" << endl;
+        inf << "--------------------------------------------------------------------" << endl;
 
-		for( const auto& c : i.clst )
-		{
-			if( c.lostEvents > 0 )
-			{
-				inf << "        " << "(" << setw(6) << c.id << ")"
-					<< setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
-					<< " ["
-					<< " lostEvents=" << c.lostEvents
-					<< " attempt=" << c.attempt
-					<< " smCount=" << c.smCount
-					<< "]"
-					<< endl;
-			}
-		}
-	}
+        for( const auto& c : i.clst )
+        {
+            if( c.lostEvents > 0 )
+            {
+                inf << "        " << "(" << setw(6) << c.id << ")"
+                    << setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
+                    << " ["
+                    << " lostEvents=" << c.lostEvents
+                    << " attempt=" << c.attempt
+                    << " smCount=" << c.smCount
+                    << "]"
+                    << endl;
+            }
+        }
+    }
 
-	if( empty )
-		inf << "...not found consumers with lost event..." << endl;
-	else
-		inf << "--------------------------------------------------------------------" << endl;
+    if( empty )
+        inf << "...not found consumers with lost event..." << endl;
+    else
+        inf << "--------------------------------------------------------------------" << endl;
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::showStatisticsForSensor( ostringstream& inf, const string& name )
 {
-	auto conf = uniset_conf();
-	auto oind = conf->oind;
+    auto conf = uniset_conf();
+    auto oind = conf->oind;
 
-	ObjectId sid = conf->getSensorID(name);
+    ObjectId sid = conf->getSensorID(name);
 
-	if( sid == DefaultObjectId )
-	{
-		inf << "..not found ID for sensor '" << name << "'" << endl;
-		return;
-	}
+    if( sid == DefaultObjectId )
+    {
+        inf << "..not found ID for sensor '" << name << "'" << endl;
+        return;
+    }
 
-	ConsumerListInfo* clist = nullptr;
+    ConsumerListInfo* clist = nullptr;
 
-	{
-		uniset_rwmutex_rlock lock(askIOMutex);
-		auto s = askIOList.find(sid);
+    {
+        uniset_rwmutex_rlock lock(askIOMutex);
+        auto s = askIOList.find(sid);
 
-		if( s == askIOList.end() )
-		{
-			inf << "..not found consumers for sensor '" << name << "'" << endl;
-			return;
-		}
+        if( s == askIOList.end() )
+        {
+            inf << "..not found consumers for sensor '" << name << "'" << endl;
+            return;
+        }
 
-		clist = &(s->second);
-	}
+        clist = &(s->second);
+    }
 
-	inf << "Statisctics for sensor "
-		<< "(" << setw(6) << sid << ")[" << name << "]: " << endl
-		<< "--------------------------------------------------------------------" << endl;
+    inf << "Statisctics for sensor "
+        << "(" << setw(6) << sid << ")[" << name << "]: " << endl
+        << "--------------------------------------------------------------------" << endl;
 
-	uniset_rwmutex_rlock lock2(clist->mut);
+    uniset_rwmutex_rlock lock2(clist->mut);
 
-	for( const auto& c : clist->clst )
-	{
-		inf << "        (" << setw(6) << c.id << ")"
-			<< setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
-			<< " ["
-			<< " lostEvents=" << c.lostEvents
-			<< " attempt=" << c.attempt
-			<< " smCount=" << c.smCount
-			<< "]"
-			<< endl;
-	}
+    for( const auto& c : clist->clst )
+    {
+        inf << "        (" << setw(6) << c.id << ")"
+            << setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
+            << " ["
+            << " lostEvents=" << c.lostEvents
+            << " attempt=" << c.attempt
+            << " smCount=" << c.smCount
+            << "]"
+            << endl;
+    }
 
-	inf << "--------------------------------------------------------------------" << endl;
+    inf << "--------------------------------------------------------------------" << endl;
 }
 // ------------------------------------------------------------------------------------------
 SimpleInfo* IONotifyController::getInfo( const char* userparam )
 {
-	uniset3::SimpleInfo_var i = IOController::getInfo(userparam);
+    uniset3::SimpleInfo_var i = IOController::getInfo(userparam);
 
-	//! \todo Назвать параметры нормально
-	//!
-	const std::string param(userparam);
+    //! \todo Назвать параметры нормально
+    //!
+    const std::string param(userparam);
 
-	ostringstream inf;
+    ostringstream inf;
 
-	inf << i->info << endl;
+    inf << i->info << endl;
 
-	auto oind = uniset_conf()->oind;
+    auto oind = uniset_conf()->oind;
 
-	if( param.empty() )
-	{
-		inf << "-------------------------- lost consumers list [maxAttemtps=" << maxAttemtps << "] ------------------" << endl;
-		showStatisticsForLostConsumers(inf);
-		inf << "----------------------------------------------------------------------------------" << endl;
-	}
+    if( param.empty() )
+    {
+        inf << "-------------------------- lost consumers list [maxAttemtps=" << maxAttemtps << "] ------------------" << endl;
+        showStatisticsForLostConsumers(inf);
+        inf << "----------------------------------------------------------------------------------" << endl;
+    }
 
-	if( param == "consumers" )
-	{
-		inf << "------------------------------- consumers list ------------------------------" << endl;
-		showStatisticsForConsusmers(inf);
-		inf << "-----------------------------------------------------------------------------" << endl << endl;
-	}
-	else if( param == "lost" )
-	{
-		inf << "------------------------------- consumers list (lost event)------------------" << endl;
-		showStatisticsForConsumersWithLostEvent(inf);
-		inf << "-----------------------------------------------------------------------------" << endl << endl;
-	}
-	else if( !param.empty() )
-	{
-		auto query = uniset3::explode_str(param, ':');
+    if( param == "consumers" )
+    {
+        inf << "------------------------------- consumers list ------------------------------" << endl;
+        showStatisticsForConsusmers(inf);
+        inf << "-----------------------------------------------------------------------------" << endl << endl;
+    }
+    else if( param == "lost" )
+    {
+        inf << "------------------------------- consumers list (lost event)------------------" << endl;
+        showStatisticsForConsumersWithLostEvent(inf);
+        inf << "-----------------------------------------------------------------------------" << endl << endl;
+    }
+    else if( !param.empty() )
+    {
+        auto query = uniset3::explode_str(param, ':');
 
-		if( query.empty() || query.size() == 1 )
-			showStatisticsForConsumer(inf, param);
-		else if( query.size() > 1 )
-		{
-			if( query[0] == "consumer" )
-				showStatisticsForConsumer(inf, query[1]);
-			else if( query[0] == "sensor" )
-				showStatisticsForSensor(inf, query[1]);
-			else
-				inf << "Unknown command: " << param << endl;
-		}
-	}
-	else
-	{
-		inf << "IONotifyController::UserParam help: " << endl
-			<< "  Default         - Common info" << endl
-			<< "  consumers       - Consumers list " << endl
-			<< "  lost            - Consumers list with lostEvent > 0" << endl
-			<< "  consumer:name   - Statistic for consumer 'name'" << endl
-			<< "  sensor:name     - Statistic for sensor 'name'"
-			<< endl;
-	}
+        if( query.empty() || query.size() == 1 )
+            showStatisticsForConsumer(inf, param);
+        else if( query.size() > 1 )
+        {
+            if( query[0] == "consumer" )
+                showStatisticsForConsumer(inf, query[1]);
+            else if( query[0] == "sensor" )
+                showStatisticsForSensor(inf, query[1]);
+            else
+                inf << "Unknown command: " << param << endl;
+        }
+    }
+    else
+    {
+        inf << "IONotifyController::UserParam help: " << endl
+            << "  Default         - Common info" << endl
+            << "  consumers       - Consumers list " << endl
+            << "  lost            - Consumers list with lostEvent > 0" << endl
+            << "  consumer:name   - Statistic for consumer 'name'" << endl
+            << "  sensor:name     - Statistic for sensor 'name'"
+            << endl;
+    }
 
-	i->info = inf.str().c_str();
+    i->info = inf.str().c_str();
 
-	return i._retn();
+    return i._retn();
 }
 
 // ------------------------------------------------------------------------------------------
@@ -437,47 +436,47 @@ SimpleInfo* IONotifyController::getInfo( const char* userparam )
 */
 bool IONotifyController::addConsumer( ConsumerListInfo& lst, const ConsumerInfo& ci )
 {
-	uniset_rwmutex_wrlock l(lst.mut);
+    uniset_rwmutex_wrlock l(lst.mut);
 
-	for( auto && it :  lst.clst )
-	{
-		if( it.id == ci.id && it.node == ci.node )
-		{
-			// при перезаказе датчиков количество неудачных попыток послать сообщение
-			// считаем что "заказчик" опять на связи
-			it.attempt = maxAttemtps;
+    for( auto&& it :  lst.clst )
+    {
+        if( it.id == ci.id && it.node == ci.node )
+        {
+            // при перезаказе датчиков количество неудачных попыток послать сообщение
+            // считаем что "заказчик" опять на связи
+            it.attempt = maxAttemtps;
 
-			// выставляем флаг, что заказчик опять "на связи"
-			std::lock_guard<std::mutex> lock(lostConsumersMutex);
-			auto c = lostConsumers.find(ci.id);
+            // выставляем флаг, что заказчик опять "на связи"
+            std::lock_guard<std::mutex> lock(lostConsumersMutex);
+            auto c = lostConsumers.find(ci.id);
 
-			if( c != lostConsumers.end() )
-				c->second.lost = false;
+            if( c != lostConsumers.end() )
+                c->second.lost = false;
 
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 
-	ConsumerInfoExt cinf(ci, 0, maxAttemtps);
+    ConsumerInfoExt cinf(ci, 0, maxAttemtps);
 
-	// получаем ссылку
-	try
-	{
-		uniset3::ObjectVar op = ui->resolve(ci.id, ci.node);
-		cinf.ref = UniSetObject_i::_narrow(op);
-	}
-	catch(...) {}
+    // получаем ссылку
+    try
+    {
+        uniset3::ObjectVar op = ui->resolve(ci.id, ci.node);
+        cinf.ref = UniSetObject_i::_narrow(op);
+    }
+    catch(...) {}
 
-	lst.clst.emplace_front( std::move(cinf) );
+    lst.clst.emplace_front( std::move(cinf) );
 
-	// выставляем флаг, что клиент опять "на связи"
-	std::lock_guard<std::mutex> lock(lostConsumersMutex);
-	auto c = lostConsumers.find(ci.id);
+    // выставляем флаг, что клиент опять "на связи"
+    std::lock_guard<std::mutex> lock(lostConsumersMutex);
+    auto c = lostConsumers.find(ci.id);
 
-	if( c != lostConsumers.end() )
-		c->second.lost = false;
+    if( c != lostConsumers.end() )
+        c->second.lost = false;
 
-	return true;
+    return true;
 }
 // ------------------------------------------------------------------------------------------
 /*!
@@ -486,18 +485,18 @@ bool IONotifyController::addConsumer( ConsumerListInfo& lst, const ConsumerInfo&
 */
 bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerInfo& cons )
 {
-	uniset_rwmutex_wrlock l(lst.mut);
+    uniset_rwmutex_wrlock l(lst.mut);
 
-	for( auto li = lst.clst.begin(); li != lst.clst.end(); ++li )
-	{
-		if( li->id == cons.id && li->node == cons.node  )
-		{
-			lst.clst.erase(li);
-			return true;
-		}
-	}
+    for( auto li = lst.clst.begin(); li != lst.clst.end(); ++li )
+    {
+        if( li->id == cons.id && li->node == cons.node  )
+        {
+            lst.clst.erase(li);
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 // ------------------------------------------------------------------------------------------
 /*!
@@ -506,143 +505,143 @@ bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerIn
  *    \param cmd        - команда см. uniset3::UIOCommand
 */
 void IONotifyController::askSensor(const uniset3::ObjectId sid,
-								   const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd )
+                                   const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd )
 {
-	ulog2 << "(askSensor): поступил " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
-		  << uniset_conf()->oind->getNameById(ci.id) << "@" << ci.node
-		  << " на аналоговый датчик "
-		  << uniset_conf()->oind->getNameById(sid) << endl;
+    ulog2 << "(askSensor): поступил " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
+          << uniset_conf()->oind->getNameById(ci.id) << "@" << ci.node
+          << " на аналоговый датчик "
+          << uniset_conf()->oind->getNameById(sid) << endl;
 
-	auto li = myioEnd();
+    auto li = myioEnd();
 
-	try
-	{
-		// если такого аналогового датчика нет, здесь сработает исключение...
-		localGetValue(li, sid);
-	}
-	catch( uniset3::Undefined& ex ) {}
+    try
+    {
+        // если такого аналогового датчика нет, здесь сработает исключение...
+        localGetValue(li, sid);
+    }
+    catch( uniset3::Undefined& ex ) {}
 
-	{
-		uniset_rwmutex_wrlock lock(askIOMutex);
-		ask(askIOList, sid, ci, cmd);
-	}
+    {
+        uniset_rwmutex_wrlock lock(askIOMutex);
+        ask(askIOList, sid, ci, cmd);
+    }
 
-	auto usi = li->second;
+    auto usi = li->second;
 
-	// посылка первый раз состояния
-	if( cmd == uniset3::UIONotify || (cmd == UIONotifyFirstNotNull && usi->value) )
-	{
-		ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
+    // посылка первый раз состояния
+    if( cmd == uniset3::UIONotify || (cmd == UIONotifyFirstNotNull && usi->value) )
+    {
+        ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
 
-		if( lst )
-		{
-			uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
-			SensorMessage smsg( usi->makeSensorMessage(false) );
-			send(*lst, smsg, &ci);
-		}
-	}
+        if( lst )
+        {
+            uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
+            SensorMessage smsg( usi->makeSensorMessage(false) );
+            send(*lst, smsg, &ci);
+        }
+    }
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
-							  const uniset3::ConsumerInfo& cons, uniset3::UIOCommand cmd)
+                              const uniset3::ConsumerInfo& cons, uniset3::UIOCommand cmd)
 {
-	// поиск датчика в списке
-	auto askIterator = askLst.find(sid);
+    // поиск датчика в списке
+    auto askIterator = askLst.find(sid);
 
-	switch (cmd)
-	{
-		case uniset3::UIONotify: // заказ
-		case uniset3::UIONotifyChange:
-		case uniset3::UIONotifyFirstNotNull:
-		{
-			if( askIterator != askLst.end() )
-				addConsumer(askIterator->second, cons);
-			else
-			{
-				ConsumerListInfo newlst; // создаем новый список
-				addConsumer(newlst, cons);
-				askLst.emplace(sid, std::move(newlst));
-			}
+    switch (cmd)
+    {
+        case uniset3::UIONotify: // заказ
+        case uniset3::UIONotifyChange:
+        case uniset3::UIONotifyFirstNotNull:
+        {
+            if( askIterator != askLst.end() )
+                addConsumer(askIterator->second, cons);
+            else
+            {
+                ConsumerListInfo newlst; // создаем новый список
+                addConsumer(newlst, cons);
+                askLst.emplace(sid, std::move(newlst));
+            }
 
-			break;
-		}
+            break;
+        }
 
-		case uniset3::UIODontNotify:     // отказ
-		{
-			if( askIterator != askLst.end() )
-				removeConsumer(askIterator->second, cons);
+        case uniset3::UIODontNotify:     // отказ
+        {
+            if( askIterator != askLst.end() )
+                removeConsumer(askIterator->second, cons);
 
-			break;
-		}
+            break;
+        }
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 
-	if( askIterator == askLst.end() )
-		askIterator = askLst.find(sid);
+    if( askIterator == askLst.end() )
+        askIterator = askLst.find(sid);
 
-	if( askIterator != askLst.end() )
-	{
-		auto s = myiofind(sid);
+    if( askIterator != askLst.end() )
+    {
+        auto s = myiofind(sid);
 
-		if( s != myioEnd() )
-			s->second->setUserData(udataConsumerList, &(askIterator->second));
-		else
-			s->second->setUserData(udataConsumerList, nullptr);
-	}
+        if( s != myioEnd() )
+            s->second->setUserData(udataConsumerList, &(askIterator->second));
+        else
+            s->second->setUserData(udataConsumerList, nullptr);
+    }
 }
 // ------------------------------------------------------------------------------------------
 long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInfo>& usi,
-										CORBA::Long value, uniset3::ObjectId sup_id )
+                                        CORBA::Long value, uniset3::ObjectId sup_id )
 {
-	// оптимизация:
-	// if( !usi ) - не проверяем, т.к. считаем что это внутренние функции и несуществующий указатель передать не могут
+    // оптимизация:
+    // if( !usi ) - не проверяем, т.к. считаем что это внутренние функции и несуществующий указатель передать не могут
 
-	CORBA::Long prevValue = value;
-	{
-		uniset_rwmutex_rlock lock(usi->val_lock);
-		prevValue = usi->value;
-	}
+    CORBA::Long prevValue = value;
+    {
+        uniset_rwmutex_rlock lock(usi->val_lock);
+        prevValue = usi->value;
+    }
 
-	CORBA::Long curValue = IOController::localSetValue(usi, value, sup_id);
+    CORBA::Long curValue = IOController::localSetValue(usi, value, sup_id);
 
-	// Рассылаем уведомления только в случае изменения значения
-	// --------
-	if( prevValue == curValue )
-		return curValue;
+    // Рассылаем уведомления только в случае изменения значения
+    // --------
+    if( prevValue == curValue )
+        return curValue;
 
 
-	{
-		// с учётом того, что параллельно с этой функцией может
-		// выполняться askSensor, то
-		// посылать сообщение надо "заблокировав" доступ к value...
+    {
+        // с учётом того, что параллельно с этой функцией может
+        // выполняться askSensor, то
+        // посылать сообщение надо "заблокировав" доступ к value...
 
-		uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
+        uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
 
-		SensorMessage sm(usi->makeSensorMessage(false));
+        SensorMessage sm(usi->makeSensorMessage(false));
 
-		try
-		{
-			if( !usi->dbignore )
-				logging(sm);
-		}
-		catch(...) {}
+        try
+        {
+            if( !usi->dbignore )
+                logging(sm);
+        }
+        catch(...) {}
 
-		ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
+        ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
 
-		if( lst )
-			send(*lst, sm);
-	}
+        if( lst )
+            send(*lst, sm);
+    }
 
-	// проверка порогов
-	try
-	{
-		checkThreshold(usi, true);
-	}
-	catch(...) {}
+    // проверка порогов
+    try
+    {
+        checkThreshold(usi, true);
+    }
+    catch(...) {}
 
-	return curValue;
+    return curValue;
 }
 // -----------------------------------------------------------------------------------------
 /*!
@@ -650,728 +649,728 @@ long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInf
     Возможно нужно ввести своего агента на удалённой стороне, который будет заниматься
     только приёмом сообщений и локальной рассылкой. Lav
 */
-void IONotifyController::send( ConsumerListInfo& lst, const uniset3::SensorMessage& sm, const uniset3::ConsumerInfo* ci  )
+void IONotifyController::send( ConsumerListInfo& lst, const uniset3::messages::SensorMessage& sm, const uniset3::ConsumerInfo* ci  )
 {
-	TransportMessage tmsg(sm.transport_msg());
+    TransportMessage tmsg(sm.transport_msg());
 
-	uniset_rwmutex_wrlock l(lst.mut);
+    uniset_rwmutex_wrlock l(lst.mut);
 
-	for( ConsumerList::iterator li = lst.clst.begin(); li != lst.clst.end(); ++li )
-	{
-		if( ci )
-		{
-			if( ci->id != li->id || ci->node != li->node )
-				continue;
-		}
+    for( ConsumerList::iterator li = lst.clst.begin(); li != lst.clst.end(); ++li )
+    {
+        if( ci )
+        {
+            if( ci->id != li->id || ci->node != li->node )
+                continue;
+        }
 
-		for( int i = 0; i < sendAttemtps; i++ )
-		{
-			try
-			{
-				if( CORBA::is_nil(li->ref) )
-				{
-					CORBA::Object_var op = ui->resolve(li->id, li->node);
-					li->ref = UniSetObject_i::_narrow(op);
-				}
+        for( int i = 0; i < sendAttemtps; i++ )
+        {
+            try
+            {
+                if( CORBA::is_nil(li->ref) )
+                {
+                    CORBA::Object_var op = ui->resolve(li->id, li->node);
+                    li->ref = UniSetObject_i::_narrow(op);
+                }
 
-				tmsg.consumer = li->id;
-				li->ref->push( tmsg );
-				li->smCount++;
-				li->attempt = maxAttemtps; // reinit attempts
-				break;
-			}
-			catch( const CORBA::SystemException& ex )
-			{
-				uwarn << myname << "(IONotifyController::send): attempt=" << (maxAttemtps - li->attempt + 1)
-					  << " from " << maxAttemtps << " "
-					  << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << " (CORBA::SystemException): "
-					  << ex.NP_minorString() << endl;
-			}
-			catch( const std::exception& ex )
-			{
-				uwarn << myname << "(IONotifyController::send): attempt=" <<  (maxAttemtps - li->attempt + 1) << " "
-					  << " from " << maxAttemtps << " "
-					  << ex.what()
-					  << " for " << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
-			}
-			catch(...)
-			{
-				ucrit << myname << "(IONotifyController::send): attempt=" <<  (maxAttemtps - li->attempt + 1) << " "
-					  << " from " << maxAttemtps << " "
-					  << uniset_conf()->oind->getNameById(li->id) << "@" << li->node
-					  << " catch..." << endl;
-			}
+                tmsg.consumer = li->id;
+                li->ref->push( tmsg );
+                li->smCount++;
+                li->attempt = maxAttemtps; // reinit attempts
+                break;
+            }
+            catch( const CORBA::SystemException& ex )
+            {
+                uwarn << myname << "(IONotifyController::send): attempt=" << (maxAttemtps - li->attempt + 1)
+                      << " from " << maxAttemtps << " "
+                      << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << " (CORBA::SystemException): "
+                      << ex.NP_minorString() << endl;
+            }
+            catch( const std::exception& ex )
+            {
+                uwarn << myname << "(IONotifyController::send): attempt=" <<  (maxAttemtps - li->attempt + 1) << " "
+                      << " from " << maxAttemtps << " "
+                      << ex.what()
+                      << " for " << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
+            }
+            catch(...)
+            {
+                ucrit << myname << "(IONotifyController::send): attempt=" <<  (maxAttemtps - li->attempt + 1) << " "
+                      << " from " << maxAttemtps << " "
+                      << uniset_conf()->oind->getNameById(li->id) << "@" << li->node
+                      << " catch..." << endl;
+            }
 
-			// фиксируем только после первой попытки послать
-			if( i > 0 )
-				li->lostEvents++;
+            // фиксируем только после первой попытки послать
+            if( i > 0 )
+                li->lostEvents++;
 
-			try
-			{
-				if( maxAttemtps > 0 && --(li->attempt) <= 0 )
-				{
-					uwarn << myname << "(IONotifyController::send): ERASE FROM CONSUMERS:  "
-						  << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
+            try
+            {
+                if( maxAttemtps > 0 && --(li->attempt) <= 0 )
+                {
+                    uwarn << myname << "(IONotifyController::send): ERASE FROM CONSUMERS:  "
+                          << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
 
-					{
-						std::lock_guard<std::mutex> lock(lostConsumersMutex);
-						auto& c = lostConsumers[li->id];
+                    {
+                        std::lock_guard<std::mutex> lock(lostConsumersMutex);
+                        auto& c = lostConsumers[li->id];
 
-						// если уже выставлен флаг что "заказчик" пропал, то не надо увеличивать "счётчик"
-						// видимо мы уже зафиксировали его пропажу на другом датчике...
-						if( !c.lost )
-						{
-							c.count += 1;
-							c.lost = true;
-						}
-					}
+                        // если уже выставлен флаг что "заказчик" пропал, то не надо увеличивать "счётчик"
+                        // видимо мы уже зафиксировали его пропажу на другом датчике...
+                        if( !c.lost )
+                        {
+                            c.count += 1;
+                            c.lost = true;
+                        }
+                    }
 
-					li = lst.clst.erase(li);
-					--li;
-					break;
-				}
+                    li = lst.clst.erase(li);
+                    --li;
+                    break;
+                }
 
 
-				li->ref = UniSetObject_i::_nil();
-			}
-			catch( const std::exception& ex )
-			{
-				uwarn << myname << "(IONotifyController::send): UniSetObject_i::_nil() "
-					  << ex.what()
-					  << " for " << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
-			}
-		}
-	}
+                li->ref = UniSetObject_i::_nil();
+            }
+            catch( const std::exception& ex )
+            {
+                uwarn << myname << "(IONotifyController::send): UniSetObject_i::_nil() "
+                      << ex.what()
+                      << " for " << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
+            }
+        }
+    }
 }
 // --------------------------------------------------------------------------------------------------------------
 bool IONotifyController::activateObject()
 {
-	// сперва загружаем датчики и заказчиков..
-	readConf();
-	// а потом уже собственно активация..
-	return IOController::activateObject();
+    // сперва загружаем датчики и заказчиков..
+    readConf();
+    // а потом уже собственно активация..
+    return IOController::activateObject();
 }
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::sensorsRegistration()
 {
-	for_iolist([this](std::shared_ptr<USensorInfo>& s)
-	{
-		ioRegistration(s);
-	});
+    for_iolist([this](std::shared_ptr<USensorInfo>& s)
+    {
+        ioRegistration(s);
+    });
 }
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::readConf()
 {
-	try
-	{
-		if( restorer )
-			initIOList( std::move(restorer->read()) );
-	}
-	catch( const std::exception& ex )
-	{
-		// Если дамп не удалось считать, значит что-то не то в configure.xml
-		// и безопаснее "вылететь", чем запустится, т.к. часть датчиков не будет работать
-		// как ожидается.
-		ucrit << myname << "(IONotifyController::readConf): " << ex.what() << endl << flush;
-		//std::terminate(); // std::abort();
-		uterminate();
-	}
+    try
+    {
+        if( restorer )
+            initIOList( std::move(restorer->read()) );
+    }
+    catch( const std::exception& ex )
+    {
+        // Если дамп не удалось считать, значит что-то не то в configure.xml
+        // и безопаснее "вылететь", чем запустится, т.к. часть датчиков не будет работать
+        // как ожидается.
+        ucrit << myname << "(IONotifyController::readConf): " << ex.what() << endl << flush;
+        //std::terminate(); // std::abort();
+        uterminate();
+    }
 }
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::initItem( std::shared_ptr<USensorInfo>& usi, IOController* ic )
 {
-	if( usi->type == uniset3::AI || usi->type == uniset3::AO )
-		checkThreshold( usi, false );
+    if( usi->type == uniset3::AI || usi->type == uniset3::AO )
+        checkThreshold( usi, false );
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::askThreshold(uniset3::ObjectId sid,
-									  const uniset3::ConsumerInfo& ci,
-									  uniset3::ThresholdId tid,
-									  CORBA::Long lowLimit, CORBA::Long hiLimit,  CORBA::Boolean invert,
-									  uniset3::UIOCommand cmd )
+                                      const uniset3::ConsumerInfo& ci,
+                                      uniset3::ThresholdId tid,
+                                      CORBA::Long lowLimit, CORBA::Long hiLimit,  CORBA::Boolean invert,
+                                      uniset3::UIOCommand cmd )
 {
-	ulog2 << "(askThreshold): " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
-		  << uniset_conf()->oind->getNameById(ci.id) << "@" << ci.node
-		  << " на порог tid=" << tid
-		  << " [" << lowLimit << "," << hiLimit << ",invert=" << invert << "]"
-		  << " для датчика "
-		  << uniset_conf()->oind->getNameById(sid)
-		  << endl;
+    ulog2 << "(askThreshold): " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
+          << uniset_conf()->oind->getNameById(ci.id) << "@" << ci.node
+          << " на порог tid=" << tid
+          << " [" << lowLimit << "," << hiLimit << ",invert=" << invert << "]"
+          << " для датчика "
+          << uniset_conf()->oind->getNameById(sid)
+          << endl;
 
-	if( lowLimit > hiLimit )
-		throw uniset3::BadRange();
+    if( lowLimit > hiLimit )
+        throw uniset3::BadRange();
 
-	auto li = myioEnd();
+    auto li = myioEnd();
 
-	CORBA::Long val = 0;
+    CORBA::Long val = 0;
 
-	try
-	{
-		// если такого датчика нет здесь сработает исключение...
-		val = localGetValue(li, sid);
-	}
-	catch( const uniset3::Undefined& ex ) {}
+    try
+    {
+        // если такого датчика нет здесь сработает исключение...
+        val = localGetValue(li, sid);
+    }
+    catch( const uniset3::Undefined& ex ) {}
 
-	{
-		// lock
-		uniset_rwmutex_wrlock lock(trshMutex);
+    {
+        // lock
+        uniset_rwmutex_wrlock lock(trshMutex);
 
-		auto it = findThreshold(sid, tid);
+        auto it = findThreshold(sid, tid);
 
-		switch( cmd )
-		{
-			case uniset3::UIONotify: // заказ
-			case uniset3::UIONotifyChange:
-			{
-				if( !it )
-					it = make_shared<IOController::UThresholdInfo>(tid, lowLimit, hiLimit, invert);
+        switch( cmd )
+        {
+            case uniset3::UIONotify: // заказ
+            case uniset3::UIONotifyChange:
+            {
+                if( !it )
+                    it = make_shared<IOController::UThresholdInfo>(tid, lowLimit, hiLimit, invert);
 
-				it = addThresholdIfNotExist(li->second, it);
-				addThresholdConsumer(it, ci);
+                it = addThresholdIfNotExist(li->second, it);
+                addThresholdConsumer(it, ci);
 
-				if( cmd == uniset3::UIONotifyChange )
-					break;
+                if( cmd == uniset3::UIONotifyChange )
+                    break;
 
-				// посылка первый раз состояния
-				SensorMessage sm(li->second->makeSensorMessage());
-				sm.consumer   = ci.id;
-				sm.tid        = tid;
+                // посылка первый раз состояния
+                SensorMessage sm(li->second->makeSensorMessage());
+                sm.consumer   = ci.id;
+                sm.tid        = tid;
 
-				// Проверка нижнего предела
-				if( val <= lowLimit )
-					sm.threshold = false;
-				// Проверка верхнего предела
-				else if( val >= hiLimit )
-					sm.threshold = true;
+                // Проверка нижнего предела
+                if( val <= lowLimit )
+                    sm.threshold = false;
+                // Проверка верхнего предела
+                else if( val >= hiLimit )
+                    sm.threshold = true;
 
-				auto clst = askTMap.find(it.get());
+                auto clst = askTMap.find(it.get());
 
-				if( clst != askTMap.end() )
-					send(clst->second, sm, &ci);
-			}
-			break;
+                if( clst != askTMap.end() )
+                    send(clst->second, sm, &ci);
+            }
+            break;
 
-			case uniset3::UIODontNotify:     // отказ
-			{
-				if( it )
-					removeThresholdConsumer(li->second, it, ci);
-			}
-			break;
+            case uniset3::UIODontNotify:     // отказ
+            {
+                if( it )
+                    removeThresholdConsumer(li->second, it, ci);
+            }
+            break;
 
-			default:
-				break;
-		}
-	} // unlock trshMutex
+            default:
+                break;
+        }
+    } // unlock trshMutex
 }
 // --------------------------------------------------------------------------------------------------------------
 std::shared_ptr<IOController::UThresholdInfo>
 IONotifyController::addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi,
-		std::shared_ptr<UThresholdInfo>& ti )
+        std::shared_ptr<UThresholdInfo>& ti )
 {
-	uniset3::uniset_rwmutex_wrlock lck(usi->tmut);
+    uniset3::uniset_rwmutex_wrlock lck(usi->tmut);
 
-	for( auto && t : usi->thresholds )
-	{
-		if( ti->id == t->id )
-			return t;
-	}
+    for( auto&& t : usi->thresholds )
+    {
+        if( ti->id == t->id )
+            return t;
+    }
 
-	struct timespec tm = uniset3::now_to_timespec();
+    struct timespec tm = uniset3::now_to_timespec();
 
-	ti->tv_sec  = tm.tv_sec;
+    ti->tv_sec  = tm.tv_sec;
 
-	ti->tv_nsec = tm.tv_nsec;
+    ti->tv_nsec = tm.tv_nsec;
 
-	usi->thresholds.push_back(ti);
+    usi->thresholds.push_back(ti);
 
-	return ti;
+    return ti;
 }
 // --------------------------------------------------------------------------------------------------------------
 bool IONotifyController::addThresholdConsumer( std::shared_ptr<IOController::UThresholdInfo>& ti, const ConsumerInfo& ci )
 {
-	auto i = askTMap.find(ti.get());
+    auto i = askTMap.find(ti.get());
 
-	if( i != askTMap.end() )
-		return addConsumer(i->second, ci);
+    if( i != askTMap.end() )
+        return addConsumer(i->second, ci);
 
-	auto ret = askTMap.emplace(ti.get(), ConsumerListInfo());
+    auto ret = askTMap.emplace(ti.get(), ConsumerListInfo());
 
-	return addConsumer( ret.first->second, ci );
+    return addConsumer( ret.first->second, ci );
 }
 // --------------------------------------------------------------------------------------------------------------
 bool IONotifyController::removeThresholdConsumer( std::shared_ptr<USensorInfo>& usi,
-		std::shared_ptr<UThresholdInfo>& ti,
-		const uniset3::ConsumerInfo& ci )
+        std::shared_ptr<UThresholdInfo>& ti,
+        const uniset3::ConsumerInfo& ci )
 {
-	uniset_rwmutex_wrlock lck(usi->tmut);
+    uniset_rwmutex_wrlock lck(usi->tmut);
 
-	for( auto && t : usi->thresholds )
-	{
-		if( t->id == ti->id )
-		{
-			auto it = askTMap.find(ti.get());
+    for( auto&& t : usi->thresholds )
+    {
+        if( t->id == ti->id )
+        {
+            auto it = askTMap.find(ti.get());
 
-			if( it == askTMap.end() )
-				return false;
+            if( it == askTMap.end() )
+                return false;
 
-			return removeConsumer(it->second, ci);
-		}
-	}
+            return removeConsumer(it->second, ci);
+        }
+    }
 
-	return false;
+    return false;
 }
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::checkThreshold( IOController::IOStateList::iterator& li,
-		const uniset3::ObjectId sid,
-		bool send_msg )
+        const uniset3::ObjectId sid,
+        bool send_msg )
 {
-	if( li == myioEnd() )
-		li = myiofind(sid);
+    if( li == myioEnd() )
+        li = myiofind(sid);
 
-	if( li == myioEnd() )
-		return; // ???
+    if( li == myioEnd() )
+        return; // ???
 
-	checkThreshold(li->second, send_msg);
+    checkThreshold(li->second, send_msg);
 }
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::checkThreshold( std::shared_ptr<IOController::USensorInfo>& usi, bool send_msg )
 {
-	uniset_rwmutex_rlock lock(trshMutex);
+    uniset_rwmutex_rlock lock(trshMutex);
 
-	auto& ti = usi->thresholds;
+    auto& ti = usi->thresholds;
 
-	if( ti.empty() )
-		return;
+    if( ti.empty() )
+        return;
 
-	// обрабатываем текущее состояние датчика обязательно "залочив" значение..
-	uniset_rwmutex_rlock vlock(usi->val_lock);
+    // обрабатываем текущее состояние датчика обязательно "залочив" значение..
+    uniset_rwmutex_rlock vlock(usi->val_lock);
 
-	SensorMessage sm(usi->makeSensorMessage(false));
+    SensorMessage sm(usi->makeSensorMessage(false));
 
-	// текущее время
-	struct timespec tm = uniset3::now_to_timespec();
+    // текущее время
+    struct timespec tm = uniset3::now_to_timespec();
 
-	{
-		uniset_rwmutex_rlock l(usi->tmut);
+    {
+        uniset_rwmutex_rlock l(usi->tmut);
 
-		for( auto && it : ti )
-		{
-			// Используем здесь значение скопированное в sm.value
-			// чтобы не делать ещё раз lock на li->second->value
-			uniset3::ThresholdState state = it->state;
+        for( auto&& it : ti )
+        {
+            // Используем здесь значение скопированное в sm.value
+            // чтобы не делать ещё раз lock на li->second->value
+            uniset3::ThresholdState state = it->state;
 
-			if( !it->invert )
-			{
-				// Если логика не инвертированная, то срабатывание это - выход за зону >= hilimit
-				if( sm.value <= it->lowlimit  )
-					state = uniset3::NormalThreshold;
-				else if( sm.value >= it->hilimit )
-					state = uniset3::HiThreshold;
-			}
-			else
-			{
-				// Если логика инвертированная, то срабатывание это - выход за зону <= lowlimit
-				if( sm.value >= it->hilimit  )
-					state = uniset3::NormalThreshold;
-				else if( sm.value <= it->lowlimit )
-					state = uniset3::LowThreshold;
-			}
+            if( !it->invert )
+            {
+                // Если логика не инвертированная, то срабатывание это - выход за зону >= hilimit
+                if( sm.value <= it->lowlimit  )
+                    state = uniset3::NormalThreshold;
+                else if( sm.value >= it->hilimit )
+                    state = uniset3::HiThreshold;
+            }
+            else
+            {
+                // Если логика инвертированная, то срабатывание это - выход за зону <= lowlimit
+                if( sm.value >= it->hilimit  )
+                    state = uniset3::NormalThreshold;
+                else if( sm.value <= it->lowlimit )
+                    state = uniset3::LowThreshold;
+            }
 
-			// если ничего не менялось..
-			if( it->state == state )
-				continue;
+            // если ничего не менялось..
+            if( it->state == state )
+                continue;
 
-			it->state = state;
+            it->state = state;
 
-			sm.tid = it->id;
+            sm.tid = it->id;
 
-			// если состояние не normal, значит порог сработал,
-			// не важно какой.. нижний или верхний (зависит от inverse)
-			sm.threshold = ( state != uniset3::NormalThreshold );
+            // если состояние не normal, значит порог сработал,
+            // не важно какой.. нижний или верхний (зависит от inverse)
+            sm.threshold = ( state != uniset3::NormalThreshold );
 
-			// запоминаем время изменения состояния
-			it->tv_sec     = tm.tv_sec;
-			it->tv_nsec    = tm.tv_nsec;
-			sm.sm_tv   = tm;
+            // запоминаем время изменения состояния
+            it->tv_sec     = tm.tv_sec;
+            it->tv_nsec    = tm.tv_nsec;
+            sm.sm_tv   = tm;
 
-			// если порог связан с датчиком, то надо его выставить
-			if( it->sid != uniset3::DefaultObjectId )
-			{
-				try
-				{
-					localSetValueIt(it->sit, it->sid, (sm.threshold ? 1 : 0), usi->supplier);
-				}
-				catch( uniset3::Exception& ex )
-				{
-					ucrit << myname << "(checkThreshold): " << ex << endl;
-				}
-			}
+            // если порог связан с датчиком, то надо его выставить
+            if( it->sid != uniset3::DefaultObjectId )
+            {
+                try
+                {
+                    localSetValueIt(it->sit, it->sid, (sm.threshold ? 1 : 0), usi->supplier);
+                }
+                catch( uniset3::Exception& ex )
+                {
+                    ucrit << myname << "(checkThreshold): " << ex << endl;
+                }
+            }
 
-			// отдельно посылаем сообщения заказчикам по данному "порогу"
-			if( send_msg )
-			{
-				uniset_rwmutex_rlock lck(trshMutex);
-				auto i = askTMap.find(it.get());
+            // отдельно посылаем сообщения заказчикам по данному "порогу"
+            if( send_msg )
+            {
+                uniset_rwmutex_rlock lck(trshMutex);
+                auto i = askTMap.find(it.get());
 
-				if( i != askTMap.end() )
-					send(i->second, sm);
-			}
-		}
-	}
+                if( i != askTMap.end() )
+                    send(i->second, sm);
+            }
+        }
+    }
 }
 // --------------------------------------------------------------------------------------------------------------
 std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold( const uniset3::ObjectId sid, const uniset3::ThresholdId tid )
 {
-	auto it = myiofind(sid);
+    auto it = myiofind(sid);
 
-	if( it != myioEnd() )
-	{
-		auto usi = it->second;
-		uniset_rwmutex_rlock lck(usi->tmut);
+    if( it != myioEnd() )
+    {
+        auto usi = it->second;
+        uniset_rwmutex_rlock lck(usi->tmut);
 
-		for( auto && t : usi->thresholds )
-		{
-			if( t->id == tid )
-				return t;
-		}
-	}
+        for( auto&& t : usi->thresholds )
+        {
+            if( t->id == tid )
+                return t;
+        }
+    }
 
-	return nullptr;
+    return nullptr;
 }
 // --------------------------------------------------------------------------------------------------------------
 
 uniset3::ThresholdInfo IONotifyController::getThresholdInfo( uniset3::ObjectId sid, uniset3::ThresholdId tid )
 {
-	uniset_rwmutex_rlock lock(trshMutex);
-	auto it = findThreshold(sid, tid);
+    uniset_rwmutex_rlock lock(trshMutex);
+    auto it = findThreshold(sid, tid);
 
-	if( !it )
-	{
-		ostringstream err;
-		err << myname << "(getThresholds): Not found sensor (" << sid << ") "
-			<< uniset_conf()->oind->getNameById(sid);
+    if( !it )
+    {
+        ostringstream err;
+        err << myname << "(getThresholds): Not found sensor (" << sid << ") "
+            << uniset_conf()->oind->getNameById(sid);
 
-		uinfo << err.str() << endl;
-		throw uniset3::NameNotFound(err.str().c_str());
-	}
+        uinfo << err.str() << endl;
+        throw uniset3::NameNotFound(err.str().c_str());
+    }
 
-	return uniset3::ThresholdInfo(*it);
+    return uniset3::ThresholdInfo(*it);
 }
 // --------------------------------------------------------------------------------------------------------------
 uniset3::ThresholdList* IONotifyController::getThresholds( uniset3::ObjectId sid )
 {
-	auto it = myiofind(sid);
+    auto it = myiofind(sid);
 
-	if( it == myioEnd() )
-	{
-		ostringstream err;
-		err << myname << "(getThresholds): Not found sensor (" << sid << ") "
-			<< uniset_conf()->oind->getNameById(sid);
+    if( it == myioEnd() )
+    {
+        ostringstream err;
+        err << myname << "(getThresholds): Not found sensor (" << sid << ") "
+            << uniset_conf()->oind->getNameById(sid);
 
-		uinfo << err.str() << endl;
-		throw uniset3::NameNotFound(err.str().c_str());
-	}
+        uinfo << err.str() << endl;
+        throw uniset3::NameNotFound(err.str().c_str());
+    }
 
-	auto& usi = it->second;
-	uniset3::ThresholdList* res = new uniset3::ThresholdList();
+    auto& usi = it->second;
+    uniset3::ThresholdList* res = new uniset3::ThresholdList();
 
-	try
-	{
-		res->si     = usi->si;
-		res->value  = IOController::localGetValue(usi);
-		res->type   = usi->type;
-	}
-	catch( const uniset3::Exception& ex )
-	{
-		uwarn << myname << "(getThresholds): для датчика "
-			  << uniset_conf()->oind->getNameById(usi->si.id)
-			  << " " << ex << endl;
-	}
+    try
+    {
+        res->si     = usi->si;
+        res->value  = IOController::localGetValue(usi);
+        res->type   = usi->type;
+    }
+    catch( const uniset3::Exception& ex )
+    {
+        uwarn << myname << "(getThresholds): для датчика "
+              << uniset_conf()->oind->getNameById(usi->si.id)
+              << " " << ex << endl;
+    }
 
-	uniset_rwmutex_rlock lck(usi->tmut);
-	res->tlist.length( usi->thresholds.size() );
+    uniset_rwmutex_rlock lck(usi->tmut);
+    res->tlist.length( usi->thresholds.size() );
 
-	size_t k = 0;
+    size_t k = 0;
 
-	for( const auto& it2 : usi->thresholds )
-	{
-		res->tlist[k].id       = it2->id;
-		res->tlist[k].hilimit  = it2->hilimit;
-		res->tlist[k].lowlimit = it2->lowlimit;
-		res->tlist[k].state    = it2->state;
-		res->tlist[k].tv_sec   = it2->tv_sec;
-		res->tlist[k].tv_nsec  = it2->tv_nsec;
-		k++;
-	}
+    for( const auto& it2 : usi->thresholds )
+    {
+        res->tlist[k].id       = it2->id;
+        res->tlist[k].hilimit  = it2->hilimit;
+        res->tlist[k].lowlimit = it2->lowlimit;
+        res->tlist[k].state    = it2->state;
+        res->tlist[k].tv_sec   = it2->tv_sec;
+        res->tlist[k].tv_nsec  = it2->tv_nsec;
+        k++;
+    }
 
-	return res;
+    return res;
 }
 // --------------------------------------------------------------------------------------------------------------
 uniset3::ThresholdsListSeq* IONotifyController::getThresholdsList()
 {
-	std::list< std::shared_ptr<USensorInfo> > slist;
+    std::list< std::shared_ptr<USensorInfo> > slist;
 
-	// ищем все датчики, у которых не пустой список порогов
-	for_iolist([&slist]( std::shared_ptr<USensorInfo>& usi )
-	{
+    // ищем все датчики, у которых не пустой список порогов
+    for_iolist([&slist]( std::shared_ptr<USensorInfo>& usi )
+    {
 
-		if( !usi->thresholds.empty() )
-			slist.push_back(usi);
-	});
+        if( !usi->thresholds.empty() )
+            slist.push_back(usi);
+    });
 
-	uniset3::ThresholdsListSeq* res = new uniset3::ThresholdsListSeq();
+    uniset3::ThresholdsListSeq* res = new uniset3::ThresholdsListSeq();
 
-	res->length( slist.size() );
+    res->length( slist.size() );
 
-	if( !slist.empty() )
-	{
-		size_t i = 0;
+    if( !slist.empty() )
+    {
+        size_t i = 0;
 
-		for( auto && it : slist )
-		{
-			try
-			{
-				(*res)[i].si    = it->si;
-				(*res)[i].value = IOController::localGetValue(it);
-				(*res)[i].type  = it->type;
-			}
-			catch( const std::exception& ex )
-			{
-				uwarn << myname << "(getThresholdsList): for sid="
-					  << uniset_conf()->oind->getNameById(it->si.id)
-					  << " " << ex.what() << endl;
-				continue;
-			}
-			catch( const uniset3::NameNotFound& ex )
-			{
-				uwarn << myname << "(getThresholdsList): uniset3::NameNotFound.. for sid="
-					  << uniset_conf()->oind->getNameById(it->si.id)
-					  << endl;
+        for( auto&& it : slist )
+        {
+            try
+            {
+                (*res)[i].si    = it->si;
+                (*res)[i].value = IOController::localGetValue(it);
+                (*res)[i].type  = it->type;
+            }
+            catch( const std::exception& ex )
+            {
+                uwarn << myname << "(getThresholdsList): for sid="
+                      << uniset_conf()->oind->getNameById(it->si.id)
+                      << " " << ex.what() << endl;
+                continue;
+            }
+            catch( const uniset3::NameNotFound& ex )
+            {
+                uwarn << myname << "(getThresholdsList): uniset3::NameNotFound.. for sid="
+                      << uniset_conf()->oind->getNameById(it->si.id)
+                      << endl;
 
-				continue;
-			}
+                continue;
+            }
 
-			uniset_rwmutex_rlock lck(it->tmut);
-			(*res)[i].tlist.length( it->thresholds.size() );
+            uniset_rwmutex_rlock lck(it->tmut);
+            (*res)[i].tlist.length( it->thresholds.size() );
 
-			size_t k = 0;
+            size_t k = 0;
 
-			for( const auto& it2 : it->thresholds )
-			{
-				(*res)[i].tlist[k].id       = it2->id;
-				(*res)[i].tlist[k].hilimit  = it2->hilimit;
-				(*res)[i].tlist[k].lowlimit = it2->lowlimit;
-				(*res)[i].tlist[k].state    = it2->state;
-				(*res)[i].tlist[k].tv_sec   = it2->tv_sec;
-				(*res)[i].tlist[k].tv_nsec  = it2->tv_nsec;
-				k++;
-			}
+            for( const auto& it2 : it->thresholds )
+            {
+                (*res)[i].tlist[k].id       = it2->id;
+                (*res)[i].tlist[k].hilimit  = it2->hilimit;
+                (*res)[i].tlist[k].lowlimit = it2->lowlimit;
+                (*res)[i].tlist[k].state    = it2->state;
+                (*res)[i].tlist[k].tv_sec   = it2->tv_sec;
+                (*res)[i].tlist[k].tv_nsec  = it2->tv_nsec;
+                k++;
+            }
 
-			i++;
-		}
-	}
+            i++;
+        }
+    }
 
-	return res;
+    return res;
 }
 // -----------------------------------------------------------------------------
 void IONotifyController::onChangeUndefinedState( std::shared_ptr<USensorInfo>& usi, IOController* ic )
 {
-	uniset_rwmutex_rlock vlock(usi->val_lock);
-	SensorMessage sm( usi->makeSensorMessage(false) );
+    uniset_rwmutex_rlock vlock(usi->val_lock);
+    SensorMessage sm( usi->makeSensorMessage(false) );
 
-	try
-	{
-		if( !usi->dbignore )
-			logging(sm);
-	}
-	catch(...) {}
+    try
+    {
+        if( !usi->dbignore )
+            logging(sm);
+    }
+    catch(...) {}
 
-	ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
+    ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
 
-	if( lst )
-		send(*lst, sm);
+    if( lst )
+        send(*lst, sm);
 }
 
 // -----------------------------------------------------------------------------
 IDSeq* IONotifyController::askSensorsSeq( const uniset3::IDSeq& lst,
-		const uniset3::ConsumerInfo& ci,
-		uniset3::UIOCommand cmd)
+        const uniset3::ConsumerInfo& ci,
+        uniset3::UIOCommand cmd)
 {
-	uniset3::IDList badlist; // cписок не найденных идентификаторов
+    uniset3::IDList badlist; // cписок не найденных идентификаторов
 
-	size_t size = lst.length();
-	ObjectId sid;
+    size_t size = lst.length();
+    ObjectId sid;
 
-	for( size_t i = 0; i < size; i++ )
-	{
-		sid = lst[i];
+    for( size_t i = 0; i < size; i++ )
+    {
+        sid = lst[i];
 
-		try
-		{
-			askSensor(sid, ci, cmd);
-		}
-		catch(...)
-		{
-			badlist.add(sid);
-		}
-	}
+        try
+        {
+            askSensor(sid, ci, cmd);
+        }
+        catch(...)
+        {
+            badlist.add(sid);
+        }
+    }
 
-	return badlist.getIDSeq();
+    return badlist.getIDSeq();
 }
 // -----------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
 Poco::JSON::Object::Ptr IONotifyController::httpHelp(const Poco::URI::QueryParameters& p)
 {
-	uniset3::json::help::object myhelp(myname, IOController::httpHelp(p));
+    uniset3::json::help::object myhelp(myname, IOController::httpHelp(p));
 
-	{
-		// 'consumers'
-		uniset3::json::help::item cmd("consumers", "get consumers list");
-		cmd.param("sensor1,sensor2,sensor3", "get consumers for sensors");
-		myhelp.add(cmd);
-	}
+    {
+        // 'consumers'
+        uniset3::json::help::item cmd("consumers", "get consumers list");
+        cmd.param("sensor1,sensor2,sensor3", "get consumers for sensors");
+        myhelp.add(cmd);
+    }
 
-	{
-		// 'lost'
-		uniset3::json::help::item cmd("lost", "get lost consumers list");
-		myhelp.add(cmd);
-	}
+    {
+        // 'lost'
+        uniset3::json::help::item cmd("lost", "get lost consumers list");
+        myhelp.add(cmd);
+    }
 
-	return myhelp;
+    return myhelp;
 }
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr IONotifyController::httpRequest( const string& req, const Poco::URI::QueryParameters& p )
 {
-	if( req == "consumers" )
-		return request_consumers(req, p);
+    if( req == "consumers" )
+        return request_consumers(req, p);
 
-	if( req == "lost" )
-		return request_lost(req, p);
+    if( req == "lost" )
+        return request_lost(req, p);
 
-	return IOController::httpRequest(req, p);
+    return IOController::httpRequest(req, p);
 }
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr IONotifyController::request_consumers( const string& req, const Poco::URI::QueryParameters& p )
 {
-	Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
-	Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "sensors");
-	auto my = httpGetMyInfo(json);
+    Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
+    Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "sensors");
+    auto my = httpGetMyInfo(json);
 
-	auto oind = uniset_conf()->oind;
+    auto oind = uniset_conf()->oind;
 
-	std::list<ParamSInfo> slist;
+    std::list<ParamSInfo> slist;
 
-	ConsumerListInfo emptyList;
+    ConsumerListInfo emptyList;
 
-	if( !p.empty() )
-	{
-		if( !p[0].first.empty() )
-			slist = uniset3::getSInfoList( p[0].first, uniset_conf() );
+    if( !p.empty() )
+    {
+        if( !p[0].first.empty() )
+            slist = uniset3::getSInfoList( p[0].first, uniset_conf() );
 
-		if( slist.empty() )
-		{
-			ostringstream err;
-			err << "(request_consumers): Bad request parameter: '" << p[0].first << "'";
-			throw uniset3::SystemError(err.str());
-		}
-	}
+        if( slist.empty() )
+        {
+            ostringstream err;
+            err << "(request_consumers): Bad request parameter: '" << p[0].first << "'";
+            throw uniset3::SystemError(err.str());
+        }
+    }
 
-	uniset_rwmutex_rlock lock(askIOMutex);
+    uniset_rwmutex_rlock lock(askIOMutex);
 
-	// Проход по списку заданных..
-	if( !slist.empty() )
-	{
-		for( const auto& s : slist )
-		{
-			auto a = askIOList.find(s.si.id);
+    // Проход по списку заданных..
+    if( !slist.empty() )
+    {
+        for( const auto& s : slist )
+        {
+            auto a = askIOList.find(s.si.id);
 
-			if( a == askIOList.end() )
-				jdata->add( getConsumers(s.si.id, emptyList, false) );
-			else
-				jdata->add( getConsumers(a->first, a->second, false) );
-		}
-	}
-	else // Проход по всему списку
-	{
-		for( auto && a : askIOList )
-		{
-			// добавляем только датчики только с непустым списком заказчиков
-			auto jret = getConsumers(a.first, a.second, true);
+            if( a == askIOList.end() )
+                jdata->add( getConsumers(s.si.id, emptyList, false) );
+            else
+                jdata->add( getConsumers(a->first, a->second, false) );
+        }
+    }
+    else // Проход по всему списку
+    {
+        for( auto&& a : askIOList )
+        {
+            // добавляем только датчики только с непустым списком заказчиков
+            auto jret = getConsumers(a.first, a.second, true);
 
-			if( jret )
-				jdata->add(jret);
-		}
-	}
+            if( jret )
+                jdata->add(jret);
+        }
+    }
 
-	return json;
+    return json;
 }
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr IONotifyController::getConsumers(ObjectId sid, ConsumerListInfo& ci, bool ifNotEmpty )
 {
-	/* Создаём json
-	 * { {"sensor":
-	 *            {"id": "xxxx"},
-	 *            {"name": "xxxx"}
-	 *	 },
-	 *   "consumers": [
-	 *            {..consumer1 info },
-	 *            {..consumer2 info },
-	 *            {..consumer3 info },
-	 *            {..consumer4 info }
-	 *	 ]
-	 * }
-	 */
+    /* Создаём json
+     * { {"sensor":
+     *            {"id": "xxxx"},
+     *            {"name": "xxxx"}
+     *   },
+     *   "consumers": [
+     *            {..consumer1 info },
+     *            {..consumer2 info },
+     *            {..consumer3 info },
+     *            {..consumer4 info }
+     *   ]
+     * }
+     */
 
-	uniset_rwmutex_rlock lock(ci.mut);
+    uniset_rwmutex_rlock lock(ci.mut);
 
-	if( ci.clst.empty() && ifNotEmpty )
-		return nullptr;
+    if( ci.clst.empty() && ifNotEmpty )
+        return nullptr;
 
-	Poco::JSON::Object::Ptr jret = new Poco::JSON::Object();
-	auto oind = uniset_conf()->oind;
-	auto jsens = uniset3::json::make_child(jret, "sensor");
-	jsens->set("id", sid);
-	jsens->set("name", ORepHelpers::getShortName(oind->getMapName(sid)));
+    Poco::JSON::Object::Ptr jret = new Poco::JSON::Object();
+    auto oind = uniset_conf()->oind;
+    auto jsens = uniset3::json::make_child(jret, "sensor");
+    jsens->set("id", sid);
+    jsens->set("name", ORepHelpers::getShortName(oind->getMapName(sid)));
 
-	auto jcons = uniset3::json::make_child_array(jret, "consumers");
+    auto jcons = uniset3::json::make_child_array(jret, "consumers");
 
-	for( const auto& c : ci.clst )
-	{
-		Poco::JSON::Object::Ptr consumer = new Poco::JSON::Object();
-		consumer->set("id", c.id);
-		consumer->set("name", ORepHelpers::getShortName(oind->getMapName(c.id)));
-		consumer->set("node", c.node);
-		consumer->set("node_name", oind->getNodeName(c.node));
-		consumer->set("lostEvents", c.lostEvents);
-		consumer->set("attempt", c.attempt);
-		consumer->set("smCount", c.smCount);
-		jcons->add(consumer);
-	}
+    for( const auto& c : ci.clst )
+    {
+        Poco::JSON::Object::Ptr consumer = new Poco::JSON::Object();
+        consumer->set("id", c.id);
+        consumer->set("name", ORepHelpers::getShortName(oind->getMapName(c.id)));
+        consumer->set("node", c.node);
+        consumer->set("node_name", oind->getNodeName(c.node));
+        consumer->set("lostEvents", c.lostEvents);
+        consumer->set("attempt", c.attempt);
+        consumer->set("smCount", c.smCount);
+        jcons->add(consumer);
+    }
 
-	return jret;
+    return jret;
 }
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr IONotifyController::request_lost( const string& req, const Poco::URI::QueryParameters& p )
 {
-	Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
-	Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "lost consumers");
-	auto my = httpGetMyInfo(json);
+    Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
+    Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "lost consumers");
+    auto my = httpGetMyInfo(json);
 
-	auto oind = uniset_conf()->oind;
+    auto oind = uniset_conf()->oind;
 
-	std::lock_guard<std::mutex> lock(lostConsumersMutex);
+    std::lock_guard<std::mutex> lock(lostConsumersMutex);
 
-	for( const auto& c : lostConsumers )
-	{
-		Poco::JSON::Object::Ptr jcons = new Poco::JSON::Object();
-		jcons->set("id", c.first);
-		jcons->set("name",  ORepHelpers::getShortName(oind->getMapName(c.first)));
-		jcons->set("lostCount",  c.second.count);
-		jcons->set("lost", c.second.lost);
-		jdata->add(jcons);
-	}
+    for( const auto& c : lostConsumers )
+    {
+        Poco::JSON::Object::Ptr jcons = new Poco::JSON::Object();
+        jcons->set("id", c.first);
+        jcons->set("name",  ORepHelpers::getShortName(oind->getMapName(c.first)));
+        jcons->set("lostCount",  c.second.count);
+        jcons->set("lost", c.second.lost);
+        jdata->add(jcons);
+    }
 
-	return json;
+    return json;
 }
 // -----------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API

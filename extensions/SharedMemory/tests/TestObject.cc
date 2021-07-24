@@ -29,7 +29,7 @@ void TestObject::askNotifyFirstNotNull()
     preAskSensors(uniset3::UIONotifyFirstNotNull);
 }
 // -----------------------------------------------------------------------------
-void TestObject::sysCommand( const uniset3::SystemMessage* sm )
+void TestObject::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     // фиксируем что SM прислала WDT при своём запуске
     if( sm->command == SystemMessage::WatchDog )

@@ -136,7 +136,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preAskSensors( uniset3::UIOCommand 
 	}
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::preSensorInfo( const uniset3::SensorMessage* _sm )
+void <xsl:value-of select="$CLASSNAME"/>_SK::preSensorInfo( const uniset3::messages::SensorMessage* _sm )
 {
 	sensorInfo(_sm);
 }

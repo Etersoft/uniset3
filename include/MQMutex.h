@@ -21,12 +21,11 @@
 #include <list>
 #include <memory>
 #include "Mutex.h"
-#include "MessageType.h"
 //--------------------------------------------------------------------------
 namespace uniset3
 {
     //--------------------------------------------------------------------------
-    typedef std::shared_ptr<uniset3::VoidMessage> VoidMessagePtr;
+    typedef std::shared_ptr<uniset3::messages::TransportMessage> VoidMessagePtr;
     //--------------------------------------------------------------------------
 
     /*! \class MQMutex

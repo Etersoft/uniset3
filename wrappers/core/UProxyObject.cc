@@ -49,7 +49,7 @@ class UProxyObject_impl:
 
     protected:
         virtual void askSensors( uniset3::UIOCommand cmd ) override;
-        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
 
     private:
 

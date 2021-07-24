@@ -124,7 +124,7 @@ std::shared_ptr<ModbusClient> MBTCPMaster::initMB( bool reopen )
     return mbtcp;
 }
 // -----------------------------------------------------------------------------
-void MBTCPMaster::sysCommand( const uniset3::SystemMessage* sm )
+void MBTCPMaster::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     MBExchange::sysCommand(sm);
 

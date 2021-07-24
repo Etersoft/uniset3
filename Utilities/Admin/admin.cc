@@ -553,7 +553,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
                         }
 
                         SystemMessage msg(SystemMessage::StartUp);
-                        obj->push( Message::transport(msg) );
+                        obj->push( messages::transport(msg) );
 
                         if( verb )
                             cout << setw(55) << oname << "   <--- start OK" <<   endl;
@@ -569,7 +569,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
                         }
 
                         SystemMessage msg(SystemMessage::FoldUp);
-                        obj->push( Message::transport(msg) );
+                        obj->push( messages::transport(msg) );
 
                         if( verb )
                             cout << setw(55) << oname << "   <--- foldUp OK" <<   endl;
@@ -585,7 +585,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
                         }
 
                         SystemMessage msg(SystemMessage::Finish);
-                        obj->push( Message::transport(msg) );
+                        obj->push( messages::transport(msg) );
 
                         if( verb )
                             cout << setw(55) << oname << "   <--- finish OK" <<   endl;
@@ -614,7 +614,7 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
                     case LogRotate:
                     {
                         SystemMessage msg(SystemMessage::LogRotate);
-                        obj->push( Message::transport(msg) );
+                        obj->push( messages::transport(msg) );
 
                         if( verb )
                             cout << setw(55) << oname << "   <--- logrotate ok\n";

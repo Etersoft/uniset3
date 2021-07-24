@@ -42,9 +42,9 @@ class TestObject:
     protected:
         TestObject();
 
-        virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
-        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
-        virtual void onTextMessage( const uniset3::TextMessage* msg ) override;
+        virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
+        virtual void onTextMessage( const uniset3::messages::TextMessage* msg ) override;
 
     private:
         bool evntIsOK = { false };

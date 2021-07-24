@@ -4,24 +4,39 @@ package uniset3;
 
 option optimize_for = LITE_RUNTIME;
 // option cc_enable_arenas = true;
-
-
-/*! Базовые типы сообщений */
-enum TypeOfMessage
+// ---------------------------------------------------------------------------
+/*! Информация об объектеp */
+message ObjectRef
 {
-    mtUnused = 0;       // Сообщение не содержит информации
-    mtSensorInfo = 1;
-    mtSysCommand = 2;   // Сообщение содержит системную команду
-    mtConfirm = 3;      // Сообщение содержит подтверждение
-    mtTimer = 4;        // Сообщения о срабатывании таймера
-    mtTextMessage = 5;  // текстовое сообщение
-    mtTheLastFieldOfTypeOfMessage = 6; // Обязательно оставьте последним
+    int64 id = 1;
+    string addr = 2; // ip:port
+    string path = 3;
 }
 
-message TransportMessage
+/*! Типы входов/выходов */
+enum IOType
 {
-    int32 type = 1;
-    bytes data = 2;
+    UnknownIOType = 0;
+    DI = 1; // DigitalInput
+    DO = 2; // DigitalOutput
+    AI = 3; // AnalogInput
+    AO = 4; // AnalogOutput
+}
+
+/*! время  (posix timespec) */
+message Timespec
+{
+     uint64 sec = 1;  /* Seconds.  */
+     uint64 nsec = 2; /* nanoseconds.  */
+}
+
+message CalibrateInfo
+{
+    int64 minRaw = 1;     /*!< минимальное "сырое" значение */
+    int64 maxRaw = 2;     /*!< максимальное "сырое" значение */
+    int64 minCal = 3;     /*!< минимальное калиброванное значение */
+    int64 maxCal = 4;     /*!< максимальное калиброванное значение */
+    int32 precision = 5;  /*!< точность */
 }
 
 /*!
@@ -45,7 +60,7 @@ message SimpleInfo
 
 message SimpleInfoSeq
 {
-    repeated SimpleInfo lst = 1;
+    repeated SimpleInfo objects = 1;
 }
 
 /*! Информация о заказчике */
@@ -68,25 +83,6 @@ message IDSeq
     repeated int64 ids = 1;
 }
 
-
-/*! время  (posix timespec) */
-message Timespec
-{
-     uint64 sec = 1;  /* Seconds.  */
-     uint64 nsec = 2; /* nanoseconds.  */
-}
-
-/*!
- * Типы входов/выходов
-*/
-enum IOType
-{
-    UnknownIOType = 0;
-    DI = 1; // DigitalInput
-    DO = 2; // DigitalOutput
-    AI = 3; // AnalogInput
-    AO = 4; // AnalogOutput
-}
 
 /*! Разрешенные команды для всех контроллеров ввода/вывода */
 enum UIOCommand

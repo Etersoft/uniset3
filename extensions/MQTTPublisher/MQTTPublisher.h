@@ -131,9 +131,9 @@ namespace uniset3
             MQTTPublisher();
 
             virtual void askSensors( uniset3::UIOCommand cmd ) override;
-            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
             virtual bool deactivateObject() override;
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
 
             std::shared_ptr<SMInterface> shm;
 

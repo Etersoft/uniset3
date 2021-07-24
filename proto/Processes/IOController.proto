@@ -10,10 +10,10 @@ import "google/protobuf/empty.proto";
 // ---------------------------------------------------------------------------
 enum ErrorCode {
     
-    OK = 0;
-    NameNotFound = 1; /*!< Датчик не найден */
-    IOBadParam = 2;
-    Undefined = 3;  /*!< Значение не определено (например: обрыв датчика) */
+    errOK = 0;
+    errNameNotFound = 1; /*!< Датчик не найден */
+    errIOBadParam = 2;
+    errUndefined = 3;  /*!< Значение не определено (например: обрыв датчика) */
 }
 
 /*! Информация о датчике */
@@ -40,15 +40,6 @@ message SetUndefinedParams {
     int64 id = 1;
     bool undefined = 2;
     int64 sup_id = 3;
-}
-
-message CalibrateInfo
-{
-    int64 minRaw = 1;     /*!< минимальное "сырое" значение */
-    int64 maxRaw = 2;     /*!< максимальное "сырое" значение */
-    int64 minCal = 3;     /*!< минимальное калиброванное значение */
-    int64 maxCal = 4;     /*!< максимальное калиброванное значение */
-    int32 precision = 5;  /*!< точность */
 }
 
 message CalibrateParams
@@ -78,16 +69,15 @@ message SensorIOInfo
     SensorInfo si = 8;
     int64 default_val = 9;             /*!< значение по умолчанию */
     CalibrateInfo ci = 10;              /*!< калибровочные параметры */
-    uint64 tv_sec = 11;     /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
-    uint64 tv_nsec = 12;    /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
-    int64 supplier = 13;    /*!< идентификатор объекта изменившего состояние датчика */
-    bool dbignore = 14;     /*!< не сохранять изменения в БД */
-    int64 depend_sid = 15;  /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
+    Timespec ts = 11;     /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
+    int64 supplier = 12;    /*!< идентификатор объекта изменившего состояние датчика */
+    bool dbignore = 13;     /*!< не сохранять изменения в БД */
+    int64 depend_sid = 14;  /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
 }
 
-message SensorInfoSeq
+message SensorIOInfoSeq
 {
-    repeated SensorIOInfo lst = 1;
+    repeated SensorIOInfo sensors = 1;
 }
 
 /*! Информация о "выходе" */
@@ -99,7 +89,7 @@ message OutInfo
 
 message OutSeq
 {
-    repeated OutInfo lst = 1;
+    repeated OutInfo sensors = 1;
 }
 
 message SetOutputParams
@@ -112,9 +102,8 @@ message SetOutputParams
 message ShortIOInfo
 {
     int64 value = 1;
-    uint64 tv_sec = 2;    /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
-    uint64 tv_nsec = 3;   /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
-    int64 supplier = 4;  /*!< идентификатор того, кто менял датчик (последний раз) */
+    Timespec ts = 2;     /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
+    int64 supplier = 3;  /*!< идентификатор того, кто менял датчик (последний раз) */
 }
 
 message ShortMap
@@ -126,7 +115,7 @@ message ShortMap
 
 message ShortMapSeq
 {
-    repeated ShortMap lst = 1;
+    repeated ShortMap sensors = 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -151,13 +140,13 @@ service IOController_i {
     rpc calibrate(CalibrateParams) returns(google.protobuf.Empty) {}
     rpc getCalibrateInfo(google.protobuf.Int64Value) returns(CalibrateInfo) {}
     
-    rpc getSensorsMap(google.protobuf.Empty) returns(SensorInfoSeq) {}
-    rpc getSensorIOInfo(google.protobuf.Int64Value) returns(SensorInfo) {}
+    rpc getSensorsMap(google.protobuf.Empty) returns(SensorIOInfoSeq) {}
+    rpc getSensorIOInfo(google.protobuf.Int64Value) returns(SensorIOInfo) {}
     
     // -- Функции работы со списком датчиков --
     
     /*! Получение состояния датчиков. */
-    rpc getSensorSeq(uniset3.IDSeq) returns(SensorInfoSeq) {}
+    rpc getSensorSeq(uniset3.IDSeq) returns(SensorIOInfoSeq) {}
     
     /*!
         Выставить состояние группы датчиков/выходов (дискретных или аналоговых).
@@ -199,14 +188,13 @@ message ThresholdInfo
     int64 hilimit = 2;     /*!< верхняя граница срабатывания */
     int64 lowlimit = 3;    /*!< нижняя граница срабатывания */
     ThresholdState state = 4;
-    uint64 tv_sec = 5;    /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
-    uint64 tv_nsec = 6;   /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
-    bool invert = 7;       /*!< инвертированная логика */
+    Timespec tv  = 5;      /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
+    bool invert = 6;       /*!< инвертированная логика */
 }
 
 message ThresholdInfoSeq
 {
-    repeated ThresholdInfo lst = 1;
+    repeated ThresholdInfo thresholds = 1;
 }
 
 message AskThresholdParams
@@ -236,7 +224,7 @@ message ThresholdList
 
 message ThresholdsListSeq 
 {
-   repeated ThresholdList lst = 1;
+   repeated ThresholdList thresholds = 1;
 }
 
 

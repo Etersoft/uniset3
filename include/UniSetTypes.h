@@ -35,6 +35,7 @@
 
 #include "UniSetTypes.pb.h"
 #include "IOController.pb.h"
+#include "MessageTypes.pb.h"
 #include "Mutex.h"
 #include "UniXML.h"
 #include "PassiveTimer.h" // for typedef timeout_t
@@ -52,6 +53,11 @@ namespace uniset3
     typedef int64_t ThresholdId;
     typedef int64_t TimerId;
     typedef std::string ObjectType;
+    typedef std::list<NodeInfo> ListOfNode;
+
+    // [DEPRECATED]
+    typedef int64_t ObjectPtr;
+    typedef int64_t ObjectVar;
 
     class Configuration;
     // ---------------------------------------------------------------
@@ -146,6 +152,7 @@ namespace uniset3
         ObjectId id = { DefaultObjectId };        /*!< идентификатор */
         std::string repName = { "" };      /*!< текстовое имя для регистрации в репозитории */
         std::string textName = { "" };     /*!< текстовое имя */
+        std::string secName = { "" };      /*!< имя секции */
         xmlNode* xmlnode = { nullptr };
 
         inline bool operator < ( const ObjectInfo& o ) const

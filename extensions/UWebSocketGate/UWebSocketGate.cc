@@ -908,7 +908,7 @@ void UWebSocketGate::UWebSocket::get( uniset3::ObjectId id )
     qcmd.push(s);
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::sensorInfo( const uniset3::SensorMessage* sm )
+void UWebSocketGate::UWebSocket::sensorInfo( const uniset3::messages::SensorMessage* sm )
 {
     if( cancelled )
         return;
@@ -1005,7 +1005,7 @@ void UWebSocketGate::UWebSocket::sendShortResponse( sinfo& si )
 // -----------------------------------------------------------------------------
 void UWebSocketGate::UWebSocket::sendResponse( sinfo& si )
 {
-    uniset3::SensorMessage sm(si.id, si.value);
+    uniset3::messages::SensorMessage sm(si.id, si.value);
 
     if( jbuf.size() > maxsize )
     {

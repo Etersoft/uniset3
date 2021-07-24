@@ -40,7 +40,7 @@ namespace uniset3
 	// -------------------------------------------------------------------------
 	using namespace std;
 	// -------------------------------------------------------------------------
-	LogServerTypes::lsMessage::lsMessage():
+	LogServerTypes::lsmessages::lsMessage():
 		magic(MAGICNUM),
 		cmd(cmdNOP),
 		data(0)
@@ -53,7 +53,7 @@ namespace uniset3
 #endif
 	}
 	// -------------------------------------------------------------------------
-	LogServerTypes::lsMessage::lsMessage( Command c, uint32_t d, const std::string& logname ):
+	LogServerTypes::lsmessages::lsMessage( Command c, uint32_t d, const std::string& logname ):
 		magic(MAGICNUM), cmd(c), data(d)
 	{
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -64,7 +64,7 @@ namespace uniset3
 		setLogName(logname);
 	}
 	// -------------------------------------------------------------------------
-	void LogServerTypes::lsMessage::convertFromNet() noexcept
+	void LogServerTypes::lsmessages::convertFromNet() noexcept
 	{
 		if( _be_order )
 		{
@@ -136,7 +136,7 @@ namespace uniset3
 		return os << " magic=" << m.magic << " cmd=" << m.cmd << " data=" << m.data;
 	}
 	// -------------------------------------------------------------------------
-	void LogServerTypes::lsMessage::setLogName( const std::string& name )
+	void LogServerTypes::lsmessages::setLogName( const std::string& name )
 	{
 		size_t s = name.size() > MAXLOGNAME ? MAXLOGNAME : name.size();
 		memcpy( &logname, name.data(), s );

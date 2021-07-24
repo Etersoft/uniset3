@@ -135,7 +135,7 @@ TEST_CASE("[UNetUDP]: repack", "[unetudp][repack]")
 // -----------------------------------------------------------------------------
 TEST_CASE("[UNetUDP]: UDPMessage", "[unetudp][udpmessage]")
 {
-    SECTION("UDPMessage::isFull()")
+    SECTION("UDPmessages::isFull()")
     {
         UniSetUDP::UDPMessage u;
 

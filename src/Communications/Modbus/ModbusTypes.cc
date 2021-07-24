@@ -235,7 +235,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 
-	ModbusMessage::ModbusMessage():
+	Modbusmessages::ModbusMessage():
 		dlen(0)
 	{
 		pduhead.addr = 0;
@@ -243,7 +243,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	u_int8_t* ModbusMessage::buf()
+	u_int8_t* Modbusmessages::buf()
 	{
 		if( mbaphead.len == 0 )
 			return (uint8_t*)&pduhead;
@@ -251,7 +251,7 @@ namespace uniset3
 		return (uint8_t*)&mbaphead;
 	}
 	// -------------------------------------------------------------------------
-	ModbusData ModbusMessage::len() const
+	ModbusData Modbusmessages::len() const
 	{
 		if( mbaphead.len == 0 )
 			return pduLen();
@@ -259,12 +259,12 @@ namespace uniset3
 		return (sizeof(mbaphead) + mbaphead.len);
 	}
 	// -------------------------------------------------------------------------
-	void ModbusMessage::swapHead()
+	void Modbusmessages::swapHead()
 	{
 		mbaphead.swapdata();
 	}
 	// -------------------------------------------------------------------------
-	void ModbusMessage::makeMBAPHeader( ModbusData tID, bool noCRC, ModbusData pID )
+	void Modbusmessages::makeMBAPHeader( ModbusData tID, bool noCRC, ModbusData pID )
 	{
 		mbaphead.tID = tID;
 		mbaphead.pID = pID;
@@ -274,22 +274,22 @@ namespace uniset3
 			mbaphead.len -= szCRC;
 	}
 	// -------------------------------------------------------------------------
-	ModbusData ModbusMessage::pduLen() const
+	ModbusData Modbusmessages::pduLen() const
 	{
 		return (szModbusHeader + dlen);
 	}
 	// -------------------------------------------------------------------------
-	ModbusCRC ModbusMessage::pduCRC( size_t clen ) const
+	ModbusCRC Modbusmessages::pduCRC( size_t clen ) const
 	{
 		return checkCRC( (ModbusByte*)(&pduhead), clen /* sizeof(pduhead)+dlen */ );
 	}
 	// -------------------------------------------------------------------------
-	size_t ModbusMessage::maxSizeOfMessage()
+	size_t Modbusmessages::maxSizeOfMessage()
 	{
 		return (MAXLENPACKET + szModbusHeader + sizeof(ModbusRTU::MBAPHeader));
 	}
 	// -------------------------------------------------------------------------
-	void ModbusMessage::clear()
+	void Modbusmessages::clear()
 	{
 		memset(this, 0, sizeof(*this));
 	}
@@ -312,18 +312,18 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	ErrorRetMessage::ErrorRetMessage( const ModbusMessage& m )
+	ErrorRetmessages::ErrorRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ErrorRetMessage& ErrorRetMessage::operator=( const ModbusMessage& m )
+	ErrorRetMessage& ErrorRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ErrorRetMessage::init( const ModbusMessage& m )
+	void ErrorRetmessages::init( const ModbusMessage& m )
 	{
 		memset(this, 0, sizeof(*this));
 		memcpy(this, &m.pduhead, szModbusHeader);
@@ -331,7 +331,7 @@ namespace uniset3
 		memcpy( &crc, &(m.data[1]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	ErrorRetMessage::ErrorRetMessage( ModbusAddr _from,
+	ErrorRetmessages::ErrorRetMessage( ModbusAddr _from,
 									  ModbusByte _func, ModbusByte _ecode )
 	{
 		addr = _from;
@@ -339,7 +339,7 @@ namespace uniset3
 		ecode = _ecode;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ErrorRetMessage::transport_msg()
+	ModbusMessage ErrorRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 
@@ -376,7 +376,7 @@ namespace uniset3
 	// -------------------------------------------------------------------------
 
 	// -------------------------------------------------------------------------
-	ReadCoilMessage::ReadCoilMessage( ModbusAddr a, ModbusData s, ModbusData c ):
+	ReadCoilmessages::ReadCoilMessage( ModbusAddr a, ModbusData s, ModbusData c ):
 		start(s),
 		count(c)
 	{
@@ -384,7 +384,7 @@ namespace uniset3
 		func = fnReadCoilStatus;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadCoilMessage::transport_msg()
+	ModbusMessage ReadCoilmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ReadCoilMessage));
 
@@ -411,19 +411,19 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	ReadCoilMessage::ReadCoilMessage( const ModbusMessage& m )
+	ReadCoilmessages::ReadCoilMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 
 	// -------------------------------------------------------------------------
-	ReadCoilMessage& ReadCoilMessage::operator=( const ModbusMessage& m )
+	ReadCoilMessage& ReadCoilmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadCoilMessage::init( const ModbusMessage& m )
+	void ReadCoilmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadCoilStatus );
 		//	memset(this, 0, sizeof(*this));
@@ -580,18 +580,18 @@ namespace uniset3
 		return os << (*d);
 	}
 	// -------------------------------------------------------------------------
-	ReadCoilRetMessage::ReadCoilRetMessage( const ModbusMessage& m )
+	ReadCoilRetmessages::ReadCoilRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ReadCoilRetMessage& ReadCoilRetMessage::operator=( const ModbusMessage& m )
+	ReadCoilRetMessage& ReadCoilRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadCoilRetMessage::init( const ModbusMessage& m )
+	void ReadCoilRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadCoilStatus );
 
@@ -608,7 +608,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[bcnt + 1]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadCoilRetMessage::getDataLen( const ModbusMessage& m )
+	size_t ReadCoilRetmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -616,7 +616,7 @@ namespace uniset3
 		return m.data[0];
 	}
 	// -------------------------------------------------------------------------
-	ReadCoilRetMessage::ReadCoilRetMessage( ModbusAddr _addr ):
+	ReadCoilRetmessages::ReadCoilRetMessage( ModbusAddr _addr ):
 		bcnt(0)
 	{
 		addr = _addr;
@@ -624,7 +624,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool ReadCoilRetMessage::setBit( uint8_t dnum, uint8_t bnum, bool state )
+	bool ReadCoilRetmessages::setBit( uint8_t dnum, uint8_t bnum, bool state )
 	{
 		if( dnum < bcnt && bnum < BitsPerByte )
 		{
@@ -637,7 +637,7 @@ namespace uniset3
 		return false;
 	}
 	// -------------------------------------------------------------------------
-	bool ReadCoilRetMessage::addData( DataBits d )
+	bool ReadCoilRetmessages::addData( DataBits d )
 	{
 		if( isFull() )
 			return false;
@@ -646,7 +646,7 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	bool ReadCoilRetMessage::getData( uint8_t dnum, DataBits& d ) const
+	bool ReadCoilRetmessages::getData( uint8_t dnum, DataBits& d ) const
 	{
 		if( dnum < bcnt )
 		{
@@ -657,13 +657,13 @@ namespace uniset3
 		return false;
 	}
 	// -------------------------------------------------------------------------
-	void ReadCoilRetMessage::clear()
+	void ReadCoilRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadCoilRetMessage::transport_msg()
+	ModbusMessage ReadCoilRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		//    assert(sizeof(ModbusMessage)>=sizeof(ReadCoilRetMessage));
@@ -691,7 +691,7 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadCoilRetMessage::szData() const
+	size_t ReadCoilRetmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + bcnt + szCRC;
@@ -708,7 +708,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 	// -------------------------------------------------------------------------
-	ReadInputStatusMessage::ReadInputStatusMessage( ModbusAddr a, ModbusData s, ModbusData c ):
+	ReadInputStatusmessages::ReadInputStatusMessage( ModbusAddr a, ModbusData s, ModbusData c ):
 		start(s),
 		count(c)
 	{
@@ -716,7 +716,7 @@ namespace uniset3
 		func = fnReadInputStatus;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadInputStatusMessage::transport_msg()
+	ModbusMessage ReadInputStatusmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ReadInputStatusMessage));
 
@@ -743,19 +743,19 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	ReadInputStatusMessage::ReadInputStatusMessage( const ModbusMessage& m )
+	ReadInputStatusmessages::ReadInputStatusMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 
 	// -------------------------------------------------------------------------
-	ReadInputStatusMessage& ReadInputStatusMessage::operator=( const ModbusMessage& m )
+	ReadInputStatusMessage& ReadInputStatusmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputStatusMessage::init( const ModbusMessage& m )
+	void ReadInputStatusmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadInputStatus );
 		func = m.pduhead.func;
@@ -783,18 +783,18 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	ReadInputStatusRetMessage::ReadInputStatusRetMessage( const ModbusMessage& m )
+	ReadInputStatusRetmessages::ReadInputStatusRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ReadInputStatusRetMessage& ReadInputStatusRetMessage::operator=( const ModbusMessage& m )
+	ReadInputStatusRetMessage& ReadInputStatusRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputStatusRetMessage::init( const ModbusMessage& m )
+	void ReadInputStatusRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadInputStatus );
 
@@ -811,7 +811,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[bcnt + 1]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadInputStatusRetMessage::getDataLen( const ModbusMessage& m )
+	size_t ReadInputStatusRetmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -819,7 +819,7 @@ namespace uniset3
 		return m.data[0];
 	}
 	// -------------------------------------------------------------------------
-	ReadInputStatusRetMessage::ReadInputStatusRetMessage( const ModbusAddr _addr ):
+	ReadInputStatusRetmessages::ReadInputStatusRetMessage( const ModbusAddr _addr ):
 		bcnt(0)
 	{
 		addr = _addr;
@@ -827,7 +827,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool ReadInputStatusRetMessage::setBit( uint8_t dnum, uint8_t bnum, bool state )
+	bool ReadInputStatusRetmessages::setBit( uint8_t dnum, uint8_t bnum, bool state )
 	{
 		if( dnum < bcnt && bnum < BitsPerByte )
 		{
@@ -840,7 +840,7 @@ namespace uniset3
 		return false;
 	}
 	// -------------------------------------------------------------------------
-	bool ReadInputStatusRetMessage::addData( DataBits d )
+	bool ReadInputStatusRetmessages::addData( DataBits d )
 	{
 		if( isFull() )
 			return false;
@@ -849,7 +849,7 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	bool ReadInputStatusRetMessage::getData( uint8_t dnum, DataBits& d ) const
+	bool ReadInputStatusRetmessages::getData( uint8_t dnum, DataBits& d ) const
 	{
 		if( dnum < bcnt )
 		{
@@ -860,13 +860,13 @@ namespace uniset3
 		return false;
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputStatusRetMessage::clear()
+	void ReadInputStatusRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadInputStatusRetMessage::transport_msg()
+	ModbusMessage ReadInputStatusRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		//    assert(sizeof(ModbusMessage)>=sizeof(ReadCoilRetMessage));
@@ -894,7 +894,7 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadInputStatusRetMessage::szData() const
+	size_t ReadInputStatusRetmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + bcnt + szCRC;
@@ -912,7 +912,7 @@ namespace uniset3
 	// -------------------------------------------------------------------------
 
 	// -------------------------------------------------------------------------
-	ReadOutputMessage::ReadOutputMessage( ModbusAddr a, ModbusData s, ModbusData c ):
+	ReadOutputmessages::ReadOutputMessage( ModbusAddr a, ModbusData s, ModbusData c ):
 		start(s),
 		count(c)
 	{
@@ -920,7 +920,7 @@ namespace uniset3
 		func = fnReadOutputRegisters;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadOutputMessage::transport_msg()
+	ModbusMessage ReadOutputmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ReadOutputMessage));
 
@@ -949,19 +949,19 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	ReadOutputMessage::ReadOutputMessage( const ModbusMessage& m )
+	ReadOutputmessages::ReadOutputMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 
 	// -------------------------------------------------------------------------
-	ReadOutputMessage& ReadOutputMessage::operator=( const ModbusMessage& m )
+	ReadOutputMessage& ReadOutputmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadOutputMessage::init( const ModbusMessage& m )
+	void ReadOutputmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadOutputRegisters );
 		func = m.pduhead.func;
@@ -991,18 +991,18 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	ReadOutputRetMessage::ReadOutputRetMessage( const ModbusMessage& m )
+	ReadOutputRetmessages::ReadOutputRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ReadOutputRetMessage& ReadOutputRetMessage::operator=( const ModbusMessage& m )
+	ReadOutputRetMessage& ReadOutputRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadOutputRetMessage::init( const ModbusMessage& m )
+	void ReadOutputRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadOutputRegisters );
 
@@ -1026,7 +1026,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[bcnt + 1]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadOutputRetMessage::getDataLen( const ModbusMessage& m )
+	size_t ReadOutputRetmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -1034,7 +1034,7 @@ namespace uniset3
 		return m.data[0];
 	}
 	// -------------------------------------------------------------------------
-	ReadOutputRetMessage::ReadOutputRetMessage( const ModbusAddr _addr ):
+	ReadOutputRetmessages::ReadOutputRetMessage( const ModbusAddr _addr ):
 		bcnt(0),
 		count(0)
 	{
@@ -1043,7 +1043,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool ReadOutputRetMessage::addData( ModbusData d )
+	bool ReadOutputRetmessages::addData( ModbusData d )
 	{
 		if( isFull() )
 			return false;
@@ -1053,14 +1053,14 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	void ReadOutputRetMessage::clear()
+	void ReadOutputRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		count    = 0;
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadOutputRetMessage::transport_msg()
+	ModbusMessage ReadOutputRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		//    assert(sizeof(ModbusMessage)>=sizeof(ReadOutputRetMessage));
@@ -1106,7 +1106,7 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadOutputRetMessage::szData() const
+	size_t ReadOutputRetmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + count * sizeof(ModbusData) + szCRC;
@@ -1123,7 +1123,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 	// -------------------------------------------------------------------------
-	ReadInputMessage::ReadInputMessage( ModbusAddr a, ModbusData s, ModbusData c ):
+	ReadInputmessages::ReadInputMessage( ModbusAddr a, ModbusData s, ModbusData c ):
 		start(s),
 		count(c)
 	{
@@ -1131,7 +1131,7 @@ namespace uniset3
 		func = fnReadInputRegisters;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadInputMessage::transport_msg()
+	ModbusMessage ReadInputmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ReadInputMessage));
 
@@ -1159,19 +1159,19 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	ReadInputMessage::ReadInputMessage( const ModbusMessage& m )
+	ReadInputmessages::ReadInputMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 
 	// -------------------------------------------------------------------------
-	ReadInputMessage& ReadInputMessage::operator=( const ModbusMessage& m )
+	ReadInputMessage& ReadInputmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputMessage::init( const ModbusMessage& m )
+	void ReadInputmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadInputRegisters );
 		//	memset(this, 0, sizeof(*this));
@@ -1200,18 +1200,18 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	ReadInputRetMessage::ReadInputRetMessage( const ModbusMessage& m )
+	ReadInputRetmessages::ReadInputRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ReadInputRetMessage& ReadInputRetMessage::operator=( const ModbusMessage& m )
+	ReadInputRetMessage& ReadInputRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputRetMessage::init( const ModbusMessage& m )
+	void ReadInputRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadInputRegisters );
 
@@ -1235,14 +1235,14 @@ namespace uniset3
 		memcpy(&crc, &(m.data[bcnt + 1]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputRetMessage::swapData()
+	void ReadInputRetmessages::swapData()
 	{
 		// переворачиваем данные
 		for( size_t i = 0; i < count; i++ )
 			data[i] = SWAPSHORT(data[i]);
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadInputRetMessage::getDataLen( const ModbusMessage& m )
+	size_t ReadInputRetmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -1250,7 +1250,7 @@ namespace uniset3
 		return m.data[0];
 	}
 	// -------------------------------------------------------------------------
-	ReadInputRetMessage::ReadInputRetMessage( ModbusAddr _addr ):
+	ReadInputRetmessages::ReadInputRetMessage( ModbusAddr _addr ):
 		bcnt(0),
 		count(0)
 	{
@@ -1259,7 +1259,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool ReadInputRetMessage::addData( ModbusData d )
+	bool ReadInputRetmessages::addData( ModbusData d )
 	{
 		if( isFull() )
 			return false;
@@ -1269,14 +1269,14 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	void ReadInputRetMessage::clear()
+	void ReadInputRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		count    = 0;
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ReadInputRetMessage::transport_msg()
+	ModbusMessage ReadInputRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
@@ -1319,7 +1319,7 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadInputRetMessage::szData()
+	size_t ReadInputRetmessages::szData()
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + count * sizeof(ModbusData) + szCRC;
@@ -1336,7 +1336,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 	// -------------------------------------------------------------------------
-	ForceCoilsMessage::ForceCoilsMessage( ModbusAddr a, ModbusData s ):
+	ForceCoilsmessages::ForceCoilsMessage( ModbusAddr a, ModbusData s ):
 		start(s),
 		quant(0),
 		bcnt(0)
@@ -1346,7 +1346,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool ForceCoilsMessage::addData( DataBits d )
+	bool ForceCoilsmessages::addData( DataBits d )
 	{
 		if( isFull() )
 			return false;
@@ -1356,7 +1356,7 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	int ForceCoilsMessage::addBit( bool state )
+	int ForceCoilsmessages::addBit( bool state )
 	{
 		size_t qnum = quant % BitsPerByte;
 
@@ -1370,7 +1370,7 @@ namespace uniset3
 		return (quant - 1);
 	}
 	// -------------------------------------------------------------------------
-	bool ForceCoilsMessage::setBit( uint8_t nbit, bool state )
+	bool ForceCoilsmessages::setBit( uint8_t nbit, bool state )
 	{
 		if( nbit >= quant )
 			return false;
@@ -1384,7 +1384,7 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	bool ForceCoilsMessage::getData( uint8_t dnum, DataBits& d )
+	bool ForceCoilsmessages::getData( uint8_t dnum, DataBits& d )
 	{
 		if( dnum < bcnt )
 		{
@@ -1395,7 +1395,7 @@ namespace uniset3
 		return false;
 	}
 	// -------------------------------------------------------------------------
-	void ForceCoilsMessage::clear()
+	void ForceCoilsmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		start    = 0;
@@ -1403,7 +1403,7 @@ namespace uniset3
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ForceCoilsMessage::transport_msg()
+	ModbusMessage ForceCoilsmessages::transport_msg()
 	{
 		assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 		ModbusMessage mm;
@@ -1442,18 +1442,18 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 
-	ForceCoilsMessage::ForceCoilsMessage( const ModbusMessage& m )
+	ForceCoilsmessages::ForceCoilsMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 
-	ForceCoilsMessage& ForceCoilsMessage::operator=( const ModbusMessage& m )
+	ForceCoilsMessage& ForceCoilsmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ForceCoilsMessage::init( const ModbusMessage& m )
+	void ForceCoilsmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnForceMultipleCoils );
 
@@ -1487,17 +1487,17 @@ namespace uniset3
 		memcpy(&crc, &(m.data[m.dlen - szCRC]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	bool ForceCoilsMessage::checkFormat() const
+	bool ForceCoilsmessages::checkFormat() const
 	{
 		return ( func == fnForceMultipleCoils );
 	}
 	// -------------------------------------------------------------------------
-	size_t ForceCoilsMessage::szData() const
+	size_t ForceCoilsmessages::szData() const
 	{
 		return szHead() + bcnt + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	size_t ForceCoilsMessage::getDataLen( const ModbusMessage& m )
+	size_t ForceCoilsmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -1528,18 +1528,18 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	ForceCoilsRetMessage::ForceCoilsRetMessage( const ModbusMessage& m )
+	ForceCoilsRetmessages::ForceCoilsRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ForceCoilsRetMessage& ForceCoilsRetMessage::operator=( const ModbusMessage& m )
+	ForceCoilsRetMessage& ForceCoilsRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ForceCoilsRetMessage::init( const ModbusMessage& m )
+	void ForceCoilsRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnForceMultipleCoils );
 
@@ -1560,7 +1560,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[ind]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	ForceCoilsRetMessage::ForceCoilsRetMessage( ModbusAddr _from,
+	ForceCoilsRetmessages::ForceCoilsRetMessage( ModbusAddr _from,
 			ModbusData s, ModbusData q )
 	{
 		addr     = _from;
@@ -1569,13 +1569,13 @@ namespace uniset3
 		quant     = q;
 	}
 	// -------------------------------------------------------------------------
-	void ForceCoilsRetMessage::set( ModbusData s, ModbusData q )
+	void ForceCoilsRetmessages::set( ModbusData s, ModbusData q )
 	{
 		start     = s;
 		quant    = q;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage ForceCoilsRetMessage::transport_msg()
+	ModbusMessage ForceCoilsRetmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ForceCoilsRetMessage));
 
@@ -1610,7 +1610,7 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	WriteOutputMessage::WriteOutputMessage( ModbusAddr a, ModbusData s ):
+	WriteOutputmessages::WriteOutputMessage( ModbusAddr a, ModbusData s ):
 		start(s),
 		quant(0),
 		bcnt(0)
@@ -1620,7 +1620,7 @@ namespace uniset3
 		memset(data,0,sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool WriteOutputMessage::addData( ModbusData d )
+	bool WriteOutputmessages::addData( ModbusData d )
 	{
 		if( isFull() )
 			return false;
@@ -1630,7 +1630,7 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	void WriteOutputMessage::clear()
+	void WriteOutputmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		start    = 0;
@@ -1638,7 +1638,7 @@ namespace uniset3
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage WriteOutputMessage::transport_msg()
+	ModbusMessage WriteOutputmessages::transport_msg()
 	{
 		assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 		ModbusMessage mm;
@@ -1685,18 +1685,18 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 
-	WriteOutputMessage::WriteOutputMessage( const ModbusMessage& m )
+	WriteOutputmessages::WriteOutputMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 
-	WriteOutputMessage& WriteOutputMessage::operator=( const ModbusMessage& m )
+	WriteOutputMessage& WriteOutputmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void WriteOutputMessage::init( const ModbusMessage& m )
+	void WriteOutputmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnWriteOutputRegisters );
 
@@ -1735,18 +1735,18 @@ namespace uniset3
 			data[i] = SWAPSHORT(data[i]);
 	}
 	// -------------------------------------------------------------------------
-	bool WriteOutputMessage::checkFormat() const
+	bool WriteOutputmessages::checkFormat() const
 	{
 		// return ( quant*sizeof(ModbusData) == bcnt ) && ( func == fnWriteOutputRegisters );
 		return ( (bcnt == (quant * sizeof(ModbusData))) && (func == fnWriteOutputRegisters) );
 	}
 	// -------------------------------------------------------------------------
-	size_t WriteOutputMessage::szData() const
+	size_t WriteOutputmessages::szData() const
 	{
 		return szHead() + bcnt + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	size_t WriteOutputMessage::getDataLen( const ModbusMessage& m )
+	size_t WriteOutputmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -1787,18 +1787,18 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	WriteOutputRetMessage::WriteOutputRetMessage( const ModbusMessage& m )
+	WriteOutputRetmessages::WriteOutputRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	WriteOutputRetMessage& WriteOutputRetMessage::operator=( const ModbusMessage& m )
+	WriteOutputRetMessage& WriteOutputRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void WriteOutputRetMessage::init( const ModbusMessage& m )
+	void WriteOutputRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnWriteOutputRegisters );
 
@@ -1819,7 +1819,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[ind]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	WriteOutputRetMessage::WriteOutputRetMessage( ModbusAddr _from,
+	WriteOutputRetmessages::WriteOutputRetMessage( ModbusAddr _from,
 			ModbusData s, ModbusData q )
 	{
 		addr     = _from;
@@ -1828,13 +1828,13 @@ namespace uniset3
 		quant     = q;
 	}
 	// -------------------------------------------------------------------------
-	void WriteOutputRetMessage::set( ModbusData s, ModbusData q )
+	void WriteOutputRetmessages::set( ModbusData s, ModbusData q )
 	{
 		start     = s;
 		quant    = q;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage WriteOutputRetMessage::transport_msg()
+	ModbusMessage WriteOutputRetmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(WriteOutputRetMessage));
 
@@ -1869,7 +1869,7 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	ForceSingleCoilMessage::ForceSingleCoilMessage( ModbusAddr a, ModbusData r , bool cmd ):
+	ForceSingleCoilmessages::ForceSingleCoilMessage( ModbusAddr a, ModbusData r , bool cmd ):
 		start(r)
 	{
 		addr = a;
@@ -1877,7 +1877,7 @@ namespace uniset3
 		data = cmd ? 0xFF00 : 0x0000;
 	}
 	// --------------------------------------------------------------------------------
-	ModbusMessage ForceSingleCoilMessage::transport_msg()
+	ModbusMessage ForceSingleCoilmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ForceSingleCoilMessage));
 
@@ -1895,18 +1895,18 @@ namespace uniset3
 	}
 	// --------------------------------------------------------------------------------
 
-	ForceSingleCoilMessage::ForceSingleCoilMessage( const ModbusMessage& m )
+	ForceSingleCoilmessages::ForceSingleCoilMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ForceSingleCoilMessage& ForceSingleCoilMessage::operator=( const ModbusMessage& m )
+	ForceSingleCoilMessage& ForceSingleCoilmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ForceSingleCoilMessage::init( const ModbusMessage& m )
+	void ForceSingleCoilmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnForceSingleCoil );
 		//	memset(this, 0, sizeof(*this));
@@ -1931,17 +1931,17 @@ namespace uniset3
 	}
 
 	// -------------------------------------------------------------------------
-	bool ForceSingleCoilMessage::checkFormat() const
+	bool ForceSingleCoilmessages::checkFormat() const
 	{
 		return (func == fnForceSingleCoil);
 	}
 	// -------------------------------------------------------------------------
-	size_t ForceSingleCoilMessage::szData() const
+	size_t ForceSingleCoilmessages::szData() const
 	{
 		return szHead() + sizeof(ModbusData) + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	size_t ForceSingleCoilMessage::getDataLen( const ModbusMessage& m )
+	size_t ForceSingleCoilmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -1962,18 +1962,18 @@ namespace uniset3
 	}
 
 	// -------------------------------------------------------------------------
-	ForceSingleCoilRetMessage::ForceSingleCoilRetMessage( const ModbusMessage& m )
+	ForceSingleCoilRetmessages::ForceSingleCoilRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ForceSingleCoilRetMessage& ForceSingleCoilRetMessage::operator=( const ModbusMessage& m )
+	ForceSingleCoilRetMessage& ForceSingleCoilRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void ForceSingleCoilRetMessage::init( const ModbusMessage& m )
+	void ForceSingleCoilRetmessages::init( const ModbusMessage& m )
 	{
 		memset(this, 0, sizeof(*this));
 
@@ -1987,21 +1987,21 @@ namespace uniset3
 		data  = SWAPSHORT(data);
 	}
 	// -------------------------------------------------------------------------
-	ForceSingleCoilRetMessage::ForceSingleCoilRetMessage( ModbusAddr _from )
+	ForceSingleCoilRetmessages::ForceSingleCoilRetMessage( ModbusAddr _from )
 	{
 		addr     = _from;
 		func     = fnForceSingleCoil;
 	}
 
 	// -------------------------------------------------------------------------
-	void ForceSingleCoilRetMessage::set( ModbusData s, bool cmd )
+	void ForceSingleCoilRetmessages::set( ModbusData s, bool cmd )
 	{
 		start     = s;
 		data     = cmd ? 0xFF00 : 0x0000;
 	}
 
 	// -------------------------------------------------------------------------
-	ModbusMessage ForceSingleCoilRetMessage::transport_msg()
+	ModbusMessage ForceSingleCoilRetmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(ForceSingleCoilRetMessage));
 
@@ -2040,7 +2040,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 
-	WriteSingleOutputMessage::WriteSingleOutputMessage( ModbusAddr a, ModbusData r , ModbusData d ):
+	WriteSingleOutputmessages::WriteSingleOutputMessage( ModbusAddr a, ModbusData r , ModbusData d ):
 		start(r),
 		data(d)
 	{
@@ -2048,7 +2048,7 @@ namespace uniset3
 		func = fnWriteOutputSingleRegister;
 	}
 	// --------------------------------------------------------------------------------
-	ModbusMessage WriteSingleOutputMessage::transport_msg()
+	ModbusMessage WriteSingleOutputmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(WriteSingleOutputMessage));
 
@@ -2066,18 +2066,18 @@ namespace uniset3
 	}
 	// --------------------------------------------------------------------------------
 
-	WriteSingleOutputMessage::WriteSingleOutputMessage( const ModbusMessage& m )
+	WriteSingleOutputmessages::WriteSingleOutputMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	WriteSingleOutputMessage& WriteSingleOutputMessage::operator=( const ModbusMessage& m )
+	WriteSingleOutputMessage& WriteSingleOutputmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void WriteSingleOutputMessage::init( const ModbusMessage& m )
+	void WriteSingleOutputmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnWriteOutputSingleRegister );
 		//	memset(this, 0, sizeof(*this));
@@ -2102,18 +2102,18 @@ namespace uniset3
 	}
 
 	// -------------------------------------------------------------------------
-	bool WriteSingleOutputMessage::checkFormat()
+	bool WriteSingleOutputmessages::checkFormat()
 	{
 		// return ( quant*sizeof(ModbusData) == bcnt ) && ( func == fnWriteOutputRegisters );
 		return ( (func == fnWriteOutputSingleRegister) );
 	}
 	// -------------------------------------------------------------------------
-	size_t WriteSingleOutputMessage::szData() const
+	size_t WriteSingleOutputmessages::szData() const
 	{
 		return szHead() + sizeof(ModbusData) + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	size_t WriteSingleOutputMessage::getDataLen( const ModbusMessage& m )
+	size_t WriteSingleOutputmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -2139,18 +2139,18 @@ namespace uniset3
 	}
 
 	// -------------------------------------------------------------------------
-	WriteSingleOutputRetMessage::WriteSingleOutputRetMessage( const ModbusMessage& m )
+	WriteSingleOutputRetmessages::WriteSingleOutputRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	WriteSingleOutputRetMessage& WriteSingleOutputRetMessage::operator=( const ModbusMessage& m )
+	WriteSingleOutputRetMessage& WriteSingleOutputRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void WriteSingleOutputRetMessage::init( const ModbusMessage& m )
+	void WriteSingleOutputRetmessages::init( const ModbusMessage& m )
 	{
 		//	memset(this, 0, sizeof(*this));
 
@@ -2164,7 +2164,7 @@ namespace uniset3
 		data     = SWAPSHORT(data);
 	}
 	// -------------------------------------------------------------------------
-	WriteSingleOutputRetMessage::WriteSingleOutputRetMessage( ModbusAddr _from, ModbusData s )
+	WriteSingleOutputRetmessages::WriteSingleOutputRetMessage( ModbusAddr _from, ModbusData s )
 	{
 		addr     = _from;
 		func     = fnWriteOutputSingleRegister;
@@ -2172,14 +2172,14 @@ namespace uniset3
 	}
 
 	// -------------------------------------------------------------------------
-	void WriteSingleOutputRetMessage::set( ModbusData s, ModbusData d )
+	void WriteSingleOutputRetmessages::set( ModbusData s, ModbusData d )
 	{
 		start     = s;
 		data    = d;
 	}
 
 	// -------------------------------------------------------------------------
-	ModbusMessage WriteSingleOutputRetMessage::transport_msg()
+	ModbusMessage WriteSingleOutputRetmessages::transport_msg()
 	{
 		assert(sizeof(ModbusMessage) >= sizeof(WriteSingleOutputRetMessage));
 
@@ -2270,18 +2270,18 @@ namespace uniset3
 		return -1;
 	}
 	// -------------------------------------------------------------------------
-	DiagnosticMessage::DiagnosticMessage( const ModbusMessage& m )
+	Diagnosticmessages::DiagnosticMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	DiagnosticMessage& DiagnosticMessage::operator=( const ModbusMessage& m )
+	DiagnosticMessage& Diagnosticmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void DiagnosticMessage::init( const ModbusMessage& m )
+	void Diagnosticmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnDiagnostics );
 
@@ -2311,7 +2311,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[last]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	size_t DiagnosticMessage::getDataLen( const ModbusMessage& m )
+	size_t Diagnosticmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -2329,7 +2329,7 @@ namespace uniset3
 		return 0;
 	}
 	// -------------------------------------------------------------------------
-	DiagnosticMessage::DiagnosticMessage( ModbusAddr _addr, DiagnosticsSubFunction sf, ModbusData d ):
+	Diagnosticmessages::DiagnosticMessage( ModbusAddr _addr, DiagnosticsSubFunction sf, ModbusData d ):
 		count(0)
 	{
 		addr = _addr;
@@ -2339,7 +2339,7 @@ namespace uniset3
 		addData(d);
 	}
 	// -------------------------------------------------------------------------
-	bool DiagnosticMessage::addData( ModbusData d )
+	bool Diagnosticmessages::addData( ModbusData d )
 	{
 		if( isFull() )
 			return false;
@@ -2348,13 +2348,13 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	void DiagnosticMessage::clear()
+	void Diagnosticmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		count    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage DiagnosticMessage::transport_msg()
+	ModbusMessage Diagnosticmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		//    assert(sizeof(ModbusMessage)>=sizeof(DiagnosticMessage));
@@ -2397,24 +2397,24 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	size_t DiagnosticMessage::szData() const
+	size_t Diagnosticmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(subf) + count * sizeof(ModbusData) + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	DiagnosticRetMessage::DiagnosticRetMessage( const ModbusMessage& m ):
+	DiagnosticRetmessages::DiagnosticRetMessage( const ModbusMessage& m ):
 		DiagnosticMessage(m)
 	{
 	}
 	// -------------------------------------------------------------------------
-	DiagnosticRetMessage::DiagnosticRetMessage( const DiagnosticMessage& m ):
+	DiagnosticRetmessages::DiagnosticRetMessage( const DiagnosticMessage& m ):
 		DiagnosticMessage(m)
 	{
 
 	}
 	// -------------------------------------------------------------------------
-	DiagnosticRetMessage::DiagnosticRetMessage( ModbusAddr a, DiagnosticsSubFunction subf, ModbusData d ):
+	DiagnosticRetmessages::DiagnosticRetMessage( ModbusAddr a, DiagnosticsSubFunction subf, ModbusData d ):
 		DiagnosticMessage(a, subf, d)
 	{
 	}
@@ -2779,7 +2779,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 
-	JournalCommandMessage::JournalCommandMessage( const ModbusMessage& m )
+	JournalCommandmessages::JournalCommandMessage( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnJournalCommand );
 		//memset(this, 0, sizeof(*this));
@@ -2790,7 +2790,7 @@ namespace uniset3
 		num = SWAPSHORT(num);
 	}
 	// -------------------------------------------------------------------------
-	JournalCommandMessage& JournalCommandMessage::operator=( const ModbusMessage& m )
+	JournalCommandMessage& JournalCommandmessages::operator=( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnJournalCommand );
 		//	memset(this, 0, sizeof(*this));
@@ -2813,7 +2813,7 @@ namespace uniset3
 	}
 	// -------------------------------------------------------------------------
 
-	JournalCommandRetMessage::JournalCommandRetMessage( ModbusAddr _addr ):
+	JournalCommandRetmessages::JournalCommandRetMessage( ModbusAddr _addr ):
 		bcnt(0),
 		count(0)
 	{
@@ -2822,7 +2822,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool JournalCommandRetMessage::setData( ModbusByte* buf, int len )
+	bool JournalCommandRetmessages::setData( ModbusByte* buf, int len )
 	{
 		if( isFull() )
 			return false;
@@ -2845,14 +2845,14 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	void JournalCommandRetMessage::clear()
+	void JournalCommandRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		count    = 0;
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage JournalCommandRetMessage::transport_msg()
+	ModbusMessage JournalCommandRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		//    assert(sizeof(ModbusMessage)>=sizeof(ReadOutputRetMessage));
@@ -2899,7 +2899,7 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	size_t JournalCommandRetMessage::szData() const
+	size_t JournalCommandRetmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + count * sizeof(ModbusData) + szCRC;
@@ -3045,14 +3045,14 @@ namespace uniset3
 		}
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeMessage::SetDateTimeMessage( const ModbusMessage& m )
+	SetDateTimemessages::SetDateTimeMessage( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnSetDateTime );
 		memset(this, 0, sizeof(*this));
 		memcpy(this, &m.pduhead, sizeof(m.pduhead)); // m.len
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeMessage& SetDateTimeMessage::operator=( const ModbusMessage& m )
+	SetDateTimeMessage& SetDateTimemessages::operator=( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnSetDateTime );
 		memset(this, 0, sizeof(*this));
@@ -3060,7 +3060,7 @@ namespace uniset3
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeMessage::SetDateTimeMessage()
+	SetDateTimemessages::SetDateTimeMessage()
 	{
 		func = fnSetDateTime;
 		memset(this, 0, sizeof(*this));
@@ -3088,7 +3088,7 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	bool SetDateTimeMessage::checkFormat() const
+	bool SetDateTimemessages::checkFormat() const
 	{
 		/*
 		    // Lav: проверка >=0 бессмысленна, потому что в типе данных Modbusbyte не могут храниться отрицательные числа
@@ -3109,13 +3109,13 @@ namespace uniset3
 				   ( century >= 19 && century <= 20 );
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeMessage::SetDateTimeMessage( ModbusAddr a )
+	SetDateTimemessages::SetDateTimeMessage( ModbusAddr a )
 	{
 		addr = a;
 		func = fnSetDateTime;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage SetDateTimeMessage::transport_msg()
+	ModbusMessage SetDateTimemessages::transport_msg()
 	{
 		ModbusMessage mm;
 		assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
@@ -3143,25 +3143,25 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeRetMessage::SetDateTimeRetMessage( const ModbusMessage& m )
+	SetDateTimeRetmessages::SetDateTimeRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeRetMessage& SetDateTimeRetMessage::operator=( const ModbusMessage& m )
+	SetDateTimeRetMessage& SetDateTimeRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void SetDateTimeRetMessage::init( const ModbusMessage& m )
+	void SetDateTimeRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnSetDateTime );
 		memset(this, 0, sizeof(*this));
 		memcpy(this, &m.pduhead, sizeof(m.pduhead)); // m.len
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeRetMessage::SetDateTimeRetMessage( ModbusAddr _from )
+	SetDateTimeRetmessages::SetDateTimeRetMessage( ModbusAddr _from )
 	{
 		addr = _from;
 		func = fnSetDateTime;
@@ -3178,18 +3178,18 @@ namespace uniset3
 		century = ( tms.tm_year + 1900 >= 2000 ) ? 20 : 19;
 	}
 	// -------------------------------------------------------------------------
-	SetDateTimeRetMessage::SetDateTimeRetMessage( const SetDateTimeMessage& query )
+	SetDateTimeRetmessages::SetDateTimeRetMessage( const SetDateTimeMessage& query )
 	{
 		memcpy(this, &query, sizeof(*this));
 	}
 	// -------------------------------------------------------------------------
-	void SetDateTimeRetMessage::cpy( SetDateTimeRetMessage& reply,
+	void SetDateTimeRetmessages::cpy( SetDateTimeRetMessage& reply,
 									 const SetDateTimeMessage& query )
 	{
 		reply = query;
 	}
 	// -----------------------------------------------------------------------
-	ModbusMessage SetDateTimeRetMessage::transport_msg()
+	ModbusMessage SetDateTimeRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
@@ -3218,18 +3218,18 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	RemoteServiceMessage::RemoteServiceMessage( const ModbusMessage& m )
+	RemoteServicemessages::RemoteServiceMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	RemoteServiceMessage& RemoteServiceMessage::operator=( const ModbusMessage& m )
+	RemoteServiceMessage& RemoteServicemessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	void RemoteServiceMessage::init( const ModbusMessage& m )
+	void RemoteServicemessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnRemoteService );
 		memset(this, 0, sizeof(*this));
@@ -3241,12 +3241,12 @@ namespace uniset3
 		memcpy(&crc, &(m.data[m.dlen - szCRC]), szCRC);
 	}
 	// -------------------------------------------------------------------------
-	size_t RemoteServiceMessage::szData() const
+	size_t RemoteServicemessages::szData() const
 	{
 		return szHead() + bcnt + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	size_t RemoteServiceMessage::getDataLen( const ModbusMessage& m )
+	size_t RemoteServicemessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -3264,7 +3264,7 @@ namespace uniset3
 		return os << (*m);
 	}
 	// -------------------------------------------------------------------------
-	RemoteServiceRetMessage::RemoteServiceRetMessage( ModbusAddr _from ):
+	RemoteServiceRetmessages::RemoteServiceRetMessage( ModbusAddr _from ):
 		bcnt(0),
 		count(0)
 	{
@@ -3273,7 +3273,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -------------------------------------------------------------------------
-	bool RemoteServiceRetMessage::setData( ModbusByte* buf, int len )
+	bool RemoteServiceRetmessages::setData( ModbusByte* buf, int len )
 	{
 		if( isFull() )
 			return false;
@@ -3291,20 +3291,20 @@ namespace uniset3
 		return true;
 	}
 	// -------------------------------------------------------------------------
-	void RemoteServiceRetMessage::clear()
+	void RemoteServiceRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		count    = 0;
 		bcnt    = 0;
 	}
 	// -------------------------------------------------------------------------
-	size_t RemoteServiceRetMessage::szData() const
+	size_t RemoteServiceRetmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + count * sizeof(ModbusByte) + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage RemoteServiceRetMessage::transport_msg()
+	ModbusMessage RemoteServiceRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
@@ -3337,23 +3337,23 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	ReadFileRecordMessage::ReadFileRecordMessage( const ModbusMessage& m )
+	ReadFileRecordmessages::ReadFileRecordMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -------------------------------------------------------------------------
-	ReadFileRecordMessage& ReadFileRecordMessage::operator=( const ModbusMessage& m )
+	ReadFileRecordMessage& ReadFileRecordmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -------------------------------------------------------------------------
-	bool ReadFileRecordMessage::checkFormat() const
+	bool ReadFileRecordmessages::checkFormat() const
 	{
 		return ( bcnt >= 0x07 && bcnt <= 0xF5 );
 	}
 	// -------------------------------------------------------------------------
-	void ReadFileRecordMessage::init( const ModbusMessage& m )
+	void ReadFileRecordmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnReadFileRecord );
 
@@ -3386,13 +3386,13 @@ namespace uniset3
 		}
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadFileRecordMessage::szData() const
+	size_t ReadFileRecordmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(bcnt) + count * sizeof(SubRequest) + szCRC;
 	}
 	// -------------------------------------------------------------------------
-	size_t ReadFileRecordMessage::getDataLen( const ModbusMessage& m )
+	size_t ReadFileRecordmessages::getDataLen( const ModbusMessage& m )
 	{
 		if( m.dlen == 0 )
 			return 0;
@@ -3410,7 +3410,7 @@ namespace uniset3
 		return mbPrintMessage(os, (ModbusByte*)m, szModbusHeader + m->szData() );
 	}
 	// -------------------------------------------------------------------------
-	FileTransferMessage::FileTransferMessage( ModbusAddr a, ModbusData nf, ModbusData np ):
+	FileTransfermessages::FileTransferMessage( ModbusAddr a, ModbusData nf, ModbusData np ):
 		numfile(nf),
 		numpacket(np)
 	{
@@ -3418,7 +3418,7 @@ namespace uniset3
 		func = fnFileTransfer;
 	}
 	// -------------------------------------------------------------------------
-	ModbusMessage FileTransferMessage::transport_msg()
+	ModbusMessage FileTransfermessages::transport_msg()
 	{
 		ModbusMessage mm;
 
@@ -3441,18 +3441,18 @@ namespace uniset3
 		return mm;
 	}
 	// -------------------------------------------------------------------------
-	FileTransferMessage::FileTransferMessage( const ModbusMessage& m )
+	FileTransfermessages::FileTransferMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -----------------------------------------------------------------------
-	FileTransferMessage& FileTransferMessage::operator=( const ModbusMessage& m )
+	FileTransferMessage& FileTransfermessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -----------------------------------------------------------------------
-	void FileTransferMessage::init( const ModbusMessage& m )
+	void FileTransfermessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnFileTransfer );
 
@@ -3480,18 +3480,18 @@ namespace uniset3
 			   << " numpacket=" << m->numpacket;
 	}
 	// -----------------------------------------------------------------------
-	FileTransferRetMessage::FileTransferRetMessage( const ModbusMessage& m )
+	FileTransferRetmessages::FileTransferRetMessage( const ModbusMessage& m )
 	{
 		init(m);
 	}
 	// -----------------------------------------------------------------------
-	FileTransferRetMessage& FileTransferRetMessage::operator=( const ModbusMessage& m )
+	FileTransferRetMessage& FileTransferRetmessages::operator=( const ModbusMessage& m )
 	{
 		init(m);
 		return *this;
 	}
 	// -----------------------------------------------------------------------
-	void FileTransferRetMessage::init( const ModbusMessage& m )
+	void FileTransferRetmessages::init( const ModbusMessage& m )
 	{
 		assert( m.pduhead.func == fnFileTransfer );
 		memset(this, 0, sizeof(*this));
@@ -3512,7 +3512,7 @@ namespace uniset3
 		memcpy(&crc, &(m.data[8 + dlen]), szCRC);
 	}
 	// -----------------------------------------------------------------------
-	FileTransferRetMessage::FileTransferRetMessage( ModbusAddr _from ):
+	FileTransferRetmessages::FileTransferRetMessage( ModbusAddr _from ):
 		bcnt(0),
 		numfile(0),
 		numpacks(0),
@@ -3524,7 +3524,7 @@ namespace uniset3
 		memset(data, 0, sizeof(data));
 	}
 	// -----------------------------------------------------------------------
-	bool FileTransferRetMessage::set( ModbusData nfile, ModbusData fpacks,
+	bool FileTransferRetmessages::set( ModbusData nfile, ModbusData fpacks,
 									  ModbusData pack, ModbusByte* buf, ModbusByte len )
 	{
 		assert( std::numeric_limits<ModbusByte>::max() <= sizeof(data) );
@@ -3539,7 +3539,7 @@ namespace uniset3
 		return true;
 	}
 	// -----------------------------------------------------------------------
-	void FileTransferRetMessage::clear()
+	void FileTransferRetmessages::clear()
 	{
 		memset(data, 0, sizeof(data));
 		dlen         = 0;
@@ -3548,18 +3548,18 @@ namespace uniset3
 		packet         = 0;
 	}
 	// -----------------------------------------------------------------------
-	size_t FileTransferRetMessage::getDataLen( const ModbusMessage& m )
+	size_t FileTransferRetmessages::getDataLen( const ModbusMessage& m )
 	{
 		return (size_t)m.data[0];
 	}
 	// -----------------------------------------------------------------------
-	size_t FileTransferRetMessage::szData() const
+	size_t FileTransferRetmessages::szData() const
 	{
 		// фактическое число данных + контрольная сумма
 		return sizeof(ModbusByte) * 2 + sizeof(ModbusData) * 3 + dlen + szCRC;
 	}
 	// -----------------------------------------------------------------------
-	ModbusMessage FileTransferRetMessage::transport_msg()
+	ModbusMessage FileTransferRetmessages::transport_msg()
 	{
 		ModbusMessage mm;
 		assert( sizeof(ModbusMessage) >= (szModbusHeader + szData()) );

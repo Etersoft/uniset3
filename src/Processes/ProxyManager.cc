@@ -34,145 +34,145 @@ ProxyManager::~ProxyManager()
 }
 
 ProxyManager::ProxyManager( uniset3::ObjectId id ):
-	UniSetObject(id)
+    UniSetObject(id)
 {
-	uin = ui;
+    uin = ui;
 }
 
 
 // -------------------------------------------------------------------------
 void ProxyManager::attachObject( PassiveObject* po, uniset3::ObjectId id )
 {
-	if( id == DefaultObjectId )
-	{
-		uwarn << myname << "(attachObject): попытка добавить объект с id="
-			  << DefaultObjectId << " PassiveObject=" << po->getName() << endl;
+    if( id == DefaultObjectId )
+    {
+        uwarn << myname << "(attachObject): попытка добавить объект с id="
+              << DefaultObjectId << " PassiveObject=" << po->getName() << endl;
 
-		return;
-	}
+        return;
+    }
 
-	auto it = omap.find(id);
+    auto it = omap.find(id);
 
-	if( it == omap.end() )
-		omap.emplace(id, po);
+    if( it == omap.end() )
+        omap.emplace(id, po);
 }
 // -------------------------------------------------------------------------
 void ProxyManager::detachObject( uniset3::ObjectId id )
 {
-	auto it = omap.find(id);
+    auto it = omap.find(id);
 
-	if( it != omap.end() )
-		omap.erase(it);
+    if( it != omap.end() )
+        omap.erase(it);
 }
 // -------------------------------------------------------------------------
 bool ProxyManager::activateObject()
 {
-	bool ret = UniSetObject::activateObject();
+    bool ret = UniSetObject::activateObject();
 
-	if( !ret )
-		return false;
+    if( !ret )
+        return false;
 
-	// Регистрируемся от имени объектов
-	for( const auto& it : omap )
-	{
-		try
-		{
-			for( unsigned int i = 0; i < 2; i++ )
-			{
-				try
-				{
-					ulogrep << myname << "(registered): попытка "
-							<< i + 1 << " регистриую (id=" << it.first << ") "
-							<< " (pname=" << it.second->getName() << ") "
-							<< uniset_conf()->oind->getNameById(it.first) << endl;
+    // Регистрируемся от имени объектов
+    for( const auto& it : omap )
+    {
+        try
+        {
+            for( unsigned int i = 0; i < 2; i++ )
+            {
+                try
+                {
+                    ulogrep << myname << "(registered): попытка "
+                            << i + 1 << " регистриую (id=" << it.first << ") "
+                            << " (pname=" << it.second->getName() << ") "
+                            << uniset_conf()->oind->getNameById(it.first) << endl;
 
-					ui->registered(it.first, getRef(), true);
-					break;
-				}
-				catch( uniset3::ObjectNameAlready& ex )
-				{
-					ucrit << myname << "(registered): СПЕРВА РАЗРЕГИСТРИРУЮ (ObjectNameAlready)" << endl;
+                    ui->registered(it.first, getRef(), true);
+                    break;
+                }
+                catch( uniset3::ObjectNameAlready& ex )
+                {
+                    ucrit << myname << "(registered): СПЕРВА РАЗРЕГИСТРИРУЮ (ObjectNameAlready)" << endl;
 
-					try
-					{
-						ui->unregister(it.first);
-					}
-					catch( const uniset3::Exception& ex )
-					{
-						ucrit << myname << "(unregistered): " << ex << endl;
-					}
-				}
-			}
-		}
-		catch( const uniset3::Exception& ex )
-		{
-			ucrit << myname << "(activate): " << ex << endl << flush;
-			//std::terminate();
-			uterminate();
-		}
-	}
+                    try
+                    {
+                        ui->unregister(it.first);
+                    }
+                    catch( const uniset3::Exception& ex )
+                    {
+                        ucrit << myname << "(unregistered): " << ex << endl;
+                    }
+                }
+            }
+        }
+        catch( const uniset3::Exception& ex )
+        {
+            ucrit << myname << "(activate): " << ex << endl << flush;
+            //std::terminate();
+            uterminate();
+        }
+    }
 
-	return ret;
+    return ret;
 }
 // -------------------------------------------------------------------------
 bool ProxyManager::deactivateObject()
 {
-	for( PObjectMap::const_iterator it = omap.begin(); it != omap.end(); ++it )
-	{
-		try
-		{
-			ui->unregister(it->first);
-		}
-		catch( const uniset3::Exception& ex )
-		{
-			ucrit << myname << "(activate): " << ex << endl;
-		}
-	}
+    for( PObjectMap::const_iterator it = omap.begin(); it != omap.end(); ++it )
+    {
+        try
+        {
+            ui->unregister(it->first);
+        }
+        catch( const uniset3::Exception& ex )
+        {
+            ucrit << myname << "(activate): " << ex << endl;
+        }
+    }
 
-	return UniSetObject::deactivateObject();
+    return UniSetObject::deactivateObject();
 }
 // -------------------------------------------------------------------------
-void ProxyManager::processingMessage( const uniset3::VoidMessage* msg )
+void ProxyManager::processingMessage( const uniset3::messages::TransportMessage* msg )
 {
-	try
-	{
-		switch(msg->type)
-		{
-			case Message::SysCommand:
-				allMessage(msg);
-				break;
+    try
+    {
+        switch(msg->type)
+        {
+            case messages::mtSysCommand:
+                allMessage(msg);
+                break;
 
-			default:
-			{
-				auto it = omap.find(msg->consumer);
+            default:
+            {
+                auto it = omap.find(msg->consumer);
 
-				if( it != omap.end() )
-					it->second->processingMessage(msg);
-				else
-					ucrit << myname << "(processingMessage): не найден объект "
-						  << " consumer= " << msg->consumer << endl;
-			}
-			break;
-		}
-	}
-	catch( const uniset3::Exception& ex )
-	{
-		ucrit << myname << "(processingMessage): " << ex << endl;
-	}
+                if( it != omap.end() )
+                    it->second->processingMessage(msg);
+                else
+                    ucrit << myname << "(processingMessage): не найден объект "
+                          << " consumer= " << msg->consumer << endl;
+            }
+            break;
+        }
+    }
+    catch( const uniset3::Exception& ex )
+    {
+        ucrit << myname << "(processingMessage): " << ex << endl;
+    }
 }
 // -------------------------------------------------------------------------
-void ProxyManager::allMessage( const uniset3::VoidMessage* msg )
+void ProxyManager::allMessage( const uniset3::messages::TransportMessage* msg )
 {
-	for( const auto& o : omap )
-	{
-		try
-		{
-			o.second->processingMessage(msg);
-		}
-		catch( const uniset3::Exception& ex )
-		{
-			ucrit << myname << "(allMessage): " << ex << endl;
-		}
-	}
+    for( const auto& o : omap )
+    {
+        try
+        {
+            o.second->processingMessage(msg);
+        }
+        catch( const uniset3::Exception& ex )
+        {
+            ucrit << myname << "(allMessage): " << ex << endl;
+        }
+    }
 }
 // -------------------------------------------------------------------------

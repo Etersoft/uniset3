@@ -122,7 +122,6 @@ namespace uniset3
             uniset3::ObjectId getAnyID( const std::string& name ) const noexcept;
 
             const std::string getConfFileName() const noexcept;
-            std::string getImagesDir() const noexcept;
             std::string getNodeIp( uniset3::ObjectId node );
 
             timeout_t getHeartBeatTime() const noexcept;
@@ -138,7 +137,6 @@ namespace uniset3
             const std::string getDocDir() const noexcept;
 
             bool isLocalIOR() const noexcept;
-            bool isTransientIOR() const noexcept;
             size_t getHttpResovlerPort() const noexcept;
 
             /*! получить значение указанного параметра, или значение по умолчанию */
@@ -158,6 +156,11 @@ namespace uniset3
             xmlNode* initLogStream( std::shared_ptr<DebugStream> deb, const std::string& nodename ) noexcept;
             xmlNode* initLogStream( DebugStream* deb, const std::string& nodename ) noexcept;
 
+            uniset3::ListOfNode::const_iterator listNodesBegin() const noexcept;
+            uniset3::ListOfNode::const_iterator listNodesEnd() const noexcept;
+
+            std::string repositoryAddress() const noexcept;
+
             /*! интерфейс к карте объектов */
             std::shared_ptr<ObjectIndex> oind;
 
@@ -167,15 +170,13 @@ namespace uniset3
             /*! указатель на конфигурационный xml */
             const std::shared_ptr<UniXML> getConfXML() const noexcept;
 
-            CORBA::ORB_ptr getORB() const;
-            const CORBA::PolicyList getPolicy() const noexcept;
-
-            static bool checkOmniORBendPoint( const std::string& endPoint );
-
         protected:
             Configuration();
 
             virtual void initConfiguration(int argc, const char* const* argv);
+
+            void createNodesList();
+            virtual void initNode( uniset3::NodeInfo& ninfo, UniXML::iterator& it) noexcept;
 
             void initRepSections();
             std::pair<std::string, xmlNode*> getRepSectionName( const std::string& sec );
@@ -199,6 +200,8 @@ namespace uniset3
 
             size_t httpResolverPort = { 8008 };
 
+            uniset3::ListOfNode lnodes;
+
             // repository
             std::string secRoot = { "" };
             std::string secSensors = { "" };
@@ -218,7 +221,6 @@ namespace uniset3
 
             std::string localNodeName = { "" };
             std::string fileConfName = { "" };
-            std::string imagesDir = { "" };
 
             std::string confDir = { "" };
             std::string dataDir = { "" };
@@ -227,7 +229,7 @@ namespace uniset3
             std::string docDir = { "" };
             std::string lockDir = { "" };
             bool localIOR = { false };
-            bool transientIOR = { false };
+            std::string repAddr = { "" };
 
             timeout_t heartbeat_msec = { 3000 };
             timeout_t ncreadytimeout_msec = { 180000 };

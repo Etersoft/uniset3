@@ -34,9 +34,10 @@
 //#include <dlfcn.h>
 #include <iomanip>
 // --------------------
-
+#include <grpcpp/server.h>
+#include <grpcpp/server_builder.h>
 #include "Exceptions.h"
-#include "ORepHelpers.h"
+#include "unisetstd.h"
 #include "UInterface.h"
 #include "UniSetActivator.h"
 #include "Debug.h"
@@ -54,9 +55,9 @@ static std::atomic_bool g_done = ATOMIC_VAR_INIT(0);
 
 static const int TERMINATE_TIMEOUT_SEC = 15; //  время, отведённое на завершение процесса [сек]
 // ------------------------------------------------------------------------------------------
-struct ORBThreadDeleter
+struct ServiceThreadDeleter
 {
-    void operator()( OmniThreadCreator<UniSetActivator>* p ) const
+    void operator()( ThreadCreator<UniSetActivator>* p ) const
     {
         // не удаляем..
     }
@@ -86,6 +87,8 @@ namespace uniset3
         if( getId() == DefaultObjectId )
             myname = "UniSetActivator";
 
+        offThread(); // отключение потока обработки сообщений
+
         auto conf = uniset_conf();
 
 #ifndef DISABLE_REST_API
@@ -101,19 +104,6 @@ namespace uniset3
         }
 
 #endif
-
-        orb = conf->getORB();
-        CORBA::Object_var obj = orb->resolve_initial_references("RootPOA");
-        PortableServer::POA_var root_poa = PortableServer::POA::_narrow(obj);
-        pman = root_poa->the_POAManager();
-        const CORBA::PolicyList pl = conf->getPolicy();
-        poa = root_poa->create_POA("my poa", pman, pl);
-
-        if( CORBA::is_nil(poa) )
-        {
-            ucrit << myname << "(init): init poa failed!!!" << endl;
-            std::terminate();
-        }
     }
 
     // ------------------------------------------------------------------------------------------
@@ -133,25 +123,39 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-
+    ::grpc::Status UniSetActivator::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
+    {
+        response->set_value("UniSetActivator");
+        return ::grpc::Status::OK;
+    }
+    // ------------------------------------------------------------------------------------------
     void UniSetActivator::run( bool thread, bool terminate_control  )
     {
         ulogsys << myname << "(run): создаю менеджер " << endl;
 
         termControl = terminate_control;
         auto aptr = std::static_pointer_cast<UniSetActivator>(get_ptr());
+        auto conf = uniset_conf();
 
-        UniSetManager::initPOA(aptr);
+        {
+            auto host = conf->getArgParam("--activator-grpc-host", "0.0.0.0");
+            auto port = conf->getArgInt("--activator-grpc-port", to_string(myid));
 
-        if( getId() == uniset3::DefaultObjectId )
-            offThread(); // отключение потока обработки сообщений, раз не задан ObjectId
+            if( port < 0 )
+            {
+                throw SystemError("(run): Unknown server port or id ");
+            }
+
+            uniset3::uniset_rwmutex_wrlock lock(refmutex);
+            ostringstream addr;
+            addr << host << ":" << port;
+            oref.set_addr(addr.str());
+        }
+
+        initGRPC(aptr);
 
         UniSetManager::activate(); // а там вызывается активация всех подчиненных объектов и менеджеров
         active = true;
-
-        ulogsys << myname << "(run): активизируем менеджер" << endl;
-        pman->activate();
-        msleep(50);
 
         if( termControl )
             set_signals(true);
@@ -178,8 +182,8 @@ namespace uniset3
         if( thread )
         {
             uinfo << myname << "(run): запускаемся с созданием отдельного потока...  " << endl;
-            orbthr = std::shared_ptr<OmniThreadCreator<UniSetActivator>>(new OmniThreadCreator<UniSetActivator>(aptr, &UniSetActivator::mainWork), ORBThreadDeleter());
-            orbthr->start();
+            srvthr = std::shared_ptr<ThreadCreator<UniSetActivator>>(new ThreadCreator<UniSetActivator>(this, &UniSetActivator::mainWork), ServiceThreadDeleter());
+            srvthr->start();
         }
         else
         {
@@ -214,9 +218,9 @@ namespace uniset3
         deactivate();
         ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
 
-        ulogsys << myname << "(shutdown): discard request..." << endl;
-        pman->discard_requests(true);
-        ulogsys << myname << "(shutdown): discard request ok." << endl;
+        //        ulogsys << myname << "(shutdown): discard request..." << endl;
+        //        pman->discard_requests(true);
+        //        ulogsys << myname << "(shutdown): discard request ok." << endl;
 
 #ifndef DISABLE_REST_API
 
@@ -225,6 +229,7 @@ namespace uniset3
 
 #endif
 
+#if 0
         ulogsys << myname << "(shutdown): pman deactivate... " << endl;
         pman->deactivate(false, true);
         ulogsys << myname << "(shutdown): pman deactivate ok. " << endl;
@@ -250,6 +255,7 @@ namespace uniset3
             ucrit << myname << "(shutdown): " << ex.what() << endl;
         }
 
+#endif
         {
             std::unique_lock<std::mutex> lk(g_donemutex);
             g_done = true;
@@ -368,25 +374,17 @@ namespace uniset3
     {
         ulogsys << myname << "(work): запускаем orb на обработку запросов..." << endl;
 
+        auto mref = getRef();
+
         try
         {
-            omniORB::setMainThread();
-            orb->run();
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            ucrit << myname << "(work): поймали CORBA::SystemException: " << ex.NP_minorString() << endl;
-        }
-        catch( const CORBA::Exception& ex )
-        {
-            ucrit << myname << "(work): поймали CORBA::Exception." << endl;
-        }
-        catch( const omniORB::fatalException& fe )
-        {
-            ucrit << myname << "(work): : поймали omniORB::fatalException:" << endl;
-            ucrit << myname << "(work):   file: " << fe.file() << endl;
-            ucrit << myname << "(work):   line: " << fe.line() << endl;
-            ucrit << myname << "(work):   mesg: " << fe.errmsg() << endl;
+            grpc::ServerBuilder builder;
+            builder.AddListeningPort(mref.addr(), grpc::InsecureServerCredentials());
+            builder.RegisterService(static_cast<UniSetManager_i::Service*>(this));
+            builder.RegisterService(static_cast<UniSetObject_i::Service*>(this));
+            server = builder.BuildAndStart();
+            uinfo << "Server listening on " << mref.addr() << std::endl;
+            server->Wait();
         }
         catch( std::exception& ex )
         {

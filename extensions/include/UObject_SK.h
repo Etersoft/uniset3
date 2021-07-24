@@ -167,11 +167,11 @@ class UObject_SK:
 
 
         virtual void callback() noexcept override;
-        virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
-        virtual void sysCommand( const uniset3::SystemMessage* sm ) override {}
+        virtual void processingMessage( const uniset3::messages::TransportMessage* msg ) override;
+        virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override {}
         virtual void askSensors( uniset3::UIOCommand cmd ) {}
-        virtual void sensorInfo( const uniset3::SensorMessage* sm ) override {}
-        virtual void timerInfo( const uniset3::TimerMessage* tm ) override {}
+        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override {}
+        virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override {}
         virtual bool activateObject() override;
         virtual bool deactivateObject() override;
         virtual std::string getMonitInfo() const
@@ -195,7 +195,7 @@ class UObject_SK:
         virtual void step() {}
 
         void preAskSensors( uniset3::UIOCommand cmd );
-        void preSysCommand( const uniset3::SystemMessage* sm );
+        void preSysCommand( const uniset3::messages::SystemMessage* sm );
 
         virtual void testMode( bool state );
         void updateOutputs( bool force );
@@ -266,8 +266,8 @@ class UObject_SK:
 
         // ------------ private функции ---------------
         void updatePreviousValues() noexcept;
-        void preSensorInfo( const uniset3::SensorMessage* sm );
-        void preTimerInfo( const uniset3::TimerMessage* tm );
+        void preSensorInfo( const uniset3::messages::SensorMessage* sm );
+        void preTimerInfo( const uniset3::messages::TimerMessage* tm );
         void initFromSM();
         void checkSensors();
         // --------------------------------------------

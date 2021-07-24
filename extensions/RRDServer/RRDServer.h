@@ -113,9 +113,9 @@ namespace uniset33
             RRDServer();
 
             virtual void askSensors( uniset3::UIOCommand cmd ) override;
-            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
 
             void initRRD( xmlNode* cnode, int tmID );
             virtual void step() override;

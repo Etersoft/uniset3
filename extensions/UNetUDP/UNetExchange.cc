@@ -376,7 +376,7 @@ void UNetExchange::ReceiverInfo::step( const std::shared_ptr<SMInterface>& shm, 
     }
 }
 // -----------------------------------------------------------------------------
-void UNetExchange::sysCommand( const uniset3::SystemMessage* sm )
+void UNetExchange::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     switch( sm->command )
     {
@@ -504,7 +504,7 @@ void UNetExchange::askSensors( uniset3::UIOCommand cmd )
         sender2->askSensors(cmd);
 }
 // ------------------------------------------------------------------------------------------
-void UNetExchange::sensorInfo( const uniset3::SensorMessage* sm )
+void UNetExchange::sensorInfo( const uniset3::messages::SensorMessage* sm )
 {
     if( sender )
         sender->updateSensor( sm->id, sm->value );

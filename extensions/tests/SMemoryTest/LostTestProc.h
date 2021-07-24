@@ -28,8 +28,8 @@ class LostTestProc:
             tmCheck
         };
 
-        virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
-        virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+        virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+        virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
         virtual std::string getMonitInfo() const override;
 
         size_t ncycle = { 0 };

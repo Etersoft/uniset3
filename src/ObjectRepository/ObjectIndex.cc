@@ -18,48 +18,65 @@
     \todo Добавить проверку на предельный номер id
 */
 // -----------------------------------------------------------------------------------------
+#include <string>
 #include "ObjectIndex.h"
-#include "ORepHelpers.h"
 #include "Configuration.h"
-
 // -----------------------------------------------------------------------------------------
 using namespace uniset3;
-// -----------------------------------------------------------------------------------------
-//const std::string ObjectIndex::sepName = "@";
-//const std::string ObjectIndex::sepNode = ":";
+using namespace std;
 // -----------------------------------------------------------------------------------------
 
 std::string ObjectIndex::getNameById( const ObjectId id ) const noexcept
 {
-	return getMapName(id);
+    return getMapName(id);
 }
 // -----------------------------------------------------------------------------------------
 std::string ObjectIndex::getNodeName(const ObjectId id) const noexcept
 {
-	return getNameById(id);
+    return getNameById(id);
 }
 // -----------------------------------------------------------------------------------------
 ObjectId ObjectIndex::getNodeId(const std::string& name) const noexcept
 {
-	return getIdByName(name);
+    return getIdByName(name);
 }
 // -----------------------------------------------------------------------------------------
 std::string ObjectIndex::getBaseName( const std::string& fname ) noexcept
 {
-	std::string::size_type pos = fname.rfind('/');
+    std::string::size_type pos = fname.rfind('/');
 
-	try
-	{
-		if( pos != std::string::npos )
-			return fname.substr(pos + 1);
-	}
-	catch(...) {}
+    try
+    {
+        if( pos != std::string::npos )
+            return fname.substr(pos + 1);
+    }
+    catch(...) {}
 
-	return fname;
+    return fname;
 }
 // -----------------------------------------------------------------------------------------
 void ObjectIndex::initLocalNode( const ObjectId nodeid ) noexcept
 {
-	nmLocalNode = getMapName(nodeid);
+    nmLocalNode = getMapName(nodeid);
+}
+// -----------------------------------------------------------------------------------------
+std::string ObjectIndex::getSectionName(const std::string& fullName, const std::string& brk)
+{
+    string::size_type pos = fullName.rfind(brk);
+
+    if( pos == string::npos )
+        return "";
+
+    return fullName.substr(0, pos);
+}
+// -----------------------------------------------------------------------------------------
+std::string ObjectIndex::getShortName(const std::string& fname, const std::string& brk)
+{
+    string::size_type pos = fname.rfind(brk);
+
+    if( pos == string::npos )
+        return fname;
+
+    return fname.substr( pos + 1, fname.length() );
 }
 // -----------------------------------------------------------------------------------------

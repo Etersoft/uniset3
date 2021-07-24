@@ -63,7 +63,7 @@ DBServer_PostgreSQL::~DBServer_PostgreSQL()
         db->close();
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::sysCommand( const uniset3::SystemMessage* sm )
+void DBServer_PostgreSQL::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     DBServer::sysCommand(sm);
 
@@ -277,7 +277,7 @@ bool DBServer_PostgreSQL::writeInsertBufferToDB( const std::string& tableName
     return db->copy(tableName, colNames, wbuf);
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::sensorInfo( const uniset3::SensorMessage* si )
+void DBServer_PostgreSQL::sensorInfo( const uniset3::messages::SensorMessage* si )
 {
     try
     {
@@ -359,9 +359,9 @@ void DBServer_PostgreSQL::initDBServer()
     std::string sfactor = conf->getArg2Param("--" + prefix + "-ibuf-overflow-cleanfactor", it.getProp("ibufOverflowCleanFactor"), "0.5");
     ibufOverflowCleanFactor = atof(sfactor.c_str());
 
-    tblMap[uniset3::Message::SensorInfo] = "main_history";
-    tblMap[uniset3::Message::Confirm] = "main_history";
-    tblMap[uniset3::Message::TextMessage] = "main_messages";
+    tblMap[uniset3::messages::mtSensorInfo] = "main_history";
+    tblMap[uniset3::messages::Confirm] = "main_history";
+    tblMap[uniset3::messages::TextMessage] = "main_messages";
 
     PingTime = conf->getArgPInt("--" + prefix + "-pingTime", it.getProp("pingTime"), PingTime);
     ReconnectTime = conf->getArgPInt("--" + prefix + "-reconnectTime", it.getProp("reconnectTime"), ReconnectTime);
@@ -432,7 +432,7 @@ void DBServer_PostgreSQL::createTables( const std::shared_ptr<PostgreSQLInterfac
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::timerInfo( const uniset3::TimerMessage* tm )
+void DBServer_PostgreSQL::timerInfo( const uniset3::messages::TimerMessage* tm )
 {
     DBServer::timerInfo(tm);
 

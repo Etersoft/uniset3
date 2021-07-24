@@ -34,6 +34,12 @@ namespace uniset3
             ObjectIndex() {}
             virtual ~ObjectIndex() {}
 
+            //! Функция отделяющая имя секции от полного имени
+            static std::string getSectionName(const std::string& fullName, const std::string& brk = "/");
+
+            //! Функция выделения имени из полного имени
+            static std::string getShortName(const std::string& fullName, const std::string& brk = "/");
+
             // info
             // \return nullptr if not found
             virtual const ObjectInfo* getObjectInfo( const uniset3::ObjectId ) const noexcept = 0;

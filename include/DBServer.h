@@ -54,8 +54,8 @@ namespace uniset3
 
         protected:
 
-            virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
+            virtual void processingMessage( const uniset3::messages::TransportMessage* msg ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
             virtual void confirmInfo( const uniset3::ConfirmMessage* cmsg ) {}
 
             virtual bool activateObject() override;

@@ -25,7 +25,7 @@
 #include <memory>
 #include <utility>
 
-namespace uniset3std
+namespace unisetstd
 {
 
     template<typename T, typename ...Args>

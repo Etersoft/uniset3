@@ -192,7 +192,7 @@ void pyUInterface::uniset_activate_objects()throw(UException)
 	try
 	{
 		auto act = uniset3::UniSetActivator::Instance();
-		uniset3::SystemMessage sm(uniset3::SystemMessage::StartUp);
+		uniset3::messages::SystemMessage sm(uniset3::messages::SystemMessage::StartUp);
 		act->broadcast( sm.transport_msg() );
 		act->run(true);
 	}

@@ -1983,7 +1983,7 @@ namespace uniset3
         return true;
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::sysCommand( const uniset3::SystemMessage* sm )
+    void MBExchange::sysCommand( const uniset3::messages::SystemMessage* sm )
     {
         switch( sm->command )
         {
@@ -2258,7 +2258,7 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::sensorInfo( const uniset3::SensorMessage* sm )
+    void MBExchange::sensorInfo( const uniset3::messages::SensorMessage* sm )
     {
         if( sm->id == sidExchangeMode )
         {

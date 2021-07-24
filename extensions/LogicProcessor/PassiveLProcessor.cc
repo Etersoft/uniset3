@@ -127,7 +127,7 @@ void PassiveLProcessor::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::sensorInfo( const uniset3::SensorMessage* sm )
+void PassiveLProcessor::sensorInfo( const uniset3::messages::SensorMessage* sm )
 {
     for( auto&& it : extInputs )
     {
@@ -136,13 +136,13 @@ void PassiveLProcessor::sensorInfo( const uniset3::SensorMessage* sm )
     }
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::timerInfo( const uniset3::TimerMessage* tm )
+void PassiveLProcessor::timerInfo( const uniset3::messages::TimerMessage* tm )
 {
     if( tm->id == tidStep )
         step();
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::sysCommand( const uniset3::SystemMessage* sm )
+void PassiveLProcessor::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     switch( sm->command )
     {

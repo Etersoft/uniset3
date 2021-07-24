@@ -268,7 +268,7 @@ void MQTTPublisher::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void MQTTPublisher::sensorInfo( const uniset3::SensorMessage* sm )
+void MQTTPublisher::sensorInfo( const uniset3::messages::SensorMessage* sm )
 {
     auto i = publist.find(sm->id);
 

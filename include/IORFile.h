@@ -26,15 +26,16 @@
 // --------------------------------------------------------------------------
 namespace uniset3
 {
-    /*! Класс работы с файлами содержащими IOR объекта
-        \todo Для оптимизации можно сделать кэширование id:node > filename
-    */
+    /*! Класс работы с файлами содержащими IOR объекта */
     class IORFile
     {
         public:
 
             IORFile( const std::string& iordir );
             ~IORFile();
+
+            static std::string makeIOR(uniset3::ObjectRef ref);
+            static uniset3::ObjectRef getRef(const std::string& s);
 
             std::string getIOR( const ObjectId id );
             void setIOR( const ObjectId id, const std::string& sior );
@@ -43,7 +44,7 @@ namespace uniset3
             std::string getFileName( const ObjectId id );
 
         private:
-            std::string iordir;
+            const std::string iordir;
     };
     // -----------------------------------------------------------------------------------------
 }    // end of namespace

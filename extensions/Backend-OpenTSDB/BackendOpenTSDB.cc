@@ -245,7 +245,7 @@ void BackendOpenTSDB::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::sensorInfo( const uniset3::SensorMessage* sm )
+void BackendOpenTSDB::sensorInfo( const uniset3::messages::SensorMessage* sm )
 {
     auto it = tsdbParams.find(sm->id);
 
@@ -299,7 +299,7 @@ void BackendOpenTSDB::sensorInfo( const uniset3::SensorMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::timerInfo( const uniset3::TimerMessage* tm )
+void BackendOpenTSDB::timerInfo( const uniset3::messages::TimerMessage* tm )
 {
     if( tm->id == tmFlushBuffer )
         flushBuffer();

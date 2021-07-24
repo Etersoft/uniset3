@@ -65,7 +65,7 @@ void TestProc::step()
 {
 }
 // -----------------------------------------------------------------------------
-void TestProc::sysCommand( const uniset3::SystemMessage* sm )
+void TestProc::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
     TestProc_SK::sysCommand(sm);
 

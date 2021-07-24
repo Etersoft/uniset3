@@ -179,11 +179,11 @@ namespace uniset3
             virtual void initDB( const std::unique_ptr<SQLiteInterface>& db ) {};
             virtual void initDBTableMap( DBTableMap& tblMap ) {};
 
-            virtual void timerInfo( const uniset3::TimerMessage* tm ) override;
-            virtual void sysCommand( const uniset3::SystemMessage* sm ) override;
-            virtual void sensorInfo( const uniset3::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
             virtual void confirmInfo( const uniset3::ConfirmMessage* cmsg ) override;
-            virtual void onTextMessage( const uniset3::TextMessage* msg ) override;
+            virtual void onTextMessage( const uniset3::messages::TextMessage* msg ) override;
             virtual std::string getMonitInfo( const std::string& params ) override;
 
             bool writeToBase( const std::string& query );

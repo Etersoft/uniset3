@@ -14,8 +14,8 @@ TEST_CASE("Message", "[basic][message types][Message]" )
     auto conf = uniset_conf();
 
     Message m;
-    CHECK( m.type == Message::Unused );
-    CHECK( m.priority == Message::Medium );
+    CHECK( m.type == messages::Unused );
+    CHECK( m.priority == messages::mpMedium );
     CHECK( m.node == conf->getLocalNode() );
     CHECK( m.supplier == DefaultObjectId );
     CHECK( m.consumer == DefaultObjectId );
@@ -28,8 +28,8 @@ TEST_CASE("VoidMessage", "[basic][message types][VoidMessage]" )
     auto conf = uniset_conf();
 
     VoidMessage vm;
-    CHECK( vm.type == Message::Unused );
-    CHECK( vm.priority == Message::Medium );
+    CHECK( vm.type == messages::Unused );
+    CHECK( vm.priority == messages::mpMedium );
     CHECK( vm.node == conf->getLocalNode() );
     CHECK( vm.supplier == DefaultObjectId );
     CHECK( vm.consumer == DefaultObjectId );
@@ -44,8 +44,8 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
     SECTION("Default consturctor")
     {
         SensorMessage sm;
-        CHECK( sm.type == Message::SensorInfo );
-        CHECK( sm.priority == Message::Medium );
+        CHECK( sm.type == messages::mtSensorInfo );
+        CHECK( sm.priority == messages::mpMedium );
         CHECK( sm.node == conf->getLocalNode() );
         CHECK( sm.supplier == DefaultObjectId );
         CHECK( sm.consumer == DefaultObjectId );
@@ -87,10 +87,10 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         auto tm = sm.transport_msg();
 
         VoidMessage vm(tm);
-        REQUIRE(vm.type == Message::SensorInfo );
+        REQUIRE(vm.type == messages::mtSensorInfo );
 
         SensorMessage sm2(&vm);
-        REQUIRE( sm2.type == Message::SensorInfo );
+        REQUIRE( sm2.type == messages::mtSensorInfo );
         REQUIRE( sm2.id == sid );
         REQUIRE( sm2.value == val );
         REQUIRE( sm2.sensor_type == uniset3::AI );
@@ -105,8 +105,8 @@ TEST_CASE("SystemMessage", "[basic][message types][SystemMessage]" )
     SECTION("Default consturctor")
     {
         SystemMessage sm;
-        CHECK( sm.type == Message::SysCommand );
-        CHECK( sm.priority == Message::Medium );
+        CHECK( sm.type == messages::mtSysCommand );
+        CHECK( sm.priority == messages::mpMedium );
         CHECK( sm.node == conf->getLocalNode() );
         CHECK( sm.supplier == DefaultObjectId );
         CHECK( sm.consumer == DefaultObjectId );
@@ -120,7 +120,7 @@ TEST_CASE("SystemMessage", "[basic][message types][SystemMessage]" )
         SystemMessage::Command cmd = SystemMessage::StartUp;
         SystemMessage sm(cmd);
         REQUIRE( sm.command == cmd );
-        CHECK( sm.priority == Message::High );
+        CHECK( sm.priority == messages::mpHigh );
     }
 
     SECTION("Transport SystemMessage")
@@ -134,10 +134,10 @@ TEST_CASE("SystemMessage", "[basic][message types][SystemMessage]" )
         auto tm = sm.transport_msg();
 
         VoidMessage vm(tm);
-        REQUIRE(vm.type == Message::SysCommand );
+        REQUIRE(vm.type == messages::mtSysCommand );
 
         SystemMessage sm2(&vm);
-        REQUIRE( sm2.type == Message::SysCommand );
+        REQUIRE( sm2.type == messages::mtSysCommand );
         REQUIRE( sm2.command == cmd );
         REQUIRE( sm2.data[0] == dat );
     }
@@ -151,8 +151,8 @@ TEST_CASE("TimerMessage", "[basic][message types][TimerMessage]" )
     SECTION("Default consturctor")
     {
         TimerMessage tm;
-        CHECK( tm.type == Message::Timer );
-        CHECK( tm.priority == Message::Medium );
+        CHECK( tm.type == messages::mtTimer );
+        CHECK( tm.priority == messages::mpMedium );
         CHECK( tm.node == conf->getLocalNode() );
         CHECK( tm.supplier == DefaultObjectId );
         CHECK( tm.consumer == DefaultObjectId );
@@ -175,10 +175,10 @@ TEST_CASE("TimerMessage", "[basic][message types][TimerMessage]" )
         auto m = tm.transport_msg();
 
         VoidMessage vm(m);
-        REQUIRE(vm.type == Message::Timer );
+        REQUIRE(vm.type == messages::mtTimer );
 
         TimerMessage tm2(&vm);
-        REQUIRE( tm2.type == Message::Timer );
+        REQUIRE( tm2.type == messages::mtTimer );
         REQUIRE( tm2.id == tid );
     }
 }
@@ -196,8 +196,8 @@ TEST_CASE("ConfirmMessage", "[basic][message types][ConfirmMessage]" )
     SECTION("Default consturctor")
     {
         ConfirmMessage cm(sid, val, t_event, t_confirm);
-        CHECK( cm.type == Message::Confirm );
-        CHECK( cm.priority == Message::Medium );
+        CHECK( cm.type == messages::Confirm );
+        CHECK( cm.priority == messages::mpMedium );
         CHECK( cm.node == conf->getLocalNode() );
         CHECK( cm.supplier == DefaultObjectId );
         CHECK( cm.consumer == DefaultObjectId );
@@ -220,7 +220,7 @@ TEST_CASE("ConfirmMessage", "[basic][message types][ConfirmMessage]" )
         auto tm = cm.transport_msg();
 
         VoidMessage vm(tm);
-        REQUIRE(vm.type == Message::Confirm );
+        REQUIRE(vm.type == messages::Confirm );
 
         ConfirmMessage cm2(&vm);
         REQUIRE( cm2.sensor_id == sid );
@@ -238,8 +238,8 @@ TEST_CASE("TextMessage", "[basic][message types][TextMessage]" )
     SECTION("Default consturctor")
     {
         TextMessage tm;
-        CHECK( tm.type == Message::TextMessage );
-        CHECK( tm.priority == Message::Medium );
+        CHECK( tm.type == messages::TextMessage );
+        CHECK( tm.priority == messages::mpMedium );
         CHECK( tm.node == conf->getLocalNode() );
         CHECK( tm.supplier == DefaultObjectId );
         CHECK( tm.consumer == DefaultObjectId );
@@ -260,7 +260,7 @@ TEST_CASE("TextMessage", "[basic][message types][TextMessage]" )
 
         ObjectId consumer = 40;
 
-        TextMessage tm(txt.c_str(), 3, tspec, pi, uniset3::Message::High, consumer );
+        TextMessage tm(txt.c_str(), 3, tspec, pi, uniset3::messages::mpHigh, consumer );
         REQUIRE( tm.consumer == consumer );
         REQUIRE( tm.node == pi.node );
         REQUIRE( tm.supplier == pi.id );
@@ -271,7 +271,7 @@ TEST_CASE("TextMessage", "[basic][message types][TextMessage]" )
 
         auto vm = tm.toLocalVoidMessage();
 
-        REQUIRE( vm->type == Message::TextMessage );
+        REQUIRE( vm->type == messages::TextMessage );
 
         TextMessage tm2(vm.get());
         REQUIRE( tm2.consumer == consumer );

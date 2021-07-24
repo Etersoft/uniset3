@@ -31,8 +31,6 @@
 
 #include "unisetstd.h"
 #include "Exceptions.h"
-#include "ORepHelpers.h"
-#include "ObjectRepository.h"
 #include "UInterface.h"
 #include "UniSetObject.h"
 #include "UniSetManager.h"
@@ -53,8 +51,7 @@ namespace uniset3
         regOK(false),
         active(0),
         threadcreate(false),
-        myid(uniset3::DefaultObjectId),
-        oref(0)
+        myid(uniset3::DefaultObjectId)
     {
         ui = make_shared<UInterface>(uniset3::DefaultObjectId);
 
@@ -68,8 +65,7 @@ namespace uniset3
         regOK(false),
         active(0),
         threadcreate(true),
-        myid(id),
-        oref(0)
+        myid(id)
     {
         ui = make_shared<UInterface>(id);
         tmr = CREATE_TIMER;
@@ -84,26 +80,6 @@ namespace uniset3
 
         initObject();
     }
-
-
-    UniSetObject::UniSetObject( const string& name, const string& section ):
-        msgpid(0),
-        regOK(false),
-        active(0),
-        threadcreate(true),
-        myid(uniset3::DefaultObjectId),
-        oref(0)
-    {
-        ui = make_shared<UInterface>(uniset3::DefaultObjectId);
-
-        /*! \warning UniversalInterface не инициализируется идентификатором объекта */
-        tmr = CREATE_TIMER;
-        myname = section + "/" + name;
-        myid = ui->getIdByName(myname);
-        setID(myid);
-        initObject();
-    }
-
     // ------------------------------------------------------------------------------------------
     UniSetObject::~UniSetObject()
     {
@@ -130,6 +106,15 @@ namespace uniset3
             throw SystemError(err.str());
         }
 
+        {
+            uniset3::uniset_rwmutex_wrlock lock(refmutex);
+            oref.set_id(myid);
+            auto oinf = conf->oind->getObjectInfo(myid);
+
+            if( oinf )
+                oref.set_path(oinf->secName);
+        }
+
         int sz = conf->getArgPInt("--uniset-object-size-message-queue", conf->getField("SizeOfMessageQueue"), 1000);
 
         if( sz > 0 )
@@ -147,6 +132,16 @@ namespace uniset3
     {
         uinfo << myname << ": init..." << endl;
         this->mymngr = om;
+
+        auto m = mymngr.lock();
+
+        if( m )
+        {
+            auto mref = m->getRef();
+            uniset3::uniset_rwmutex_wrlock lock(refmutex);
+            oref.set_addr(mref.addr());
+        }
+
         uinfo << myname << ": init ok..." << endl;
         return true;
     }
@@ -157,8 +152,14 @@ namespace uniset3
             throw ObjectNameAlready("Set ID error: ObjectId is active..");
 
         string myfullname = ui->getNameById(id);
-        myname = ORepHelpers::getShortName(myfullname);
+        myname = ObjectIndex::getShortName(myfullname);
         myid = id;
+
+        {
+            uniset3::uniset_rwmutex_wrlock lock(refmutex);
+            oref.set_id(myid);
+        }
+
         ui->initBackId(myid);
     }
     // ------------------------------------------------------------------------------------------
@@ -232,9 +233,9 @@ namespace uniset3
         {
             uniset3::uniset_rwmutex_rlock lock(refmutex);
 
-            if( !oref )
+            if( oref.addr().empty() )
             {
-                uwarn << myname << "(registration): oref is NULL!..." << endl;
+                uwarn << myname << "(registration): repository address is NULL.." << endl;
                 return;
             }
         }
@@ -304,9 +305,9 @@ namespace uniset3
         {
             uniset3::uniset_rwmutex_rlock lock(refmutex);
 
-            if( !oref )
+            if( oref.addr().empty() )
             {
-                uwarn << myname << "(unregister): oref NULL!" << endl;
+                uwarn << myname << "(unregister): unknown repository address" << endl;
                 regOK = false;
                 return;
             }
@@ -348,19 +349,27 @@ namespace uniset3
             thr->join();
     }
     // ------------------------------------------------------------------------------------------
-    CORBA::Boolean UniSetObject::exist()
+    ::grpc::Status UniSetObject::exist(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response)
     {
-        return true;
+        response->set_value(true);
+        return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
-    ObjectId UniSetObject::getId()
+    ::grpc::Status UniSetObject::getId(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::Int64Value* response)
+    {
+        response->set_value(myid);
+        return ::grpc::Status::OK;
+    }
+    // ------------------------------------------------------------------------------------------
+    ObjectId UniSetObject::getId() const
     {
         return myid;
     }
     // ------------------------------------------------------------------------------------------
-    const ObjectId UniSetObject::getId() const
+    ::grpc::Status UniSetObject::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
     {
-        return myid;
+        response->set_value(getStrType());
+        return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
     string UniSetObject::getName() const
@@ -370,7 +379,7 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     const string UniSetObject::getStrType()
     {
-        return CORBA::string_dup(getType());
+        return "UniSetObject";
     }
     // ------------------------------------------------------------------------------------------
     void UniSetObject::termWaiting()
@@ -385,42 +394,22 @@ namespace uniset3
             thr->setPriority(p);
     }
     // ------------------------------------------------------------------------------------------
-    void UniSetObject::push( const TransportMessage& tm )
+    ::grpc::Status UniSetObject::push(::grpc::ServerContext* context, const ::uniset3::messages::TransportMessage* request, ::google::protobuf::Empty* response)
     {
-        auto vm = make_shared<VoidMessage>(tm);
+        // make copy
+        auto vm = make_shared<messages::TransportMessage>(*request);
 
-        if( vm->priority == Message::Medium )
+        if( request->header().priority() == messages::mpMedium )
             mqueueMedium.push(vm);
-        else if( vm->priority == Message::High )
+        else if( request->header().priority() == messages::mpHigh )
             mqueueHi.push(vm);
-        else if( vm->priority == Message::Low )
+        else if( request->header().priority() == messages::mpLow )
             mqueueLow.push(vm);
         else // на всякий по умолчанию medium
             mqueueMedium.push(vm);
 
         termWaiting();
-    }
-    // ------------------------------------------------------------------------------------------
-    void UniSetObject::pushMessage(const char* msg,
-                                   ::CORBA::Long mtype,
-                                   const ::uniset3::Timespec& tm,
-                                   const ::uniset3::ProducerInfo& pi,
-                                   ::CORBA::Long priority,
-                                   ::CORBA::Long consumer )
-    {
-        uniset3::TextMessage tmsg(msg, mtype, tm, pi, (uniset3::Message::Priority)priority, consumer);
-        auto vm = tmsg.toLocalVoidMessage();
-
-        if( vm->priority == Message::Medium )
-            mqueueMedium.push(vm);
-        else if( vm->priority == Message::High )
-            mqueueHi.push(vm);
-        else if( vm->priority == Message::Low )
-            mqueueLow.push(vm);
-        else // на всякий по умолчанию medium
-            mqueueMedium.push(vm);
-
-        termWaiting();
+        return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
@@ -600,10 +589,10 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
 #endif
     // ------------------------------------------------------------------------------------------
-    ObjectPtr UniSetObject::getRef() const
+    uniset3::ObjectRef UniSetObject::getRef() const
     {
         uniset3::uniset_rwmutex_rlock lock(refmutex);
-        return (uniset3::ObjectPtr)CORBA::Object::_duplicate(oref);
+        return oref;
     }
     // ------------------------------------------------------------------------------------------
     size_t UniSetObject::countMessages()
@@ -679,45 +668,29 @@ namespace uniset3
 
             if( m )
             {
-                PortableServer::POA_var poamngr = m->getPOA();
+                //                PortableServer::POA_var poamngr = m->getPOA();
 
-                if( !PortableServer::POA_Helper::is_nil(poamngr) )
+                //                if( !PortableServer::POA_Helper::is_nil(poamngr) )
+                //                {
+                try
                 {
-                    try
-                    {
-                        deactivateObject();
-                    }
-                    catch( std::exception& ex )
-                    {
-                        uwarn << myname << "(deactivate): " << ex.what() << endl;
-                    }
-
-                    unregistration();
-                    PortableServer::ObjectId_var oid = poamngr->servant_to_id(static_cast<PortableServer::ServantBase*>(this));
-                    poamngr->deactivate_object(oid);
-                    uinfo << myname << "(deactivate): finished..." << endl;
-                    waitFinish();
-                    return true;
+                    deactivateObject();
                 }
+                catch( std::exception& ex )
+                {
+                    uwarn << myname << "(deactivate): " << ex.what() << endl;
+                }
+
+                unregistration();
+                //                    PortableServer::ObjectId_var oid = poamngr->servant_to_id(static_cast<PortableServer::ServantBase*>(this));
+                //                    poamngr->deactivate_object(oid);
+                uinfo << myname << "(deactivate): finished..." << endl;
+                waitFinish();
+                return true;
+                //                }
             }
 
             uwarn << myname << "(deactivate): manager already destroyed.." << endl;
-        }
-        catch( const CORBA::TRANSIENT& )
-        {
-            uwarn << myname << "(deactivate): isExist: нет связи..." << endl;
-        }
-        catch( CORBA::SystemException& ex )
-        {
-            uwarn << myname << "(deactivate): " << "поймали CORBA::SystemException: " << ex.NP_minorString() << endl;
-        }
-        catch( const CORBA::Exception& ex )
-        {
-            uwarn << myname << "(deactivate): " << "поймали CORBA::Exception." << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            uwarn << myname << "(deactivate): " << ex << endl;
         }
         catch( std::exception& ex )
         {
@@ -742,6 +715,7 @@ namespace uniset3
             throw SystemError(err.str());
         }
 
+#if 0
         PortableServer::POA_var poa = m->getPOA();
 
         if( poa == NULL || CORBA::is_nil(poa) )
@@ -816,6 +790,7 @@ namespace uniset3
             oref = poa->servant_to_reference(static_cast<PortableServer::ServantBase*>(this) );
         }
 
+#endif
         registration();
 
         // Запускаем поток обработки сообщений
@@ -896,51 +871,70 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    void UniSetObject::processingMessage( const uniset3::VoidMessage* msg )
+    void UniSetObject::processingMessage( const uniset3::messages::TransportMessage* msg )
     {
         try
         {
-            switch( msg->type )
+            switch( msg->header().type() )
             {
-                case Message::SensorInfo:
-                    sensorInfo( reinterpret_cast<const SensorMessage*>(msg) );
-                    break;
-
-                case Message::Timer:
-                    timerInfo( reinterpret_cast<const TimerMessage*>(msg) );
-                    break;
-
-                case Message::SysCommand:
-                    sysCommand( reinterpret_cast<const SystemMessage*>(msg) );
-                    break;
-
-                case Message::TextMessage:
+                case messages::mtSensorInfo:
                 {
-                    TextMessage tm(msg);
-                    onTextMessage( &tm );
-                    break;
+                    messages::SensorMessage m;
+
+                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                    {
+                        ucrit << myname << "(processingMessage): SensorInfo: parse error" << endl;
+                        return;
+                    }
+
+                    sensorInfo(&m);
                 }
+                break;
+
+                case messages::mtTimer:
+                {
+                    messages::TimerMessage m;
+
+                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                    {
+                        ucrit << myname << "(processingMessage): TimerInfo: parse error" << endl;
+                        return;
+                    }
+
+                    timerInfo(&m);
+                }
+                break;
+
+                case messages::mtSysCommand:
+                {
+                    messages::SystemMessage m;
+
+                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                    {
+                        ucrit << myname << "(processingMessage): SysCommand: parse error" << endl;
+                        return;
+                    }
+
+                    sysCommand(&m);
+                }
+                break;
+
+                case messages::mtTextInfo:
+                {
+                    messages::TextMessage m;
+
+                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                    {
+                        ucrit << myname << "(processingMessage): TextMessage: parse error" << endl;
+                        return;
+                    }
+
+                    onTextMessage( &m );
+                }
+                break;
 
                 default:
                     break;
-            }
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            ucrit << myname << "(processingMessage): CORBA::SystemException: " << ex.NP_minorString() << endl;
-        }
-        catch( const CORBA::Exception& ex )
-        {
-            uwarn << myname << "(processingMessage): CORBA::Exception: " << ex._name() << endl;
-        }
-        catch( omniORB::fatalException& fe )
-        {
-            if( ulog()->is_crit() )
-            {
-                ulog()->crit() << myname << "(processingMessage): Caught omniORB::fatalException:" << endl;
-                ulog()->crit() << myname << "(processingMessage): file: " << fe.file()
-                               << " line: " << fe.line()
-                               << " mesg: " << fe.errmsg() << endl;
             }
         }
         catch( const uniset3::Exception& ex )
@@ -961,7 +955,7 @@ namespace uniset3
         */
     }
     // ------------------------------------------------------------------------------------------
-    timeout_t UniSetObject::askTimer( TimerId timerid, timeout_t timeMS, clock_t ticks, Message::Priority p )
+    timeout_t UniSetObject::askTimer( TimerId timerid, timeout_t timeMS, clock_t ticks, messages::Priority p )
     {
         timeout_t tsleep = LT_Object::askTimer(timerid, timeMS, ticks, p);
 
@@ -972,7 +966,7 @@ namespace uniset3
     }
     // ------------------------------------------------------------------------------------------
 
-    uniset3::SimpleInfo* UniSetObject::getInfo( const char* userparam )
+    ::grpc::Status UniSetObject::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
     {
         ostringstream info;
         info.setf(ios::left, ios::adjustfield);
@@ -1007,27 +1001,25 @@ namespace uniset3
              << " maxMsg=" << mqueueLow.getMaxQueueMessages()
              << " qFull(" << mqueueLow.getMaxSizeOfMessageQueue() << ")=" << mqueueLow.getCountOfLostMessages();
 
-        SimpleInfo res;
-        res.set_info(info.str());
-        res.set_id(myid);
-        return res;
+        response->set_value(info.str());
+        return grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
-    SimpleInfo UniSetObject::apiRequest( const char* request )
+
+    //    SimpleInfo UniSetObject::apiRequest( const char* request )
+    ::grpc::Status UniSetObject::request(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
     {
 #ifdef DISABLE_REST_API
-        return getInfo(request);
+        return getInfo(context, request, response)
 #else
-        SimpleInfo ret;
-        ret.set_id(getId());
         ostringstream err;
 
         try
         {
-            Poco::URI uri(request);
+            Poco::URI uri(request->value());
 
             if( ulog()->is_level9() )
-                ulog()->level9() << myname << "(apiRequest): request: " << request << endl;
+                ulog()->level9() << myname << "(apiRequest): request: " << request->value() << endl;
 
             ostringstream out;
             std::string query = "";
@@ -1049,8 +1041,8 @@ namespace uniset3
                     jdata.set("ecode", (int)Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
                     jdata.set("message", "BAD REQUEST STRUCTURE");
                     jdata.stringify(out);
-                    ret->info = out.str().c_str(); // CORBA::string_dup(..)
-                    return ret;
+                    response->set_value(out.str());
+                    return ::grpc::Status::OK;
                 }
 
                 if( seg.size() > 2 )
@@ -1095,8 +1087,8 @@ namespace uniset3
                 reply->stringify(out);
             }
 
-            ret->set_info(out.str());
-            return ret;
+            response->set_value(out.str());
+            return ::grpc::Status::OK;
         }
         catch( Poco::SyntaxException& ex )
         {
@@ -1118,16 +1110,18 @@ namespace uniset3
 
         ostringstream out;
         jdata.stringify(out);
-        ret->set_info(out.str());
-        return ret;
-
+        response->set_value(out.str());
+        return ::grpc::Status::OK;
 #endif
     }
     // ------------------------------------------------------------------------------------------
     ostream& operator<<(ostream& os, UniSetObject& obj )
     {
-        SimpleInfo si = obj.getInfo();
-        return os << si->info();
+        grpc::ServerContext ctx;
+        ::google::protobuf::StringValue params;
+        ::google::protobuf::StringValue response;
+        obj.getInfo(&ctx, &params, &response);
+        return os << response.value();
     }
     // ------------------------------------------------------------------------------------------
 #undef CREATE_TIMER

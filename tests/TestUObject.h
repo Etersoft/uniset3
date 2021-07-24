@@ -17,7 +17,7 @@ class TestUObject:
         virtual ~TestUObject() {};
 
         // специальные функции для проведения тестирования
-        inline uniset3::VoidMessagePtr getOneMessage()
+        inline uniset3::messages::TransportMessagePtr getOneMessage()
         {
             return receiveMessage();
         }

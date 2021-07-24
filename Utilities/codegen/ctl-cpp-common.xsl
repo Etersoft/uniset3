@@ -273,11 +273,11 @@
 
 <xsl:template name="COMMON-HEAD-PROTECTED">
 		virtual void callback() noexcept override;
-		virtual void processingMessage( const uniset3::VoidMessage* msg ) override;
-		virtual void sysCommand( const uniset3::SystemMessage* sm ) override {}
+		virtual void processingMessage( const uniset3::messages::TransportMessage* msg ) override;
+		virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override {}
 		virtual void askSensors( uniset3::UIOCommand cmd ) {}
-		virtual void sensorInfo( const uniset3::SensorMessage* sm ) override {}
-		virtual void timerInfo( const uniset3::TimerMessage* tm ) override {}
+		virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override {}
+		virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override {}
 		virtual bool activateObject() override;
 		virtual bool deactivateObject() override;
 		virtual std::string getMonitInfo() const { return ""; } /*!&lt; пользовательская информация выводимая в getInfo() */
@@ -295,7 +295,7 @@
 		virtual void step(){}
 
 		void preAskSensors( uniset3::UIOCommand cmd );
-		void preSysCommand( const uniset3::SystemMessage* sm );
+		void preSysCommand( const uniset3::messages::SystemMessage* sm );
 		
 		virtual void testMode( bool state );
 		void updateOutputs( bool force );
@@ -376,8 +376,8 @@
 <xsl:template name="COMMON-HEAD-PRIVATE">
 		// ------------ private функции ---------------
 		void updatePreviousValues() noexcept;
-		void preSensorInfo( const uniset3::SensorMessage* sm );
-		void preTimerInfo( const uniset3::TimerMessage* tm );
+		void preSensorInfo( const uniset3::messages::SensorMessage* sm );
+		void preTimerInfo( const uniset3::messages::TimerMessage* tm );
 		void initFromSM();
 		void checkSensors();
 		// --------------------------------------------
@@ -441,7 +441,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::init_dlog( std::shared_ptr&lt;Debug
 	<xsl:value-of select="$CLASSNAME"/>_SK::mylog = d;
 }
 // ------------------------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::VoidMessage* _msg )
+void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::messages::TransportMessage* _msg )
 {
 	try
 	{
@@ -450,7 +450,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::V
 		</xsl:if>
 		switch( _msg->type )
 		{
-			case Message::SensorInfo:
+			case messages::mtSensorInfo:
 			{
 				const SensorMessage* sm = reinterpret_cast&lt;const SensorMessage*&gt;(_msg);
 				<xsl:if test="normalize-space($STAT)='1'">
@@ -460,11 +460,11 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::V
 			}
 			break;
 
-			case Message::Timer:
+			case messages::mtTimer:
 				preTimerInfo( reinterpret_cast&lt;const TimerMessage*&gt;(_msg) );
 			break;
 
-			case Message::SysCommand:
+			case messages::mtSysCommand:
 				preSysCommand( reinterpret_cast&lt;const SystemMessage*&gt;(_msg) );
 			break;
                                                                                         
@@ -960,7 +960,7 @@ bool <xsl:value-of select="$CLASSNAME"/>_SK::deactivateObject()
 	<xsl:if test="normalize-space($BASECLASS)=''">return UniSetObject::deactivateObject();</xsl:if>
 }
 // -----------------------------------------------------------------------------
-void <xsl:value-of select="$CLASSNAME"/>_SK::preTimerInfo( const uniset3::TimerMessage* _tm )
+void <xsl:value-of select="$CLASSNAME"/>_SK::preTimerInfo( const uniset3::messages::TimerMessage* _tm )
 {
 	timerInfo(_tm);
 }
@@ -1331,11 +1331,11 @@ end_private(false)
 	if( <xsl:value-of select="normalize-space(@name)"/> == uniset3::DefaultObjectId )
 	{
 		if( !conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>").empty() )
-			throw uniset3::SystemError( myname + ": Not found Message::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
+			throw uniset3::SystemError( myname + ": Not found messages::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
 	}
 	
 	if( node_<xsl:value-of select="normalize-space(@name)"/> == uniset3::DefaultObjectId )
-		throw uniset3::SystemError( myname + ": Not found Message::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
+		throw uniset3::SystemError( myname + ": Not found messages::NodeID for (node='node_<xsl:value-of select="normalize-space(@name)"/>') " + conf->getProp(cnode,"node_<xsl:value-of select="normalize-space(@name)"/>") );
 </xsl:for-each>
 
 	UniXML::iterator it(cnode);

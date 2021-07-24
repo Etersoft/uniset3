@@ -46,7 +46,7 @@ namespace uniset3
             PassiveObject( uniset3::ObjectId id, ProxyManager* mngr );
             virtual ~PassiveObject();
 
-            virtual void processingMessage( const uniset3::VoidMessage* msg );
+            virtual void processingMessage( const uniset3::messages::TransportMessage* msg );
 
             void setID( uniset3::ObjectId id );
             void init(ProxyManager* mngr);
@@ -61,10 +61,10 @@ namespace uniset3
             }
 
         protected:
-            virtual void sysCommand( const uniset3::SystemMessage* sm );
+            virtual void sysCommand( const uniset3::messages::SystemMessage* sm );
             virtual void askSensors( uniset3::UIOCommand cmd ) {}
-            virtual void timerInfo( const uniset3::TimerMessage* tm ) {}
-            virtual void sensorInfo( const uniset3::SensorMessage* sm ) {}
+            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) {}
+            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) {}
 
             std::string myname = { "" };
             ProxyManager* mngr = { nullptr };

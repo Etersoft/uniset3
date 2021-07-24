@@ -19,14 +19,28 @@
 #include <unistd.h>
 #include "IORFile.h"
 #include "Exceptions.h"
-#include "ORepHelpers.h"
-
 // -----------------------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------------------
+std::string IORFile::makeIOR(uniset3::ObjectRef ref)
+{
+    //    ostringstream s;
+    //    s << ref.id() << "|" << ref.addr();
+    //    return s.str();
+
+    return ref.SerializeAsString();
+}
+// -----------------------------------------------------------------------------------------
+uniset3::ObjectRef IORFile::getRef( const std::string& s )
+{
+    uniset3::ObjectRef ref;
+    ref.ParseFromArray(s.data(), s.size());
+    return ref;
+}
+// -----------------------------------------------------------------------------------------
 IORFile::IORFile( const std::string& dir ):
-	iordir(dir)
+    iordir(dir)
 {
 
 }
@@ -38,36 +52,36 @@ IORFile::~IORFile()
 // -----------------------------------------------------------------------------------------
 string IORFile::getIOR( const ObjectId id )
 {
-	const string fname( getFileName(id) );
-	ifstream ior_file(fname.c_str());
-	string sior;
-	ior_file >> sior;
+    const string fname( getFileName(id) );
+    ifstream ior_file(fname.c_str());
+    string sior;
+    ior_file >> sior;
 
-	return sior;
+    return sior;
 }
 // -----------------------------------------------------------------------------------------
 void IORFile::setIOR( const ObjectId id, const string& sior )
 {
-	const string fname( getFileName(id) );
-	ofstream ior_file(fname.c_str(), ios::out | ios::trunc);
+    const string fname( getFileName(id) );
+    ofstream ior_file(fname.c_str(), ios::out | ios::trunc);
 
-	if( !ior_file )
-		throw ORepFailed("(IORFile): не смог создать ior-файл " + fname);
+    if( !ior_file )
+        throw ORepFailed("(IORFile): не смог создать ior-файл " + fname);
 
-	ior_file << sior << endl;
-	ior_file.close();
+    ior_file << sior << endl;
+    ior_file.close();
 }
 // -----------------------------------------------------------------------------------------
 void IORFile::unlinkIOR( const ObjectId id )
 {
-	const string fname( getFileName(id) );
-	unlink(fname.c_str());
+    const string fname( getFileName(id) );
+    unlink(fname.c_str());
 }
 // -----------------------------------------------------------------------------------------
 string IORFile::getFileName( const ObjectId id )
 {
-	ostringstream fname;
-	fname << iordir << id;
-	return fname.str();
+    ostringstream fname;
+    fname << iordir << id;
+    return fname.str();
 }
 // -----------------------------------------------------------------------------------------

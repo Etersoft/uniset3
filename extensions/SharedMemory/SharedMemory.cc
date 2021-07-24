@@ -597,7 +597,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    void SharedMemory::sendEvent( uniset3::SystemMessage& sm )
+    void SharedMemory::sendEvent( uniset3::messages::SystemMessage& sm )
     {
         TransportMessage tm( sm.transport_msg() );
 
@@ -749,7 +749,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    SharedMemory::HistorySlot SharedMemory::signal_history()
+    SharedMemory::mpHistorySlot SharedMemory::signal_history()
     {
         return m_historySignal;
     }
@@ -857,7 +857,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    std::ostream& operator<<( std::ostream& os, const SharedMemory::HistoryInfo& h )
+    std::ostream& operator<<( std::ostream& os, const SharedMemory::mpHistoryInfo& h )
     {
         os << "History id=" << h.id
            << " fuse_id=" << h.fuse_id
@@ -866,7 +866,7 @@ namespace uniset3
            << " size=" << h.size
            << " filter=" << h.filter << endl;
 
-        for( SharedMemory::HistoryList::const_iterator it = h.hlst.begin(); it != h.hlst.end(); ++it )
+        for( SharedMemory::mpHistoryList::const_iterator it = h.hlst.begin(); it != h.hlst.end(); ++it )
         {
             os << "    id=" << it->id << "[";
 

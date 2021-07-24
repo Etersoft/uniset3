@@ -85,11 +85,11 @@ DBServer::~DBServer()
 {
 }
 //--------------------------------------------------------------------------------------------
-void DBServer::processingMessage( const uniset3::VoidMessage* msg )
+void DBServer::processingMessage( const uniset3::messages::TransportMessage* msg )
 {
 	switch(msg->type)
 	{
-		case Message::Confirm:
+		case messages::Confirm:
 			confirmInfo( reinterpret_cast<const uniset3::ConfirmMessage*>(msg) );
 			break;
 
@@ -107,7 +107,7 @@ bool DBServer::activateObject()
 	return true;
 }
 //--------------------------------------------------------------------------------------------
-void DBServer::sysCommand( const uniset3::SystemMessage* sm )
+void DBServer::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
 	UniSetObject::sysCommand(sm);
 
