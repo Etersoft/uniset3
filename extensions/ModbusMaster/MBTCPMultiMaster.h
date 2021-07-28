@@ -24,7 +24,7 @@
 #include "MBExchange.h"
 #include "modbus/ModbusTCPMaster.h"
 // -------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -283,10 +283,10 @@ namespace uniset33
 
             static void help_print( int argc, const char* const* argv );
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
         protected:
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
             virtual void initIterators() override;
             virtual std::shared_ptr<ModbusClient> initMB( bool reopen = false ) override;
             virtual bool deactivateObject() override;
@@ -371,7 +371,7 @@ namespace uniset33
             std::unique_ptr< ThreadCreator<MBTCPMultiMaster> > checkThread; /*!< поток проверки связи по другим каналам */
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // _MBTCPMultiMaster_H_
 // -----------------------------------------------------------------------------

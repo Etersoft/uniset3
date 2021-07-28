@@ -38,14 +38,9 @@ int main( int argc, const char* argv[] )
 
         act->add(to);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
         return session.run();
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(tests_httpresolver): " << ex << endl;
     }
     catch( const std::exception& e )
     {

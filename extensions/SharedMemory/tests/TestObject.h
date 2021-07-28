@@ -27,7 +27,7 @@ class TestObject:
             return ptHeartBeat.getInterval();
         }
 
-        // тест на последовательность SensorMessage
+        // тест на последcommandовательность SensorMessage
         void askMonotonic();
         void startMonitonicTest();
         bool isMonotonicTestOK() const;
@@ -42,9 +42,9 @@ class TestObject:
     protected:
         TestObject();
 
-        virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
-        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-        virtual void onTextMessage( const uniset3::messages::TextMessage* msg ) override;
+        virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
+        virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+        virtual void onTextMessage( const uniset3::umessage::TextMessage* msg ) override;
 
     private:
         bool evntIsOK = { false };

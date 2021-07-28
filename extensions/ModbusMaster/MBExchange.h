@@ -47,7 +47,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // -------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -81,15 +81,15 @@ namespace uniset33
                 return mblog;
             }
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
             bool reload( const std::string& confile );
 
         protected:
             virtual void step();
-            virtual void sysCommand( const uniset3::messages::SystemMessage* msg ) override;
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* msg ) override;
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual void askSensors( uniset3::UIOCommand cmd );
             virtual void initOutput();
             virtual bool deactivateObject() override;
@@ -190,7 +190,7 @@ namespace uniset33
 
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // _MBExchange_H_
 // -----------------------------------------------------------------------------

@@ -407,8 +407,8 @@ TEST_CASE("[UNetUDP]: multicast check undefined value", "[unetudp][multicast][un
     REQUIRE( pack.aValue(0) == 110 );
 
     uniset3::SensorInfo si;
-    si.id = 2;
-    si.node = uniset_conf()->getLocalNode();
+    si.set_id(2);
+    si.set_node(uniset_conf()->getLocalNode());
     ui->setUndefinedState(si, true, 6000 /* TestProc */ );
     msleep(600);
     pack = mreceive(pack.num() + 1);

@@ -410,7 +410,7 @@ ModbusRTU::mbErrCode MBTCPTestServer::setDateTime( ModbusRTU::SetDateTimeMessage
 
     // подтверждаем сохранение
     // в ответе возвращаем установленное время...
-    ModbusRTU::SetDateTimeRetmessages::cpy(reply, query);
+    ModbusRTU::SetDateTimeRetMessage::cpy(reply, query);
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------

@@ -404,7 +404,9 @@ namespace uniset3
             }
             else if ( name == "URepository" )
             {
-                repAddr = it.getProp("addr");
+                repAddr = it.getProp2("ip", "localhost");
+                repPort = it.getPIntProp("port", 8111);
+                repAddr = repAddr + ":" + to_string(repPort);
             }
             else if( name == "LocalIOR" )
             {
@@ -417,7 +419,7 @@ namespace uniset3
                 if( dataDir.empty() )
                     dataDir = getRootDir();
 
-                if( !directory_exist(dataDir) )
+                if( !directory_exists(dataDir) )
                 {
                     ostringstream err;
                     err << "Configuration: DataDir=" << dataDir << " NOT EXISTS";
@@ -431,7 +433,7 @@ namespace uniset3
                 if( binDir.empty() )
                     binDir = getRootDir();
 
-                if( !directory_exist(binDir) )
+                if( !directory_exists(binDir) )
                 {
                     ostringstream err;
                     err << "Configuration: BinDir=" << binDir << " NOT EXISTS";
@@ -445,7 +447,7 @@ namespace uniset3
                 if( logDir.empty() )
                     logDir = getRootDir();
 
-                if( !directory_exist(logDir) )
+                if( !directory_exists(logDir) )
                 {
                     ostringstream err;
                     err << "Configuration: LogDir=" << logDir << " NOT EXISTS";
@@ -459,7 +461,7 @@ namespace uniset3
                 if( lockDir.empty() )
                     lockDir = getRootDir();
 
-                if( !directory_exist(lockDir) )
+                if( !directory_exists(lockDir) )
                 {
                     ostringstream err;
                     err << "Configuration: LockDir=" << lockDir << " NOT EXISTS";
@@ -473,7 +475,7 @@ namespace uniset3
                 if( confDir.empty() )
                     confDir = getRootDir();
 
-                if( !directory_exist(confDir) )
+                if( !directory_exists(confDir) )
                 {
                     ostringstream err;
                     err << "Configuration: ConfDir=" << confDir << " NOT EXISTS";
@@ -644,9 +646,30 @@ namespace uniset3
         return secServices;
     }
     // -------------------------------------------------------------------------
-    std::string Configuration::repositoryAddress() const noexcept
+    std::string Configuration::repositoryAddressByNode( uniset3::ObjectId node, size_t netNumber  ) const noexcept
+    {
+        if( node == getLocalNode() )
+            return repositoryAddr();
+
+        if( !oind )
+            return "";
+
+        auto ip = getNodeIP(node, netNumber);
+
+        if( ip.empty() )
+            return "";
+
+        return ip + ":" + to_string(repPort);
+    }
+    // -------------------------------------------------------------------------
+    std::string Configuration::repositoryAddr() const noexcept
     {
         return repAddr;
+    }
+    // -------------------------------------------------------------------------
+    int Configuration::repositoryPort() const noexcept
+    {
+        return repPort;
     }
     // -------------------------------------------------------------------------
     void Configuration::createNodesList()
@@ -1230,6 +1253,22 @@ namespace uniset3
     size_t Configuration::getRepeatCount() const noexcept
     {
         return repeatCount;
+    }
+    // -------------------------------------------------------------------------
+    std::string Configuration::getNodeIP(ObjectId node, size_t netNumber) const noexcept
+    {
+        if( !oind )
+            return "";
+
+        auto oinf = oind->getObjectInfo(node);
+
+        if( !oinf->xmlnode )
+            return "";
+
+        if( netNumber == 0 )
+            return getProp(oinf->xmlnode, "ip");
+
+        return getProp(oinf->xmlnode, "ip" + std::to_string(netNumber));
     }
     // -------------------------------------------------------------------------
     std::shared_ptr<Configuration> uniset_init( int argc, const char* const* argv, const std::string& xmlfile )

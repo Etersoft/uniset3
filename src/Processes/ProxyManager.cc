@@ -132,25 +132,25 @@ bool ProxyManager::deactivateObject()
     return UniSetObject::deactivateObject();
 }
 // -------------------------------------------------------------------------
-void ProxyManager::processingMessage( const uniset3::messages::TransportMessage* msg )
+void ProxyManager::processingMessage( const uniset3::umessage::TransportMessage* msg )
 {
     try
     {
-        switch(msg->type)
+        switch(msg->header().type())
         {
-            case messages::mtSysCommand:
+            case umessage::mtSysCommand:
                 allMessage(msg);
                 break;
 
             default:
             {
-                auto it = omap.find(msg->consumer);
+                auto it = omap.find(msg->header().consumer());
 
                 if( it != omap.end() )
                     it->second->processingMessage(msg);
                 else
                     ucrit << myname << "(processingMessage): не найден объект "
-                          << " consumer= " << msg->consumer << endl;
+                          << " consumer= " << msg->header().consumer() << endl;
             }
             break;
         }
@@ -161,7 +161,7 @@ void ProxyManager::processingMessage( const uniset3::messages::TransportMessage*
     }
 }
 // -------------------------------------------------------------------------
-void ProxyManager::allMessage( const uniset3::messages::TransportMessage* msg )
+void ProxyManager::allMessage( const uniset3::umessage::TransportMessage* msg )
 {
     for( const auto& o : omap )
     {

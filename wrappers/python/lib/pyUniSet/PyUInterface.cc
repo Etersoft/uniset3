@@ -16,7 +16,6 @@
 // -------------------------------------------------------------------------
 #include <ostream>
 #include "Exceptions.h"
-#include "ORepHelpers.h"
 #include "UInterface.h"
 #include "Configuration.h"
 #include "UniSetActivator.h"
@@ -161,7 +160,7 @@ string pyUInterface::getShortName( long id )
 	auto conf = uniset3::uniset_conf();
 
 	if( conf )
-		return uniset3::ORepHelpers::getShortName(conf->oind->getMapName(id));
+        return uniset3::ObjectIndex::getShortName(conf->oind->getMapName(id));
 
 	return "";
 }
@@ -191,9 +190,8 @@ void pyUInterface::uniset_activate_objects()throw(UException)
 {
 	try
 	{
-		auto act = uniset3::UniSetActivator::Instance();
-		uniset3::messages::SystemMessage sm(uniset3::messages::SystemMessage::StartUp);
-		act->broadcast( sm.transport_msg() );
+        auto act = uniset3::UniSetActivator::Instance();
+        act->startup();
 		act->run(true);
 	}
 	catch( const std::exception& ex )

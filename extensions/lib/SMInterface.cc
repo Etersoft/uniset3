@@ -27,63 +27,33 @@ using namespace uniset3;
     {     \
         auto conf = ui->getConf(); \
         uniset_rwmutex_wrlock l(shmMutex); \
-        IONotifyController_i_var shm;\
+        std::unique_ptr<IONotifyController_i::Stub> shm;\
         for( unsigned int i=0; i<conf->getRepeatCount(); i++)\
         {\
-            try\
-            {\
-                if( CORBA::is_nil(oref) ) \
-                    oref = ui->resolve( shmID, conf->getLocalNode() ); \
-                \
-                if( CORBA::is_nil(oref) ) \
-                    continue;\
-                \
-                shm = uniset3::_narrow(oref); \
-                if( CORBA::is_nil(shm) ) \
-                { \
-                    oref = CORBA::Object::_nil();\
-                    msleep(conf->getRepeatTimeout());    \
-                    continue;\
-                } \
+            if( !oref ) \
+                oref = ui->resolve( shmID, conf->getLocalNode() ); \
+            \
+            if( !oref ) \
+                continue;\
 
 #define BEG_FUNC1(name) \
     try \
     {     \
         auto conf = ui->getConf(); \
         uniset_rwmutex_wrlock l(shmMutex); \
-        if( true ) \
+        if(true) \
         { \
-            try \
-            { \
-
 
 #define END_FUNC(fname) \
-    }\
-    catch( const CORBA::TRANSIENT& ){}\
-    catch( const CORBA::OBJECT_NOT_EXIST& ){}\
-    catch( const CORBA::SystemException& ex){}\
-    oref = CORBA::Object::_nil();\
+    oref = nullptr;\
     msleep(conf->getRepeatTimeout());    \
-    }\
     } \
-    catch( const uniset3::NameNotFound &ex ) \
+    } \
+    catch( const std::exception& ex ) \
     { \
-        uwarn << "(" << __STRING(fname) << "): " << ex.err << endl; \
+        uwarn << "(" << __STRING(fname) << "): " << ex.what() << endl; \
     } \
-    catch( const uniset3::IOBadParam &ex ) \
-    { \
-        uwarn << "(" << __STRING(fname) << "): " << ex.err << endl; \
-    } \
-    catch( const CORBA::SystemException& ex ) \
-    { \
-        uwarn << "(" << __STRING(fname) << "): CORBA::SystemException: " \
-              << ex.NP_minorString() << endl; \
-    } \
-    catch( const uniset3::Exception& ex ) \
-    { \
-        uwarn << "(" << __STRING(fname) << "): " << ex << endl; \
-    } \
-    oref = CORBA::Object::_nil(); \
+    oref = nullptr; \
     throw uniset3::TimeOut(); \
 
 #define CHECK_IC_PTR(fname) \
@@ -98,7 +68,6 @@ SMInterface::SMInterface( uniset3::ObjectId _shmID, const std::shared_ptr<UInter
                           uniset3::ObjectId _myid, const std::shared_ptr<IONotifyController> ic ):
     ic(ic),
     ui(_ui),
-    oref( CORBA::Object::_nil() ),
     shmID(_shmID),
     myid(_myid)
 {
@@ -116,14 +85,18 @@ void SMInterface::setValue( uniset3::ObjectId id, long value )
     if( ic )
     {
         BEG_FUNC1(SMInterface::setValue)
-        ic->setValue(id, value, myid);
+        SetValueParams request;
+        request.set_id(id);
+        request.set_value(value);
+        request.set_sup_id(myid);
+        ic->setValue(&ctx, &request, &empty);
         return;
         END_FUNC(SMInterface::setValue)
     }
 
     uniset3::SensorInfo si;
-    si.id = id;
-    si.node = ui->getConf()->getLocalNode();
+    si.set_id(id);
+    si.set_node(ui->getConf()->getLocalNode());
 
     BEG_FUNC1(SMInterface::setValue)
     ui->setValue(si, value, myid);
@@ -136,7 +109,15 @@ long SMInterface::getValue( uniset3::ObjectId id )
     if( ic )
     {
         BEG_FUNC1(SMInterface::getValue)
-        return ic->getValue(id);
+        google::protobuf::Int64Value request;
+        request.set_value(id);
+        google::protobuf::Int64Value response;
+        auto status = ic->getValue(&ctx, &request, &response);
+
+        if( !status.ok() )
+            throw SystemError(status.error_message());
+
+        return response.value();
         END_FUNC(SMInterface::getValue)
     }
 
@@ -147,49 +128,84 @@ long SMInterface::getValue( uniset3::ObjectId id )
 // --------------------------------------------------------------------------
 void SMInterface::askSensor( uniset3::ObjectId id, uniset3::UIOCommand cmd, uniset3::ObjectId backid )
 {
-    ConsumerInfo_var ci;
-    ci->id   = (backid == DefaultObjectId) ? myid : backid;
-    ci->node = ui->getConf()->getLocalNode();
+    ConsumerInfo ci;
+    ci.set_id((backid == DefaultObjectId) ? myid : backid);
+    ci.set_node(ui->getConf()->getLocalNode());
 
     if( ic )
     {
         BEG_FUNC1(SMInterface::askSensor)
-        ic->askSensor(id, ci, cmd);
+        AskParams p;
+        p.set_sid(id);
+        *(p.mutable_ci()) = ci;
+        p.set_cmd(cmd);
+        auto status = ic->askSensor(&ctx, &p, &empty);
+
+        if( !status.ok() )
+            throw SystemError(status.error_message());
+
         return;
         END_FUNC(SMInterface::askSensor)
     }
 
     BEG_FUNC1(SMInterface::askSensor)
-    ui->askRemoteSensor(id, cmd, conf->getLocalNode(), ci->id);
+    ui->askRemoteSensor(id, cmd, conf->getLocalNode(), ci.id());
     return;
     END_FUNC(SMInterface::askSensor)
 }
 // --------------------------------------------------------------------------
-uniset3::SensorInfoSeq* SMInterface::getSensorsMap()
+uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
 {
     if( ic )
     {
+        SensorIOInfoSeq seq;
+
         BEG_FUNC1(SMInterface::getSensorsMap)
-        return ic->getSensorsMap();
+        auto status = ic->getSensorsMap(&ctx, &empty, &seq);
+
+        if( !status.ok() )
+            throw SystemError(status.error_message());
+
+        return seq;
         END_FUNC(SMInterface::getSensorsMap)
     }
 
     BEG_FUNC(SMInterface::getSensorsMap)
-    return shm->getSensorsMap();
+    auto shm = IOController_i::NewStub(oref);
+    SensorIOInfoSeq seq;
+    auto status = shm->getSensorsMap(&clictx, empty, &seq);
+
+    if( !status.ok() )
+        throw SystemError(status.error_message());
+
+    return seq;
     END_FUNC(SMInterface::getSensorsMap)
 }
 // --------------------------------------------------------------------------
-uniset3::ThresholdsListSeq* SMInterface::getThresholdsList()
+uniset3::ThresholdsListSeq SMInterface::getThresholdsList()
 {
     if( ic )
     {
         BEG_FUNC1(SMInterface::getThresholdsList)
-        return ic->getThresholdsList();
+        ThresholdsListSeq seq;
+        auto status = ic->getThresholdsList(&ctx, &empty, &seq);
+
+        if( !status.ok() )
+            throw SystemError(status.error_message());
+
+        return seq;
         END_FUNC(SMInterface::getThresholdsList)
     }
 
     BEG_FUNC(SMInterface::getThresholdsList)
-    return shm->getThresholdsList();
+    auto shm = IONotifyController_i::NewStub(oref);
+    ThresholdsListSeq seq;
+    auto status = shm->getThresholdsList(&clictx, empty, &seq);
+
+    if( !status.ok() )
+        throw SystemError(status.error_message());
+
+    return seq;
     END_FUNC(SMInterface::getThresholdsList)
 }
 // --------------------------------------------------------------------------
@@ -199,27 +215,44 @@ void SMInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefin
     if( ic )
     {
         BEG_FUNC1(SMInterface::setUndefinedState)
-        ic->setUndefinedState(si.id, undefined, sup_id);
+        SetUndefinedParams request;
+        request.set_id(si.id());
+        request.set_undefined(undefined);
+        request.set_sup_id(sup_id);
+        auto status = ic->setUndefinedState(&ctx, &request, &empty);
+
+        if( !status.ok() )
+            throw SystemError(status.error_message());
+
         return;
         END_FUNC(SMInterface::setUndefinedState)
     }
 
     BEG_FUNC(SMInterface::setUndefinedState)
-    shm->setUndefinedState(si.id, undefined, sup_id);
+    auto shm = IOController_i::NewStub(oref);
+    SetUndefinedParams request;
+    request.set_id(si.id());
+    request.set_undefined(undefined);
+    request.set_sup_id(sup_id);
+    auto status = shm->setUndefinedState(&clictx, request, &empty);
+
+    if( !status.ok() )
+        throw SystemError(status.error_message());
+
     return;
     END_FUNC(SMInterface::setUndefinedState)
 }
 // --------------------------------------------------------------------------
-bool SMInterface::exist()
+bool SMInterface::exists()
 {
     if( ic )
     {
         BEG_FUNC1(SMInterface::exist)
-        return ic->exist();
+        return ic->isExists();
         END_FUNC(SMInterface::exist)
     }
 
-    return ui->isExist(shmID);
+    return ui->isExists(shmID);
 }
 // --------------------------------------------------------------------------
 IOController::IOStateList::iterator SMInterface::ioEnd()
@@ -230,7 +263,7 @@ IOController::IOStateList::iterator SMInterface::ioEnd()
 // --------------------------------------------------------------------------
 void SMInterface::localSetValue( IOController::IOStateList::iterator& it,
                                  uniset3::ObjectId sid,
-                                 CORBA::Long value, uniset3::ObjectId sup_id )
+                                 long value, uniset3::ObjectId sup_id )
 {
     if( !ic )
         return setValue(sid, value);
@@ -255,8 +288,8 @@ void SMInterface::localSetUndefinedState( IOController::IOStateList::iterator& i
     if( !ic )
     {
         uniset3::SensorInfo si;
-        si.id     = sid;
-        si.node = ui->getConf()->getLocalNode();
+        si.set_id(sid);
+        si.set_node(ui->getConf()->getLocalNode());
         setUndefinedState(si, undefined, myid);
         return;
     }
@@ -306,7 +339,7 @@ bool SMInterface::waitSMreadyWithCancellation(int ready_timeout, std::atomic_boo
     {
         try
         {
-            sm_ready = exist();
+            sm_ready = exists();
 
             if( sm_ready )
                 break;
@@ -325,14 +358,20 @@ std::string SMInterface::apiRequest( const std::string& query )
     if( ic )
     {
         BEG_FUNC1(SMInterface::apiRequest)
-        SimpleInfo_var i = ic->apiRequest(query.c_str());
-        return std::string(i->info);
+        google::protobuf::StringValue req;
+        req.set_value(query);
+        google::protobuf::StringValue resp;
+        auto status = ic->request(&ctx, &req, &resp);
+
+        if( !status.ok() )
+            throw SystemError(status.error_message());
+
+        return resp.value();
         END_FUNC(SMInterface::apiRequest)
     }
 
     BEG_FUNC(SMInterface::apiRequest)
-    SimpleInfo_var i = shm->apiRequest(query.c_str());
-    return std::string(i->info);
+    return ui->apiRequest(shmID, query, ui->getConf()->getLocalNode());
     END_FUNC(SMInterface::apiRequest)
 }
 #endif

@@ -27,7 +27,7 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, IOBase& inf )
     {
-        return os << "(" << inf.si.id << ")" << uniset_conf()->oind->getMapName(inf.si.id)
+        return os << "(" << inf.si.id() << ")" << uniset_conf()->oind->getMapName(inf.si.id())
                << " default=" << inf.defval
                << " safeval=" << inf.safeval
                << " stype=" << inf.stype
@@ -205,7 +205,7 @@ namespace uniset3
             {
                 uniset_rwmutex_wrlock lock(it->val_lock);
                 it->value = ChannelBreakValue;
-                shm->localSetUndefinedState(it->ioit, true, it->si.id);
+                shm->localSetUndefinedState(it->ioit, true, it->si.id());
                 return;
             }
 
@@ -243,12 +243,12 @@ namespace uniset3
                     {
                         uniset3::CalibrateInfo* cal( &(it->cal) );
 
-                        if( cal->maxRaw != cal->minRaw ) // задана обычная калибровка
-                            val = uniset3::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
+                        if( cal->maxraw() != cal->minraw() ) // задана обычная калибровка
+                            val = uniset3::lcalibrate(val, cal->minraw(), cal->maxraw(), cal->mincal(), cal->maxcal(), it->calcrop);
                     }
 
-                    if( !it->noprecision && it->cal.precision != 0 )
-                        val = lround( val * pow(10.0, it->cal.precision) );
+                    if( !it->noprecision && it->cal.precision() != 0 )
+                        val = lround( val * pow(10.0, it->cal.precision()) );
                 }
             } // end of 'check_depend'
 
@@ -260,11 +260,11 @@ namespace uniset3
             // если предыдущее значение "обрыв",
             // то сбрасываем признак
             if( it->value == ChannelBreakValue )
-                shm->localSetUndefinedState(it->ioit, false, it->si.id);
+                shm->localSetUndefinedState(it->ioit, false, it->si.id());
 
             if( force || it->value != val )
             {
-                shm->localSetValue( it->ioit, it->si.id, val, shm->ID() );
+                shm->localSetValue( it->ioit, it->si.id(), val, shm->ID() );
                 it->value = val;
             }
         }
@@ -283,15 +283,15 @@ namespace uniset3
                 val = 0;
                 memcpy(&val, &fval, std::min(sizeof(val), sizeof(fval)));
             }
-            else if( it->cal.precision != 0 && !it->noprecision )
-                val = lroundf( fval * pow(10.0, it->cal.precision) );
+            else if( it->cal.precision() != 0 && !it->noprecision )
+                val = lroundf( fval * pow(10.0, it->cal.precision()) );
 
             // проверка на обрыв
             if( it->check_channel_break(val) )
             {
                 uniset_rwmutex_wrlock lock(it->val_lock);
                 it->value = ChannelBreakValue;
-                shm->localSetUndefinedState(it->ioit, true, it->si.id);
+                shm->localSetUndefinedState(it->ioit, true, it->si.id());
                 return;
             }
 
@@ -313,8 +313,8 @@ namespace uniset3
                 {
                     uniset3::CalibrateInfo* cal( &(it->cal) );
 
-                    if( cal->maxRaw != cal->minRaw ) // задана обычная калибровка
-                        val = uniset3::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
+                    if( cal->maxraw() != cal->minraw() ) // задана обычная калибровка
+                        val = uniset3::lcalibrate(val, cal->minraw(), cal->maxraw(), cal->mincal(), cal->maxcal(), it->calcrop);
                 }
             }
         }
@@ -325,11 +325,11 @@ namespace uniset3
             // если предыдущее значение "обрыв",
             // то сбрасываем признак
             if( it->value == ChannelBreakValue )
-                shm->localSetUndefinedState(it->ioit, false, it->si.id);
+                shm->localSetUndefinedState(it->ioit, false, it->si.id());
 
             if( force || it->value != val )
             {
-                shm->localSetValue( it->ioit, it->si.id, val, shm->ID() );
+                shm->localSetValue( it->ioit, it->si.id(), val, shm->ID() );
                 it->value = val;
             }
         }
@@ -348,15 +348,15 @@ namespace uniset3
                 val = 0;
                 memcpy(&val, &fval, std::min(sizeof(val), sizeof(fval)));
             }
-            else if( it->cal.precision != 0 && !it->noprecision )
-                val = lroundf( fval * pow(10.0, it->cal.precision) );
+            else if( it->cal.precision() != 0 && !it->noprecision )
+                val = lroundf( fval * pow(10.0, it->cal.precision()) );
 
             // проверка на обрыв
             if( it->check_channel_break(val) )
             {
                 uniset_rwmutex_wrlock lock(it->val_lock);
                 it->value = ChannelBreakValue;
-                shm->localSetUndefinedState(it->ioit, true, it->si.id);
+                shm->localSetUndefinedState(it->ioit, true, it->si.id());
                 return;
             }
 
@@ -378,8 +378,8 @@ namespace uniset3
                 {
                     uniset3::CalibrateInfo* cal( &(it->cal) );
 
-                    if( cal->maxRaw != cal->minRaw ) // задана обычная калибровка
-                        val = uniset3::lcalibrate(val, cal->minRaw, cal->maxRaw, cal->minCal, cal->maxCal, it->calcrop);
+                    if( cal->maxraw() != cal->minraw() ) // задана обычная калибровка
+                        val = uniset3::lcalibrate(val, cal->minraw(), cal->maxraw(), cal->mincal(), cal->maxcal(), it->calcrop);
                 }
             }
         }
@@ -390,11 +390,11 @@ namespace uniset3
             // если предыдущее значение "обрыв",
             // то сбрасываем признак
             if( it->value == ChannelBreakValue )
-                shm->localSetUndefinedState(it->ioit, false, it->si.id);
+                shm->localSetUndefinedState(it->ioit, false, it->si.id());
 
             if( force || it->value != val )
             {
-                shm->localSetValue( it->ioit, it->si.id, val, shm->ID() );
+                shm->localSetValue( it->ioit, it->si.id(), val, shm->ID() );
                 it->value = val;
             }
         }
@@ -419,7 +419,7 @@ namespace uniset3
 
             if( force || (bool)it->value != set )
             {
-                shm->localSetValue( it->ioit, it->si.id, (set ? 1 : 0), shm->ID() );
+                shm->localSetValue( it->ioit, it->si.id(), (set ? 1 : 0), shm->ID() );
                 it->value = set ? 1 : 0;
             }
         }
@@ -436,7 +436,7 @@ namespace uniset3
 
         if( force )
         {
-            val = shm->localGetValue(it->ioit, it->si.id);
+            val = shm->localGetValue(it->ioit, it->si.id());
             it->value = val;
         }
 
@@ -460,15 +460,15 @@ namespace uniset3
             else
             {
                 // сперва "убираем степень", потом калибруем.. (это обратная последовательность для AsAI)
-                if( !it->noprecision && it->cal.precision != 0 )
-                    val = lroundf( (float)it->value / pow(10.0, it->cal.precision) );
+                if( !it->noprecision && it->cal.precision() != 0 )
+                    val = lroundf( (float)it->value / pow(10.0, it->cal.precision()) );
 
                 uniset3::CalibrateInfo* cal = &(it->cal);
 
-                if( cal->maxRaw != cal->minRaw ) // задана калибровка
+                if( cal->maxraw() != cal->minraw() ) // задана калибровка
                 {
                     // Калибруем в обратную сторону!!!
-                    val = uniset3::lcalibrate(val, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
+                    val = uniset3::lcalibrate(val, cal->mincal(), cal->maxcal(), cal->minraw(), cal->maxraw(), it->calcrop );
                 }
             }
         }
@@ -486,7 +486,7 @@ namespace uniset3
         bool set = it->value;
 
         if( force )
-            set = shm->localGetValue(it->ioit, it->si.id) ? true : false;
+            set = shm->localGetValue(it->ioit, it->si.id()) ? true : false;
 
         set = it->invert ? !set : set;
         return set;
@@ -503,7 +503,7 @@ namespace uniset3
 
         if( force )
         {
-            val = shm->localGetValue(it->ioit, it->si.id);
+            val = shm->localGetValue(it->ioit, it->si.id());
             it->value = val; // обновим на всякий
         }
 
@@ -520,14 +520,14 @@ namespace uniset3
         {
             uniset3::CalibrateInfo* cal( &(it->cal) );
 
-            if( cal->maxRaw != cal->minRaw ) // задана калибровка
+            if( cal->maxraw() != cal->minraw() ) // задана калибровка
             {
                 // Калибруем в обратную сторону!!!
-                fval = uniset3::fcalibrate(fval, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
+                fval = uniset3::fcalibrate(fval, cal->mincal(), cal->maxcal(), cal->minraw(), cal->maxraw(), it->calcrop );
             }
 
-            if( !it->noprecision && it->cal.precision != 0 )
-                return ( fval / pow(10.0, it->cal.precision) );
+            if( !it->noprecision && it->cal.precision() != 0 )
+                return ( fval / pow(10.0, it->cal.precision()) );
         }
         else // if( it->stype == uniset3::DI || it->stype == uniset3::DO )
             fval = val ? 1.0 : 0.0;
@@ -546,7 +546,7 @@ namespace uniset3
 
         if( force )
         {
-            val = shm->localGetValue(it->ioit, it->si.id);
+            val = shm->localGetValue(it->ioit, it->si.id());
             it->value = val; // обновим на всякий
         }
 
@@ -563,14 +563,14 @@ namespace uniset3
         {
             uniset3::CalibrateInfo* cal( &(it->cal) );
 
-            if( cal->maxRaw != cal->minRaw ) // задана калибровка
+            if( cal->maxraw() != cal->minraw() ) // задана калибровка
             {
                 // Калибруем в обратную сторону!!!
-                dval = uniset3::dcalibrate(dval, cal->minCal, cal->maxCal, cal->minRaw, cal->maxRaw, it->calcrop );
+                dval = uniset3::dcalibrate(dval, cal->mincal(), cal->maxcal(), cal->minraw(), cal->maxraw(), it->calcrop );
             }
 
-            if( !it->noprecision && it->cal.precision != 0 )
-                return ( dval / pow(10.0, it->cal.precision) );
+            if( !it->noprecision && it->cal.precision() != 0 )
+                return ( dval / pow(10.0, it->cal.precision()) );
         }
         else // if( it->stype == uniset3::DI || it->stype == uniset3::DO )
             dval = val ? 1.0 : 0.0;
@@ -589,18 +589,18 @@ namespace uniset3
         //    cout  << "val=" << val << " set=" << set << endl;
         // Проверка нижнего предела
         // значение должно быть меньше lowLimit-чуствительность
-        if (it->ti.invert)
+        if (it->ti.invert())
         {
-            if( val <= it->ti.lowlimit )
+            if( val <= it->ti.lowlimit() )
                 set = true;
-            else if( val >= it->ti.hilimit )
+            else if( val >= it->ti.hilimit() )
                 set = false;
         }
         else
         {
-            if( val <= it->ti.lowlimit )
+            if( val <= it->ti.lowlimit() )
                 set = false;
-            else if( val >= it->ti.hilimit )
+            else if( val >= it->ti.hilimit() )
                 set = true;
         }
 
@@ -682,8 +682,8 @@ namespace uniset3
 
         b->val_lock.setName(sname + "_lock");
 
-        b->si.id     = sid;
-        b->si.node   = conf->getLocalNode();
+        b->si.set_id(sid);
+        b->si.set_node(conf->getLocalNode());
 
         b->nofilter = initIntProp(it, "nofilter", prefix, init_prefix_only);
         b->ignore   = initIntProp(it, "ioignore", prefix, init_prefix_only);
@@ -783,12 +783,12 @@ namespace uniset3
             shm->initIterator(b->d_it);
         }
 
-        b->cal.minRaw = 0;
-        b->cal.maxRaw = 0;
-        b->cal.minCal = 0;
-        b->cal.maxCal = 0;
-        b->cal.precision = 0;
-        b->cdiagram = 0;
+        b->cal.set_minraw(0);;
+        b->cal.set_maxraw(0);
+        b->cal.set_mincal(0);
+        b->cal.set_maxcal(0);
+        b->cal.set_precision(0);
+        b->cdiagram = nullptr;
         b->f_median = false;
         b->f_ls = false;
         b->f_filter_iir = false;
@@ -797,11 +797,11 @@ namespace uniset3
 
         if( b->stype == uniset3::AI || b->stype == uniset3::AO )
         {
-            b->cal.minRaw = initIntProp(it, "rmin", prefix, init_prefix_only);
-            b->cal.maxRaw = initIntProp(it, "rmax", prefix, init_prefix_only);
-            b->cal.minCal = initIntProp(it, "cmin", prefix, init_prefix_only);
-            b->cal.maxCal = initIntProp(it, "cmax", prefix, init_prefix_only);
-            b->cal.precision = initIntProp(it, "precision", prefix, init_prefix_only);
+            b->cal.set_minraw(initIntProp(it, "rmin", prefix, init_prefix_only));
+            b->cal.set_maxraw(initIntProp(it, "rmax", prefix, init_prefix_only));
+            b->cal.set_mincal(initIntProp(it, "cmin", prefix, init_prefix_only));
+            b->cal.set_maxcal(initIntProp(it, "cmax", prefix, init_prefix_only));
+            b->cal.set_precision(initIntProp(it, "precision", prefix, init_prefix_only));
             b->calcrop = initIntProp(it, "cal_nocrop", prefix, init_prefix_only) ? false : true;
 
             int f_size     = def_filtersize;
@@ -885,9 +885,9 @@ namespace uniset3
                     return false;
                 }
 
-                b->ti.lowlimit = initIntProp(it, "lowlimit", prefix, init_prefix_only);
-                b->ti.hilimit = initIntProp(it, "hilimit", prefix, init_prefix_only);
-                b->ti.invert = initIntProp(it, "threshold_invert", prefix, init_prefix_only);
+                b->ti.set_lowlimit(initIntProp(it, "lowlimit", prefix, init_prefix_only));
+                b->ti.set_hilimit(initIntProp(it, "hilimit", prefix, init_prefix_only));
+                b->ti.set_invert(initIntProp(it, "threshold_invert", prefix, init_prefix_only));
                 shm->initIterator(b->t_ait);
             }
         }

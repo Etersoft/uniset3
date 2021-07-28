@@ -28,7 +28,7 @@ static void InitTest()
     REQUIRE( conf->getHttpResovlerPort() == 8008 );
     REQUIRE( conf->isLocalIOR() );
     REQUIRE_NOTHROW( ui->resolve(TestProc) );
-    REQUIRE( ui->isExist(TestProc) );
+    REQUIRE( ui->isExists(TestProc) );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("HttpResolver: cli resolve", "[httpresolver][cli]")
@@ -46,9 +46,8 @@ TEST_CASE("HttpResolver: resolve", "[httpresolver][ui]")
     InitTest();
 
     REQUIRE_NOTHROW( ui->resolve(TestProc, Node1) );
-    REQUIRE_NOTHROW( ui->resolve("UNISET_PLC/UniObjects/TestProc") );
     REQUIRE_THROWS_AS( ui->resolve(DefaultObjectId, Node1), uniset3::ResolveNameError& );
-    REQUIRE( ui->isExist(TestProc, Node1) );
+    REQUIRE( ui->isExists(TestProc, Node1) );
 }
 // -----------------------------------------------------------------------------
 

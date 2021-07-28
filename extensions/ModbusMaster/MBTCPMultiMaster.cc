@@ -27,6 +27,7 @@
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 MBTCPMultiMaster::MBTCPMultiMaster( uniset3::ObjectId objId, uniset3::ObjectId shmId,
                                     const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
@@ -437,11 +438,11 @@ bool MBTCPMultiMaster::MBSlaveInfo::init( std::shared_ptr<DebugStream>& mblog )
     return initOK;
 }
 // -----------------------------------------------------------------------------
-void MBTCPMultiMaster::sysCommand( const uniset3::messages::SystemMessage* sm )
+void MBTCPMultiMaster::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     MBExchange::sysCommand(sm);
 
-    if( sm->command == SystemMessage::StartUp )
+    if( sm->cmd() == SystemMessage::StartUp )
     {
         initCheckConnectionParameters();
 
@@ -740,13 +741,17 @@ const std::string MBTCPMultiMaster::MBSlaveInfo::getShortInfo() const
     return s.str();
 }
 // -----------------------------------------------------------------------------
-uniset3::SimpleInfo* MBTCPMultiMaster::getInfo( const char* userparam )
+grpc::Status MBTCPMultiMaster::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
 {
-    uniset3::SimpleInfo_var i = MBExchange::getInfo(userparam);
+    ::google::protobuf::StringValue oinf;
+    grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+    if( !st.ok() )
+        return st;
 
     ostringstream inf;
 
-    inf << i->info << endl;
+    inf << oinf.value() << endl;
     inf << "Gates: " << (checktime <= 0 ? "/ check connections DISABLED /" : "") << endl;
 
     for( const auto& m : mblist )
@@ -754,8 +759,8 @@ uniset3::SimpleInfo* MBTCPMultiMaster::getInfo( const char* userparam )
 
     inf << endl;
 
-    i->info = inf.str().c_str();
-    return i._retn();
+    response->set_value(inf.str());
+    return grpc::Status::OK;
 }
 // ----------------------------------------------------------------------------
 bool MBTCPMultiMaster::reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& newConf )

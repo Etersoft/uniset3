@@ -399,7 +399,7 @@ int main(int argc, char* argv[])
                     auto vlist = uniset3::getSInfoList(a_data, nullptr);
 
                     for( const auto& v : vlist )
-                        mypack.addAData(v.si.id, v.val);
+                        mypack.addAData(v.si.id(), v.val);
                 }
                 else
                 {
@@ -412,7 +412,7 @@ int main(int argc, char* argv[])
                     auto vlist = uniset3::getSInfoList(d_data, nullptr);
 
                     for( const auto& v : vlist )
-                        mypack.addDData(v.si.id, v.val);
+                        mypack.addDData(v.si.id(), v.val);
                 }
                 else
                 {

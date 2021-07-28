@@ -22,23 +22,22 @@
 #include <sstream>
 #include <iomanip>
 #include "SViewer.h"
-#include "ORepHelpers.h"
-#include "UniSetObject_i.hh"
+#include "UniSetObject.pb.h"
+#include "URepository.grpc.pb.h"
+#include "IOController.grpc.pb.h"
 #include "UniSetTypes.h"
 #include "ObjectIndex_Array.h"
 
 // --------------------------------------------------------------------------
 using namespace uniset3;
-using namespace UniversalIO;
 using namespace std;
 // --------------------------------------------------------------------------
 SViewer::SViewer(const string& csec, bool sn):
-	csec(csec),
-	rep(uniset3::uniset_conf()),
-	isShortName(sn)
+    csec(csec),
+    isShortName(sn)
 {
-	ui = make_shared<UInterface>(uniset3::uniset_conf());
-	ui->setCacheMaxSize(500);
+    ui = make_shared<UInterface>(uniset3::uniset_conf());
+    ui->setCacheMaxSize(500);
 }
 
 SViewer::~SViewer()
@@ -47,272 +46,249 @@ SViewer::~SViewer()
 // --------------------------------------------------------------------------
 void SViewer::monitor( timeout_t msec )
 {
-	for(;;)
-	{
-		view();
-		msleep(msec);
-	}
+    for(;;)
+    {
+        view();
+        msleep(msec);
+    }
 }
 
 // --------------------------------------------------------------------------
 void SViewer::view()
 {
-	try
-	{
-		readSection(csec, "");
-	}
-	catch( const uniset3::Exception& ex )
-	{
-		cerr << ex << endl;
-	}
+    try
+    {
+        readSection(csec, "");
+    }
+    catch( const uniset3::Exception& ex )
+    {
+        cerr << ex << endl;
+    }
 }
 
 // ---------------------------------------------------------------------------
 
 void SViewer::readSection( const string& section, const string& secRoot )
 {
-	ListObjectName lst;
-	string curSection;
+    uniset3::ObjectRefList lst;
+    std::shared_ptr<grpc::Channel> chan;
+    grpc::ClientContext ctx;
 
-	try
-	{
-		if ( secRoot.empty() )
-			curSection = section;
-		else
-			curSection = secRoot + "/" + section;
+    google::protobuf::StringValue sec;
 
-		//        cout << " read sectionlist ..."<< endl;
-		if( !rep.listSections(curSection, &lst, 1000) )
-		{
-			cout << "(readSection): получен не полный список" << endl;
-		}
-	}
-	catch( const ORepFailed& ex ) {}
-	catch(...)
-	{
-		std::exception_ptr p = std::current_exception();
-		cout << "(readSection): get section list: " << (p ? p.__cxa_exception_type()->name() : "catch..") << std::endl;
-	}
+    if ( secRoot.empty() )
+        sec.set_value(section);
+    else
+        sec.set_value(secRoot + "/" + section);
 
-	if( !lst.empty() )
-	{
-		for ( ListObjectName::const_iterator li = lst.begin(); li != lst.end(); ++li)
-		{
-			readSection((*li), curSection);
-		}
-	}
-	else
-	{
-		const string secName(curSection);
-		ListObjectName lstObj;
-		ListObjectName::const_iterator li;
+    try
+    {
+        chan = grpc::CreateChannel(uniset_conf()->repositoryAddr(), grpc::InsecureChannelCredentials());
+        std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(chan));
 
-		try
-		{
-			if( !rep.list(secName, &lstObj, 1000) )
-				cout << "(readSection): получен не полный список" << endl;
-		}
-		catch( const ORepFailed& ex )
-		{
-			cout << "(readSection):.. catch ORepFailed" << endl;
-			return;
-		}
-		catch(...)
-		{
-			std::exception_ptr p = std::current_exception();
-			cout << "(readSection): " << (p ? p.__cxa_exception_type()->name() : "catch..") << std::endl;
-			return;
-		}
+        auto status = stub->list(&ctx, sec, &lst);
 
-		//        cout << " read objectlist ok."<< endl;
+        if( !status.ok() )
+        {
+            cerr << "(readSection): error: " << status.error_message() << endl;
+            return;
+        }
+    }
+    catch(std::exception& ex)
+    {
+        cerr << "(readSection): error: " << ex.what() << endl;
+    }
+    catch(...)
+    {
+        std::exception_ptr p = std::current_exception();
+        cerr << "(readSection): get section list: " << (p ? p.__cxa_exception_type()->name() : "catch..") << std::endl;
+    }
 
-		if ( !lstObj.empty() )
-		{
-			for ( li = lstObj.begin(); li != lstObj.end(); ++li )
-			{
-				try
-				{
-					const string ob(*li);
-					const string fname(curSection + "/" + ob);
-					ObjectId id = uniset_conf()->oind->getIdByName( fname );
+    if( !lst.refs().empty() )
+    {
+        cout << " секция " << sec.value() << " не содержит объектов " << endl;
+        return;
+    }
 
-					if( id == DefaultObjectId )
-						cout << "(readSection): ID?! для " << fname << endl;
-					else
-						getInfo(id);
-				}
-				catch( const uniset3::Exception& ex )
-				{
-					cout << "(readSection): " << ex << endl;
-				}
-
-			}
-		}
-		else
-			cout << " секция " << secRoot << "/" << section << " не содержит объектов " << endl;
-	}
+    for( const auto& o : lst.refs() )
+    {
+        try
+        {
+            getSensorsInfo(o.id());
+        }
+        catch( const std::exception& ex )
+        {
+            cout << "(readSection): " << ex.what() << endl;
+        }
+    }
 }
 // ---------------------------------------------------------------------------
-void SViewer::getInfo( ObjectId id )
+void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
 {
-	CORBA::Object_var oref;
+    grpc::ClientContext ctx;
+    std::shared_ptr<grpc::Channel> chan;
+    google::protobuf::Empty request;
+    uniset3::SensorIOInfoSeq smap;
+    uniset3::ThresholdsListSeq tlist;
 
-	try
-	{
-		if( CORBA::is_nil(oref) )
-			oref = ui->resolve(id);
+    try
+    {
+        chan = ui->resolve(iocontrollerID);
 
-		IONotifyController_i_var ioc = uniset3::_narrow(oref);
+        if( !chan )
+        {
+            cerr  << "(getSensorsInfo): call grpc failed. ID=" << iocontrollerID << endl;
+            return;
+        }
 
-		if( CORBA::is_nil(ioc) )
-		{
-			cout << "(getInfo): nil references" << endl;
-			return;
-		}
+        try
+        {
+            std::unique_ptr<IOController_i::Stub> ic(IOController_i::NewStub(chan));
 
+            auto status = ic->getSensorsMap(&ctx, request, &smap);
 
-		try
-		{
-			uniset3::SensorInfoSeq_var amap = ioc->getSensorsMap();
-			updateSensors(amap, id);
-		}
-		catch( const uniset3::NameNotFound& ex ) {}
-		catch(...) {}
+            if( status.ok() )
+                updateSensors(smap, iocontrollerID);
+            else
+                cerr << "(getSensorsMap): error: " << status.error_message() << endl;
+        }
+        catch( const uniset3::NameNotFound& ex ) {}
+        catch(...) {}
 
-		try
-		{
-			uniset3::ThresholdsListSeq_var tlst = ioc->getThresholdsList();
-			updateThresholds(tlst, id);
-		}
-		catch( const uniset3::NameNotFound& ex ) {}
-		catch(...) {}
+        try
+        {
+            std::unique_ptr<IONotifyController_i::Stub> inc(IONotifyController_i::NewStub(chan));
+            auto status = inc->getThresholdsList(&ctx, request, &tlist);
 
-		return;
-	}
-	catch( const uniset3::Exception& ex )
-	{
-		cout << "(getInfo):" << ex << endl;
-	}
-	catch(...)
-	{
-		std::exception_ptr p = std::current_exception();
-		cout << "(getInfo): " << (p ? p.__cxa_exception_type()->name() : "catch..") << std::endl;
-	}
+            if( status.ok() )
+                updateThresholds(tlist, iocontrollerID);
+            else
+                cerr << "(getThresholdsList): error: " << status.error_message() << endl;
+        }
+        catch( const uniset3::NameNotFound& ex ) {}
+        catch(...) {}
+
+        return;
+    }
+    catch( const std::exception& ex )
+    {
+        cout << "(getSensorsInfo):" << ex.what() << endl;
+    }
+    catch(...)
+    {
+        std::exception_ptr p = std::current_exception();
+        cout << "(getSensorsInfo): " << (p ? p.__cxa_exception_type()->name() : "catch..") << std::endl;
+    }
 }
 
 // ---------------------------------------------------------------------------
-void SViewer::updateSensors( uniset3::SensorInfoSeq_var& amap, uniset3::ObjectId oid )
+void SViewer::updateSensors( uniset3::SensorIOInfoSeq& smap, uniset3::ObjectId oid )
 {
-	const string owner = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(oid));
-	cout << "\n======================================================\n"
-		 << ORepHelpers::getShortName(uniset_conf()->oind->getMapName(oid))
-		 << "\t Датчики"
-		 << "\n------------------------------------------------------"
-		 << endl;
-	int size = amap->length();
+    const string owner = ObjectIndex::getShortName(uniset_conf()->oind->getMapName(oid));
+    cout << "\n======================================================\n"
+         << ObjectIndex::getShortName(uniset_conf()->oind->getMapName(oid))
+         << "\t Датчики"
+         << "\n------------------------------------------------------"
+         << endl;
 
-	for(int i = 0; i < size; i++)
-	{
-		if( amap[i].type == uniset3::AI || amap[i].type == uniset3::DI )
-		{
-			string name(uniset_conf()->oind->getNameById(amap[i].si.id));
+    for(const auto& s : smap.sensors())
+    {
+        if( s.type() == uniset3::AI || s.type() == uniset3::DI )
+        {
+            string name = uniset_conf()->oind->getNameById(s.si().id());
 
-			if( isShortName )
-				name = ORepHelpers::getShortName(name);
+            if( isShortName )
+                name = ObjectIndex::getShortName(name);
 
-			string supplier = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(amap[i].supplier));
+            string supplier = ObjectIndex::getShortName(uniset_conf()->oind->getMapName(s.supplier()));
 
-			if( amap[i].supplier == uniset3::AdminID )
-				supplier = "uniset-admin";
+            if( s.supplier() == uniset3::AdminID )
+                supplier = "uniset-admin";
 
-			const string txtname( uniset_conf()->oind->getTextName(amap[i].si.id) );
-			printInfo( amap[i].si.id, name, amap[i].value, supplier, txtname, (amap[i].type == uniset3::AI ? "AI" : "DI") );
-		}
-	}
+            const string txtname = uniset_conf()->oind->getTextName(s.si().id());
+            printInfo( s.si().id(), name, s.value(), supplier, txtname, (s.type() == uniset3::AI ? "AI" : "DI") );
+        }
+    }
 
-	cout << "------------------------------------------------------\n";
+    cout << "------------------------------------------------------\n";
 
-	cout << "\n======================================================\n" << owner;
-	cout << "\t Выходы";
-	cout << "\n------------------------------------------------------" << endl;
+    cout << "\n======================================================\n" << owner;
+    cout << "\t Выходы";
+    cout << "\n------------------------------------------------------" << endl;
 
-	for(int i = 0; i < size; i++)
-	{
-		if( amap[i].type == uniset3::AO || amap[i].type == uniset3::DO )
-		{
-			string name(uniset_conf()->oind->getNameById(amap[i].si.id));
+    for(const auto& s : smap.sensors())
+    {
+        if( s.type() == uniset3::AO || s.type() == uniset3::DO )
+        {
+            string name = uniset_conf()->oind->getNameById(s.si().id());
 
-			if( isShortName )
-				name = ORepHelpers::getShortName(name);
+            if( isShortName )
+                name = ObjectIndex::getShortName(name);
 
-			string supplier = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(amap[i].supplier));
+            string supplier = ObjectIndex::getShortName(uniset_conf()->oind->getMapName(s.supplier()));
 
-			if( amap[i].supplier == uniset3::AdminID )
-				supplier = "uniset-admin";
+            if( s.supplier() == uniset3::AdminID )
+                supplier = "uniset-admin";
 
-			const string txtname( uniset_conf()->oind->getTextName(amap[i].si.id) );
-			printInfo( amap[i].si.id, name, amap[i].value, supplier, txtname, (amap[i].type == uniset3::AO ? "AO" : "DO"));
-		}
-	}
+            const string txtname( uniset_conf()->oind->getTextName(s.si().id()) );
+            printInfo( s.si().id(), name, s.value(), supplier, txtname, (s.type() == uniset3::AO ? "AO" : "DO"));
+        }
+    }
 
-	cout << "------------------------------------------------------\n";
+    cout << "------------------------------------------------------\n";
 
 }
 // ---------------------------------------------------------------------------
-void SViewer::updateThresholds( uniset3::ThresholdsListSeq_var& tlst, uniset3::ObjectId oid )
+void SViewer::updateThresholds( uniset3::ThresholdsListSeq& tlst, uniset3::ObjectId oid )
 {
-	int size = tlst->length();
-	const string owner = ORepHelpers::getShortName(uniset_conf()->oind->getMapName(oid));
-	cout << "\n======================================================\n" << owner;
-	cout << "\t Пороговые датчики";
-	cout << "\n------------------------------------------------------" << endl;
+    const string owner = ObjectIndex::getShortName(uniset_conf()->oind->getMapName(oid));
+    cout << "\n======================================================\n" << owner;
+    cout << "\t Пороговые датчики";
+    cout << "\n------------------------------------------------------" << endl;
 
-	for(int i = 0; i < size; i++)
-	{
-		cout << "(" << setw(5) << tlst[i].si.id << ") | ";
+    for(const auto& s : tlst.thresholds())
+    {
+        cout << "(" << setw(5) << s.si().id() << ") | ";
 
-		switch( tlst[i].type  )
-		{
-			case uniset3::AI:
-				cout << "AI";
-				break;
+        switch( s.type() )
+        {
+            case uniset3::AI:
+                cout << "AI";
+                break;
 
-			case uniset3::AO:
-				cout << "AO";
-				break;
+            case uniset3::AO:
+                cout << "AO";
+                break;
 
-			default:
-				cout << "??";
-				break;
-		}
+            default:
+                cout << "??";
+                break;
+        }
 
-		string sname(uniset_conf()->oind->getNameById(tlst[i].si.id));
+        string sname = uniset_conf()->oind->getNameById(s.si().id());
 
-		if( isShortName )
-			sname = ORepHelpers::getShortName(sname);
+        if( isShortName )
+            sname = ObjectIndex::getShortName(sname);
 
-		cout << " | " << setw(60) << sname << " | " << setw(5) << tlst[i].value << endl;
+        cout << " | " << setw(60) << sname << " | " << setw(5) << s.value() << endl;
 
-		int m = tlst[i].tlist.length();
-
-		for( auto k = 0; k < m; k++ )
-		{
-			uniset3::ThresholdInfo* ti = &tlst[i].tlist[k];
-			cout << "\t(" << setw(3) << ti->id << ")  |  " << setw(5) << ti->state << "  |  hi: " << setw(5) << ti->hilimit;
-			cout << " | low: " << setw(5) << ti->lowlimit;
-			cout << endl;
-		}
-	}
+        for( const auto& t : s.tlist().thresholds() )
+        {
+            cout << "\t(" << setw(3) << t.id() << ")  |  " << setw(5) << t.state() << "  |  hi: " << setw(5) << t.hilimit();
+            cout << " | low: " << setw(5) << t.lowlimit();
+            cout << endl;
+        }
+    }
 }
 // ---------------------------------------------------------------------------
 
 void SViewer::printInfo(uniset3::ObjectId id, const string& sname, long value, const string& supplier,
-						const string& txtname, const string& iotype)
+                        const string& txtname, const string& iotype)
 {
-	std::ios_base::fmtflags old_flags = cout.flags();
-	cout << "(" << setw(5) << id << ")" << " | " << setw(2) << iotype << " | " << setw(60) << sname
-		 << "   | " << setw(5) << value << "\t | "
-		 << setw(40) << left << supplier << endl; // "\t | " << txtname << endl;
-	cout.setf(old_flags);
+    std::ios_base::fmtflags old_flags = cout.flags();
+    cout << "(" << setw(5) << id << ")" << " | " << setw(2) << iotype << " | " << setw(60) << sname
+         << "   | " << setw(5) << value << "\t | "
+         << setw(40) << left << supplier << endl; // "\t | " << txtname << endl;
+    cout.setf(old_flags);
 }
 // ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 TestProc::TestProc( uniset3::ObjectId id, xmlNode* confnode ):
     TestProc_SK( id, confnode )

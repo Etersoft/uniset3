@@ -69,16 +69,14 @@ static void run_senders( size_t max, const std::string& s_host, size_t count = 5
 
     for( size_t i = 0; i < count; i++ )
     {
-        auto a = mypack.mutable_data()->add_adata();
-        a->set_id(i);
-        a->set_value(i);
+        mypack.mutable_data()->add_aid(i);
+        mypack.mutable_data()->add_avalue(i);
     }
 
     for( size_t i = 0; i < count; i++ )
     {
-        auto d = mypack.mutable_data()->add_ddata();
-        d->set_id(i);
-        d->set_value(i);
+        mypack.mutable_data()->add_did(i);
+        mypack.mutable_data()->add_dvalue(i);
     }
 
     for( size_t i = 0; i < max; i++ )

@@ -42,14 +42,9 @@ int main( int argc, const char** argv )
         auto smon = make_shared<SMonitor>(ID);
         act->add(smon);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(false);
         return 0;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cout << "(main):" << ex << endl;
     }
     catch( const std::exception& ex )
     {

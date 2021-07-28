@@ -88,9 +88,10 @@ namespace uniset3
             virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status request(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status exist(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response) override;
-            virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::messages::TransportMessage* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response) override;
+            virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
 
+            virtual bool isExists();
             uniset3::ObjectId getId() const;
             std::string getName() const;
             const std::string getStrType();
@@ -111,7 +112,7 @@ namespace uniset3
 
             /*! заказ таймера (вынесена в public, хотя должна была бы быть в protected */
             virtual timeout_t askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks = -1,
-                                        uniset3::messages::Priority p = uniset3::messages::mpHigh ) override;
+                                        uniset3::umessage::Priority p = uniset3::umessage::mpHigh ) override;
 
             friend std::ostream& operator<<(std::ostream& os, UniSetObject& obj );
 
@@ -122,13 +123,13 @@ namespace uniset3
             std::weak_ptr<UniSetManager> mymngr;
 
             /*! обработка приходящих сообщений */
-            virtual void processingMessage( const uniset3::messages::TransportMessage* msg );
+            virtual void processingMessage( const uniset3::umessage::TransportMessage* msg );
 
             // конкретные виды сообщений
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) {}
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) {}
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) {}
-            virtual void onTextMessage( const uniset3::messages::TextMessage* tm ) {}
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) {}
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) {}
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) {}
+            virtual void onTextMessage( const uniset3::umessage::TextMessage* tm ) {}
 
             /*! Получить сообщение */
             VoidMessagePtr receiveMessage();

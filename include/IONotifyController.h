@@ -54,7 +54,7 @@ namespace uniset3
     Механизм функционирует по следующей логике:
     "заказчики" уведомляют \b IONC об изменении какого именно датчика они хотят получать уведомление,
     после чего, если данный датчик меняет своё состояние, заказчику посылается
-    сообщение uniset3::messages::SensorMessage содержащее информацию о текущем(новом) состоянии датчика,
+    сообщение uniset3::umessage::SensorMessage содержащее информацию о текущем(новом) состоянии датчика,
     времени изменения и т.п. В случае необходимости можно отказаться от уведомления.
     Для заказа датчиков предусмотрен ряд функций. На данный момент рекомендуется
     пользоваться функцией IONotifyController::askSensor.
@@ -134,31 +134,20 @@ namespace uniset3
     {
         public:
 
-            IONotifyController(const std::string& name, const std::string& section, std::shared_ptr<IOConfig> ioconf = nullptr );
             IONotifyController(const uniset3::ObjectId id, std::shared_ptr<IOConfig> ioconf = nullptr );
 
             virtual ~IONotifyController();
 
-            virtual uniset3::ObjectType getType() override
-            {
-                return uniset3::ObjectType("IONotifyController");
-            }
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
-
-            virtual void askSensor(const uniset3::ObjectId sid, const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd) override;
-
-            virtual void askThreshold(const uniset3::ObjectId sid, const uniset3::ConsumerInfo& ci,
-                                      uniset3::ThresholdId tid,
-                                      CORBA::Long lowLimit, CORBA::Long hiLimit, CORBA::Boolean invert,
-                                      uniset3::UIOCommand cmd ) override;
-
-            virtual uniset3::ThresholdInfo getThresholdInfo( const uniset3::ObjectId sid, uniset3::ThresholdId tid ) override;
-            virtual uniset3::ThresholdList* getThresholds(const uniset3::ObjectId sid ) override;
-            virtual uniset3::ThresholdsListSeq* getThresholdsList() override;
-
-            virtual uniset3::IDSeq* askSensorsSeq(const uniset3::IDSeq& lst,
-                                                  const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd) override;
+            // IDL
+            virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response) override;
+            virtual ::grpc::Status askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response) override;
+            virtual ::grpc::Status getThresholds(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ThresholdList* response) override;
+            virtual ::grpc::Status getThresholdsList(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ThresholdsListSeq* response) override;
 
             // --------------------------------------------
 
@@ -170,15 +159,13 @@ namespace uniset3
 
             // --------------------------------------------
             /*! Информация о заказчике */
-            struct ConsumerInfoExt:
-                public uniset3::ConsumerInfo
+            struct ConsumerInfoExt
             {
-                ConsumerInfoExt( const uniset3::ConsumerInfo& ci,
-                                 UniSetObject_i_ptr ref = 0, size_t maxAttemtps = 10 ):
-                    uniset3::ConsumerInfo(ci),
-                    ref(ref), attempt(maxAttemtps) {}
+                ConsumerInfoExt( const uniset3::ConsumerInfo& _ci, size_t maxAttemtps = 10 ):
+                    ci(_ci),
+                    attempt(maxAttemtps) {}
 
-                UniSetObject_i_var ref;
+                uniset3::ConsumerInfo ci;
                 size_t attempt = { 10 };
                 size_t lostEvents = { 0 }; // количество потерянных сообщений (не смогли послать)
                 size_t smCount = { 0 }; // количество посланных SensorMessage
@@ -217,7 +204,7 @@ namespace uniset3
             virtual void initItem( std::shared_ptr<USensorInfo>& usi, IOController* ic );
 
             //! посылка информации об изменении состояния датчика (всем или указанному заказчику)
-            virtual void send( ConsumerListInfo& lst, const uniset3::messages::SensorMessage& sm, const uniset3::ConsumerInfo* ci = nullptr );
+            virtual void send( ConsumerListInfo& lst, const uniset3::umessage::SensorMessage& sm, const uniset3::ConsumerInfo* ci = nullptr );
 
             //! проверка срабатывания пороговых датчиков
             virtual void checkThreshold( std::shared_ptr<USensorInfo>& usi, bool send = true );
@@ -235,7 +222,7 @@ namespace uniset3
 
             // функция для работы напрямую с указателем (оптимизация)
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi,
-                                        CORBA::Long value, uniset3::ObjectId sup_id ) override;
+                                        long value, uniset3::ObjectId sup_id ) override;
 
 #ifndef DISABLE_REST_API
             // http api

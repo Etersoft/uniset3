@@ -1,13 +1,14 @@
 #include <catch.hpp>
 // --------------------------------------------------------------------------
 #include "UniSetObject.h"
-#include "MessageType.h"
+#include "MessageTypes.pb.h"
 #include "Configuration.h"
 #include "UHelpers.h"
 #include "TestUObject.h"
 // --------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
+using namespace uniset3::umessage;
 // --------------------------------------------------------------------------
 /* Простой тест для UniSetObject.
  * Попытка протестировать UniSetObject без зависимостей и только интерфейс.
@@ -28,16 +29,19 @@ void initTest()
     }
 }
 // --------------------------------------------------------------------------
-static void pushMessage( long id, messages::Priority p )
+static void pushMessage( long id, umessage::Priority p )
 {
-    SensorMessage sm(id, id);
-    sm.priority = p;
-    sm.consumer = id; // чтобы хоть как-то идентифицировать сообщений, используем поле consumer
-    TransportMessage tm( std::move(sm.transport_msg()) );
-    uobj->push(tm);
+    SensorMessage sm = makeSensorMessage(id, id, uniset3::AI);
+    sm.mutable_header()->set_priority(p);
+    sm.mutable_header()->set_consumer(id); // чтобы хоть как-то идентифицировать сообщений, используем поле consumer
+    auto tm = to_transport<SensorMessage>(sm);
+
+    grpc::ServerContext ctx;
+    google::protobuf::Empty empty;
+    uobj->push(&ctx, &tm, &empty);
 }
 // --------------------------------------------------------------------------
-TEST_CASE( "UObject: priority messages", "[uobject]" )
+TEST_CASE( "UObject: priority umessage", "[uobject]" )
 {
     initTest();
 
@@ -46,38 +50,38 @@ TEST_CASE( "UObject: priority messages", "[uobject]" )
      * Хотя в реальности, оно должно совпадать с id объекта получателя.
      */
 
-    pushMessage(100, messages::mpLow);
-    pushMessage(101, messages::mpLow);
-    pushMessage(200, messages::mpMedium);
-    pushMessage(300, messages::mpHigh);
-    pushMessage(301, messages::mpHigh);
+    pushMessage(100, umessage::mpLow);
+    pushMessage(101, umessage::mpLow);
+    pushMessage(200, umessage::mpMedium);
+    pushMessage(300, umessage::mpHigh);
+    pushMessage(301, umessage::mpHigh);
 
     // теперь проверяем что сперва вынули Hi
     // но так же контролируем что порядок извлечения правильный
     // в порядке поступления в очередь
     auto m = uobj->getOneMessage();
-    REQUIRE( m->priority == messages::mpHigh );
-    REQUIRE( m->consumer == 300 );
+    REQUIRE( m->header().priority() == umessage::mpHigh );
+    REQUIRE( m->header().consumer() == 300 );
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == messages::mpHigh );
-    REQUIRE( m->consumer == 301 );
+    REQUIRE( m->header().priority() == umessage::mpHigh );
+    REQUIRE( m->header().consumer() == 301 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == messages::mpMedium );
-    REQUIRE( m->consumer == 200 );
+    REQUIRE( m->header().priority() == umessage::mpMedium );
+    REQUIRE( m->header().consumer() == 200 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == messages::mpLow );
-    REQUIRE( m->consumer == 100 );
+    REQUIRE( m->header().priority() == umessage::mpLow );
+    REQUIRE( m->header().consumer() == 100 );
 
-    pushMessage(201, messages::mpMedium);
+    pushMessage(201, umessage::mpMedium);
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == messages::mpMedium );
-    REQUIRE( m->consumer == 201 );
+    REQUIRE( m->header().priority() == umessage::mpMedium );
+    REQUIRE( m->header().consumer() == 201 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->priority == messages::mpLow );
-    REQUIRE( m->consumer == 101 );
+    REQUIRE( m->header().priority() == umessage::mpLow );
+    REQUIRE( m->header().consumer() == 101 );
 
     REQUIRE( uobj->mqEmpty() == true );
 }

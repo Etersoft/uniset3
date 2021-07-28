@@ -518,7 +518,7 @@ void IOController::ioUnRegistration( const uniset3::ObjectId sid )
     ui->unregister(sid);
 }
 // ---------------------------------------------------------------------------
-void IOController::logging( uniset3::messages::SensorMessage& sm )
+void IOController::logging( uniset3::umessage::SensorMessage& sm )
 {
     std::lock_guard<std::mutex> l(loggingMutex);
 
@@ -532,7 +532,7 @@ void IOController::logging( uniset3::messages::SensorMessage& sm )
         }
 
         sm.mutable_header()->set_consumer(dbserverID);
-        messages::TransportMessage tm;
+        umessage::TransportMessage tm;
         auto header = tm.mutable_header();
         *header = sm.header();
         ui->send(std::move(tm), uniset_conf()->getLocalNode());
@@ -563,7 +563,7 @@ void IOController::dumpToDB()
 
             if ( !s->sinf.dbignore() )
             {
-                messages::SensorMessage sm( s->makeSensorMessage() );
+                umessage::SensorMessage sm( s->makeSensorMessage() );
                 logging(sm);
             }
         }
@@ -585,14 +585,14 @@ grpc::Status IOController::getSensorsMap(::grpc::ServerContext* context, const :
     return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
-uniset3::messages::Priority IOController::getPriority( const uniset3::ObjectId sid )
+uniset3::umessage::Priority IOController::getPriority( const uniset3::ObjectId sid )
 {
     auto it = ioList.find(sid);
 
     if( it != ioList.end() )
-        return (uniset3::messages::Priority)it->second->sinf.priority();
+        return (uniset3::umessage::Priority)it->second->sinf.priority();
 
-    return uniset3::messages::mpMedium; // ??
+    return uniset3::umessage::mpMedium; // ??
 }
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IOController::getSensorIOInfo(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::SensorIOInfo* response)

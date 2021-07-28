@@ -142,7 +142,7 @@ namespace uniset3
                 long value = shm->localGetValue(i.ioit, i.id);
                 updateItem(i, value);
             }
-            catch( uniset3::Undefined& ex )
+            catch( uniset3::IOController::Undefined& ex )
             {
                 unetwarn << myname << "(updateFromSM): sid=" << i.id
                          << " undefined state (value=" << ex.value << ")." << endl;

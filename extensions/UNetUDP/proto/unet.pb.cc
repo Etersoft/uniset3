@@ -81,7 +81,7 @@ namespace uniset3
         {
             SharedCtor();
             RegisterArenaDtor(arena);
-            // @@protoc_insertion_point(arena_constructor:uniset.unet.UNetData)
+            // @@protoc_insertion_point(arena_constructor:uniset3.unet.UNetData)
         }
         UNetData::UNetData(const UNetData& from)
             : ::PROTOBUF_NAMESPACE_ID::MessageLite(),
@@ -91,7 +91,7 @@ namespace uniset3
               avalue_(from.avalue_)
         {
             _internal_metadata_.MergeFrom<std::string>(from._internal_metadata_);
-            // @@protoc_insertion_point(copy_constructor:uniset.unet.UNetData)
+            // @@protoc_insertion_point(copy_constructor:uniset3.unet.UNetData)
         }
 
         void UNetData::SharedCtor()
@@ -100,7 +100,7 @@ namespace uniset3
 
         UNetData::~UNetData()
         {
-            // @@protoc_insertion_point(destructor:uniset.unet.UNetData)
+            // @@protoc_insertion_point(destructor:uniset3.unet.UNetData)
             SharedDtor();
             _internal_metadata_.Delete<std::string>();
         }
@@ -131,7 +131,7 @@ namespace uniset3
 
         void UNetData::Clear()
         {
-            // @@protoc_insertion_point(message_clear_start:uniset.unet.UNetData)
+            // @@protoc_insertion_point(message_clear_start:uniset3.unet.UNetData)
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
             // Prevent compiler warnings about cached_has_bits being unused
             (void) cached_has_bits;
@@ -249,7 +249,7 @@ namespace uniset3
         ::PROTOBUF_NAMESPACE_ID::uint8* UNetData::_InternalSerialize(
             ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const
         {
-            // @@protoc_insertion_point(serialize_to_array_start:uniset.unet.UNetData)
+            // @@protoc_insertion_point(serialize_to_array_start:uniset3.unet.UNetData)
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
             (void) cached_has_bits;
 
@@ -298,13 +298,13 @@ namespace uniset3
                                           static_cast<int>(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).size()), target);
             }
 
-            // @@protoc_insertion_point(serialize_to_array_end:uniset.unet.UNetData)
+            // @@protoc_insertion_point(serialize_to_array_end:uniset3.unet.UNetData)
             return target;
         }
 
         size_t UNetData::ByteSizeLong() const
         {
-            // @@protoc_insertion_point(message_byte_size_start:uniset.unet.UNetData)
+            // @@protoc_insertion_point(message_byte_size_start:uniset3.unet.UNetData)
             size_t total_size = 0;
 
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
@@ -402,7 +402,7 @@ namespace uniset3
 
         void UNetData::MergeFrom(const UNetData& from)
         {
-            // @@protoc_insertion_point(class_specific_merge_from_start:uniset.unet.UNetData)
+            // @@protoc_insertion_point(class_specific_merge_from_start:uniset3.unet.UNetData)
             GOOGLE_DCHECK_NE(&from, this);
             _internal_metadata_.MergeFrom<std::string>(from._internal_metadata_);
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
@@ -416,7 +416,7 @@ namespace uniset3
 
         void UNetData::CopyFrom(const UNetData& from)
         {
-            // @@protoc_insertion_point(class_specific_copy_from_start:uniset.unet.UNetData)
+            // @@protoc_insertion_point(class_specific_copy_from_start:uniset3.unet.UNetData)
             if (&from == this) return;
 
             Clear();
@@ -440,7 +440,7 @@ namespace uniset3
 
         std::string UNetData::GetTypeName() const
         {
-            return "uniset.unet.UNetData";
+            return "uniset3.unet.UNetData";
         }
 
 
@@ -487,7 +487,7 @@ namespace uniset3
         {
             SharedCtor();
             RegisterArenaDtor(arena);
-            // @@protoc_insertion_point(arena_constructor:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(arena_constructor:uniset3.unet.UNetPacket)
         }
         UNetPacket::UNetPacket(const UNetPacket& from)
             : ::PROTOBUF_NAMESPACE_ID::MessageLite(),
@@ -507,7 +507,7 @@ namespace uniset3
             ::memcpy(&num_, &from.num_,
                      static_cast<size_t>(reinterpret_cast<char*>(&magic_) -
                                          reinterpret_cast<char*>(&num_)) + sizeof(magic_));
-            // @@protoc_insertion_point(copy_constructor:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(copy_constructor:uniset3.unet.UNetPacket)
         }
 
         void UNetPacket::SharedCtor()
@@ -521,7 +521,7 @@ namespace uniset3
 
         UNetPacket::~UNetPacket()
         {
-            // @@protoc_insertion_point(destructor:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(destructor:uniset3.unet.UNetPacket)
             SharedDtor();
             _internal_metadata_.Delete<std::string>();
         }
@@ -554,7 +554,7 @@ namespace uniset3
 
         void UNetPacket::Clear()
         {
-            // @@protoc_insertion_point(message_clear_start:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(message_clear_start:uniset3.unet.UNetPacket)
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
             // Prevent compiler warnings about cached_has_bits being unused
             (void) cached_has_bits;
@@ -639,7 +639,7 @@ namespace uniset3
 
                         continue;
 
-                    // optional .uniset.unet.UNetData data = 5;
+                    // optional .uniset3.unet.UNetData data = 5;
                     case 5:
                         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42))
                         {
@@ -681,7 +681,7 @@ namespace uniset3
         ::PROTOBUF_NAMESPACE_ID::uint8* UNetPacket::_InternalSerialize(
             ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const
         {
-            // @@protoc_insertion_point(serialize_to_array_start:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(serialize_to_array_start:uniset3.unet.UNetPacket)
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
             (void) cached_has_bits;
 
@@ -715,7 +715,7 @@ namespace uniset3
                 target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteUInt64ToArray(4, this->_internal_procid(), target);
             }
 
-            // optional .uniset.unet.UNetData data = 5;
+            // optional .uniset3.unet.UNetData data = 5;
             if (cached_has_bits & 0x00000001u)
             {
                 target = stream->EnsureSpace(target);
@@ -730,13 +730,13 @@ namespace uniset3
                                           static_cast<int>(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).size()), target);
             }
 
-            // @@protoc_insertion_point(serialize_to_array_end:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(serialize_to_array_end:uniset3.unet.UNetPacket)
             return target;
         }
 
         size_t UNetPacket::RequiredFieldsByteSizeFallback() const
         {
-            // @@protoc_insertion_point(required_fields_byte_size_fallback_start:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(required_fields_byte_size_fallback_start:uniset3.unet.UNetPacket)
             size_t total_size = 0;
 
             if (_internal_has_num())
@@ -759,7 +759,7 @@ namespace uniset3
         }
         size_t UNetPacket::ByteSizeLong() const
         {
-            // @@protoc_insertion_point(message_byte_size_start:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(message_byte_size_start:uniset3.unet.UNetPacket)
             size_t total_size = 0;
 
             if (((_has_bits_[0] & 0x00000012) ^ 0x00000012) == 0)    // All required fields are present.
@@ -784,7 +784,7 @@ namespace uniset3
             // Prevent compiler warnings about cached_has_bits being unused
             (void) cached_has_bits;
 
-            // optional .uniset.unet.UNetData data = 5;
+            // optional .uniset3.unet.UNetData data = 5;
             cached_has_bits = _has_bits_[0];
 
             if (cached_has_bits & 0x00000001u)
@@ -833,7 +833,7 @@ namespace uniset3
 
         void UNetPacket::MergeFrom(const UNetPacket& from)
         {
-            // @@protoc_insertion_point(class_specific_merge_from_start:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(class_specific_merge_from_start:uniset3.unet.UNetPacket)
             GOOGLE_DCHECK_NE(&from, this);
             _internal_metadata_.MergeFrom<std::string>(from._internal_metadata_);
             ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
@@ -874,7 +874,7 @@ namespace uniset3
 
         void UNetPacket::CopyFrom(const UNetPacket& from)
         {
-            // @@protoc_insertion_point(class_specific_copy_from_start:uniset.unet.UNetPacket)
+            // @@protoc_insertion_point(class_specific_copy_from_start:uniset3.unet.UNetPacket)
             if (&from == this) return;
 
             Clear();
@@ -903,7 +903,7 @@ namespace uniset3
 
         std::string UNetPacket::GetTypeName() const
         {
-            return "uniset.unet.UNetPacket";
+            return "uniset3.unet.UNetPacket";
         }
 
 

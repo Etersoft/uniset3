@@ -19,30 +19,28 @@
 #include <cmath>
 #include "SMonitor.h"
 #include "Configuration.h"
-#include "ORepHelpers.h"
 #include "UniSetTypes.h"
 // ------------------------------------------------------------------------------------------
-using namespace UniversalIO;
 using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 SMonitor::SMonitor():
-	script("")
+    script("")
 {
 }
 
 SMonitor::SMonitor(ObjectId id):
-	UniSetObject(id),
-	script("")
+    UniSetObject(id),
+    script("")
 {
-	const string sid(uniset_conf()->getArgParam("--sid"));
+    const string sid(uniset_conf()->getArgParam("--sid"));
 
-	lst = uniset3::getSInfoList(sid, uniset_conf());
+    lst = uniset3::getSInfoList(sid, uniset_conf());
 
-	if( lst.empty() )
-		throw SystemError("Не задан список датчиков (--sid)");
+    if( lst.empty() )
+        throw SystemError("Не задан список датчиков (--sid)");
 
-	script = uniset_conf()->getArgParam("--script");
+    script = uniset_conf()->getArgParam("--script");
 }
 
 
@@ -50,102 +48,100 @@ SMonitor::~SMonitor()
 {
 }
 // ------------------------------------------------------------------------------------------
-void SMonitor::sysCommand( const SystemMessage* sm )
+void SMonitor::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
-	switch(sm->command)
-	{
-		case SystemMessage::StartUp:
-		{
-			for( auto& it : lst )
-			{
-				if( it.si.node == DefaultObjectId )
-					it.si.node = uniset_conf()->getLocalNode();
+    switch(sm->cmd())
+    {
+        case umessage::SystemMessage::StartUp:
+        {
+            for( auto&& it : lst )
+            {
+                if( it.si.node() == DefaultObjectId )
+                    it.si.set_node(uniset_conf()->getLocalNode());
 
-				try
-				{
-					if( it.si.id != DefaultObjectId )
-						ui->askRemoteSensor(it.si.id, uniset3::UIONotify, it.si.node);
-				}
-				catch( const uniset3::Exception& ex )
-				{
-					cerr << myname << ":(askSensor): " << ex << endl;
-					//					raise(SIGTERM);
-					//std::terminate();
-					uterminate();
-				}
-				catch(...)
-				{
-					std::exception_ptr p = std::current_exception();
-					cerr << myname << ": " << (p ? p.__cxa_exception_type()->name() : "FAIL ask sensors..") << std::endl;
-					uterminate();
-				}
-			}
-		}
-		break;
+                try
+                {
+                    if( it.si.id() != DefaultObjectId )
+                        ui->askRemoteSensor(it.si.id(), uniset3::UIONotify, it.si.node());
+                }
+                catch( const std::exception& ex )
+                {
+                    cerr << myname << ":(askSensor): " << ex.what() << endl;
+                    uterminate();
+                }
+                catch(...)
+                {
+                    std::exception_ptr p = std::current_exception();
+                    cerr << myname << ": " << (p ? p.__cxa_exception_type()->name() : "FAIL ask sensors..") << std::endl;
+                    uterminate();
+                }
+            }
+        }
+        break;
 
-		case SystemMessage::FoldUp:
-		case SystemMessage::Finish:
-			break;
+        case umessage::SystemMessage::FoldUp:
+        case umessage::SystemMessage::Finish:
+            break;
 
-		case SystemMessage::WatchDog:
-			break;
+        case umessage::SystemMessage::WatchDog:
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 // ------------------------------------------------------------------------------------------
-std::string SMonitor::printEvent( const uniset3::messages::SensorMessage* sm )
+std::string SMonitor::printEvent( const uniset3::umessage::SensorMessage* sm )
 {
-	auto conf = uniset_conf();
-	ostringstream s;
+    auto conf = uniset_conf();
+    ostringstream s;
 
-	string s_sup("");
+    string s_sup("");
 
-	if( sm->supplier == uniset3::AdminID )
-		s_sup = "uniset-admin";
-	else
-		s_sup = ORepHelpers::getShortName(conf->oind->getMapName(sm->supplier));
+    if( sm->header().supplier() == uniset3::AdminID )
+        s_sup = "uniset-admin";
+    else
+        s_sup = ObjectIndex::getShortName(conf->oind->getMapName(sm->header().supplier()));
 
-	s << "(" << setw(6) << sm->id << "):"
-	  << "[(" << std::right << setw(5) << sm->supplier << ")"
-	  << std::left << setw(20) << s_sup <<  "] "
-	  << std::right << setw(8) << timeToString(sm->sm_tv.tv_sec, ":")
-	  << "(" << setw(6) << sm->sm_tv.tv_nsec << "): "
-	  << std::right << setw(45) << conf->oind->getMapName(sm->id)
-	  << "    value:" << std::right << setw(9) << sm->value
-	  << "    fvalue:" << std::right << setw(12) << ( (float)sm->value / pow(10.0, sm->ci.precision) ) << endl;
+    s << "(" << setw(6) << sm->id() << "):"
+      << "[(" << std::right << setw(5) << sm->header().supplier() << ")"
+      << std::left << setw(20) << s_sup <<  "] "
+      << std::right << setw(8) << timeToString(sm->sm_ts().sec(), ":")
+      << "(" << setw(6) << sm->sm_ts().nsec() << "): "
+      << std::right << setw(45) << conf->oind->getMapName(sm->id())
+      << "    value:" << std::right << setw(9) << sm->value()
+      << "    fvalue:" << std::right << setw(12) << ( (float)sm->value() / pow(10.0, sm->ci().precision()) ) << endl;
 
-	return s.str();
+    return s.str();
 }
 // ------------------------------------------------------------------------------------------
-void SMonitor::sensorInfo( const SensorMessage* si )
+void SMonitor::sensorInfo( const umessage::SensorMessage* si )
 {
-	cout << printEvent(si) << endl;
+    cout << printEvent(si) << endl;
 
-	if( !script.empty() )
-	{
-		ostringstream cmd;
+    if( !script.empty() )
+    {
+        ostringstream cmd;
 
-		// если задан полный путь или путь начиная с '.'
-		// то берём как есть, иначе прибавляем bindir из файла настроек
-		if( script[0] == '.' || script[0] == '/' )
-			cmd << script;
-		else
-			cmd << uniset_conf()->getBinDir() << script;
+        // если задан полный путь или путь начиная с '.'
+        // то берём как есть, иначе прибавляем bindir из файла настроек
+        if( script[0] == '.' || script[0] == '/' )
+            cmd << script;
+        else
+            cmd << uniset_conf()->getBinDir() << script;
 
-		cmd << " " << si->id << " " << si->value << " " << si->sm_tv.tv_sec << " " << si->sm_tv.tv_nsec;
+        cmd << " " << si->id() << " " << si->value() << " " << si->sm_ts().sec() << " " << si->sm_ts().nsec();
 
-		int ret = system(cmd.str().c_str());
-		int res = WEXITSTATUS(ret);
+        int ret = system(cmd.str().c_str());
+        int res = WEXITSTATUS(ret);
 
-		if( res != 0 )
-			cerr << "run script '" << cmd.str() << "' failed.." << endl;
+        if( res != 0 )
+            cerr << "run script '" << cmd.str() << "' failed.." << endl;
 
-		//        if( WIFSIGNALED(ret) && (WTERMSIG(ret) == SIGINT || WTERMSIG(ret) == SIGQUIT))
-		//        {
-		//            cout << "finish..." << endl;
-		//        }
-	}
+        //        if( WIFSIGNALED(ret) && (WTERMSIG(ret) == SIGINT || WTERMSIG(ret) == SIGQUIT))
+        //        {
+        //            cout << "finish..." << endl;
+        //        }
+    }
 }
 // ------------------------------------------------------------------------------------------

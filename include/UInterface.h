@@ -32,7 +32,7 @@
 #include "Exceptions.h"
 #include "UniSetTypes.h"
 #include "ObjectIndex.h"
-#include "Repository.grpc.pb.h"
+#include "URepository.grpc.pb.h"
 #include "IOController.pb.h"
 #include "MessageTypes.pb.h"
 #include "Configuration.h"
@@ -166,15 +166,14 @@ namespace uniset3
             // throw(uniset3::ORepFailed)
             void unregister(const uniset3::ObjectId id);
 
-            std::shared_ptr<grpc::Channel> resolve( const std::string& name ) const;
             std::shared_ptr<grpc::Channel> resolve( const uniset3::ObjectId id ) const;
 
             // throw(uniset3::ResolveNameError, uniset3::TimeOut);
-            std::shared_ptr<grpc::Channel> resolve(const uniset3::ObjectId id, const uniset3::ObjectId nodeName) const;
+            std::shared_ptr<grpc::Channel> resolve(const uniset3::ObjectId id, const uniset3::ObjectId node) const;
 
             // Проверка доступности объекта или датчика
-            bool isExist( const uniset3::ObjectId id ) const noexcept;
-            bool isExist( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
+            bool isExists( const uniset3::ObjectId id ) const noexcept;
+            bool isExists( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
 
             //! used for check 'isExist' \deprecated! Use waitReadyWithCancellation(..)
             bool waitReady( const uniset3::ObjectId id, int msec, int pause = 5000,
@@ -214,11 +213,11 @@ namespace uniset3
 
             // ---------------------------------------------------------------
             // Получение указателей на вспомогательные классы.
-            inline const std::shared_ptr<uniset3::ObjectIndex> getObjectIndex() noexcept
+            inline std::shared_ptr<uniset3::ObjectIndex> getObjectIndex() noexcept
             {
                 return oind;
             }
-            inline const std::shared_ptr<uniset3::Configuration> getConf() noexcept
+            inline std::shared_ptr<uniset3::Configuration> getConf() noexcept
             {
                 return uconf;
             }
@@ -226,8 +225,8 @@ namespace uniset3
             // Посылка сообщений
 
             /*! посылка сообщения msg объекту name на узел node */
-            void send(const uniset3::messages::TransportMessage& msg, uniset3::ObjectId node);
-            void sendText(const uniset3::messages::TextMessage& msg, uniset3::ObjectId node);
+            void send(const uniset3::umessage::TransportMessage& msg, uniset3::ObjectId node = uniset3::DefaultObjectId);
+            void sendText(const uniset3::umessage::TextMessage& msg, uniset3::ObjectId node = uniset3::DefaultObjectId);
             void sendText(const uniset3::ObjectId name, const std::string& text, int mtype, const uniset3::ObjectId node = uniset3::DefaultObjectId );
 
             // ---------------------------------------------------------------
@@ -243,7 +242,7 @@ namespace uniset3
             {
                 public:
                     CacheOfResolve( size_t maxsize, size_t cleancount = 20 ):
-                        MaxSize(maxsize), minCallCount(cleancount) {};
+                        MaxSize(maxsize), minCallCount(cleancount)  {} ;
                     ~CacheOfResolve() {};
 
                     //  throw(uniset3::NameNotFound, uniset3::SystemError)

@@ -32,11 +32,11 @@
 #include "UHelpers.h"
 #include "Debug.h"
 #include "UniXML.h"
-#include "ORepHelpers.h"
 #include "UWebSocketGateSugar.h"
 #include "SMonitor.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
+using namespace uniset3::umessage;
 using namespace std;
 // --------------------------------------------------------------------------
 UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
@@ -184,19 +184,23 @@ void UWebSocketGate::sensorInfo( const SensorMessage* sm )
 {
     uniset_rwmutex_wrlock lock(wsocksMutex);
 
-    myinfoV(5) << myname << "(sensorInfo): sid=" << sm->id << " val=" << sm->value << endl;
+    myinfoV(5) << myname << "(sensorInfo): sid=" << sm->id() << " val=" << sm->value() << endl;
 
     for( auto&& s : wsocks )
         s->sensorInfo(sm);
 }
 //--------------------------------------------------------------------------------------------
-uniset3::SimpleInfo* UWebSocketGate::getInfo( const char* userparam )
+grpc::Status UWebSocketGate::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
 {
-    uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+    ::google::protobuf::StringValue oinf;
+    grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+    if( !st.ok() )
+        return st;
 
     ostringstream inf;
 
-    inf << i->info << endl;
+    inf << oinf.value() << endl;
     //  inf << vmon.pretty_str() << endl;
     inf << endl;
 
@@ -210,8 +214,8 @@ uniset3::SimpleInfo* UWebSocketGate::getInfo( const char* userparam )
         }
     }
 
-    i->info = inf.str().c_str();
-    return i._retn();
+    response->set_value(inf.str());
+    return grpc::Status::OK;
 }
 //--------------------------------------------------------------------------------------------
 Poco::JSON::Object::Ptr UWebSocketGate::UWebSocket::to_short_json( sinfo* si )
@@ -230,24 +234,24 @@ Poco::JSON::Object::Ptr UWebSocketGate::to_json( const SensorMessage* sm, const 
 
     json->set("type", "SensorInfo");
     json->set("error", err);
-    json->set("id", sm->id);
-    json->set("value", sm->value);
-    json->set("name", uniset3::ORepHelpers::getShortName(uniset_conf()->oind->getMapName(sm->id)));
-    json->set("sm_tv_sec", sm->sm_tv.tv_sec);
-    json->set("sm_tv_nsec", sm->sm_tv.tv_nsec);
-    json->set("iotype", uniset3::iotype2str(sm->sensor_type));
-    json->set("undefined", sm->undefined );
-    json->set("supplier", sm->supplier );
-    json->set("tv_sec", sm->tm.tv_sec);
-    json->set("tv_nsec", sm->tm.tv_nsec);
-    json->set("node", sm->node);
+    json->set("id", sm->id());
+    json->set("value", sm->value());
+    json->set("name", ObjectIndex::getShortName(uniset_conf()->oind->getMapName(sm->id())));
+    json->set("sm_tv_sec", sm->sm_ts().sec());
+    json->set("sm_tv_nsec", sm->sm_ts().nsec());
+    json->set("iotype", uniset3::iotype2str(sm->sensor_type()));
+    json->set("undefined", sm->undefined() );
+    json->set("supplier", sm->header().supplier() );
+    json->set("tv_sec", sm->header().ts().sec());
+    json->set("tv_nsec", sm->header().ts().nsec());
+    json->set("node", sm->header().node());
 
     Poco::JSON::Object::Ptr calibr = uniset3::json::make_child(json, "calibration");
-    calibr->set("cmin", sm->ci.minCal);
-    calibr->set("cmax", sm->ci.maxCal);
-    calibr->set("rmin", sm->ci.minRaw);
-    calibr->set("rmax", sm->ci.maxRaw);
-    calibr->set("precision", sm->ci.precision);
+    calibr->set("cmin", sm->ci().mincal());
+    calibr->set("cmax", sm->ci().maxcal());
+    calibr->set("rmin", sm->ci().minraw());
+    calibr->set("rmax", sm->ci().maxraw());
+    calibr->set("precision", sm->ci().precision());
 
     return json;
 }
@@ -908,12 +912,12 @@ void UWebSocketGate::UWebSocket::get( uniset3::ObjectId id )
     qcmd.push(s);
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::sensorInfo( const uniset3::messages::SensorMessage* sm )
+void UWebSocketGate::UWebSocket::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
     if( cancelled )
         return;
 
-    auto s = smap.find(sm->id);
+    auto s = smap.find(sm->id());
 
     if( s == smap.end() )
         return;
@@ -1005,7 +1009,7 @@ void UWebSocketGate::UWebSocket::sendShortResponse( sinfo& si )
 // -----------------------------------------------------------------------------
 void UWebSocketGate::UWebSocket::sendResponse( sinfo& si )
 {
-    uniset3::messages::SensorMessage sm(si.id, si.value);
+    auto sm = makeSensorMessage(si.id, si.value, uniset3::AI);
 
     if( jbuf.size() > maxsize )
     {
@@ -1058,7 +1062,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         auto idlist = uniset3::getSInfoList(params, uniset_conf());
 
         for( const auto& i : idlist )
-            set(i.si.id, i.val);
+            set(i.si.id(), i.val);
 
         // уведомление о новой команде
         cmdsignal->send();

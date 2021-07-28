@@ -39,7 +39,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // --------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -240,7 +240,7 @@ namespace uniset33
                 return unetlog;
             }
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
         protected:
 
@@ -251,9 +251,9 @@ namespace uniset33
             std::shared_ptr<SMInterface> shm;
             void step() noexcept;
 
-            void sysCommand( const uniset3::messages::SystemMessage* msg ) override;
-            void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            void sysCommand( const uniset3::umessage::SystemMessage* msg ) override;
+            void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             void askSensors( uniset3::UIOCommand cmd );
             bool waitSMReady();
             void receiverEvent( const std::shared_ptr<UNetReceiver>& r, UNetReceiver::Event ev ) noexcept;
@@ -377,7 +377,7 @@ namespace uniset33
             VMonitor vmon;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // UNetExchange_H_
 // -----------------------------------------------------------------------------

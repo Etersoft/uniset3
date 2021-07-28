@@ -27,6 +27,7 @@
 		<DocDir name="./"/>
 		<LockDir name="/tmp/"/>
 		<HttpResolver name="HttpResolver"/>
+		<URepository name="URepository" port="8111"/>
 		<LocalIOR name="0"/>
 		<Services>
 			<LocalTimeService AskLifeTimeSEC="10" MaxCountTimers="100" name="TimeService"/>

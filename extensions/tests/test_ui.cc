@@ -2,12 +2,14 @@
 
 #include <memory>
 #include <time.h>
-#include "IOController_i.hh"
+#include "IOController.grpc.pb.h"
 #include "UInterface.h"
 #include "UniSetTypes.h"
+#include "UHelpers.h"
 
 using namespace std;
 using namespace uniset3;
+using namespace uniset3::umessage;
 
 const std::string sidName = "Input1_S";
 const std::string aidName = "AI_AS";
@@ -60,32 +62,32 @@ TEST_CASE("UInterface", "[UInterface]")
         REQUIRE( ui->getValue(aid) == 10 );
 
         uniset3::SensorInfo si;
-        si.id = aid;
-        si.node = conf->getLocalNode();
+        si.set_id(aid);
+        si.set_node(conf->getLocalNode());
         REQUIRE_NOTHROW( ui->setValue(si, 15, DefaultObjectId) );
         REQUIRE( ui->getRawValue(si) == 15 );
 
-        REQUIRE_NOTHROW( ui->fastSetValue(si, 20, DefaultObjectId) );
+        REQUIRE_NOTHROW( ui->setValue(si, 20, DefaultObjectId) );
         REQUIRE( ui->getValue(aid) == 20 );
         REQUIRE_THROWS_AS( ui->getValue(aid, -2), uniset3::Exception& );
 
-        si.id = sid;
+        si.set_id(sid);
         REQUIRE_NOTHROW( ui->setValue(si, 15, DefaultObjectId) );
         REQUIRE( ui->getValue(sid) == 15 );
 
-        si.node = -2;
+        si.set_node(-2);
         REQUIRE_THROWS_AS( ui->setValue(si, 20, DefaultObjectId), uniset3::Exception& );
 
         REQUIRE_THROWS_AS( ui->getTimeChange(sid, DefaultObjectId), uniset3::ORepFailed& );
         REQUIRE_NOTHROW( ui->getTimeChange(sid, conf->getLocalNode()) );
 
-        si.id = aid;
-        si.node = conf->getLocalNode();
+        si.set_id(aid);
+        si.set_node(conf->getLocalNode());
         REQUIRE_NOTHROW( ui->setUndefinedState(si, true, testOID) );
         REQUIRE_NOTHROW( ui->setUndefinedState(si, false, testOID) );
 
-        si.id = sid;
-        si.node = conf->getLocalNode();
+        si.set_id(sid);
+        si.set_node(conf->getLocalNode());
         REQUIRE_NOTHROW( ui->setUndefinedState(si, true, testOID) );
         REQUIRE_NOTHROW( ui->setUndefinedState(si, false, testOID) );
 
@@ -98,19 +100,23 @@ TEST_CASE("UInterface", "[UInterface]")
         REQUIRE_NOTHROW( ui->resolve(sid) );
         REQUIRE_THROWS_AS( ui->resolve(sid, 10), uniset3::ResolveNameError& );
         REQUIRE_THROWS_AS( ui->resolve(sid, DefaultObjectId), uniset3::ResolveNameError& );
-        REQUIRE_NOTHROW( ui->resolve("UNISET_PLC/Controllers/SharedMemory") );
     }
 
     SECTION( "send" )
     {
-        TransportMessage tm( SensorMessage(sid, 10).transport_msg() );
-        REQUIRE_NOTHROW( ui->send(sid, tm) );
+        auto sm = makeSensorMessage(sid, 10, uniset3::AI);
+        TransportMessage tm = uniset3::to_transport<SensorMessage>(sm);
+        REQUIRE_NOTHROW( ui->send(tm) );
     }
 
     SECTION( "sendText" )
     {
-        TransportMessage tm( SensorMessage(sid, 10).transport_msg() );
-        REQUIRE_NOTHROW( ui->send(sid, tm) );
+        uniset3::ProducerInfo pi;
+        pi.set_id(sid);
+        pi.set_node(conf->getLocalNode());
+        auto tm = makeTextMessage("test", 0, now_to_uniset_timespec(), pi);
+        REQUIRE_NOTHROW( ui->sendText(tm) );
+        REQUIRE_NOTHROW( ui->sendText(sid, "text", 1) );
     }
 
 
@@ -130,10 +136,10 @@ TEST_CASE("UInterface", "[UInterface]")
         CHECK_FALSE( ui->waitWorking(sid, -1, 50) );
         CHECK( ui->waitWorking(sid, 100, -1) );
 
-        CHECK( ui->isExist(sid) );
-        CHECK( ui->isExist(sid, conf->getLocalNode()) );
-        CHECK_FALSE( ui->isExist(sid, DefaultObjectId) );
-        CHECK_FALSE( ui->isExist(sid, 100) );
+        CHECK( ui->isExists(sid) );
+        CHECK( ui->isExists(sid, conf->getLocalNode()) );
+        CHECK_FALSE( ui->isExists(sid, DefaultObjectId) );
+        CHECK_FALSE( ui->isExists(sid, 100) );
     }
 
     SECTION( "get/set list" )
@@ -143,23 +149,24 @@ TEST_CASE("UInterface", "[UInterface]")
         lst.add(sid);
         lst.add(-100); // bad sensor ID
 
-        uniset3::SensorInfoSeq_var seq = ui->getSensorSeq(lst);
-        REQUIRE( seq->length() == 3 );
+        uniset3::SensorIOInfoSeq seq = ui->getSensorSeq(lst);
+        REQUIRE( seq.sensors().size() == 3 );
 
-        uniset3::OutSeq_var olst = new uniset3::OutSeq();
-        olst->length(2);
-        olst[0].si.id = sid;
-        olst[0].si.node = conf->getLocalNode();
-        olst[0].value = 1;
-        olst[1].si.id = aid;
-        olst[1].si.node = conf->getLocalNode();
-        olst[1].value = 35;
+        uniset3::OutSeq olst;
+        auto a1 = olst.add_sensors();
+        a1->mutable_si()->set_id(sid);
+        a1->mutable_si()->set_node(conf->getLocalNode());
+        a1->set_value(1);
+        auto a2 = olst.add_sensors();
+        a2->mutable_si()->set_id(aid);
+        a2->mutable_si()->set_node(conf->getLocalNode());
+        a2->set_value(35);
 
-        uniset3::IDSeq_var iseq = ui->setOutputSeq(olst, DefaultObjectId);
-        REQUIRE( iseq->length() == 0 );
+        uniset3::IDSeq iseq = ui->setOutputSeq(olst, DefaultObjectId);
+        REQUIRE( iseq.ids().size() == 0 );
 
-        uniset3::ShortMapSeq_var slist = ui->getSensors( sid, conf->getLocalNode() );
-        REQUIRE( slist->length() >= 2 );
+        uniset3::ShortMapSeq slist = ui->getSensors( sid, conf->getLocalNode() );
+        REQUIRE( slist.sensors().size() >= 2 );
     }
 
     SECTION( "ask" )
@@ -181,8 +188,8 @@ TEST_CASE("UInterface", "[UInterface]")
         lst.add(sid);
         lst.add(-100); // bad sensor ID
 
-        uniset3::IDSeq_var rseq = ui->askSensorsSeq(lst, uniset3::UIONotify, testOID);
-        REQUIRE( rseq->length() == 1 ); // проверяем, что нам вернули один BAD-датчик..(-100)
+        uniset3::IDSeq rseq = ui->askSensorsSeq(lst, uniset3::UIONotify, testOID);
+        REQUIRE( rseq.ids().size() == 1 ); // проверяем, что нам вернули один BAD-датчик..(-100)
     }
 
     SECTION( "Thresholds" )
@@ -190,28 +197,28 @@ TEST_CASE("UInterface", "[UInterface]")
         REQUIRE_NOTHROW( ui->askThreshold(aid, 10, uniset3::UIONotify, 90, 100, false, testOID) );
         REQUIRE_NOTHROW( ui->askThreshold(aid, 11, uniset3::UIONotify, 50, 70, false, testOID) );
         REQUIRE_NOTHROW( ui->askThreshold(aid, 12, uniset3::UIONotify, 20, 40, false, testOID) );
-        REQUIRE_THROWS_AS( ui->askThreshold(aid, 3, uniset3::UIONotify, 50, 20, false, testOID), uniset3::BadRange& );
+        //        REQUIRE_THROWS_AS( ui->askThreshold(aid, 3, uniset3::UIONotify, 50, 20, false, testOID), uniset3::IOController::BadRange& );
 
-        uniset3::ThresholdsListSeq_var slist = ui->getThresholdsList(aid);
-        REQUIRE( slist->length() == 1 ); // количество датчиков с порогами = 1 (это aid)
+        uniset3::ThresholdsListSeq slist = ui->getThresholdsList(aid);
+        REQUIRE( slist.thresholds().size() == 1 ); // количество датчиков с порогами = 1 (это aid)
 
         // 3 порога мы создали выше(askThreshold) + 1 который в настроечном файле в секции <thresholds>
-        REQUIRE( slist[0].tlist.length() == 4 );
+        REQUIRE( slist.thresholds(0).tlist().thresholds().size() == 4 );
 
         uniset3::ThresholdInfo ti1 = ui->getThresholdInfo(aid, 10);
-        REQUIRE( ti1.id == 10 );
-        REQUIRE( ti1.lowlimit == 90 );
-        REQUIRE( ti1.hilimit == 100 );
+        REQUIRE( ti1.id() == 10 );
+        REQUIRE( ti1.lowlimit() == 90 );
+        REQUIRE( ti1.hilimit() == 100 );
 
         uniset3::ThresholdInfo ti2 = ui->getThresholdInfo(aid, 11);
-        REQUIRE( ti2.id == 11 );
-        REQUIRE( ti2.lowlimit == 50 );
-        REQUIRE( ti2.hilimit == 70 );
+        REQUIRE( ti2.id() == 11 );
+        REQUIRE( ti2.lowlimit() == 50 );
+        REQUIRE( ti2.hilimit() == 70 );
 
         uniset3::ThresholdInfo ti3 = ui->getThresholdInfo(aid, 12);
-        REQUIRE( ti3.id == 12 );
-        REQUIRE( ti3.lowlimit == 20 );
-        REQUIRE( ti3.hilimit == 40 );
+        REQUIRE( ti3.id() == 12 );
+        REQUIRE( ti3.lowlimit() == 20 );
+        REQUIRE( ti3.hilimit() == 40 );
 
         REQUIRE_THROWS_AS( ui->getThresholdInfo(sid, 10), uniset3::NameNotFound& );
 
@@ -225,23 +232,23 @@ TEST_CASE("UInterface", "[UInterface]")
     SECTION( "calibration" )
     {
         uniset3::SensorInfo si;
-        si.id = aid;
-        si.node = conf->getLocalNode();
+        si.set_id(aid);
+        si.set_node(conf->getLocalNode());
 
         uniset3::CalibrateInfo ci;
-        ci.minRaw = 0;
-        ci.maxRaw = 4096;
-        ci.minCal = -100;
-        ci.maxCal = 100;
-        ci.precision = 3;
+        ci.set_minraw(0);
+        ci.set_maxraw(4096);
+        ci.set_mincal(-100);
+        ci.set_maxcal(100);
+        ci.set_precision(3);
         REQUIRE_NOTHROW( ui->calibrate(si, ci) );
 
         uniset3::CalibrateInfo ci2 = ui->getCalibrateInfo(si);
-        CHECK( ci.minRaw == ci2.minRaw );
-        CHECK( ci.maxRaw == ci2.maxRaw );
-        CHECK( ci.minCal == ci2.minCal );
-        CHECK( ci.maxCal == ci2.maxCal );
-        CHECK( ci.precision == ci2.precision );
+        CHECK( ci.minraw() == ci2.minraw() );
+        CHECK( ci.maxraw() == ci2.maxraw() );
+        CHECK( ci.mincal() == ci2.mincal() );
+        CHECK( ci.maxcal() == ci2.maxcal() );
+        CHECK( ci.precision() == ci2.precision() );
     }
 }
 // -----------------------------------------------------------------------------
@@ -251,8 +258,8 @@ TEST_CASE("UInterface::freezeValue", "[UInterface][freezeValue]")
     auto conf = uniset_conf();
 
     uniset3::SensorInfo si;
-    si.id = aid;
-    si.node = conf->getLocalNode();
+    si.set_id(aid);
+    si.set_node(conf->getLocalNode());
 
     REQUIRE_NOTHROW( ui->setValue(aid, 200) );
     REQUIRE( ui->getValue(aid) == 200 );
@@ -282,8 +289,8 @@ TEST_CASE("UInterface::getSensorIOInfo", "[UInterface][getSensorIOInfo]")
     auto conf = uniset_conf();
 
     uniset3::SensorInfo si;
-    si.id = aid;
-    si.node = conf->getLocalNode();
+    si.set_id(aid);
+    si.set_node(conf->getLocalNode());
 
     REQUIRE_NOTHROW( ui->setValue(si, 200, testOID) );
     REQUIRE( ui->getValue(aid) == 200 );
@@ -291,53 +298,53 @@ TEST_CASE("UInterface::getSensorIOInfo", "[UInterface][getSensorIOInfo]")
     REQUIRE_NOTHROW( ui->getSensorIOInfo(si) );
     auto inf = ui->getSensorIOInfo(si);
 
-    REQUIRE( inf.supplier == testOID );
-    REQUIRE( inf.value == 200 );
-    REQUIRE( inf.real_value == 200 );
-    REQUIRE( inf.blocked == false );
-    REQUIRE( inf.frozen == false );
-    REQUIRE( inf.undefined == false );
-    REQUIRE( inf.tv_sec > 0 );
-    REQUIRE( inf.dbignore == false );
-    REQUIRE( inf.depend_sid == DefaultObjectId );
+    REQUIRE( inf.supplier() == testOID );
+    REQUIRE( inf.value() == 200 );
+    REQUIRE( inf.real_value() == 200 );
+    REQUIRE( inf.blocked() == false );
+    REQUIRE( inf.frozen() == false );
+    REQUIRE( inf.undefined() == false );
+    REQUIRE( inf.ts().sec() > 0 );
+    REQUIRE( inf.dbignore() == false );
+    REQUIRE( inf.depend_sid() == DefaultObjectId );
 
     // freeze/unfreeze
     REQUIRE_NOTHROW( ui->freezeValue(si, true, 10, testOID) );
     inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.frozen == true );
-    REQUIRE( inf.supplier == testOID );
+    REQUIRE( inf.frozen() == true );
+    REQUIRE( inf.supplier() == testOID );
 
     REQUIRE_NOTHROW( ui->freezeValue(si, false, 10, testOID) );
     inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.frozen == false );
-    REQUIRE( inf.supplier == testOID );
+    REQUIRE( inf.frozen() == false );
+    REQUIRE( inf.supplier() == testOID );
 
     // undef
     REQUIRE_NOTHROW( ui->setUndefinedState( si, true, testOID ));
     inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.undefined == true );
-    REQUIRE( inf.supplier == testOID );
+    REQUIRE( inf.undefined() == true );
+    REQUIRE( inf.supplier() == testOID );
 
     REQUIRE_NOTHROW( ui->setUndefinedState( si, false, testOID ));
     inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.undefined == false );
-    REQUIRE( inf.supplier == testOID );
+    REQUIRE( inf.undefined() == false );
+    REQUIRE( inf.supplier() == testOID );
 
     // depend
-    si.id = 100;
+    si.set_id(100);
     REQUIRE_NOTHROW( ui->setValue(si, 0, testOID) );
 
-    si.id = 101;
+    si.set_id(101);
     inf = ui->getSensorIOInfo(si);
 
-    REQUIRE( inf.blocked == true );
-    REQUIRE( inf.depend_sid == 100 );
+    REQUIRE( inf.blocked() == true );
+    REQUIRE( inf.depend_sid() == 100 );
 
-    si.id = 100;
+    si.set_id(100);
     REQUIRE_NOTHROW( ui->setValue(si, 10, testOID) );
 
-    si.id = 101;
+    si.set_id(101);
     inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.blocked == false );
-    REQUIRE( inf.depend_sid == 100 );
+    REQUIRE( inf.blocked() == false );
+    REQUIRE( inf.depend_sid() == 100 );
 }

@@ -21,7 +21,6 @@
 #include <iomanip>
 #include "ProxyManager.h"
 #include "PassiveObject.h"
-#include "ORepHelpers.h"
 #include "Configuration.h"
 // ------------------------------------------------------------------------------------------
 using namespace std;
@@ -39,7 +38,7 @@ PassiveObject::PassiveObject( uniset3::ObjectId id ):
     id(id)
 {
     const string myfullname = uniset_conf()->oind->getNameById(id);
-    myname = ORepHelpers::getShortName(myfullname);
+    myname = ObjectIndex::getShortName(myfullname);
 }
 
 PassiveObject::PassiveObject( ObjectId id, ProxyManager* mngr ):
@@ -47,7 +46,7 @@ PassiveObject::PassiveObject( ObjectId id, ProxyManager* mngr ):
     id(id)
 {
     const string myfullname = uniset_conf()->oind->getNameById(id);
-    myname = ORepHelpers::getShortName(myfullname);
+    myname = ObjectIndex::getShortName(myfullname);
 
     if( mngr )
         mngr->attachObject(this, id);
@@ -79,69 +78,94 @@ void PassiveObject::init( ProxyManager* _mngr )
 }
 
 // ------------------------------------------------------------------------------------------
-void PassiveObject::processingMessage( const uniset3::messages::TransportMessage* msg )
+void PassiveObject::processingMessage( const uniset3::umessage::TransportMessage* msg )
 {
     try
     {
-        switch( msg->type )
+        switch( msg->header().type() )
         {
-            case messages::mtSensorInfo:
-                sensorInfo( reinterpret_cast<const SensorMessage*>(msg) );
-                break;
+            case umessage::mtSensorInfo:
+            {
+                umessage::SensorMessage m;
 
-            case messages::mtTimer:
-                timerInfo( reinterpret_cast<const TimerMessage*>(msg) );
-                break;
+                if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                {
+                    ucrit << myname << "(processingMessage): SensorInfo: parse error" << endl;
+                    return;
+                }
 
-            case messages::mtSysCommand:
-                sysCommand( reinterpret_cast<const SystemMessage*>(msg) );
-                break;
+                sensorInfo(&m);
+            }
+            break;
+
+            case umessage::mtTimer:
+            {
+                umessage::TimerMessage m;
+
+                if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                {
+                    ucrit << myname << "(processingMessage): TimerInfo: parse error" << endl;
+                    return;
+                }
+
+                timerInfo(&m);
+            }
+            break;
+
+            case umessage::mtSysCommand:
+            {
+                umessage::SystemMessage m;
+
+                if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                {
+                    ucrit << myname << "(processingMessage): SysCommand: parse error" << endl;
+                    return;
+                }
+
+                sysCommand(&m);
+            }
+            break;
+
+            case umessage::mtTextInfo:
+            {
+                umessage::TextMessage m;
+
+                if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
+                {
+                    ucrit << myname << "(processingMessage): TextMessage: parse error" << endl;
+                    return;
+                }
+
+                onTextMessage( &m );
+            }
+            break;
 
             default:
                 break;
         }
     }
-    catch( const CORBA::SystemException& ex )
+    catch( const std::exception& ex )
     {
-        ucrit << myname << "(processingMessage): CORBA::SystemException: " << ex.NP_minorString() << endl;
-    }
-    catch( const CORBA::Exception& ex )
-    {
-        uwarn << myname << "(processingMessage): CORBA::Exception: " << ex._name() << endl;
-    }
-    catch( const omniORB::fatalException& fe )
-    {
-        auto ul = ulog();
-
-        if( ul && ul->is_crit() )
-        {
-            ul->crit() << myname << "(processingMessage): Caught omniORB::fatalException:" << endl;
-            ul->crit() << myname << "(processingMessage): file: " << fe.file()
-                       << " line: " << fe.line()
-                       << " mesg: " << fe.errmsg() << endl;
-        }
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        ucrit  << myname << "(processingMessage): " << ex << endl;
+        ucrit << myname << "(processingMessage): " << ex.what() << endl;
     }
 }
+
 // -------------------------------------------------------------------------
-void PassiveObject::sysCommand( const SystemMessage* sm )
+void PassiveObject::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
-    switch( sm->command )
+    switch( sm->cmd() )
     {
-        case SystemMessage::StartUp:
+        case umessage::SystemMessage::StartUp:
             askSensors(uniset3::UIONotify);
             break;
 
-        case SystemMessage::FoldUp:
-        case SystemMessage::Finish:
+        case umessage::SystemMessage::FoldUp:
+        case umessage::SystemMessage::Finish:
             askSensors(uniset3::UIODontNotify);
             break;
 
-        case SystemMessage::WatchDog:
-        case SystemMessage::LogRotate:
+        case umessage::SystemMessage::WatchDog:
+        case umessage::SystemMessage::LogRotate:
             break;
 
         default:

@@ -366,7 +366,7 @@ void UniSetManager::getAllObjectsList( std::vector<std::shared_ptr<UniSetObject>
 // ------------------------------------------------------------------------------------------
 //virtual ::grpc::Status getObjectsInfo(::grpc::ServerContext* context, const ::uniset3::ObjectsInfoParams* request, ::uniset3::SimpleInfoSeq* response) override;
 
-::grpc::Status UniSetManager::broadcast(::grpc::ServerContext* context, const ::uniset3::messages::TransportMessage* request, ::google::protobuf::Empty* response)
+::grpc::Status UniSetManager::broadcast(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response)
 {
     // себя не забыть...
     //    push(msg);

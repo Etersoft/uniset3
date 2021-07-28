@@ -270,7 +270,7 @@ namespace uniset3
 		return v;
 	}
 	// -------------------------------------------------------------------------
-	bool LogAgregator::logExist( std::shared_ptr<DebugStream>& log ) const
+    bool LogAgregator::logExists( std::shared_ptr<DebugStream>& log ) const
 	{
 		for( const auto& l : lmap )
 		{
@@ -281,7 +281,7 @@ namespace uniset3
 			auto ag = dynamic_pointer_cast<LogAgregator>(l.second);
 
 			if( ag )
-				res = ag->logExist(log);
+                res = ag->logExists(log);
 
 			if( res )
 				return true;

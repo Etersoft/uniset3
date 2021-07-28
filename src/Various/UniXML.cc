@@ -45,9 +45,9 @@ using namespace std;
 */
 // -----------------------------------------------------------------------------
 UniXML::UniXML(const string& fname):
-	filename(fname)
+    filename(fname)
 {
-	open(filename);
+    open(filename);
 }
 // -----------------------------------------------------------------------------
 UniXML::UniXML()
@@ -56,324 +56,325 @@ UniXML::UniXML()
 // -----------------------------------------------------------------------------
 UniXML::~UniXML()
 {
-	close();
+    close();
 }
 // -----------------------------------------------------------------------------
 string UniXML::getFileName() const noexcept
 {
-	return filename;
+    return filename;
 }
 // -----------------------------------------------------------------------------
 void UniXML::newDoc( const string& root_node, const string& xml_ver )
 {
-	assert(doc == nullptr);  // предыдущий doc не удален из памяти
+    assert(doc == nullptr);  // предыдущий doc не удален из памяти
 
-	xmlKeepBlanksDefault(0);
-	xmlDoc* d = xmlNewDoc((const xmlChar*)xml_ver.c_str());
+    xmlKeepBlanksDefault(0);
+    xmlDoc* d = xmlNewDoc((const xmlChar*)xml_ver.c_str());
 
-	if( d == NULL )
-		throw NameNotFound("UniXML(open): не смогли создать doc=" + root_node);
+    if( d == NULL )
+        throw NameNotFound("UniXML(open): не смогли создать doc=" + root_node);
 
-	doc = std::unique_ptr<xmlDoc, UniXMLDocDeleter>(d);
+    doc = std::unique_ptr<xmlDoc, UniXMLDocDeleter>(d);
 
-	//    xmlEncodeEntitiesReentrant(doc, (const xmlChar*)ExternalEncoding.c_str());
-	xmlNode* rootnode = xmlNewDocNode(d, NULL, (const xmlChar*)root_node.c_str(), NULL);
-	xmlDocSetRootElement(d, rootnode);
+    //    xmlEncodeEntitiesReentrant(doc, (const xmlChar*)ExternalEncoding.c_str());
+    xmlNode* rootnode = xmlNewDocNode(d, NULL, (const xmlChar*)root_node.c_str(), NULL);
+    xmlDocSetRootElement(d, rootnode);
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::getFirstNode() noexcept
 {
-	if( !doc )
-		return nullptr;
+    if( !doc )
+        return nullptr;
 
-	return xmlDocGetRootElement(doc.get());
+    return xmlDocGetRootElement(doc.get());
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::getFirstNode() const noexcept
 {
-	if( !doc )
-		return nullptr;
+    if( !doc )
+        return nullptr;
 
-	return xmlDocGetRootElement(doc.get());
+    return xmlDocGetRootElement(doc.get());
 }
 // -----------------------------------------------------------------------------
 UniXML::iterator UniXML::begin() noexcept
 {
-	return iterator(getFirstNode());
+    return iterator(getFirstNode());
 }
 // -----------------------------------------------------------------------------
 UniXML::iterator UniXML::end() noexcept
 {
-	return  iterator(NULL);
+    return  iterator(NULL);
 }
 // -----------------------------------------------------------------------------
-static void suppress(void *ctx, const char *msg, ...)
+static void suppress(void* ctx, const char* msg, ...)
 {
 
 }
 // -----------------------------------------------------------------------------
 void UniXML::createFromText( const std::string& text )
 {
-	assert(doc == nullptr);  // предыдущий doc не удален из памяти
+    assert(doc == nullptr);  // предыдущий doc не удален из памяти
 
-	// hide console errors
-//	xmlSetGenericErrorFunc(NULL,suppress);
+    // hide console errors
+    //  xmlSetGenericErrorFunc(NULL,suppress);
 
-	xmlKeepBlanksDefault(0);
-	// Can read files in any encoding, recode to UTF-8 internally
-	xmlDoc* d = xmlParseDoc((const xmlChar*)text.c_str());
+    xmlKeepBlanksDefault(0);
+    // Can read files in any encoding, recode to UTF-8 internally
+    xmlDoc* d = xmlParseDoc((const xmlChar*)text.c_str());
 
-	if( d == NULL )
-		throw SystemError("UniXML(createFromText): parse error");
+    if( d == NULL )
+        throw SystemError("UniXML(createFromText): parse error");
 
-	doc = std::unique_ptr<xmlDoc, UniXMLDocDeleter>(d);
+    doc = std::unique_ptr<xmlDoc, UniXMLDocDeleter>(d);
 
-	// Support for XInclude (see eterbug #6304)
-	// main tag must to have follow property: xmlns:xi="http://www.w3.org/2001/XInclude"
-	//For include: <xi:include href="test2.xml"/>
-	xmlXIncludeProcess(doc.get());
+    // Support for XInclude (see eterbug #6304)
+    // main tag must to have follow property: xmlns:xi="http://www.w3.org/2001/XInclude"
+    //For include: <xi:include href="test2.xml"/>
+    xmlXIncludeProcess(doc.get());
 }
 // -----------------------------------------------------------------------------
 void UniXML::open( const string& _filename )
 {
-	assert( doc == nullptr );  // предыдущий doc не удален из памяти
+    assert( doc == nullptr );  // предыдущий doc не удален из памяти
 
-	xmlKeepBlanksDefault(0);
-	// Can read files in any encoding, recode to UTF-8 internally
-	xmlDoc* d = xmlParseFile(_filename.c_str());
+    xmlKeepBlanksDefault(0);
+    // Can read files in any encoding, recode to UTF-8 internally
+    xmlDoc* d = xmlParseFile(_filename.c_str());
 
-	if( d == NULL )
-		throw NameNotFound("UniXML(open): NotFound file=" + _filename);
+    if( d == NULL )
+        throw NameNotFound("UniXML(open): NotFound file=" + _filename);
 
-	doc = std::unique_ptr<xmlDoc, UniXMLDocDeleter>(d);
+    doc = std::unique_ptr<xmlDoc, UniXMLDocDeleter>(d);
 
-	// Support for XInclude (see eterbug #6304)
-	// main tag must to have follow property: xmlns:xi="http://www.w3.org/2001/XInclude"
-	//For include: <xi:include href="test2.xml"/>
-	xmlXIncludeProcess(doc.get());
+    // Support for XInclude (see eterbug #6304)
+    // main tag must to have follow property: xmlns:xi="http://www.w3.org/2001/XInclude"
+    //For include: <xi:include href="test2.xml"/>
+    xmlXIncludeProcess(doc.get());
 
-	filename = _filename;
+    filename = _filename;
 }
 // -----------------------------------------------------------------------------
 void UniXML::close()
 {
-	doc = nullptr;
-	filename = "";
+    doc = nullptr;
+    filename = "";
 }
 // -----------------------------------------------------------------------------
 bool UniXML::isOpen() const noexcept
 {
-	return (doc != nullptr);
+    return (doc != nullptr);
 }
 // -----------------------------------------------------------------------------
 string UniXML::getProp2(const xmlNode* node, const string& name, const string& defval) noexcept
 {
-	// формально при конструировании строки может быть exception
-	try
-	{
-		const string s(getProp(node, name));
+    // формально при конструировании строки может быть exception
+    try
+    {
+        const string s(getProp(node, name));
 
-		if( !s.empty() )
-			return s;
-	}
-	catch(...) {}
+        if( !s.empty() )
+            return s;
+    }
+    catch(...) {}
 
-	return defval;
+    return defval;
 }
 // -----------------------------------------------------------------------------
 string UniXML::getProp(const xmlNode* node, const string& name) noexcept
 {
-	if( !node )
-		return "";
+    if( !node )
+        return "";
 
-	xmlChar* text = ::xmlGetProp((xmlNode*)node, (const xmlChar*)name.c_str());
+    xmlChar* text = ::xmlGetProp((xmlNode*)node, (const xmlChar*)name.c_str());
 
-	if( text == NULL )
-		return "";
+    if( text == NULL )
+        return "";
 
-	try
-	{
-		// формально при конструировании строки может быть exception
-		const string t( (const char*)text );
-		xmlFree( text );
-		return t;
-	}
-	catch(...) {}
+    try
+    {
+        // формально при конструировании строки может быть exception
+        const string t( (const char*)text );
+        xmlFree( text );
+        return t;
+    }
+    catch(...) {}
 
-	xmlFree( text );
-	return "";
+    xmlFree( text );
+    return "";
 }
 // -----------------------------------------------------------------------------
 int UniXML::getIntProp(const xmlNode* node, const string& name ) noexcept
 {
-	return uniset3::uni_atoi(getProp(node, name));
+    return uniset3::uni_atoi(getProp(node, name));
 }
 // -----------------------------------------------------------------------------
 int UniXML::getPIntProp(const xmlNode* node, const string& name, int def ) noexcept
 {
-	const string param( getProp(node, name) );
+    const string param( getProp(node, name) );
 
-	if( param.empty() )
-		return def;
+    if( param.empty() )
+        return def;
 
-	return uniset3::uni_atoi(param);
+    return uniset3::uni_atoi(param);
 }
 // -----------------------------------------------------------------------------
 void UniXML::setProp(xmlNode* node, const string& name, const string& text )
 {
-	::xmlSetProp(node, (const xmlChar*)name.c_str(), (const xmlChar*)text.c_str());
+    ::xmlSetProp(node, (const xmlChar*)name.c_str(), (const xmlChar*)text.c_str());
 }
 // -----------------------------------------------------------------------------
 UniXMLPropList UniXML::getPropList( xmlNode* node )
 {
-	UniXMLPropList lst;
+    UniXMLPropList lst;
 
-	if( !node )
-		return lst;
+    if( !node )
+        return lst;
 
-	xmlAttr* attribute = node->properties;
+    xmlAttr* attribute = node->properties;
 
-	while( attribute )
-	{
-		xmlChar* value = ::xmlNodeListGetString(node->doc, attribute->children, 1);
-		const std::string nm( (const char*)attribute->name );
-		const std::string val( (const char*)value );
-		lst.push_back( {nm, val} );
-		xmlFree(value);
-		attribute = attribute->next;
-	}
+    while( attribute )
+    {
+        xmlChar* value = ::xmlNodeListGetString(node->doc, attribute->children, 1);
+        const std::string nm( (const char*)attribute->name );
+        const std::string val( (const char*)value );
+        lst.push_back( {nm, val} );
+        xmlFree(value);
+        attribute = attribute->next;
+    }
 
-	return lst;
+    return lst;
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::createChild(xmlNode* node, const string& title, const string& text)
 {
-	return ::xmlNewChild(node, NULL, (const xmlChar*)title.c_str(), (const xmlChar*)text.c_str());
+    return ::xmlNewChild(node, NULL, (const xmlChar*)title.c_str(), (const xmlChar*)text.c_str());
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::createNext( xmlNode* node, const string& title, const string& text )
 {
-	if( node->parent )
-		return createChild(node->parent, title, text);
+    if( node->parent )
+        return createChild(node->parent, title, text);
 
-	return 0;
+    return 0;
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::insertNext( xmlNode* node, const string& title, const string& text )
 {
-	xmlNode* newNode = createNext(node,title,text);
-	if( newNode )
-		return ::xmlAddNextSibling(node,newNode);
+    xmlNode* newNode = createNext(node, title, text);
 
-	return 0;
+    if( newNode )
+        return ::xmlAddNextSibling(node, newNode);
+
+    return 0;
 }
 // -----------------------------------------------------------------------------
 /// Удаление указанного узла со всеми вложенными
 void UniXML::removeNode(xmlNode* node)
 {
-	::xmlUnlinkNode(node);
-	::xmlFreeNode(node);
+    ::xmlUnlinkNode(node);
+    ::xmlFreeNode(node);
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::copyNode(xmlNode* node, int recursive)
 {
-	//    return ::xmlCopyNode(node,recursive);
+    //    return ::xmlCopyNode(node,recursive);
 
-	xmlNode* copynode(::xmlCopyNode(node, recursive));
-	/*!    \bug Почему-то портятся русские имена (точнее становятся UTF8)
-	        независимо от текущей локали файла
-	         спасает только такое вот дополнительное копирование списка свойств
-	    \bug Непонятный параметр 'target'
-	        - при указании NULL нормально работает
-	        - при указании copynode - проблемы с русским при сохранении
-	        - при указании node - SEGFAULT при попытке удалить исходный(node) узел
-	    \todo "Нужно тест написать на copyNode"
-	*/
+    xmlNode* copynode(::xmlCopyNode(node, recursive));
+    /*!    \bug Почему-то портятся русские имена (точнее становятся UTF8)
+            независимо от текущей локали файла
+             спасает только такое вот дополнительное копирование списка свойств
+        \bug Непонятный параметр 'target'
+            - при указании NULL нормально работает
+            - при указании copynode - проблемы с русским при сохранении
+            - при указании node - SEGFAULT при попытке удалить исходный(node) узел
+        \todo "Нужно тест написать на copyNode"
+    */
 
-	if( copynode )
-		copynode->properties = ::xmlCopyPropList(NULL, node->properties);
+    if( copynode )
+        copynode->properties = ::xmlCopyPropList(NULL, node->properties);
 
-	if( copynode != 0 && node->parent )
-	{
-		xmlNode* newnode = ::xmlNewChild(node->parent, NULL, (const xmlChar*)"", (const xmlChar*)"" );
+    if( copynode != 0 && node->parent )
+    {
+        xmlNode* newnode = ::xmlNewChild(node->parent, NULL, (const xmlChar*)"", (const xmlChar*)"" );
 
-		if( newnode != 0 )
-		{
-			::xmlReplaceNode(newnode, copynode);
-			return copynode;
-		}
-	}
+        if( newnode != 0 )
+        {
+            ::xmlReplaceNode(newnode, copynode);
+            return copynode;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 // -----------------------------------------------------------------------------
 bool UniXML::save( const string& filename, int level )
 {
-	string fn(filename);
+    string fn(filename);
 
-	if (fn.empty())
-		fn = this->filename;
+    if (fn.empty())
+        fn = this->filename;
 
-	// Если файл уже существует, переименовываем его в *.xml.bak
-	const string bakfilename(fn + ".bak");
-	(void)rename(fn.c_str(), bakfilename.c_str());
-	//    int res = ::xmlSaveFormatFileEnc(fn.c_str(), doc, ExternalEncoding.c_str(), level);
-	// Write in UTF-8 without XML encoding in the header */
-	int res = ::xmlSaveFormatFile(fn.c_str(), doc.get(), level);
-	//    int res = ::xmlSaveFile(fn.c_str(), doc);
-	return res > 0;
+    // Если файл уже существует, переименовываем его в *.xml.bak
+    const string bakfilename(fn + ".bak");
+    (void)rename(fn.c_str(), bakfilename.c_str());
+    //    int res = ::xmlSaveFormatFileEnc(fn.c_str(), doc, ExternalEncoding.c_str(), level);
+    // Write in UTF-8 without XML encoding in the header */
+    int res = ::xmlSaveFormatFile(fn.c_str(), doc.get(), level);
+    //    int res = ::xmlSaveFile(fn.c_str(), doc);
+    return res > 0;
 }
 // -----------------------------------------------------------------------------
 // Переместить указатель к следующему узлу, обходит по всему дереву
 xmlNode* UniXML::nextNode(xmlNode* n)
 {
-	if (!n)
-		return 0;
+    if (!n)
+        return 0;
 
-	if (n->children)
-		return n->children;
+    if (n->children)
+        return n->children;
 
-	if (n->next)
-		return n->next;
+    if (n->next)
+        return n->next;
 
-	for(; n && n->parent && !n->next;)
-		n = n->parent;
+    for(; n && n->parent && !n->next;)
+        n = n->parent;
 
-	if (n && n->next)
-		n = n->next;
+    if (n && n->next)
+        n = n->next;
 
-	if (n && !n->name)
-		n = 0;
+    if (n && !n->name)
+        n = 0;
 
-	return n;
+    return n;
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::findNode( xmlNode* node, const string& searchnode, const string& name ) const
 {
-	xmlNode* fnode = node;
+    xmlNode* fnode = node;
 
-	while (fnode != NULL)
-	{
-		if (searchnode == (const char*)fnode->name)
-		{
-			/* Если name не задано, не сверяем. Иначе ищем, пока не найдём с таким именем */
-			if( name.empty() )
-				return fnode;
+    while (fnode != NULL)
+    {
+        if (searchnode == (const char*)fnode->name)
+        {
+            /* Если name не задано, не сверяем. Иначе ищем, пока не найдём с таким именем */
+            if( name.empty() )
+                return fnode;
 
-			if( name == getProp(fnode, "name") )
-				return fnode;
+            if( name == getProp(fnode, "name") )
+                return fnode;
 
-		}
+        }
 
-		xmlNode* nodeFound = findNode(fnode->children, searchnode, name);
+        xmlNode* nodeFound = findNode(fnode->children, searchnode, name);
 
-		if ( nodeFound != NULL )
-			return nodeFound;
+        if ( nodeFound != NULL )
+            return nodeFound;
 
-		fnode = fnode->next;
-	}
+        fnode = fnode->next;
+    }
 
-	return NULL;
+    return NULL;
 }
 
 // -------------------------------------------------------------------------
@@ -384,387 +385,387 @@ xmlNode* UniXML::findNode( xmlNode* node, const string& searchnode, const string
 //depth means number of times we can go to the children, if 0 we can't go only to elements of the same level
 xmlNode* UniXML::extFindNode( xmlNode* node, int depth, int width, const string& searchnode, const string& name, bool top ) const
 {
-	auto i = 0;
-	xmlNode* fnode = node;
+    auto i = 0;
+    xmlNode* fnode = node;
 
-	while( fnode != NULL )
-	{
-		if(top && (i >= width)) return NULL;
+    while( fnode != NULL )
+    {
+        if(top && (i >= width)) return NULL;
 
-		if (searchnode == (const char*)fnode->name)
-		{
-			if( name == getProp(fnode, "name") )
-				return fnode;
+        if (searchnode == (const char*)fnode->name)
+        {
+            if( name == getProp(fnode, "name") )
+                return fnode;
 
-			if( name.empty() )
-				return node;
-		}
+            if( name.empty() )
+                return node;
+        }
 
-		if(depth > 0)
-		{
-			xmlNode* nodeFound = extFindNode(fnode->children, depth - 1, width, searchnode, name, false);
+        if(depth > 0)
+        {
+            xmlNode* nodeFound = extFindNode(fnode->children, depth - 1, width, searchnode, name, false);
 
-			if ( nodeFound != NULL )
-				return nodeFound;
-		}
+            if ( nodeFound != NULL )
+                return nodeFound;
+        }
 
-		i++;
-		fnode = fnode->next;
-	}
+        i++;
+        fnode = fnode->next;
+    }
 
-	return NULL;
+    return NULL;
 }
 // -----------------------------------------------------------------------------
 xmlNode* UniXML::findNodeLevel1( xmlNode* root, const string& nodename, const string& nm ) const
 {
-	UniXML::iterator it(root);
+    UniXML::iterator it(root);
 
-	if( it.goChildren() )
-	{
-		for( ; it; it.goNext() )
-		{
-			if( it.getName() == nodename )
-			{
-				if( nm.empty() )
-					return it;
+    if( it.goChildren() )
+    {
+        for( ; it; it.goNext() )
+        {
+            if( it.getName() == nodename )
+            {
+                if( nm.empty() )
+                    return it;
 
-				if( it.getProp("name") == nm )
-					return it;
-			}
-		}
-	}
+                if( it.getProp("name") == nm )
+                    return it;
+            }
+        }
+    }
 
-	return 0;
+    return 0;
 }
 // -----------------------------------------------------------------------------
 bool UniXML_iterator::goNext() noexcept
 {
-	if( !curNode ) // || !curNode->next )
-		return false;
+    if( !curNode ) // || !curNode->next )
+        return false;
 
-	curNode = curNode->next;
+    curNode = curNode->next;
 
-	if ( getName() == "text" )
-		return goNext();
+    if ( getName() == "text" )
+        return goNext();
 
-	if ( getName() == "comment" )
-		return goNext();
+    if ( getName() == "comment" )
+        return goNext();
 
-	return true;
+    return true;
 }
 // -------------------------------------------------------------------------
 bool UniXML_iterator::goThrowNext() noexcept
 {
-	xmlNode* node = UniXML::nextNode(curNode);
+    xmlNode* node = UniXML::nextNode(curNode);
 
-	if (!node)
-		return false;
+    if (!node)
+        return false;
 
-	curNode = node;
+    curNode = node;
 
-	if ( getName() == "text" )
-		return goThrowNext();
+    if ( getName() == "text" )
+        return goThrowNext();
 
-	if ( getName() == "comment" )
-		return goThrowNext();
+    if ( getName() == "comment" )
+        return goThrowNext();
 
-	return true;
+    return true;
 }
 // -------------------------------------------------------------------------
 bool UniXML_iterator::goPrev() noexcept
 {
-	if( !curNode ) // || !curNode->prev )
-		return false;
+    if( !curNode ) // || !curNode->prev )
+        return false;
 
-	curNode = curNode->prev;
+    curNode = curNode->prev;
 
-	if ( getName() == "text" )
-		return goPrev();
+    if ( getName() == "text" )
+        return goPrev();
 
-	if ( getName() == "comment" )
-		return goPrev();
+    if ( getName() == "comment" )
+        return goPrev();
 
-	return true;
+    return true;
 }
 // -------------------------------------------------------------------------
 bool UniXML_iterator::canPrev() const noexcept
 {
-	if( !curNode || !curNode->prev )
-		return false;
+    if( !curNode || !curNode->prev )
+        return false;
 
-	return true;
+    return true;
 }
 // -------------------------------------------------------------------------
 bool UniXML_iterator::canNext() const noexcept
 {
-	if( !curNode || !curNode->next )
-		return false;
+    if( !curNode || !curNode->next )
+        return false;
 
-	return true;
+    return true;
 }
 // -------------------------------------------------------------------------
 bool UniXML_iterator::goParent() noexcept
 {
-	if( !curNode )
-		return false;
+    if( !curNode )
+        return false;
 
-	if( !curNode->parent )
-		return false;
+    if( !curNode->parent )
+        return false;
 
-	curNode = curNode->parent;
-	return true;
+    curNode = curNode->parent;
+    return true;
 }
 // -------------------------------------------------------------------------
 bool UniXML_iterator::goChildren() noexcept
 {
-	if (!curNode || !curNode->children )
-		return false;
+    if (!curNode || !curNode->children )
+        return false;
 
-	xmlNode* tmp = curNode;
-	curNode = curNode->children;
+    xmlNode* tmp = curNode;
+    curNode = curNode->children;
 
-	// использовать везде xmlIsBlankNode, если подходит
-	if( getName() == "text" )
-		return goNext();
+    // использовать везде xmlIsBlankNode, если подходит
+    if( getName() == "text" )
+        return goNext();
 
-	if( getName() == "comment" )
-		return goNext();
+    if( getName() == "comment" )
+        return goNext();
 
-	if( getName().empty() )
-	{
-		curNode = tmp;
-		return false;
-	}
+    if( getName().empty() )
+    {
+        curNode = tmp;
+        return false;
+    }
 
-	return true;
+    return true;
 }
 // -------------------------------------------------------------------------
 xmlNode* UniXML_iterator::getCurrent() noexcept
 {
-	return curNode;
+    return curNode;
 }
 // -------------------------------------------------------------------------
 const string UniXML_iterator::getName() const noexcept
 {
-	if( curNode )
-	{
-		if( !curNode->name )
-			return "";
+    if( curNode )
+    {
+        if( !curNode->name )
+            return "";
 
-		return (char*) curNode->name;
-	}
+        return (char*) curNode->name;
+    }
 
-	return "";
+    return "";
 }
 
 // -------------------------------------------------------------------------
 string UniXML_iterator::getProp2( const string& name, const string& defval ) const noexcept
 {
-	return UniXML::getProp2(curNode, name, defval);
+    return UniXML::getProp2(curNode, name, defval);
 }
 
 string UniXML_iterator::getProp( const string& name ) const noexcept
 {
-	return UniXML::getProp(curNode, name);
+    return UniXML::getProp(curNode, name);
 }
 
 // -------------------------------------------------------------------------
 const string UniXML_iterator::getContent() const noexcept
 {
-	if (curNode == NULL)
-		return "";
+    if (curNode == NULL)
+        return "";
 
-	return (const char*)::xmlNodeGetContent(curNode);
+    return (const char*)::xmlNodeGetContent(curNode);
 }
 // -------------------------------------------------------------------------
 void UniXML_iterator::goBegin() noexcept
 {
-	while(canPrev())
-	{
-		goPrev();
-	}
+    while(canPrev())
+    {
+        goPrev();
+    }
 }
 // -------------------------------------------------------------------------
 void UniXML_iterator::goEnd() noexcept
 {
-	while(canNext())
-	{
-		goNext();
-	}
+    while(canNext())
+    {
+        goNext();
+    }
 }
 // -------------------------------------------------------------------------
 UniXMLPropList UniXML_iterator::getPropList() const
 {
-	return UniXML::getPropList(curNode);
+    return UniXML::getPropList(curNode);
 }
 // -------------------------------------------------------------------------
 UniXML_iterator::operator xmlNode* () const noexcept
 {
-	//ulog.< "current\n";
-	return curNode;
+    //ulog.< "current\n";
+    return curNode;
 }
 // -------------------------------------------------------------------------
 int UniXML_iterator::getIntProp( const string& name ) const noexcept
 {
-	return uniset3::uni_atoi(UniXML::getProp(curNode, name));
+    return uniset3::uni_atoi(UniXML::getProp(curNode, name));
 }
 
 int UniXML_iterator::getPIntProp( const string& name, int def ) const noexcept
 {
-	const string param( getProp(name) );
+    const string param( getProp(name) );
 
-	if( param.empty() )
-		return def;
+    if( param.empty() )
+        return def;
 
-	return uniset3::uni_atoi(param);
+    return uniset3::uni_atoi(param);
 }
 
 // -------------------------------------------------------------------------
 void UniXML_iterator::setProp( const string& name, const string& text ) noexcept
 {
-	UniXML::setProp(curNode, name, text);
+    UniXML::setProp(curNode, name, text);
 }
 
 // -------------------------------------------------------------------------
 bool UniXML_iterator::findName( const std::string& nodename, const std::string& searchname, bool deepfind ) noexcept
 {
-	xmlNode* fnode = curNode;
+    xmlNode* fnode = curNode;
 
-	while( fnode != NULL )
-	{
-		fnode = this->findX(fnode, nodename, deepfind);
+    while( fnode != NULL )
+    {
+        fnode = this->findX(fnode, nodename, deepfind);
 
-		if( !fnode )
-			return false;
+        if( !fnode )
+            return false;
 
-		if ( searchname == UniXML::getProp(fnode, "name") )
-		{
-			curNode = fnode;
-			return true;
-		}
+        if ( searchname == UniXML::getProp(fnode, "name") )
+        {
+            curNode = fnode;
+            return true;
+        }
 
-		// ищем дальше
-		fnode = fnode->next;
-	}
+        // ищем дальше
+        fnode = fnode->next;
+    }
 
-	return false;
+    return false;
 }
 
 // -------------------------------------------------------------------------
 bool UniXML_iterator::find( const std::string& searchnode, bool deepfind ) noexcept
 {
-	xmlNode* fnode = findX(curNode, searchnode, deepfind);
+    xmlNode* fnode = findX(curNode, searchnode, deepfind);
 
-	if( fnode != NULL )
-	{
-		curNode = fnode;
-		return true;
-	}
+    if( fnode != NULL )
+    {
+        curNode = fnode;
+        return true;
+    }
 
-	return false;
+    return false;
 }
 // -------------------------------------------------------------------------
 xmlNode* UniXML_iterator::findX( xmlNode* root, const std::string& searchnode, bool deepfind ) const noexcept
 {
-	if( root == NULL )
-		return NULL;
+    if( root == NULL )
+        return NULL;
 
-	// Функция ищет "в ширину и в глубь" начиная с текущего узла!
-	xmlNode* fnode = root;
+    // Функция ищет "в ширину и в глубь" начиная с текущего узла!
+    xmlNode* fnode = root;
 
-	while( fnode != NULL )
-	{
-		if( searchnode == (const char*)fnode->name )
-			return fnode;
+    while( fnode != NULL )
+    {
+        if( searchnode == (const char*)fnode->name )
+            return fnode;
 
-		// идём "в глубь"
-		if( deepfind && fnode->children )
-		{
-			xmlNode* cnode = findX(fnode->children, searchnode);
+        // идём "в глубь"
+        if( deepfind && fnode->children )
+        {
+            xmlNode* cnode = findX(fnode->children, searchnode);
 
-			if( cnode != NULL )
-				return cnode;
-		}
+            if( cnode != NULL )
+                return cnode;
+        }
 
-		// идём в ширину
-		fnode = fnode->next;
-	}
+        // идём в ширину
+        fnode = fnode->next;
+    }
 
-	return NULL;
+    return NULL;
 }
 // -------------------------------------------------------------------------
 UniXML_iterator& UniXML_iterator::operator++() noexcept
 {
-	return (*this) + 1;
+    return (*this) + 1;
 }
 // -------------------------------------------------------------------------
 UniXML_iterator UniXML_iterator::operator++(int) noexcept
 {
-	UniXML_iterator temp(*this);
-	(*this) = (*this) + 1;
-	return temp;
+    UniXML_iterator temp(*this);
+    (*this) = (*this) + 1;
+    return temp;
 }
 // -------------------------------------------------------------------------
 UniXML_iterator& UniXML_iterator::operator+=(int s) noexcept
 {
-	return (*this) + s;
+    return (*this) + s;
 }
 // -------------------------------------------------------------------------
 UniXML_iterator& UniXML_iterator::operator+(int step) noexcept
 {
-	int i = 0;
+    int i = 0;
 
-	while( i < step && curNode )
-	{
-		curNode = curNode->next;
+    while( i < step && curNode )
+    {
+        curNode = curNode->next;
 
-		if( curNode )
-		{
-			if( getName() == "text" || getName() == "comment" )
-				continue;
+        if( curNode )
+        {
+            if( getName() == "text" || getName() == "comment" )
+                continue;
 
-			i++;
-		}
-	}
+            i++;
+        }
+    }
 
-	return *this;
+    return *this;
 }
 // -------------------------------------------------------------------------
 UniXML_iterator UniXML_iterator::operator--(int) noexcept
 {
-	UniXML_iterator temp(*this);
-	(*this) = (*this) - 1;
-	return temp;
+    UniXML_iterator temp(*this);
+    (*this) = (*this) - 1;
+    return temp;
 }
 
 UniXML_iterator& UniXML_iterator::operator--() noexcept
 {
-	return (*this) - 1;
+    return (*this) - 1;
 }
 
 UniXML_iterator& UniXML_iterator::operator-=(int s) noexcept
 {
-	return (*this) - s;
+    return (*this) - s;
 }
 // -------------------------------------------------------------------------
 
 UniXML_iterator& UniXML_iterator::operator-(int step) noexcept
 {
-	int i = 0;
+    int i = 0;
 
-	while( i < step && curNode )
-	{
-		curNode = curNode->prev;
+    while( i < step && curNode )
+    {
+        curNode = curNode->prev;
 
-		if( curNode )
-		{
-			if( getName() == "text" || getName() == "comment" )
-				continue;
+        if( curNode )
+        {
+            if( getName() == "text" || getName() == "comment" )
+                continue;
 
-			i++;
-		}
-	}
+            i++;
+        }
+    }
 
-	return (*this);
+    return (*this);
 }
 // -------------------------------------------------------------------------------

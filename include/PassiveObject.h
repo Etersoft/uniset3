@@ -24,7 +24,6 @@
 
 #include <string>
 #include "UniSetTypes.h"
-#include "MessageType.h"
 #include "ProxyManager.h"
 // -------------------------------------------------------------------------
 namespace uniset3
@@ -46,7 +45,7 @@ namespace uniset3
             PassiveObject( uniset3::ObjectId id, ProxyManager* mngr );
             virtual ~PassiveObject();
 
-            virtual void processingMessage( const uniset3::messages::TransportMessage* msg );
+            virtual void processingMessage( const uniset3::umessage::TransportMessage* msg );
 
             void setID( uniset3::ObjectId id );
             void init(ProxyManager* mngr);
@@ -61,10 +60,11 @@ namespace uniset3
             }
 
         protected:
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm );
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm );
             virtual void askSensors( uniset3::UIOCommand cmd ) {}
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) {}
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) {}
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) {}
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) {}
+            virtual void onTextMessage( const uniset3::umessage::TextMessage* tm ) {}
 
             std::string myname = { "" };
             ProxyManager* mngr = { nullptr };

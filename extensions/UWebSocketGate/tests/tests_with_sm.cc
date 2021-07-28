@@ -52,37 +52,28 @@ int main(int argc, const char* argv[] )
         act->add(shm);
         act->add(ws);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
 
         int tout = 6000;
         PassiveTimer pt(tout);
 
-        while( !pt.checkTime() && !act->exist() && !ws->exist() )
+        while( !pt.checkTime() && !act->isExists() && !ws->isExists() )
             msleep(100);
 
-        if( !act->exist() )
+        if( !act->isExists() )
         {
             cerr << "(tests_with_sm): SharedMemory not exist! (timeout=" << tout << ")" << endl;
             return 1;
         }
 
-        if( !ws->exist() )
+        if( !ws->isExists() )
         {
             cerr << "(tests_with_sm): UWebSocketGate not exist! (timeout=" << tout << ")" << endl;
             return 1;
         }
 
         return session.run();
-    }
-    catch( const SystemError& err )
-    {
-        cerr << "(tests_with_sm): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(tests_with_sm): " << ex << endl;
     }
     catch( const std::exception& e )
     {

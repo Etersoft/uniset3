@@ -188,7 +188,7 @@ message ThresholdInfo
     int64 hilimit = 2;     /*!< верхняя граница срабатывания */
     int64 lowlimit = 3;    /*!< нижняя граница срабатывания */
     ThresholdState state = 4;
-    Timespec tv  = 5;      /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
+    Timespec ts  = 5;      /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
     bool invert = 6;       /*!< инвертированная логика */
 }
 
@@ -268,7 +268,9 @@ service IONotifyController_i
     */
     rpc getThresholdInfo(GetThresholdInfoParams) returns(ThresholdInfo) {}
 
-    
+    /*! получить список порогов для датчика "si" */
+    rpc getThresholds(google.protobuf.Int64Value) returns(ThresholdList) {}
+
     /*! получить список ВСЕХ датчиков по которым созданы пороги */
     rpc getThresholdsList(google.protobuf.Empty) returns(ThresholdsListSeq) {}
 }

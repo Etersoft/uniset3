@@ -207,6 +207,8 @@ namespace uniset3
             /*! глобальная функция для вывода help-а */
             static void help_print();
 
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+
             inline std::shared_ptr<DebugStream> log()
             {
                 return mylog;
@@ -249,8 +251,7 @@ namespace uniset3
             std::shared_ptr<ev::async> wscmd;
 
             void checkMessages( ev::timer& t, int revents );
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
             ev::timer iocheck;
             double check_sec = { 0.05 };
             int maxMessagesProcessing  = { 100 };
@@ -269,7 +270,7 @@ namespace uniset3
             size_t wsMaxSend = { 5000 };
             size_t wsMaxCmd = { 200 };
 
-            static Poco::JSON::Object::Ptr to_json( const uniset3::messages::SensorMessage* sm, const std::string& err );
+            static Poco::JSON::Object::Ptr to_json( const uniset3::umessage::SensorMessage* sm, const std::string& err );
             static Poco::JSON::Object::Ptr error_to_json( const std::string& err );
 
             /*! класс реализует работу с websocket через eventloop
@@ -310,7 +311,7 @@ namespace uniset3
                     void del( uniset3::ObjectId id );
                     void get( uniset3::ObjectId id );
                     void set( uniset3::ObjectId id, long value );
-                    void sensorInfo( const uniset3::messages::SensorMessage* sm );
+                    void sensorInfo( const uniset3::umessage::SensorMessage* sm );
                     void doCommand( const std::shared_ptr<SMInterface>& ui );
                     static Poco::JSON::Object::Ptr to_short_json( sinfo* si );
 

@@ -46,23 +46,33 @@ void run_test(std::size_t concurrency, int bound, shared_ptr<SharedMemory>& shm 
 {
     auto&& r_worker = [&shm, bound]
     {
+        grpc::ServerContext ctx;
         int num = bound;
-        ObjectId sid = begSensorID + rand() % 10000;
+        google::protobuf::Int64Value sid;
+        sid.set_value(begSensorID + rand() % 10000);
+        google::protobuf::Int64Value ret;
 
         while (num--)
         {
-            shm->getValue(sid);
+            sid.set_value(begSensorID + rand() % 10000);
+            shm->getValue(&ctx, &sid, &ret);
         }
     };
 
     auto&& w_worker = [&shm, bound]
     {
+        grpc::ServerContext ctx;
+        google::protobuf::Empty empty;
         int num = bound;
-        ObjectId sid = begSensorID + rand() % 10000;
+
+        SetValueParams p;
+        p.set_id(begSensorID + rand() % 10000);
+        p.set_sup_id(DefaultObjectId);
 
         while (num--)
         {
-            shm->setValue(sid, num);
+            p.set_value(num);
+            shm->setValue(&ctx, &p, &empty);
         }
     };
 
@@ -92,17 +102,16 @@ int main(int argc, char* argv[] )
         auto act = UniSetActivator::Instance();
 
         act->add(shm);
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
 
         int tout = 10000;
         PassiveTimer pt(tout);
 
-        while( !pt.checkTime() && !act->exist() )
+        while( !pt.checkTime() && !act->isExists() )
             msleep(100);
 
-        if( !act->exist() )
+        if( !act->isExists() )
         {
             cerr << "(tests_with_sm): SharedMemory not exist! (timeout=" << tout << ")" << endl;
             return 1;
@@ -116,14 +125,6 @@ int main(int argc, char* argv[] )
         int elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         std::cerr << "elapsed time: " << elapsed_seconds << " ms\n";
         return 0;
-    }
-    catch( const uniset3::SystemError& err )
-    {
-        cerr << "(tests_with_sm): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(tests_with_sm): " << ex << endl;
     }
     catch( const std::exception& e )
     {

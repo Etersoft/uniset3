@@ -117,20 +117,20 @@ TEST_CASE("UniSetTypes: getSInfoList", "[utypes][getsinfo]" )
 
     vector<uniset3::ParamSInfo> v(t1.begin(), t1.end());
 
-    REQUIRE( v[0].si.id == 141 );
-    REQUIRE( v[0].si.node == 1001 );
+    REQUIRE( v[0].si.id() == 141 );
+    REQUIRE( v[0].si.node() == 1001 );
 
-    REQUIRE( v[1].si.id == 1 );
-    REQUIRE( v[1].si.node == DefaultObjectId );
+    REQUIRE( v[1].si.id() == 1 );
+    REQUIRE( v[1].si.node() == DefaultObjectId );
 
-    REQUIRE( v[2].si.id == 5 );
-    REQUIRE( v[2].si.node == DefaultObjectId );
+    REQUIRE( v[2].si.id() == 5 );
+    REQUIRE( v[2].si.node() == DefaultObjectId );
 
-    REQUIRE( v[3].si.id == 5 );
-    REQUIRE( v[3].si.node == 1002 );
+    REQUIRE( v[3].si.id() == 5 );
+    REQUIRE( v[3].si.node() == 1002 );
 
-    REQUIRE( v[4].si.id == 6 );
-    REQUIRE( v[4].si.node == 1001 );
+    REQUIRE( v[4].si.id() == 6 );
+    REQUIRE( v[4].si.node() == 1001 );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: getObjectsList", "[utypes][getolist]" )
@@ -143,20 +143,20 @@ TEST_CASE("UniSetTypes: getObjectsList", "[utypes][getolist]" )
 
     vector<uniset3::ConsumerInfo> v(t1.begin(), t1.end());
 
-    REQUIRE( v[0].id == 100 );
-    REQUIRE( v[0].node == 1001 );
+    REQUIRE( v[0].id() == 100 );
+    REQUIRE( v[0].node() == 1001 );
 
-    REQUIRE( v[1].id == 100 );
-    REQUIRE( v[1].node == DefaultObjectId );
+    REQUIRE( v[1].id() == 100 );
+    REQUIRE( v[1].node() == DefaultObjectId );
 
-    REQUIRE( v[2].id == 102 );
-    REQUIRE( v[2].node == DefaultObjectId );
+    REQUIRE( v[2].id() == 102 );
+    REQUIRE( v[2].node() == DefaultObjectId );
 
-    REQUIRE( v[3].id == 102 );
-    REQUIRE( v[3].node == 1002 );
+    REQUIRE( v[3].id() == 102 );
+    REQUIRE( v[3].node() == 1002 );
 
-    REQUIRE( v[4].id == 103 );
-    REQUIRE( v[4].node == 1001 );
+    REQUIRE( v[4].id() == 103 );
+    REQUIRE( v[4].node() == 1001 );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: replace_all", "[utypes][replace_all]" )
@@ -245,17 +245,17 @@ TEST_CASE("UniSetTypes: setoutregion", "[utypes][setoutregion]" )
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: file_exist", "[utypes][file_exist]" )
 {
-    CHECK_FALSE( file_exist("uknown_file") );
+    CHECK_FALSE( file_exists("uknown_file") );
 
     auto conf = uniset_conf();
     REQUIRE( conf );
-    CHECK( file_exist(conf->getConfFileName()) );
+    CHECK( file_exists(conf->getConfFileName()) );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: directory_exist", "[utypes][directory_exist]" )
 {
-    CHECK_FALSE( directory_exist("uknown_dir") );
-    CHECK( directory_exist("/") ); // linux only
+    CHECK_FALSE( directory_exists("uknown_dir") );
+    CHECK( directory_exists("/") ); // linux only
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: check_filter", "[utypes][check_filter]" )

@@ -21,6 +21,7 @@
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -------------------------------------------------------------------------
 PassiveLProcessor::PassiveLProcessor( uniset3::ObjectId objId,
                                       uniset3::ObjectId shmID, const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
@@ -127,24 +128,24 @@ void PassiveLProcessor::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::sensorInfo( const uniset3::messages::SensorMessage* sm )
+void PassiveLProcessor::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
     for( auto&& it : extInputs )
     {
-        if( it.sid == sm->id )
-            it.value = sm->value;
+        if( it.sid == sm->id() )
+            it.value = sm->value();
     }
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::timerInfo( const uniset3::messages::TimerMessage* tm )
+void PassiveLProcessor::timerInfo( const uniset3::umessage::TimerMessage* tm )
 {
-    if( tm->id == tidStep )
+    if( tm->id() == tidStep )
         step();
 }
 // -------------------------------------------------------------------------
-void PassiveLProcessor::sysCommand( const uniset3::messages::SystemMessage* sm )
+void PassiveLProcessor::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
-    switch( sm->command )
+    switch( sm->cmd() )
     {
         case SystemMessage::StartUp:
         {

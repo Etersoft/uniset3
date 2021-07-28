@@ -3,6 +3,7 @@
 #include <time.h>
 #include "UInterface.h"
 #include "UniSetTypes.h"
+#include "UHelpers.h"
 
 using namespace std;
 using namespace uniset3;
@@ -36,20 +37,22 @@ TEST_CASE("UInterface", "[UInterface]")
     REQUIRE_THROWS_AS( ui.resolve(sid, 10), uniset3::ResolveNameError& );
     REQUIRE_THROWS_AS( ui.resolve(sid, DefaultObjectId), ResolveNameError& );
 
-    TransportMessage tm( SensorMessage(sid, 10).transport_msg() );
+    umessage::SensorMessage sm = makeSensorMessage(sid,10,uniset3::AI);
+    sm.mutable_header()->set_consumer(testOID);
+    umessage::TransportMessage tm = uniset3::to_transport<umessage::SensorMessage>(sm);
 
-    REQUIRE_THROWS_AS( ui.send(testOID, tm), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.send(testOID, tm, -20), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.send(testOID, tm, DefaultObjectId), uniset3::Exception& );
+    REQUIRE_THROWS_AS( ui.send(tm), uniset3::Exception& );
+    REQUIRE_THROWS_AS( ui.send(tm, -20), uniset3::Exception& );
+    REQUIRE_THROWS_AS( ui.send(tm, DefaultObjectId), uniset3::Exception& );
     REQUIRE_THROWS_AS( ui.getTimeChange(sid, -20), uniset3::Exception& );
     REQUIRE_THROWS_AS( ui.getTimeChange(sid, DefaultObjectId), uniset3::Exception& );
     REQUIRE_THROWS_AS( ui.getTimeChange(sid, conf->getLocalNode()), uniset3::Exception& );
     REQUIRE_THROWS_AS( ui.sendText(testOID, "hello", 1), uniset3::Exception& );
     REQUIRE_THROWS_AS( ui.sendText(testOID, "hello", 1, -20), uniset3::Exception& );
 
-    CHECK_FALSE( ui.isExist(sid) );
-    CHECK_FALSE( ui.isExist(sid, DefaultObjectId) );
-    CHECK_FALSE( ui.isExist(sid, 100) );
+    CHECK_FALSE( ui.isExists(sid) );
+    CHECK_FALSE( ui.isExists(sid, DefaultObjectId) );
+    CHECK_FALSE( ui.isExists(sid, 100) );
 
     CHECK_FALSE( ui.waitReady(sid, 100, 50) );
     CHECK_FALSE( ui.waitReady(sid, 300, 50, DefaultObjectId) );

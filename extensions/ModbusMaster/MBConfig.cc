@@ -20,7 +20,6 @@
 #include <Exceptions.h>
 #include <UniSetTypes.h>
 #include <extensions/Extensions.h>
-#include <ORepHelpers.h>
 #include "MBConfig.h"
 #include "modbus/MBLogSugar.h"
 // -------------------------------------------------------------------------
@@ -274,7 +273,7 @@ namespace uniset3
         os << "[ ";
 
         for( const auto& p : lst )
-            os << "(" << p.si.id << ")" << conf->oind->getBaseName(conf->oind->getMapName(p.si.id)) << " ";
+            os << "(" << p.si.id() << ")" << conf->oind->getBaseName(conf->oind->getMapName(p.si.id())) << " ";
 
         os << "]";
 
@@ -372,7 +371,7 @@ namespace uniset3
     {
         for( auto&& it : plist )
         {
-            if( it.si.id == p.si.id && it.si.node == p.si.node )
+            if( it.si.id() == p.si.id() && it.si.node() == p.si.node() )
                 return &it;
         }
 
@@ -623,7 +622,7 @@ namespace uniset3
         else
         {
             if( mbregFromID )
-                mbreg = p.si.id; // conf->getSensorID(it.getProp("name"));
+                mbreg = p.si.id(); // conf->getSensorID(it.getProp("name"));
             else
             {
                 const string reg( IOBase::initProp(it, "mbreg", prop_prefix, false) );
@@ -707,7 +706,7 @@ namespace uniset3
                 sl << "[ ";
 
                 for( const auto& i : ri->slst )
-                    sl << ORepHelpers::getShortName(conf->oind->getMapName(i.si.id)) << ",";
+                    sl << ObjectIndex::getShortName(conf->oind->getMapName(i.si.id())) << ",";
 
                 sl << "]";
 
@@ -934,7 +933,7 @@ namespace uniset3
     std::ostream& operator<<( std::ostream& os, const MBConfig::RSProperty& p )
     {
         os     << " (" << ModbusRTU::dat2str(p.reg->mbreg) << ")"
-               << " sid=" << p.si.id
+               << " sid=" << p.si.id()
                << " stype=" << p.stype
                << " nbit=" << (int)p.nbit
                << " nbyte=" << p.nbyte

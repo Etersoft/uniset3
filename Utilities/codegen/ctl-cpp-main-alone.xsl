@@ -1,21 +1,21 @@
 <?xml version='1.0' encoding="utf-8" ?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version='1.0'
-		             xmlns:date="http://exslt.org/dates-and-times">
+                     xmlns:date="http://exslt.org/dates-and-times">
 
 <xsl:import href="ctl-cpp-common.xsl"/>
 <xsl:output method="text" indent="yes" encoding="utf-8"/>
 
 <xsl:variable name="CLASSNAME">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'class-name'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'class-name'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="BASECLASS">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'base-class'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'base-class'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="OID">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'ID'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'ID'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="LOGROTATE">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'logrotate'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'logrotate'"/></xsl:call-template>
 </xsl:variable>
 
 
@@ -43,55 +43,55 @@ using namespace uniset3;
 // -----------------------------------------------------------------------------
 int main( int argc,char* argv[] )
 {
-	if( argc>1 &amp;&amp; ( strcmp(argv[1],"--help")==0 || strcmp(argv[1],"-h")==0 ) )
-	{
-		cout &lt;&lt; "--name name		- ID процесса. По умолчанию IOController1." &lt;&lt; endl;
-		cout &lt;&lt; "--confile fname	- Конф. файл. по умолчанию configure.xml" &lt;&lt; endl;
-		return 0;
-	}
+    if( argc>1 &amp;&amp; ( strcmp(argv[1],"--help")==0 || strcmp(argv[1],"-h")==0 ) )
+    {
+        cout &lt;&lt; "--name name        - ID процесса. По умолчанию IOController1." &lt;&lt; endl;
+        cout &lt;&lt; "--confile fname    - Конф. файл. по умолчанию configure.xml" &lt;&lt; endl;
+        return 0;
+    }
 
-	try
-	{
-		auto conf = uniset_init(argc, argv);
+    try
+    {
+        auto conf = uniset_init(argc, argv);
 
-		// определяем ID объекта
-		ObjectId ID = DefaultObjectId;
-		string name = conf->getArgParam("--name","<xsl:value-of select="normalize-space($OID)"/>");
-		if( !name.empty() )
-			ID = conf->getObjectID(name);
+        // определяем ID объекта
+        ObjectId ID = DefaultObjectId;
+        string name = conf->getArgParam("--name","<xsl:value-of select="normalize-space($OID)"/>");
+        if( !name.empty() )
+            ID = conf->getObjectID(name);
 
-		if( ID == uniset3::DefaultObjectId )
-		{
-			cerr &lt;&lt; "(main): идентификатор '" &lt;&lt; name 
-				&lt;&lt; "' не найден в конф. файле!"
-				&lt;&lt; " в секции " &lt;&lt; conf->getObjectsSection() &lt;&lt; endl;
-			return 1;
-		}
-	
-		auto obj = make_shared&lt;<xsl:value-of select="$CLASSNAME"/>&gt;(ID);
+        if( ID == uniset3::DefaultObjectId )
+        {
+            cerr &lt;&lt; "(main): идентификатор '" &lt;&lt; name 
+                &lt;&lt; "' не найден в конф. файле!"
+                &lt;&lt; " в секции " &lt;&lt; conf->getObjectsSection() &lt;&lt; endl;
+            return 1;
+        }
+    
+        auto obj = make_shared&lt;<xsl:value-of select="$CLASSNAME"/>&gt;(ID);
 
-		auto act = UniSetActivator::Instance();
-		act-&gt;add(obj);
+        auto act = UniSetActivator::Instance();
+        act-&gt;add(obj);
 
-		SystemMessage sm(SystemMessage::StartUp);
-		act-&gt;broadcast( sm.transport_msg() );
-		act-&gt;run(false);
-		return 0;
-	}
-	catch( const uniset3::Exception&amp; ex )
-	{
-		cerr &lt;&lt; "(main): " &lt;&lt; ex &lt;&lt; endl;
-	}
+        SystemMessage sm(SystemMessage::StartUp);
+        act-&gt;broadcast( sm.transport_msg() );
+        act-&gt;run(false);
+        return 0;
+    }
+    catch( const uniset3::Exception&amp; ex )
+    {
+        cerr &lt;&lt; "(main): " &lt;&lt; ex &lt;&lt; endl;
+    }
     catch( const std::exception&amp;ex )
     {
         cerr &lt;&lt; "(main): catch " &lt;&lt; ex.what()  &lt;&lt;   endl;
     }
-	catch(...)
-	{
-		cerr &lt;&lt; "(main): catch ..." &lt;&lt; endl;
-	}
+    catch(...)
+    {
+        cerr &lt;&lt; "(main): catch ..." &lt;&lt; endl;
+    }
 
-	return 1;
+    return 1;
 }
 </xsl:template>
 </xsl:stylesheet>

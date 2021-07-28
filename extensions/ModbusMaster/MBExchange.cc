@@ -20,7 +20,6 @@
 #include <Exceptions.h>
 #include <UniSetTypes.h>
 #include <extensions/Extensions.h>
-#include <ORepHelpers.h>
 #include "MBExchange.h"
 #include "modbus/MBLogSugar.h"
 // -------------------------------------------------------------------------
@@ -29,6 +28,7 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     using namespace std;
     using namespace uniset3::extensions;
+    using namespace uniset3::umessage;
     // -----------------------------------------------------------------------------
     MBExchange::MBExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId,
                            const std::shared_ptr<SharedMemory>& _ic, const std::string& prefix ):
@@ -395,7 +395,7 @@ namespace uniset3
                 {
                     for( auto it2 = it->second->slst.begin(); it2 != it->second->slst.end(); ++it2 )
                     {
-                        it2->value = shm->localGetValue(it2->ioit, it2->si.id);
+                        it2->value = shm->localGetValue(it2->ioit, it2->si.id());
                     }
 
                     it->second->sm_initOK = true;
@@ -405,7 +405,7 @@ namespace uniset3
 
         for( auto t = mbconf->thrlist.begin(); t != mbconf->thrlist.end(); ++t )
         {
-            t->value = shm->localGetValue(t->ioit, t->si.id);
+            t->value = shm->localGetValue(t->ioit, t->si.id());
         }
     }
     // -----------------------------------------------------------------------------
@@ -638,7 +638,7 @@ namespace uniset3
                 }
 
                 mbcrit << myname << "(initSMValue): IGNORE item: rnum=" << p->rnum
-                       << " > 1 ?!! for id=" << p->si.id << endl;
+                       << " > 1 ?!! for id=" << p->si.id() << endl;
 
                 return false;
             }
@@ -670,7 +670,7 @@ namespace uniset3
             {
                 if( p->nbyte <= 0 || p->nbyte > VTypes::Byte::bsize )
                 {
-                    mbcrit << myname << "(initSMValue): IGNORE item: sid=" << ModbusRTU::dat2str(p->si.id)
+                    mbcrit << myname << "(initSMValue): IGNORE item: sid=" << ModbusRTU::dat2str(p->si.id())
                            << " vtype=" << p->vType << " but nbyte=" << p->nbyte << endl;
                     return false;
                 }
@@ -717,26 +717,9 @@ namespace uniset3
 
             return true;
         }
-        catch(uniset3::NameNotFound& ex)
+        catch( const std::exception& ex )
         {
-            mblog3 << myname << "(initSMValue):(NameNotFound) " << ex.err << endl;
-        }
-        catch(uniset3::IOBadParam& ex )
-        {
-            mblog3 << myname << "(initSMValue):(IOBadParam) " << ex.err << endl;
-        }
-        catch(uniset3::BadRange& ex )
-        {
-            mblog3 << myname << "(initSMValue): (BadRange)..." << endl;
-        }
-        catch( const CORBA::SystemException& ex)
-        {
-            mblog3 << myname << "(initSMValue): CORBA::SystemException: "
-                   << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            mblog3 << myname << "(initSMValue): " << ex << endl;
+            mblog3 << myname << "(initSMValue): " << ex.what() << endl;
         }
         catch(...)
         {
@@ -977,27 +960,6 @@ namespace uniset3
                     if( !shm->isLocalwork() )
                         d->mode = shm->localGetValue(d->mode_it, d->mode_id);
                 }
-                catch(uniset3::NameNotFound& ex)
-                {
-                    mblog3 << myname << "(updateSM):(NameNotFound) " << ex.err << endl;
-                }
-                catch(uniset3::IOBadParam& ex )
-                {
-                    mblog3 << myname << "(updateSM):(IOBadParam) " << ex.err << endl;
-                }
-                catch( uniset3::BadRange& ex )
-                {
-                    mblog3 << myname << "(updateSM): (BadRange)..." << endl;
-                }
-                catch( const CORBA::SystemException& ex )
-                {
-                    mblog3 << myname << "(updateSM): CORBA::SystemException: "
-                           << ex.NP_minorString() << endl;
-                }
-                catch( const uniset3::Exception& ex )
-                {
-                    mblog3 << myname << "(updateSM): " << ex << endl;
-                }
                 catch( std::exception& ex )
                 {
                     mblog3 << myname << "(updateSM): check modeSensor: " << ex.what() << endl;
@@ -1014,27 +976,6 @@ namespace uniset3
                             else
                                 d->safeMode = MBConfig::safeNone;
                         }
-                    }
-                    catch(uniset3::NameNotFound& ex)
-                    {
-                        mblog3 << myname << "(updateSM):(NameNotFound) " << ex.err << endl;
-                    }
-                    catch(uniset3::IOBadParam& ex )
-                    {
-                        mblog3 << myname << "(updateSM):(IOBadParam) " << ex.err << endl;
-                    }
-                    catch( uniset3::BadRange& ex )
-                    {
-                        mblog3 << myname << "(updateSM): (BadRange)..." << endl;
-                    }
-                    catch( const CORBA::SystemException& ex )
-                    {
-                        mblog3 << myname << "(updateSM): CORBA::SystemException: "
-                               << ex.NP_minorString() << endl;
-                    }
-                    catch( const uniset3::Exception& ex )
-                    {
-                        mblog3 << myname << "(updateSM): " << ex << endl;
                     }
                     catch( std::exception& ex )
                     {
@@ -1062,27 +1003,6 @@ namespace uniset3
                             updateMTR(it);
                         else if( d->dtype == MBConfig::dtRTU188 )
                             updateRTU188(it);
-                    }
-                    catch(uniset3::NameNotFound& ex)
-                    {
-                        mblog3 << myname << "(updateSM):(NameNotFound) " << ex.err << endl;
-                    }
-                    catch(uniset3::IOBadParam& ex )
-                    {
-                        mblog3 << myname << "(updateSM):(IOBadParam) " << ex.err << endl;
-                    }
-                    catch(uniset3::BadRange& ex )
-                    {
-                        mblog3 << myname << "(updateSM): (BadRange)..." << endl;
-                    }
-                    catch( const CORBA::SystemException& ex )
-                    {
-                        mblog3 << myname << "(updateSM): CORBA::SystemException: "
-                               << ex.NP_minorString() << endl;
-                    }
-                    catch( const uniset3::Exception& ex )
-                    {
-                        mblog3 << myname << "(updateSM): " << ex << endl;
                     }
                     catch( const std::exception& ex )
                     {
@@ -1126,7 +1046,7 @@ namespace uniset3
 
         bool useSafeval = isSafeMode(r->dev) && p->safevalDefined;
 
-        mblog3 << myname << "(updateP): sid=" << p->si.id
+        mblog3 << myname << "(updateP): sid=" << p->si.id()
                << " mbval=" << r->mbval
                << " vtype=" << p->vType
                << " rnum=" << p->rnum
@@ -1208,7 +1128,7 @@ namespace uniset3
                 }
 
                 mbcrit << myname << "(updateRSProperty): IGNORE item: rnum=" << p->rnum
-                       << " > 1 ?!! for id=" << p->si.id << endl;
+                       << " > 1 ?!! for id=" << p->si.id() << endl;
                 return;
             }
             else if( p->vType == VTypes::vtSigned )
@@ -1528,26 +1448,9 @@ namespace uniset3
 
             return;
         }
-        catch(uniset3::NameNotFound& ex)
+        catch( const std::exception& ex )
         {
-            mblog3 << myname << "(updateRSProperty):(NameNotFound) " << ex.err << endl;
-        }
-        catch(uniset3::IOBadParam& ex )
-        {
-            mblog3 << myname << "(updateRSProperty):(IOBadParam) " << ex.err << endl;
-        }
-        catch(uniset3::BadRange& ex )
-        {
-            mblog3 << myname << "(updateRSProperty): (BadRange)..." << endl;
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            mblog3 << myname << "(updateRSProperty): CORBA::SystemException: "
-                   << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            mblog3 << myname << "(updateRSProperty): " << ex << endl;
+            mblog3 << myname << "(updateRSProperty): " << ex.what() << endl;
         }
         catch(...)
         {
@@ -1868,26 +1771,9 @@ namespace uniset3
                     continue;
                 }
             }
-            catch(uniset3::NameNotFound& ex)
+            catch( const std::exception& ex )
             {
-                mblog3 << myname << "(updateMTR):(NameNotFound) " << ex.err << endl;
-            }
-            catch(uniset3::IOBadParam& ex )
-            {
-                mblog3 << myname << "(updateMTR):(IOBadParam) " << ex.err << endl;
-            }
-            catch(uniset3::BadRange& ex )
-            {
-                mblog3 << myname << "(updateMTR): (BadRange)..." << endl;
-            }
-            catch( const CORBA::SystemException& ex )
-            {
-                mblog3 << myname << "(updateMTR): CORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-            }
-            catch( const uniset3::Exception& ex )
-            {
-                mblog3 << myname << "(updateMTR): " << ex << endl;
+                mblog3 << myname << "(updateMTR): " << ex.what() << endl;
             }
             catch(...)
             {
@@ -1935,26 +1821,9 @@ namespace uniset3
                     IOBase::processingAsAI( &(*it), val, shm, force );
                 }
             }
-            catch(uniset3::NameNotFound& ex)
+            catch( const std::exception& ex )
             {
-                mblog3 << myname << "(updateRTU188):(NameNotFound) " << ex.err << endl;
-            }
-            catch(uniset3::IOBadParam& ex )
-            {
-                mblog3 << myname << "(updateRTU188):(IOBadParam) " << ex.err << endl;
-            }
-            catch(uniset3::BadRange& ex )
-            {
-                mblog3 << myname << "(updateRTU188): (BadRange)..." << endl;
-            }
-            catch( const CORBA::SystemException& ex )
-            {
-                mblog3 << myname << "(updateRTU188): CORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-            }
-            catch( const uniset3::Exception& ex )
-            {
-                mblog3 << myname << "(updateRTU188): " << ex << endl;
+                mblog3 << myname << "(updateRTU188): " << ex.what() << endl;
             }
             catch(...)
             {
@@ -1983,9 +1852,9 @@ namespace uniset3
         return true;
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::sysCommand( const uniset3::messages::SystemMessage* sm )
+    void MBExchange::sysCommand( const uniset3::umessage::SystemMessage* sm )
     {
-        switch( sm->command )
+        switch( sm->cmd() )
         {
             case SystemMessage::StartUp:
             {
@@ -2242,7 +2111,7 @@ namespace uniset3
                     {
                         try
                         {
-                            shm->askSensor(i->si.id, cmd);
+                            shm->askSensor(i->si.id(), cmd);
                         }
                         catch( uniset3::Exception& ex )
                         {
@@ -2250,7 +2119,7 @@ namespace uniset3
                         }
                         catch(...)
                         {
-                            mbwarn << myname << "(askSensors): id=" << i->si.id << " catch..." << std::endl;
+                            mbwarn << myname << "(askSensors): id=" << i->si.id() << " catch..." << std::endl;
                         }
                     }
                 }
@@ -2258,12 +2127,12 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBExchange::sensorInfo( const uniset3::messages::SensorMessage* sm )
+    void MBExchange::sensorInfo( const uniset3::umessage::SensorMessage* sm )
     {
-        if( sm->id == sidExchangeMode )
+        if( sm->id() == sidExchangeMode )
         {
-            exchangeMode = sm->value;
-            mblog3 << myname << "(sensorInfo): exchange MODE=" << sm->value << std::endl;
+            exchangeMode = sm->value();
+            mblog3 << myname << "(sensorInfo): exchange MODE=" << sm->value() << std::endl;
             //return; // этот датчик может встречаться и в списке обмена.. поэтому делать return нельзя.
         }
 
@@ -2271,12 +2140,12 @@ namespace uniset3
         {
             auto& d(it1->second);
 
-            if( sm->id == d->mode_id )
-                d->mode = sm->value;
+            if( sm->id() == d->mode_id )
+                d->mode = sm->value();
 
-            if( sm->id == d->safemode_id )
+            if( sm->id() == d->safemode_id )
             {
-                if( sm->value == d->safemode_value )
+                if( sm->value() == d->safemode_value )
                     d->safeMode = MBConfig::safeExternalControl;
                 else
                     d->safeMode = MBConfig::safeNone;
@@ -2296,17 +2165,17 @@ namespace uniset3
 
                     for( auto&& i : it.second->slst )
                     {
-                        if( sm->id == i.si.id && sm->node == i.si.node )
+                        if( sm->id() == i.si.id() && sm->header().node() == i.si.node() )
                         {
-                            mbinfo << myname << "(sensorInfo): si.id=" << sm->id
+                            mbinfo << myname << "(sensorInfo): si.id()=" << sm->id()
                                    << " reg=" << ModbusRTU::dat2str(i.reg->mbreg)
-                                   << " val=" << sm->value
+                                   << " val=" << sm->value()
                                    << " mb_initOK=" << i.reg->mb_initOK << endl;
 
                             if( !i.reg->mb_initOK )
                                 continue;
 
-                            i.value = sm->value;
+                            i.value = sm->value();
                             updateRSProperty( &i, true );
                             return;
                         }
@@ -2318,10 +2187,10 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     void MBExchange::timerInfo( const TimerMessage* tm )
     {
-        if( tm->id == tmExchange )
+        if( tm->id() == tmExchange )
         {
             if( notUseExchangeTimer )
-                askTimer(tm->id, 0);
+                askTimer(tm->id(), 0);
             else
                 step();
         }
@@ -2526,13 +2395,17 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    uniset3::SimpleInfo* MBExchange::getInfo( const char* userparam )
+    grpc::Status MBExchange::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
     {
-        uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+        ::google::protobuf::StringValue oinf;
+        grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+        if( !st.ok() )
+            return st;
 
         ostringstream inf;
 
-        inf << i->info << endl;
+        inf << oinf.value() << endl;
         inf << vmon.pretty_str() << endl;
         inf << "activated: " << activated << endl;
         inf << "LogServer:  " << logserv_host << ":" << logserv_port << endl;
@@ -2548,8 +2421,8 @@ namespace uniset3
         for( const auto& it : mbconf->devices )
             inf << "  " <<  it.second->getShortInfo() << endl;
 
-        i->info = inf.str().c_str();
-        return i._retn();
+        response->set_value(inf.str());
+        return grpc::Status::OK;
     }
     // ----------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
@@ -2580,7 +2453,7 @@ namespace uniset3
             {
                 confile = p[0].second;
 
-                if( !uniset3::file_exist(confile) )
+                if( !uniset3::file_exists(confile) )
                 {
                     ostringstream err;
                     err << myname << "(reload): Not found config file '" << confile << "'";

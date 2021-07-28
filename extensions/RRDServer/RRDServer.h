@@ -25,7 +25,7 @@
 #include "SharedMemory.h"
 #include "extensions/Extensions.h"
 // --------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -113,9 +113,9 @@ namespace uniset33
             RRDServer();
 
             virtual void askSensors( uniset3::UIOCommand cmd ) override;
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
 
             void initRRD( xmlNode* cnode, int tmID );
             virtual void step() override;
@@ -160,7 +160,7 @@ namespace uniset33
             std::string prefix;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // _RRDServer_H_
 // -----------------------------------------------------------------------------

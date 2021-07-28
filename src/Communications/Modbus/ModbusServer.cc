@@ -730,7 +730,7 @@ namespace uniset3
 			switch( rbuf.func() )
 			{
 				case fnReadCoilStatus:
-					rbuf.dlen = ReadCoilmessages::szData();
+                    rbuf.dlen = ReadCoilMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -738,7 +738,7 @@ namespace uniset3
 					break;
 
 				case fnReadInputStatus:
-					rbuf.dlen = ReadInputStatusmessages::szData();
+                    rbuf.dlen = ReadInputStatusMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -746,7 +746,7 @@ namespace uniset3
 					break;
 
 				case fnReadOutputRegisters:
-					rbuf.dlen = ReadOutputmessages::szData();
+                    rbuf.dlen = ReadOutputMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -754,7 +754,7 @@ namespace uniset3
 					break;
 
 				case fnReadInputRegisters:
-					rbuf.dlen = ReadInputmessages::szData();
+                    rbuf.dlen = ReadInputMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -762,23 +762,23 @@ namespace uniset3
 					break;
 
 				case fnForceMultipleCoils:
-					rbuf.dlen = ForceCoilsmessages::szHead();
+                    rbuf.dlen = ForceCoilsMessage::szHead();
 					break;
 
 				case fnWriteOutputRegisters:
-					rbuf.dlen = WriteOutputmessages::szHead();
+                    rbuf.dlen = WriteOutputMessage::szHead();
 					break;
 
 				case fnForceSingleCoil:
-					rbuf.dlen = ForceSingleCoilmessages::szHead();
+                    rbuf.dlen = ForceSingleCoilMessage::szHead();
 					break;
 
 				case fnWriteOutputSingleRegister:
-					rbuf.dlen = WriteSingleOutputmessages::szHead();
+                    rbuf.dlen = WriteSingleOutputMessage::szHead();
 					break;
 
 				case fnDiagnostics:
-					rbuf.dlen = Diagnosticmessages::szHead();
+                    rbuf.dlen = DiagnosticMessage::szHead();
 					break;
 
 				case fnMEI:
@@ -786,7 +786,7 @@ namespace uniset3
 					break;
 
 				case fnJournalCommand:
-					rbuf.dlen = JournalCommandmessages::szData();
+                    rbuf.dlen = JournalCommandMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -794,7 +794,7 @@ namespace uniset3
 					break;
 
 				case fnSetDateTime:
-					rbuf.dlen = SetDateTimemessages::szData();
+                    rbuf.dlen = SetDateTimeMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -802,11 +802,11 @@ namespace uniset3
 					break;
 
 				case fnRemoteService:
-					rbuf.dlen = RemoteServicemessages::szHead();
+                    rbuf.dlen = RemoteServiceMessage::szHead();
 					break;
 
 				case fnFileTransfer:
-					rbuf.dlen = FileTransfermessages::szData();
+                    rbuf.dlen = FileTransferMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -964,7 +964,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnForceMultipleCoils )
 			{
-				int szDataLen = ForceCoilsmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = ForceCoilsMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1034,7 +1034,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnWriteOutputRegisters )
 			{
-				int szDataLen = WriteOutputmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = WriteOutputMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1104,7 +1104,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnForceSingleCoil )
 			{
-				int szDataLen = ForceSingleCoilmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = ForceSingleCoilMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1174,7 +1174,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnWriteOutputSingleRegister )
 			{
-				int szDataLen = WriteSingleOutputmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = WriteSingleOutputMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1244,7 +1244,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnDiagnostics )
 			{
-				int szDataLen = Diagnosticmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = DiagnosticMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1430,7 +1430,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnRemoteService )
 			{
-				int szDataLen = RemoteServicemessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = RemoteServiceMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1647,7 +1647,7 @@ namespace uniset3
 			return ModbusRTU::erOperationFailed;
 		}
 
-		int seek = query.numpacket * ModbusRTU::FileTransferRetmessages::MaxDataLen;
+        int seek = query.numpacket * ModbusRTU::FileTransferRetMessage::MaxDataLen;
 		int ret = lseek(fd, seek, SEEK_SET);
 
 		if( ret == -1 )
@@ -1660,7 +1660,7 @@ namespace uniset3
 			return ModbusRTU::erOperationFailed;
 		}
 
-		ModbusRTU::ModbusByte buf[ModbusRTU::FileTransferRetmessages::MaxDataLen];
+        ModbusRTU::ModbusByte buf[ModbusRTU::FileTransferRetMessage::MaxDataLen];
 
 		ret = ::read(fd, &buf, sizeof(buf));
 
@@ -1688,9 +1688,9 @@ namespace uniset3
 
 		close(fd);
 
-		int numpacks = fs.st_size / ModbusRTU::FileTransferRetmessages::MaxDataLen;
+        int numpacks = fs.st_size / ModbusRTU::FileTransferRetMessage::MaxDataLen;
 
-		if( fs.st_size % ModbusRTU::FileTransferRetmessages::MaxDataLen )
+        if( fs.st_size % ModbusRTU::FileTransferRetMessage::MaxDataLen )
 			numpacks++;
 
 		if( !reply.set(query.numfile, numpacks, query.numpacket, buf, ret) )
@@ -1775,7 +1775,7 @@ namespace uniset3
 			{
 				// подтверждаем сохранение
 				// в ответе возвращаем установленное время...
-				ModbusRTU::SetDateTimeRetmessages::cpy(reply, query);
+                ModbusRTU::SetDateTimeRetMessage::cpy(reply, query);
 				return ModbusRTU::erNoError;
 			}
 			else if( dlog && dlog->is_warn() )

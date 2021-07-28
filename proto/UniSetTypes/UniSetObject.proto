@@ -25,8 +25,8 @@ service UniSetObject_i {
     /*! REST API. query: /api/version/query_for_object[?param1&param2...] */
     rpc request(google.protobuf.StringValue) returns (google.protobuf.StringValue) {}
 
-    rpc exist(google.protobuf.Empty) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
+    rpc exists(google.protobuf.Empty) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
 
     /*!  Функция посылки сообщения объекту */
-    rpc push(uniset3.messages.TransportMessage) returns(google.protobuf.Empty) {}
+    rpc push(uniset3.umessage.TransportMessage) returns(google.protobuf.Empty) {}
 }

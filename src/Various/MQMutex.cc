@@ -16,87 +16,86 @@
 // -------------------------------------------------------------------------
 #include <unordered_map>
 #include <map>
-#include "MessageType.h"
 #include "MQMutex.h"
 //--------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
 //--------------------------------------------------------------------------
 MQMutex::MQMutex( size_t qsize ):
-	SizeOfMessageQueue(qsize)
+    SizeOfMessageQueue(qsize)
 {
 }
 //---------------------------------------------------------------------------
 void MQMutex::push( const VoidMessagePtr& vm )
 {
-	std::lock_guard<std::mutex> lk(qmutex);
+    std::lock_guard<std::mutex> lk(qmutex);
 
-	size_t sz = mqueue.size();
+    size_t sz = mqueue.size();
 
-	// проверяем переполнение, только если стратегия "терять новые данные"
-	// иначе нет смысла проверять, а можно просто писать новые данные затирая старые
-	// (sz+1) - т.к мы смотрим есть ли место для новых данных
-	if( (sz + 1) > SizeOfMessageQueue )
-	{
-		stCountOfLostMessages++;
+    // проверяем переполнение, только если стратегия "терять новые данные"
+    // иначе нет смысла проверять, а можно просто писать новые данные затирая старые
+    // (sz+1) - т.к мы смотрим есть ли место для новых данных
+    if( (sz + 1) > SizeOfMessageQueue )
+    {
+        stCountOfLostMessages++;
 
-		if( lostStrategy == lostNewData )
-			return;
+        if( lostStrategy == lostNewData )
+            return;
 
-		// if( lostStrategy == lostOldData )
-		mqueue.pop_front(); // удаляем одно старое, добавляем одно новое
-		sz--;
-	}
+        // if( lostStrategy == lostOldData )
+        mqueue.pop_front(); // удаляем одно старое, добавляем одно новое
+        sz--;
+    }
 
-	mqueue.push_back(vm);
-	sz++;
+    mqueue.push_back(vm);
+    sz++;
 
-	if( sz > stMaxQueueMessages )
-		stMaxQueueMessages = sz;
+    if( sz > stMaxQueueMessages )
+        stMaxQueueMessages = sz;
 }
 //---------------------------------------------------------------------------
 VoidMessagePtr MQMutex::top() noexcept
 {
-	try
-	{
-		std::lock_guard<std::mutex> lk(qmutex);
+    try
+    {
+        std::lock_guard<std::mutex> lk(qmutex);
 
-		if( mqueue.empty() )
-			return nullptr;
+        if( mqueue.empty() )
+            return nullptr;
 
-		auto m = mqueue.front();
-		mqueue.pop_front();
-		return m;
-	}
-	catch(...) {}
+        auto m = mqueue.front();
+        mqueue.pop_front();
+        return m;
+    }
+    catch(...) {}
 
-	return nullptr;
+    return nullptr;
 }
 //---------------------------------------------------------------------------
 size_t MQMutex::size()
 {
-	std::lock_guard<std::mutex> lk(qmutex);
-	return mqueue.size();
+    std::lock_guard<std::mutex> lk(qmutex);
+    return mqueue.size();
 }
 //---------------------------------------------------------------------------
 bool MQMutex::empty()
 {
-	std::lock_guard<std::mutex> lk(qmutex);
-	return mqueue.empty();
+    std::lock_guard<std::mutex> lk(qmutex);
+    return mqueue.empty();
 }
 //---------------------------------------------------------------------------
 void MQMutex::setMaxSizeOfMessageQueue( size_t s ) noexcept
 {
-	SizeOfMessageQueue = s;
+    SizeOfMessageQueue = s;
 }
 //---------------------------------------------------------------------------
 size_t MQMutex::getMaxSizeOfMessageQueue() const noexcept
 {
-	return SizeOfMessageQueue;
+    return SizeOfMessageQueue;
 }
 //---------------------------------------------------------------------------
 void MQMutex::setLostStrategy( MQMutex::LostStrategy s ) noexcept
 {
-	lostStrategy = s;
+    lostStrategy = s;
 }
 //---------------------------------------------------------------------------

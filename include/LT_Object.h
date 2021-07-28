@@ -42,7 +42,7 @@ namespace uniset3
         время на проверку таймеров (правда при условии, что в списке есть хотя бы один заказ)
 
         \par Основной принцип
-            Проверяет список таймеров и при срабатывании формирует стандартное уведомление uniset3::messages::TimerMessage,
+            Проверяет список таймеров и при срабатывании формирует стандартное уведомление uniset3::umessage::TimerMessage,
         которое помещается в очередь указанному объекту. При проверке таймеров, определяется минимальное время оставшееся
         до очередного срабатывания. Если в списке не остаётся ни одного таймера - возвращает UniSetTimers::WaitUpTime.
 
@@ -108,7 +108,7 @@ namespace uniset3
                 \return Возвращает время [мсек] оставшееся до срабатывания очередного таймера
             */
             virtual timeout_t askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks = -1,
-                                        uniset3::messages::Priority p = uniset3::messages::mpHigh );
+                                        uniset3::umessage::Priority p = uniset3::umessage::mpHigh );
 
 
             /*!
@@ -139,7 +139,7 @@ namespace uniset3
             struct TimerInfo
             {
                 TimerInfo() {};
-                TimerInfo( uniset3::TimerId id, timeout_t timeMS, clock_t cnt, uniset3::messages::Priority p ):
+                TimerInfo( uniset3::TimerId id, timeout_t timeMS, clock_t cnt, uniset3::umessage::Priority p ):
                     id(id),
                     curTimeMS(timeMS),
                     priority(p),
@@ -156,7 +156,7 @@ namespace uniset3
 
                 uniset3::TimerId id = { 0 };   /*!<  идентификатор таймера */
                 timeout_t curTimeMS = { 0 };   /*!<  остаток времени */
-                uniset3::messages::Priority priority = { uniset3::messages::mpHigh }; /*!<  приоритет посылаемого сообщения */
+                uniset3::umessage::Priority priority = { uniset3::umessage::mpHigh }; /*!<  приоритет посылаемого сообщения */
 
                 /*!
                  * текущий такт

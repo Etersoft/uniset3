@@ -141,9 +141,9 @@ namespace uniset3
             virtual void callback() noexcept override;
 
             virtual void askSensors( uniset3::UIOCommand cmd ) override;
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
             virtual std::string getMonitInfo() const override;
 
             void init( xmlNode* cnode );

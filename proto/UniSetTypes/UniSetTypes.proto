@@ -5,12 +5,13 @@ package uniset3;
 option optimize_for = LITE_RUNTIME;
 // option cc_enable_arenas = true;
 // ---------------------------------------------------------------------------
-/*! Информация об объектеp */
+/*! Информация об объекте */
 message ObjectRef
 {
     int64 id = 1;
     string addr = 2; // ip:port
     string path = 3;
+    string type = 4;
 }
 
 /*! Типы входов/выходов */

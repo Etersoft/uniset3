@@ -24,14 +24,12 @@
 //--------------------------------------------------------------------------------
 #include <string>
 #include <memory>
-#include "IOController_i.hh"
-#include "ObjectRepository.h"
+#include "IOController.pb.h"
 #include "UInterface.h"
 #include "PassiveTimer.h"
 //--------------------------------------------------------------------------------
 namespace uniset3
 {
-
     class SViewer
     {
         public:
@@ -44,10 +42,10 @@ namespace uniset3
 
         protected:
             void readSection(const std::string& sec, const std::string& secRoot);
-            void getInfo(uniset3::ObjectId id);
+            void getSensorsInfo(uniset3::ObjectId iocontrollerID);
 
-            virtual void updateSensors( uniset3::SensorInfoSeq_var& amap, uniset3::ObjectId oid );
-            virtual void updateThresholds( uniset3::ThresholdsListSeq_var& tlst, uniset3::ObjectId oid );
+            virtual void updateSensors( uniset3::SensorIOInfoSeq& smap, uniset3::ObjectId oid );
+            virtual void updateThresholds( uniset3::ThresholdsListSeq& tlst, uniset3::ObjectId oid );
 
             const std::string csec;
 
@@ -60,7 +58,6 @@ namespace uniset3
             std::shared_ptr<UInterface> ui;
 
         private:
-            ObjectRepository rep;
             bool isShortName = { true };
 
     };

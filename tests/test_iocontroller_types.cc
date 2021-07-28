@@ -14,23 +14,23 @@ using namespace uniset3;
 TEST_CASE("IOController: USensorInfo", "[ioc][usi]" )
 {
     IOController::USensorInfo usi;
-    usi.supplier = 100;
-    usi.blocked = true;
-    usi.value = 9;
+    usi.sinf.set_supplier(100);
+    usi.sinf.set_blocked(true);
+    usi.sinf.set_value(9);
 
     SECTION( "makeSensorIOInfo" )
     {
         uniset3::SensorIOInfo si( usi.makeSensorIOInfo() );
-        REQUIRE( si.supplier == 100 );
-        REQUIRE( si.blocked == true );
-        REQUIRE( si.value == 9 );
+        REQUIRE( si.supplier() == 100 );
+        REQUIRE( si.blocked() == true );
+        REQUIRE( si.value() == 9 );
     }
 
     SECTION( "makeSensorMessage" )
     {
-        uniset3::messages::SensorMessage sm( usi.makeSensorMessage() );
-        REQUIRE( sm.supplier == 100 );
-        REQUIRE( sm.value == 9 );
+        uniset3::umessage::SensorMessage sm( usi.makeSensorMessage() );
+        REQUIRE( sm.header().supplier() == 100 );
+        REQUIRE( sm.value() == 9 );
     }
 
     WARN("Tests for 'UniSetTypes' incomplete...");

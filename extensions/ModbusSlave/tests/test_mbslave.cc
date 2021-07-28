@@ -676,10 +676,10 @@ static void test_write10_F2( const float& val )
 
     auto conf = uniset_conf();
     uniset3::SensorInfo si;
-    si.id = 2007;
-    si.node = conf->getLocalNode();
+    si.set_id(2007);
+    si.set_node(conf->getLocalNode());
     uniset3::CalibrateInfo cal = ui->getCalibrateInfo(si);
-    float fval = (float)ui->getValue(si.id) / pow(10.0, cal.precision);
+    float fval = (float)ui->getValue(si.id()) / pow(10.0, cal.precision());
 
     REQUIRE( fval == val );
 }
@@ -697,10 +697,11 @@ static void test_write10_F2r( const float& val )
 
     auto conf = uniset_conf();
     uniset3::SensorInfo si;
-    si.id = 2008;
-    si.node = conf->getLocalNode();
+    si.set_id(2008);
+    si.set_node(conf->getLocalNode());
+
     uniset3::CalibrateInfo cal = ui->getCalibrateInfo(si);
-    float fval = (float)ui->getValue(si.id) / pow(10.0, cal.precision);
+    float fval = (float)ui->getValue(si.id()) / pow(10.0, cal.precision());
 
     REQUIRE( fval == val );
 }
@@ -721,10 +722,10 @@ static void test_write10_F4raw( const float& val )
 
     auto conf = uniset_conf();
     uniset3::SensorInfo si;
-    si.id = 2013;
-    si.node = conf->getLocalNode();
+    si.set_id(2013);
+    si.set_node(conf->getLocalNode());
 
-    long raw = ui->getValue(si.id);
+    long raw = ui->getValue(si.id());
     float fval = 0;
     memcpy( &fval, &raw, std::min(sizeof(fval), sizeof(raw)) );
     REQUIRE( fval == val );
@@ -746,10 +747,10 @@ static void test_write10_F4prec( const float& val )
 
     auto conf = uniset_conf();
     uniset3::SensorInfo si;
-    si.id = 2009;
-    si.node = conf->getLocalNode();
+    si.set_id(2009);
+    si.set_node(conf->getLocalNode());
     uniset3::CalibrateInfo cal = ui->getCalibrateInfo(si);
-    float fval = (float)ui->getValue(si.id) / pow(10.0, cal.precision);
+    float fval = (float)ui->getValue(si.id()) / pow(10.0, cal.precision());
 
     REQUIRE( fval == val );
 }

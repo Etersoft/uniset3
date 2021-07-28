@@ -21,6 +21,7 @@
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 MQTTPublisher::MQTTPublisher(uniset3::ObjectId objId, xmlNode* cnode, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                              const string& prefix ):
@@ -151,7 +152,7 @@ void MQTTPublisher::sysCommand(const SystemMessage* sm)
 {
     UObject_SK::sysCommand(sm);
 
-    if( sm->command == SystemMessage::StartUp || sm->command == SystemMessage::WatchDog )
+    if( sm->cmd() == SystemMessage::StartUp || sm->cmd() == SystemMessage::WatchDog )
     {
         if( !connectOK )
         {
@@ -268,14 +269,14 @@ void MQTTPublisher::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void MQTTPublisher::sensorInfo( const uniset3::messages::SensorMessage* sm )
+void MQTTPublisher::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
-    auto i = publist.find(sm->id);
+    auto i = publist.find(sm->id());
 
     if( i != publist.end() )
     {
         ostringstream m;
-        m << sm->value;
+        m << sm->value();
 
         string tmsg(m.str());
 
@@ -290,10 +291,10 @@ void MQTTPublisher::sensorInfo( const uniset3::messages::SensorMessage* sm )
         }
     }
 
-    auto t = textpublist.find(sm->id);
+    auto t = textpublist.find(sm->id());
 
     if( t != textpublist.end() )
-        t->second.check(this, sm->value, mylog, myname);
+        t->second.check(this, sm->value(), mylog, myname);
 }
 // -----------------------------------------------------------------------------
 MQTTPublisher::MQTTTextInfo::MQTTTextInfo( const string& rootsec, UniXML::iterator s, UniXML::iterator i ):

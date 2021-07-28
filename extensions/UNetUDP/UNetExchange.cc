@@ -27,6 +27,7 @@
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 UNetExchange::UNetExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
     UniSetObject(objId),
@@ -277,7 +278,7 @@ void UNetExchange::timerInfo( const TimerMessage* tm )
     if( !activated )
         return;
 
-    if( tm->id == tmStep )
+    if( tm->id() == tmStep )
         step();
 }
 // -----------------------------------------------------------------------------
@@ -376,9 +377,9 @@ void UNetExchange::ReceiverInfo::step( const std::shared_ptr<SMInterface>& shm, 
     }
 }
 // -----------------------------------------------------------------------------
-void UNetExchange::sysCommand( const uniset3::messages::SystemMessage* sm )
+void UNetExchange::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
-    switch( sm->command )
+    switch( sm->cmd() )
     {
         case SystemMessage::StartUp:
         {
@@ -504,13 +505,13 @@ void UNetExchange::askSensors( uniset3::UIOCommand cmd )
         sender2->askSensors(cmd);
 }
 // ------------------------------------------------------------------------------------------
-void UNetExchange::sensorInfo( const uniset3::messages::SensorMessage* sm )
+void UNetExchange::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
     if( sender )
-        sender->updateSensor( sm->id, sm->value );
+        sender->updateSensor( sm->id(), sm->value() );
 
     if( sender2 )
-        sender2->updateSensor( sm->id, sm->value );
+        sender2->updateSensor( sm->id(), sm->value() );
 }
 // ------------------------------------------------------------------------------------------
 bool UNetExchange::activateObject()
@@ -755,13 +756,17 @@ void UNetExchange::receiverEvent( const shared_ptr<UNetReceiver>& r, UNetReceive
     }
 }
 // -----------------------------------------------------------------------------
-uniset3::SimpleInfo* UNetExchange::getInfo( const char* userparam )
+grpc::Status UNetExchange::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
 {
-    uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+    ::google::protobuf::StringValue oinf;
+    grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+    if( !st.ok() )
+        return st;
 
     ostringstream inf;
 
-    inf << i->info << endl;
+    inf << oinf.value() << endl;
     inf << vmon.pretty_str() << endl;
     inf << endl;
 
@@ -796,8 +801,8 @@ uniset3::SimpleInfo* UNetExchange::getInfo( const char* userparam )
     inf << "]" << endl;
     inf << endl;
 
-    i->info = inf.str().c_str();
-    return i._retn();
+    response->set_value(inf.str());
+    return grpc::Status::OK;
 }
 // ----------------------------------------------------------------------------
 void UNetExchange::initUDPTransport( UniXML::iterator n_it,

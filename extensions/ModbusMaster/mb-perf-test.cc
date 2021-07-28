@@ -76,14 +76,13 @@ int main( int argc, const char** argv )
             act->add(mb);
         }
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(false);
         return 0;
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        cerr << "(mbtcpmultimaster): " << ex << std::endl;
+        cerr << "(mbtcpmultimaster): " << ex.what() << std::endl;
     }
     catch(...)
     {

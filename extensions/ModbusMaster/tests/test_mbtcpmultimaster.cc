@@ -128,7 +128,7 @@ TEST_CASE("MBTCPMultiMaster: rotate channel", "[modbus][mbmaster][mbtcpmultimast
     // ----------------------------
 
     InitTest();
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
 
     mbs1->setReply(0);
     msleep(polltime + 1000);
@@ -245,7 +245,7 @@ TEST_CASE("MBTCPMultiMaster: udefined value", "[modbus][undefined][mbmaster][mbt
     {
         ui->getValue(1070);
     }
-    catch( uniset3::Undefined& ex )
+    catch( uniset3::IOController::Undefined& ex )
     {
         REQUIRE( ex.value == 65535 );
     }
@@ -277,41 +277,33 @@ TEST_CASE("MBTCPMultiMaster: reload config (HTTP API)", "[modbus][reload-api][mb
 {
     InitTest();
 
+    grpc::ServerContext ctx;
+    google::protobuf::StringValue query;
+    google::protobuf::StringValue resp;
+
     // default reconfigure
-    std::string request = "/api/v01/reload";
-    uniset3::SimpleInfo_var ret = mbmm->apiRequest(request.c_str());
+    query.set_value("/api/v01/reload");
+    auto status = mbmm->request(&ctx, &query, &resp);
+    REQUIRE(status.ok());
 
-    ostringstream sinfo;
-    sinfo << ret->info;
-    std::string info = sinfo.str();
-
-    REQUIRE( ret->id == mbmm->getId() );
-    REQUIRE_FALSE( info.empty() );
-    REQUIRE( info.find("OK") != std::string::npos );
+    REQUIRE_FALSE( resp.value().empty() );
+    REQUIRE( resp.value().find("OK") != std::string::npos );
 
 
     // reconfigure from other file
-    request = "/api/v01/reload?confile=" + confile2;
-    ret = mbmm->apiRequest(request.c_str());
+    query.set_value("/api/v01/reload?confile=" + confile2);
+    status = mbmm->request(&ctx, &query, &resp);
+    REQUIRE(status.ok());
 
-    sinfo.str("");
-    sinfo << ret->info;
-    info = sinfo.str();
-
-    REQUIRE( ret->id == mbmm->getId() );
-    REQUIRE_FALSE( info.empty() );
-    REQUIRE( info.find("OK") != std::string::npos );
-    REQUIRE( info.find(confile2) != std::string::npos );
+    REQUIRE_FALSE( resp.value().empty() );
+    REQUIRE( resp.value().find("OK") != std::string::npos );
+    REQUIRE( resp.value().find(confile2) != std::string::npos );
 
     // reconfigure FAIL
-    request = "/api/v01/reload?confile=BADFILE";
-    ret = mbmm->apiRequest(request.c_str());
-    sinfo.str("");
-    sinfo << ret->info;
-    info = sinfo.str();
-
-    REQUIRE( ret->id == mbmm->getId() );
-    REQUIRE_FALSE( info.empty() );
-    REQUIRE( info.find("OK") == std::string::npos );
+    query.set_value("/api/v01/reload?confile=BADFILE");
+    status = mbmm->request(&ctx, &query, &resp);
+    REQUIRE(status.ok());
+    REQUIRE_FALSE( resp.value().empty() );
+    REQUIRE( resp.value().find("OK") == std::string::npos );
 }
 // -----------------------------------------------------------------------------

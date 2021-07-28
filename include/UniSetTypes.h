@@ -55,10 +55,6 @@ namespace uniset3
     typedef std::string ObjectType;
     typedef std::list<NodeInfo> ListOfNode;
 
-    // [DEPRECATED]
-    typedef int64_t ObjectPtr;
-    typedef int64_t ObjectVar;
-
     class Configuration;
     // ---------------------------------------------------------------
     // Вспомогательные типы данных и константы
@@ -92,6 +88,9 @@ namespace uniset3
     KeyType key( const uniset3::SensorInfo& si );
 
     typedef std::list<std::string> ListObjectName;    /*!< Список объектов типа ObjectName */
+
+    std::string strTypeOfMessage( int type );
+    std::ostream& operator<<( std::ostream& os, const uniset3::umessage::TypeOfMessage& t );
 
     uniset3::IOType getIOType( const std::string& s ) noexcept;
     std::string iotype2str( const uniset3::IOType& t ) noexcept;
@@ -182,6 +181,8 @@ namespace uniset3
 
     uniset3::Timespec to_uniset_timespec( const std::chrono::system_clock::duration& d );
     uniset3::Timespec now_to_uniset_timespec(); /*!< получение текущего времени */
+    uniset3::Timespec to_uniset_timespec(struct timespec ts);
+    bool equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept;
 
     inline bool operator==( const struct timespec& r1,  const struct timespec& r2 )
     {
@@ -324,11 +325,30 @@ namespace uniset3
     // установка значения вне диапазона
     long setoutregion(long raw, long rawMin, long rawMax);
 
-    // ---------------------------------------------------------------
     // Всякие helper-ы
+    // ---------------------------------------------------------------
+    umessage::MessageHeader makeMessageHeader(uniset3::umessage::TypeOfMessage t = uniset3::umessage::mtUnused,
+                                              uniset3::umessage::Priority p = uniset3::umessage::mpMedium);
+    umessage::SystemMessage makeSystemMessage(umessage::SystemMessage::Command cmd = umessage::SystemMessage::Unknown);
+    umessage::SensorMessage makeSensorMessage(ObjectId sid, long value, uniset3::IOType type);
+    umessage::TimerMessage makeTimerMessage(int tid=uniset3::DefaultTimerId, uniset3::umessage::Priority p = uniset3::umessage::mpMedium);
+    umessage::ConfirmMessage makeConfirmMessage(ObjectId sensor_id,
+                                                const double& sensor_value,
+                                                const uniset3::Timespec& sensor_time,
+                                                const uniset3::Timespec& confirm_time,
+                                                uniset3::umessage::Priority prior = uniset3::umessage::mpMedium);
 
-    bool file_exist( const std::string& filename );
-    bool directory_exist( const std::string& path );
+    umessage::TextMessage makeTextMessage( const std::string& msg,
+                int mtype,
+                const uniset3::Timespec& tm,
+                const uniset3::ProducerInfo& pi,
+                uniset3::umessage::Priority prior = uniset3::umessage::mpMedium,
+                ObjectId cons = uniset3::DefaultObjectId );
+    umessage::TextMessage makeTextMessage();
+    // ---------------------------------------------------------------
+
+    bool file_exists( const std::string& filename );
+    bool directory_exists( const std::string& path );
 
     // Проверка xml-узла на соответствие <...f_prop="f_val">,
     // если не задано f_val, то проверяется, что просто f_prop!=""

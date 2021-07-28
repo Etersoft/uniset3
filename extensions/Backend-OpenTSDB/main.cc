@@ -55,14 +55,13 @@ int main( int argc, const char** argv )
         auto act = UniSetActivator::Instance();
         act->add(db);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(false);
         return 0;
     }
-    catch( uniset3::Exception& ex )
+    catch( std::exception& ex )
     {
-        cerr << "(opendtsdb): " << ex << std::endl;
+        cerr << "(opendtsdb): " << ex.what() << std::endl;
     }
     catch(...)
     {

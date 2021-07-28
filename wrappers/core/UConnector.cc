@@ -15,8 +15,7 @@
  */
 // -------------------------------------------------------------------------
 #include "UConnector.h"
-#include "ORepHelpers.h"
-#include "MessageType.h"
+#include "MessageTypes.pb.h"
 // --------------------------------------------------------------------------
 using namespace std;
 // --------------------------------------------------------------------------
@@ -118,10 +117,10 @@ void UConnector::setValue( long id, long val, long node, long supplier )throw(UE
 static UTypes::ShortIOInfo toUTypes( uniset3::ShortIOInfo i )
 {
     UTypes::ShortIOInfo ret;
-    ret.value = i.value;
-    ret.tv_sec = i.tv_sec;
-    ret.tv_nsec = i.tv_nsec;
-    ret.supplier = i.supplier;
+    ret.value = i.value();
+    ret.tv_sec = i.ts().sec();
+    ret.tv_nsec = i.ts().nsec();
+    ret.supplier = i.supplier();
     ret.supplier_node = UTypes::DefaultID;
 
     return ret;
@@ -173,7 +172,7 @@ string UConnector::getName( long id )
 string UConnector::getShortName( long id )
 {
     if( conf )
-        return uniset3::ORepHelpers::getShortName(conf->oind->getMapName(id));
+        return uniset3::ObjectIndex::getShortName(conf->oind->getMapName(id));
 
     return "";
 }
@@ -234,8 +233,7 @@ void UConnector::activate_objects() throw(UException)
     try
     {
         auto act = uniset3::UniSetActivator::Instance();
-        uniset3::messages::SystemMessage sm(uniset3::messages::SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
     }
     catch( const std::exception& ex )

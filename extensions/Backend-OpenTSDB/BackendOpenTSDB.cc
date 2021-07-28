@@ -23,6 +23,7 @@
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 BackendOpenTSDB::BackendOpenTSDB( uniset3::ObjectId objId, xmlNode* cnode,
                                   uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
@@ -245,9 +246,9 @@ void BackendOpenTSDB::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::sensorInfo( const uniset3::messages::SensorMessage* sm )
+void BackendOpenTSDB::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
-    auto it = tsdbParams.find(sm->id);
+    auto it = tsdbParams.find(sm->id());
 
     if( it != tsdbParams.end() )
     {
@@ -259,7 +260,7 @@ void BackendOpenTSDB::sensorInfo( const uniset3::messages::SensorMessage* sm )
                 // если размер буфера стал максимальный (теряем сообщения)
                 if( buf.size() >= bufMaxSize && !flushBuffer() )
                 {
-                    mycrit << "buffer overflow. Lost data: sid=" << sm->id << " value=" << sm->value << endl;
+                    mycrit << "buffer overflow. Lost data: sid=" << sm->id() << " value=" << sm->value() << endl;
                     return;
                 }
             }
@@ -275,10 +276,10 @@ void BackendOpenTSDB::sensorInfo( const uniset3::messages::SensorMessage* sm )
             s << tsdbPrefix << ".";
 
         s << it->second.name
-          << " " << setw(10) << setfill('0') << sm->sm_tv.tv_sec
-          << setw(3) << setfill('0') << std::round( sm->sm_tv.tv_nsec / 1e6 )
+          << " " << setw(10) << setfill('0') << sm->sm_ts().sec()
+          << setw(3) << setfill('0') << std::round( sm->sm_ts().nsec() / 1e6 )
           << " "
-          << sm->value;
+          << sm->value();
 
         if( !tsdbTags.empty() )
             s << " " << tsdbTags;
@@ -299,20 +300,20 @@ void BackendOpenTSDB::sensorInfo( const uniset3::messages::SensorMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::timerInfo( const uniset3::messages::TimerMessage* tm )
+void BackendOpenTSDB::timerInfo( const uniset3::umessage::TimerMessage* tm )
 {
-    if( tm->id == tmFlushBuffer )
+    if( tm->id() == tmFlushBuffer )
         flushBuffer();
-    else if( tm->id == tmReconnect )
+    else if( tm->id() == tmReconnect )
     {
         if( reconnect() )
             askTimer(tmReconnect, 0);
     }
 }
 // -----------------------------------------------------------------------------
-void BackendOpenTSDB::sysCommand(const SystemMessage* sm)
+void BackendOpenTSDB::sysCommand(const uniset3::umessage::SystemMessage* sm)
 {
-    if( sm->command == SystemMessage::StartUp )
+    if( sm->cmd() == SystemMessage::StartUp )
     {
         if( !reconnect() )
             askTimer(tmReconnect, reconnectTime);

@@ -64,7 +64,7 @@ void TestGen::sensorInfo( const SensorMessage* sm )
         out_output1_c = in_input1_s; // sm->state
 }
 // -----------------------------------------------------------------------------
-void TestGen::timerInfo( const TimerMessage* tm )
+void TestGen::timerInfo( const uniset3::messages::TimerMessage* tm )
 {
     if( tm->id == 1 )
     {
@@ -91,7 +91,7 @@ void TestGen::httpGetUserData( Poco::JSON::Object::Ptr& jdata )
 // -----------------------------------------------------------------------------
 void TestGen::sysCommand( const uniset3::messages::SystemMessage* sm )
 {
-    if( sm->command == SystemMessage::StartUp )
+    if( sm->cmd() == SystemMessage::StartUp )
         askTimer(1, 2000);
 }
 // -----------------------------------------------------------------------------

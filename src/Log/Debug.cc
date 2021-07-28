@@ -31,8 +31,8 @@ static error_item errorTags[] =
 	{ Debug::INIT,      "init",      ("Program initialisation")},
 	{ Debug::INFO,      "info",      ("General information")},
 	{ Debug::WARN,      "warn",      ("Warning meessages")},
-	{ Debug::CRIT,      "crit",      ("Critical messages")},
-	{ Debug::SYSTEM,    "system",    ("UniSet system messages")},
+	{ Debug::CRIT,      "crit",      ("Critical umessage")},
+	{ Debug::SYSTEM,    "system",    ("UniSet system umessage")},
 	{ Debug::LEVEL1,    "level1",    ("UniSet debug level1")},
 	{ Debug::LEVEL2,    "level2",    ("UniSet debug level2")},
 	{ Debug::LEVEL3,    "level3",    ("UniSet debug level3")},
@@ -42,9 +42,9 @@ static error_item errorTags[] =
 	{ Debug::LEVEL7,    "level7",    ("UniSet debug level7")},
 	{ Debug::LEVEL8,    "level8",    ("UniSet debug level8")},
 	{ Debug::LEVEL9,    "level9",    ("UniSet debug level9")},
-	{ Debug::REPOSITORY, "repository", ("UniSet repository messages")},
-	{ Debug::ANY,       "any",       ("All debugging messages")},
-	{ Debug::EXCEPTION, "exception", ("Exception debug messages")},
+	{ Debug::REPOSITORY, "repository", ("UniSet repository umessage")},
+	{ Debug::ANY,       "any",       ("All debugging umessage")},
+	{ Debug::EXCEPTION, "exception", ("Exception debug umessage")},
 
 };
 

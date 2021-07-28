@@ -18,9 +18,9 @@
 #include <sstream>
 #include "UniXML.h"
 #include "IOConfig_XML.h"
+#include "UHelpers.h"
 #include "SharedMemory.h"
 #include "Extensions.h"
-#include "ORepHelpers.h"
 #include "SMLogSugar.h"
 // -----------------------------------------------------------------------------
 namespace uniset3
@@ -28,6 +28,7 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     using namespace std;
     using namespace uniset3::extensions;
+    using namespace uniset3::umessage;
     // -----------------------------------------------------------------------------
     void SharedMemory::help_print( int argc, const char* const* argv )
     {
@@ -81,7 +82,7 @@ namespace uniset3
         string cname(confname);
 
         if( cname.empty() )
-            cname = ORepHelpers::getShortName( conf->oind->getMapName(id));
+            cname = ObjectIndex::getShortName( conf->oind->getMapName(id));
 
         confnode = conf->getNode(cname);
 
@@ -195,25 +196,25 @@ namespace uniset3
     }
 
     // --------------------------------------------------------------------------------
-    void SharedMemory::timerInfo( const TimerMessage* tm )
+    void SharedMemory::timerInfo( const uniset3::umessage::TimerMessage* tm )
     {
-        if( tm->id == tmHeartBeatCheck )
+        if( tm->id() == tmHeartBeatCheck )
         {
             checkHeartBeat();
         }
-        else if( tm->id == tmEvent )
+        else if( tm->id() == tmEvent )
         {
             workready = true;
             // рассылаем уведомление, о том, чтобы стартанули
-            SystemMessage sm1(SystemMessage::WatchDog);
+            auto sm1 = makeSystemMessage(umessage::SystemMessage::WatchDog);
             sendEvent(sm1);
-            askTimer(tm->id, 0);
+            askTimer(tm->id(), 0);
         }
-        else if( tm->id == tmHistory )
+        else if( tm->id() == tmHistory )
         {
             saveToHistory();
         }
-        else if( tm->id == tmPulsar )
+        else if( tm->id() == tmPulsar )
         {
             if( sidPulsar != DefaultObjectId )
             {
@@ -245,9 +246,9 @@ namespace uniset3
     }
 
     // ------------------------------------------------------------------------------------------
-    void SharedMemory::sysCommand( const SystemMessage* sm )
+    void SharedMemory::sysCommand( const uniset3::umessage::SystemMessage* sm )
     {
-        switch( sm->command )
+        switch( sm->cmd() )
         {
             case SystemMessage::StartUp:
             {
@@ -369,7 +370,7 @@ namespace uniset3
         return res;
     }
     // ------------------------------------------------------------------------------------------
-    CORBA::Boolean SharedMemory::exist()
+    bool SharedMemory::isExists()
     {
         return workready;
     }
@@ -550,7 +551,7 @@ namespace uniset3
             return nullptr;
         }
 
-        string cname = conf->getArgParam("--smemory--confnode", ORepHelpers::getShortName(conf->oind->getMapName(ID)) );
+        string cname = conf->getArgParam("--smemory--confnode", ObjectIndex::getShortName(conf->oind->getMapName(ID)) );
         return make_shared<SharedMemory>(ID, ioconf, cname);
     }
     // -----------------------------------------------------------------------------
@@ -597,20 +598,20 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    void SharedMemory::sendEvent( uniset3::messages::SystemMessage& sm )
+    void SharedMemory::sendEvent( uniset3::umessage::SystemMessage& sm )
     {
-        TransportMessage tm( sm.transport_msg() );
+        auto tm = uniset3::to_transport<SystemMessage>(sm);
 
         for( const auto& it : elst )
         {
             bool ok = false;
-            tm.consumer = it;
+            tm.mutable_header()->set_consumer(it);
 
             for( size_t i = 0; i < 2; i++ )
             {
                 try
                 {
-                    ui->send(it, tm);
+                    ui->send(tm);
                     ok = true;
                     break;
                 }
@@ -627,7 +628,7 @@ namespace uniset3
         lstRSlot.push_back(sl);
     }
     // -----------------------------------------------------------------------------
-    void SharedMemory::logging( SensorMessage& sm )
+    void SharedMemory::logging( uniset3::umessage::SensorMessage& sm )
     {
         if( dblogging )
             IONotifyController::logging(sm);
@@ -749,7 +750,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    SharedMemory::mpHistorySlot SharedMemory::signal_history()
+    SharedMemory::HistorySlot SharedMemory::signal_history()
     {
         return m_historySignal;
     }
@@ -767,7 +768,7 @@ namespace uniset3
                 {
                     hit.add( localGetValue( hit.ioit, hit.id ), it.size );
                 }
-                catch( uniset3::Undefined& ex )
+                catch( uniset3::IOController::Undefined& ex )
                 {
                     hit.add( ex.value, it.size );
                     // hit.add( numeric_limits<long>::max(), it.size );
@@ -792,13 +793,13 @@ namespace uniset3
         unsigned long sm_tv_nsec = 0;
         {
             uniset_rwmutex_rlock lock(usi->val_lock);
-            value = usi->value;
-            sm_tv_sec = usi->tv_sec;
-            sm_tv_nsec = usi->tv_nsec;
+            value = usi->sinf.value();
+            sm_tv_sec = usi->sinf.ts().sec();
+            sm_tv_nsec = usi->sinf.ts().nsec();
         }
 
         sminfo << myname << "(updateHistory): "
-               << " sid=" << usi->si.id
+               << " sid=" << usi->sinf.si().id()
                << " value=" << value
                << endl;
 
@@ -806,8 +807,7 @@ namespace uniset3
         {
             History::iterator it = it1;
 
-            if( usi->type == uniset3::DI ||
-                    usi->type == uniset3::DO )
+            if( usi->sinf.type() == uniset3::DI || usi->sinf.type() == uniset3::DO )
             {
                 bool st = (bool)value;
 
@@ -823,8 +823,7 @@ namespace uniset3
                     m_historySignal.emit( (*it) );
                 }
             }
-            else if( usi->type == uniset3::AI ||
-                     usi->type == uniset3::AO )
+            else if( usi->sinf.type() == uniset3::AI || usi->sinf.type() == uniset3::AO )
             {
                 if( !it->fuse_use_val )
                 {
@@ -857,7 +856,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    std::ostream& operator<<( std::ostream& os, const SharedMemory::mpHistoryInfo& h )
+    std::ostream& operator<<( std::ostream& os, const SharedMemory::HistoryInfo& h )
     {
         os << "History id=" << h.id
            << " fuse_id=" << h.fuse_id
@@ -866,7 +865,7 @@ namespace uniset3
            << " size=" << h.size
            << " filter=" << h.filter << endl;
 
-        for( SharedMemory::mpHistoryList::const_iterator it = h.hlst.begin(); it != h.hlst.end(); ++it )
+        for( SharedMemory::HistoryList::const_iterator it = h.hlst.begin(); it != h.hlst.end(); ++it )
         {
             os << "    id=" << it->id << "[";
 
@@ -962,35 +961,39 @@ namespace uniset3
         // SENSORS MAP
         try
         {
-            uniset3::SensorInfoSeq_var amap = ui->getSensorsMap(sm_id, sm_node);
-            int size = amap->length();
+            grpc::ServerContext ctx;
+            SetValueParams req;
+            google::protobuf::Empty resp;
 
-            for( int i = 0; i < size; i++ )
+            uniset3::SensorIOInfoSeq amap = ui->getSensorsMap(sm_id, sm_node);
+
+            for( const auto& s : amap.sensors() )
             {
-                uniset3::SensorIOInfo& ii(amap[i]);
-
                 try
                 {
 #if 1
+                    req.set_id(s.si().id());
+                    req.set_value(s.value());
+                    req.set_sup_id(getId());
                     // Вариант через setValue...(заодно внутри проверяются пороги)
-                    setValue(ii.si.id, ii.value, getId());
+                    setValue(&ctx, &req, &resp);
 #else
 
                     // Вариант с прямым обновлением внутреннего состояния
-                    IOStateList::iterator io = myiofind(ii.si.id);
+                    IOStateList::iterator io = myiofind(s.si().id());
 
                     if( io == myioEnd() )
                     {
-                        smcrit << myname << "(initFromSM): not found sensor id=" << ii.si.id << "'" << endl;
+                        smcrit << myname << "(initFromSM): not found sensor id=" << s.si().id() << "'" << endl;
                         continue;
                     }
 
-                    io->second->init(ii);
+                    io->second->init(s);
 
                     // проверка порогов
                     try
                     {
-                        checkThreshold(io, ii.si.id, true);
+                        checkThreshold(io, s.si().id(), true);
                     }
                     catch(...) {}
 
@@ -998,31 +1001,35 @@ namespace uniset3
                 }
                 catch( const uniset3::NameNotFound& ex )
                 {
-                    smcrit << myname << "(initFromSM): not found sensor id=" << ii.si.id << "'" << endl;
+                    smcrit << myname << "(initFromSM): not found sensor id=" << s.si().id() << "'" << endl;
                 }
-                catch( const uniset3::Exception& ex )
+                catch( const uniset3::exception& ex )
                 {
-                    smcrit << myname << "(initFromSM): " << ex << endl;
+                    smcrit << myname << "(initFromSM): " << ex.what() << endl;
                 }
             }
 
             return true;
         }
-        catch( const uniset3::Exception& ex )
+        catch( const uniset3::exception& ex )
         {
-            smwarn << myname << "(initFromSM): " << ex << endl;
+            smwarn << myname << "(initFromSM): " << ex.what() << endl;
         }
 
         return false;
     }
     // ----------------------------------------------------------------------------
-    uniset3::SimpleInfo* SharedMemory::getInfo( const char* userparam )
+    grpc::Status SharedMemory::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response )
     {
-        uniset3::SimpleInfo_var i = IONotifyController::getInfo(userparam);
+        ::google::protobuf::StringValue oinf;
+        grpc::Status st = IONotifyController::getInfo(context, request, &oinf);
+
+        if( !st.ok() )
+            return st;
 
         ostringstream inf;
 
-        inf << i->info << endl;
+        inf << oinf.value() << endl;
         inf << vmon.pretty_str() << endl;
 
         if( logserv )
@@ -1030,8 +1037,8 @@ namespace uniset3
         else
             inf << "No logserver running." << endl;
 
-        i->info = inf.str().c_str();
-        return i._retn();
+        response->set_value(inf.str());
+        return grpc::Status::OK;
     }
     // ----------------------------------------------------------------------------
 } // end of namespace uniset3

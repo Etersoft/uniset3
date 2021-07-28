@@ -3,8 +3,9 @@
 #include <limits>
 #include "MQAtomic.h"
 #include "MQMutex.h"
-#include "MessageType.h"
+#include "MessageTypes.pb.h"
 #include "Configuration.h"
+#include "UHelpers.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
 // --------------------------------------------------------------------------
@@ -46,11 +47,10 @@ using namespace uniset3;
 // --------------------------------------------------------------------------
 static bool pushMessage( UMessageQueue& mq, long id )
 {
-    SensorMessage sm(id, id);
-    sm.consumer = id; // чтобы хоть как-то идентифицировать сообщений, используем поле consumer
-    TransportMessage tm( std::move(sm.transport_msg()) );
-    auto vm = make_shared<VoidMessage>(tm);
-    return mq.push(vm);
+    umessage::SensorMessage sm = makeSensorMessage(id, id, uniset3::AI);
+    sm.mutable_header()->set_consumer(id); // чтобы хоть как-то идентифицировать сообщений, используем поле consumer
+    auto tm = make_shared<umessage::TransportMessage>(to_transport<umessage::SensorMessage>(sm));
+    return mq.push(tm);
 }
 // --------------------------------------------------------------------------
 TEST_CASE( "UMessageQueue: setup", "[mqueue]" )
@@ -72,7 +72,7 @@ TEST_CASE( "UMessageQueue: simple push/top", "[mqueue]" )
 
     auto msg = mq.top();
     REQUIRE( msg != nullptr );
-    REQUIRE( msg->consumer == 100 );
+    REQUIRE( msg->header().consumer() == 100 );
 }
 // --------------------------------------------------------------------------
 TEST_CASE( "UMessageQueue: overflow (lost old data)", "[mqueue]" )
@@ -95,11 +95,11 @@ TEST_CASE( "UMessageQueue: overflow (lost old data)", "[mqueue]" )
 
     auto msg = mq.top();
     REQUIRE( msg != nullptr );
-    REQUIRE( msg->consumer == 110 );
+    REQUIRE( msg->header().consumer() == 110 );
 
     msg = mq.top();
     REQUIRE( msg != nullptr );
-    REQUIRE( msg->consumer == 120 );
+    REQUIRE( msg->header().consumer() == 120 );
 
     REQUIRE( mq.getCountOfLostMessages() == 1 );
 }
@@ -130,11 +130,11 @@ TEST_CASE( "UMessageQueue: overflow (lost new data)", "[mqueue]" )
 
     auto msg = mq.top();
     REQUIRE( msg != nullptr );
-    REQUIRE( msg->consumer == 100 );
+    REQUIRE( msg->header().consumer() == 100 );
 
     msg = mq.top();
     REQUIRE( msg != nullptr );
-    REQUIRE( msg->consumer == 110 );
+    REQUIRE( msg->header().consumer() == 110 );
 
     msg = mq.top();
     REQUIRE( msg == nullptr );
@@ -153,7 +153,7 @@ TEST_CASE( "UMessageQueue: many read", "[mqueue]" )
 
     auto msg = mq.top();
     REQUIRE( msg != nullptr );
-    REQUIRE( msg->consumer == 100 );
+    REQUIRE( msg->header().consumer() == 100 );
 
     for( int i = 0; i < 5; i++ )
     {
@@ -185,7 +185,7 @@ TEST_CASE( "UMessageQueue: correct operation", "[mqueue]" )
         if( i % 50 )
         {
             auto m = mq.top();
-            REQUIRE( m->consumer == rnum );
+            REQUIRE( m->header().consumer() == rnum );
             rnum++;
         }
     }
@@ -196,7 +196,7 @@ TEST_CASE( "UMessageQueue: correct operation", "[mqueue]" )
     while( !mq.empty() )
     {
         auto m = mq.top();
-        REQUIRE( m->consumer == rnum );
+        REQUIRE( m->header().consumer() == rnum );
         rnum++;
     }
 
@@ -224,15 +224,15 @@ TEST_CASE( "UMessageQueue: overflow index (strategy=lostOldData)", "[mqueue]" )
 
     auto m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 100 );
+    REQUIRE( m->header().consumer() == 100 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 110 );
+    REQUIRE( m->header().consumer() == 110 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 120 );
+    REQUIRE( m->header().consumer() == 120 );
 }
 // --------------------------------------------------------------------------
 TEST_CASE( "UMessageQueue: lost data (strategy=lostOldData)", "[mqueue]" )
@@ -250,11 +250,11 @@ TEST_CASE( "UMessageQueue: lost data (strategy=lostOldData)", "[mqueue]" )
 
     auto m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 110 );
+    REQUIRE( m->header().consumer() == 110 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 120 );
+    REQUIRE( m->header().consumer() == 120 );
 
     m = mq.top();
     REQUIRE( m == nullptr );
@@ -270,11 +270,11 @@ TEST_CASE( "UMessageQueue: lost data (strategy=lostOldData)", "[mqueue]" )
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 150 );
+    REQUIRE( m->header().consumer() == 150 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 160 );
+    REQUIRE( m->header().consumer() == 160 );
 
     m = mq.top();
     REQUIRE( m == nullptr );
@@ -298,15 +298,15 @@ TEST_CASE( "UMessageQueue: overflow index (strategy=lostNewData)", "[mqueue]" )
 
     auto m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 100 );
+    REQUIRE( m->header().consumer() == 100 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 110 );
+    REQUIRE( m->header().consumer() == 110 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 120 );
+    REQUIRE( m->header().consumer() == 120 );
 }
 // --------------------------------------------------------------------------
 TEST_CASE( "UMessageQueue: lost data (strategy=lostNewData)", "[mqueue]" )
@@ -324,11 +324,11 @@ TEST_CASE( "UMessageQueue: lost data (strategy=lostNewData)", "[mqueue]" )
 
     auto m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 100 );
+    REQUIRE( m->header().consumer() == 100 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 110 );
+    REQUIRE( m->header().consumer() == 110 );
 
     m = mq.top();
     REQUIRE( m == nullptr );
@@ -344,11 +344,11 @@ TEST_CASE( "UMessageQueue: lost data (strategy=lostNewData)", "[mqueue]" )
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 140 );
+    REQUIRE( m->header().consumer() == 140 );
 
     m = mq.top();
     REQUIRE( m != nullptr );
-    REQUIRE( m->consumer == 150 );
+    REQUIRE( m->header().consumer() == 150 );
 
     m = mq.top();
     REQUIRE( m == nullptr );

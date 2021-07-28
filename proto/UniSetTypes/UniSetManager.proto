@@ -18,7 +18,7 @@ import "google/protobuf/empty.proto";
   */
 service UniSetManager_i {
     /*!< распространить сообщение всем подчиненным объектам */
-    rpc broadcast(uniset3.messages.TransportMessage) returns(google.protobuf.Empty) {}
+    rpc broadcast(uniset3.umessage.TransportMessage) returns(google.protobuf.Empty) {}
 
     /*! получение информации о состоянии подчиненных объектов(менеджеров)
      * \param userparam - Необязательный пользовательский параметр (см. UniSetObject_i::getInfo()).

@@ -29,7 +29,7 @@ static void print_help()
 {
     printf("-h|--help           - this message\n");
     //    printf("[-t|--timeout] msec  - Timeout. Default: 2000.\n");
-    printf("[-v|--verbose]      - Print all messages to stdout\n");
+    printf("[-v|--verbose]      - Print all umessage to stdout\n");
     printf("[-i|--iaddr] addr   - Inet address for listen connections.\n");
     printf("[-p|--port] port    - Bind port. Default: 3333\n");
     printf("[-d|--delay] msec   - Delay for generate message. Default 5000.\n");

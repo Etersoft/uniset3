@@ -112,13 +112,12 @@ RTUExchange::~RTUExchange()
 // -----------------------------------------------------------------------------
 std::shared_ptr<ModbusClient> RTUExchange::initMB( bool reopen )
 {
-    if( !file_exist(devname) )
+    if( !file_exists(devname) )
     {
         if( mbrtu )
         {
-            //          delete mbrtu;
-            mb = 0;
-            mbrtu = 0;
+            mb = nullptr;
+            mbrtu = nullptr;
         }
 
         return mbrtu;
@@ -129,9 +128,8 @@ std::shared_ptr<ModbusClient> RTUExchange::initMB( bool reopen )
         if( !reopen )
             return mbrtu;
 
-        //        delete mbrtu;
-        mbrtu = 0;
-        mb = 0;
+        mbrtu = nullptr;
+        mb = nullptr;
     }
 
     try
@@ -155,20 +153,14 @@ std::shared_ptr<ModbusClient> RTUExchange::initMB( bool reopen )
 
         mbinfo << myname << "(init): dev=" << devname << " speed=" << ComPort::getSpeed( mbrtu->getSpeed() ) << endl;
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        //if( mbrtu )
-        //    delete mbrtu;
-        mbrtu = 0;
-
-        mbwarn << myname << "(init): " << ex << endl;
+        mbrtu = nullptr;
+        mbwarn << myname << "(init): " << ex.what() << endl;
     }
     catch(...)
     {
-        //        if( mbrtu )
-        //            delete mbrtu;
-        mbrtu = 0;
-
+        mbrtu = nullptr;
         mbinfo << myname << "(init): catch...." << endl;
     }
 

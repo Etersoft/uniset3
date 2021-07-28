@@ -65,24 +65,17 @@ int main( int argc, char** argv )
         auto act = UniSetActivator::Instance();
         act->add(rs);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
-
-        ulogany << "\n\n\n";
-        ulogany << "(main): -------------- RTU Exchange START -------------------------\n\n";
-        dlogany << "\n\n\n";
-        dlogany << "(main): -------------- RTU Exchange START -------------------------\n\n";
-
+        act->startup();
         act->run(false);
         return 0;
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        dcrit << "(rtuexchange): " << ex << std::endl;
+        cerr << "(rtuexchange): " << ex.what() << std::endl;
     }
     catch(...)
     {
-        dcrit << "(rtuexchange): catch ..." << std::endl;
+        cerr << "(rtuexchange): catch ..." << std::endl;
     }
 
     return 1;

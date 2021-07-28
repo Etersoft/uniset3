@@ -35,12 +35,12 @@ SMViewer::~SMViewer()
 // --------------------------------------------------------------------------
 void SMViewer::run()
 {
-    uniset3::SensorInfoSeq_var amap = shm->getSensorsMap();
-    uniset3::ThresholdsListSeq_var tlst = shm->getThresholdsList();
+    uniset3::SensorIOInfoSeq smap = shm->getSensorsMap();
+    uniset3::ThresholdsListSeq tlst = shm->getThresholdsList();
 
     try
     {
-        updateSensors(amap, getSharedMemoryID());
+        updateSensors(smap, getSharedMemoryID());
     }
     catch(...) {}
 

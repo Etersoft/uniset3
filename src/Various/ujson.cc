@@ -20,120 +20,120 @@
 // --------------------------------------------------------------------------
 namespace uniset3
 {
-	// --------------------------------------------------------------------------
-	Poco::JSON::Object::Ptr json::make_object( const std::string& key, const Poco::Dynamic::Var& val )
-	{
-		Poco::JSON::Object::Ptr j = new Poco::JSON::Object();
-		j->set(key, val);
-		return j;
-	}
-	// --------------------------------------------------------------------------
-	Poco::JSON::Object::Ptr json::make_object( const std::string& key, const Poco::Dynamic::Var&& val )
-	{
-		Poco::JSON::Object::Ptr j = new Poco::JSON::Object();
-		j->set(key, std::move(val));
-		return j;
-	}
-	// --------------------------------------------------------------------------
-	json::help::item::item( Poco::JSON::Object::Ptr& ptr )
-	{
-		root = ptr;
-		params = ptr->getArray("parameters");
-	}
-	// --------------------------------------------------------------------------
-	json::help::item::item( const std::string& cmd, const std::string& description )
-	{
-		root = new Poco::JSON::Object();
-		root->set("name", cmd);
-		root->set("desc", description);
-	}
-	// --------------------------------------------------------------------------
-	void json::help::item::param(const std::string& name, const std::string& description)
-	{
-		if( !params )
-		{
-			params = new Poco::JSON::Array();
-			root->set("parameters", params);
-		}
+    // --------------------------------------------------------------------------
+    Poco::JSON::Object::Ptr json::make_object( const std::string& key, const Poco::Dynamic::Var& val )
+    {
+        Poco::JSON::Object::Ptr j = new Poco::JSON::Object();
+        j->set(key, val);
+        return j;
+    }
+    // --------------------------------------------------------------------------
+    Poco::JSON::Object::Ptr json::make_object( const std::string& key, const Poco::Dynamic::Var&& val )
+    {
+        Poco::JSON::Object::Ptr j = new Poco::JSON::Object();
+        j->set(key, std::move(val));
+        return j;
+    }
+    // --------------------------------------------------------------------------
+    json::help::item::item( Poco::JSON::Object::Ptr& ptr )
+    {
+        root = ptr;
+        params = ptr->getArray("parameters");
+    }
+    // --------------------------------------------------------------------------
+    json::help::item::item( const std::string& cmd, const std::string& description )
+    {
+        root = new Poco::JSON::Object();
+        root->set("name", cmd);
+        root->set("desc", description);
+    }
+    // --------------------------------------------------------------------------
+    void json::help::item::param(const std::string& name, const std::string& description)
+    {
+        if( !params )
+        {
+            params = new Poco::JSON::Array();
+            root->set("parameters", params);
+        }
 
-		params->add( item(name, description) );
-	}
-	// --------------------------------------------------------------------------
-	Poco::JSON::Object::Ptr json::help::item::get()
-	{
-		return root;
-	}
-	// --------------------------------------------------------------------------
-	uniset3::json::help::item::operator Poco::Dynamic::Var()
-	{
-		return root;
-	}
-	// --------------------------------------------------------------------------
-	uniset3::json::help::item::operator Poco::JSON::Object::Ptr()
-	{
-		return root;
-	}
-	// --------------------------------------------------------------------------
-	json::help::object::object( const std::string& name )
-	{
-		root = new Poco::JSON::Object();
-		cmdlist = new Poco::JSON::Array();
-		root->set(name, cmdlist);
-	}
-	// --------------------------------------------------------------------------
-	json::help::object::object(const std::string& name, Poco::JSON::Object::Ptr ptr )
-	{
-		root = ptr;
-		cmdlist = root->getArray(name);
+        params->add( item(name, description) );
+    }
+    // --------------------------------------------------------------------------
+    Poco::JSON::Object::Ptr json::help::item::get()
+    {
+        return root;
+    }
+    // --------------------------------------------------------------------------
+    uniset3::json::help::item::operator Poco::Dynamic::Var()
+    {
+        return root;
+    }
+    // --------------------------------------------------------------------------
+    uniset3::json::help::item::operator Poco::JSON::Object::Ptr()
+    {
+        return root;
+    }
+    // --------------------------------------------------------------------------
+    json::help::object::object( const std::string& name )
+    {
+        root = new Poco::JSON::Object();
+        cmdlist = new Poco::JSON::Array();
+        root->set(name, cmdlist);
+    }
+    // --------------------------------------------------------------------------
+    json::help::object::object(const std::string& name, Poco::JSON::Object::Ptr ptr )
+    {
+        root = ptr;
+        cmdlist = root->getArray(name);
 
-		if( !cmdlist )
-		{
-			cmdlist = new Poco::JSON::Array();
-			root->set(name, cmdlist);
-		}
-	}
-	// --------------------------------------------------------------------------
-	void json::help::object::add( json::help::item& i)
-	{
-		cmdlist->add(i);
-	}
-	// --------------------------------------------------------------------------
-	void json::help::object::emplace( json::help::item&& i )
-	{
-		cmdlist->add( std::move(i) );
-	}
-	// --------------------------------------------------------------------------
-	Poco::JSON::Object::Ptr json::help::object::get()
-	{
-		return root;
-	}
-	// --------------------------------------------------------------------------
-	uniset3::json::help::object::operator Poco::Dynamic::Var()
-	{
-		return root;
-	}
-	// --------------------------------------------------------------------------
-	uniset3::json::help::object::operator Poco::JSON::Object::Ptr()
-	{
-		return root;
-	}
-	// --------------------------------------------------------------------------
-	Poco::JSON::Object::Ptr json::make_child( Poco::JSON::Object::Ptr& root, const std::string& key )
-	{
-		Poco::JSON::Object::Ptr child = new Poco::JSON::Object();
-		root->set(key, child);
-		return child;
-	}
-	// --------------------------------------------------------------------------
-	Poco::JSON::Array::Ptr json::make_child_array(Poco::JSON::Object::Ptr& root, const std::string& key)
-	{
-		Poco::JSON::Array::Ptr child = new Poco::JSON::Array();
-		root->set(key, child);
-		return child;
-	}
+        if( !cmdlist )
+        {
+            cmdlist = new Poco::JSON::Array();
+            root->set(name, cmdlist);
+        }
+    }
+    // --------------------------------------------------------------------------
+    void json::help::object::add( json::help::item& i)
+    {
+        cmdlist->add(i);
+    }
+    // --------------------------------------------------------------------------
+    void json::help::object::emplace( json::help::item&& i )
+    {
+        cmdlist->add( std::move(i) );
+    }
+    // --------------------------------------------------------------------------
+    Poco::JSON::Object::Ptr json::help::object::get()
+    {
+        return root;
+    }
+    // --------------------------------------------------------------------------
+    uniset3::json::help::object::operator Poco::Dynamic::Var()
+    {
+        return root;
+    }
+    // --------------------------------------------------------------------------
+    uniset3::json::help::object::operator Poco::JSON::Object::Ptr()
+    {
+        return root;
+    }
+    // --------------------------------------------------------------------------
+    Poco::JSON::Object::Ptr json::make_child( Poco::JSON::Object::Ptr& root, const std::string& key )
+    {
+        Poco::JSON::Object::Ptr child = new Poco::JSON::Object();
+        root->set(key, child);
+        return child;
+    }
+    // --------------------------------------------------------------------------
+    Poco::JSON::Array::Ptr json::make_child_array(Poco::JSON::Object::Ptr& root, const std::string& key)
+    {
+        Poco::JSON::Array::Ptr child = new Poco::JSON::Array();
+        root->set(key, child);
+        return child;
+    }
 
-	// --------------------------------------------------------------------------
-	// --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
 } // end of namespace uniset3
 // --------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API

@@ -178,7 +178,7 @@ TEST_CASE("MBTCPMaster: 0x01 (read coil status)", "[modbus][0x01][mbmaster][mbtc
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     mbs->setReply(65535);
     msleep(polltime + 200);
     REQUIRE( ui->getValue(1000) == 1 );
@@ -196,7 +196,7 @@ TEST_CASE("MBTCPMaster: 0x02 (read input status)", "[modbus][0x02][mbmaster][mbt
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     mbs->setReply(65535);
     msleep(polltime + 200);
     REQUIRE( ui->getValue(1040) == 1 );
@@ -214,7 +214,7 @@ TEST_CASE("MBTCPMaster: 0x03 (read register outputs or memories or read word out
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     mbs->setReply(10);
     msleep(polltime + 200);
     REQUIRE( ui->getValue(1003) == 10 );
@@ -263,7 +263,7 @@ TEST_CASE("MBTCPMaster: 0x04 (read input registers or memories or read word outp
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     mbs->setReply(10);
     msleep(polltime + 200);
     REQUIRE( ui->getValue(1010) == 10 );
@@ -312,7 +312,7 @@ TEST_CASE("MBTCPMaster: 0x05 (forces a single coil to either ON or OFF)", "[modb
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     ui->setValue(1017, 0);
     REQUIRE( ui->getValue(1017) == 0 );
     msleep(polltime + 200);
@@ -333,7 +333,7 @@ TEST_CASE("MBTCPMaster: 0x06 (write register outputs or memories)", "[modbus][0x
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     ui->setValue(1018, 0);
     REQUIRE( ui->getValue(1018) == 0 );
     msleep(polltime + 200);
@@ -762,7 +762,7 @@ TEST_CASE("MBTCPMaster: udefined value", "[modbus][undefined][mbmaster][mbtcpmas
     {
         ui->getValue(1070);
     }
-    catch( uniset3::Undefined& ex )
+    catch( uniset3::IOController::Undefined& ex )
     {
         REQUIRE( ex.value == 65535 );
     }
@@ -792,42 +792,33 @@ TEST_CASE("MBTCPMaster: reload config (HTTP API)", "[modbus][reload-api][mbmaste
 {
     InitTest();
 
+    grpc::ServerContext ctx;
+    google::protobuf::StringValue query;
+    google::protobuf::StringValue resp;
+
     // default reconfigure
-    std::string request = "/api/v01/reload";
-    uniset3::SimpleInfo_var ret = mbm->apiRequest(request.c_str());
+    query.set_value("/api/v01/reload");
+    auto status = mbm->request(&ctx, &query, &resp);
+    REQUIRE(status.ok());
 
-    ostringstream sinfo;
-    sinfo << ret->info;
-    std::string info = sinfo.str();
-
-    REQUIRE( ret->id == mbm->getId() );
-    REQUIRE_FALSE( info.empty() );
-    REQUIRE( info.find("OK") != std::string::npos );
+    REQUIRE_FALSE( resp.value().empty() );
+    REQUIRE( resp.value().find("OK") != std::string::npos );
 
 
     // reconfigure from other file
-    request = "/api/v01/reload?confile=" + confile2;
-    ret = mbm->apiRequest(request.c_str());
-
-    sinfo.str("");
-    sinfo << ret->info;
-    info = sinfo.str();
-
-    REQUIRE( ret->id == mbm->getId() );
-    REQUIRE_FALSE( info.empty() );
-    REQUIRE( info.find("OK") != std::string::npos );
-    REQUIRE( info.find(confile2) != std::string::npos );
+    query.set_value("/api/v01/reload?confile=" + confile2);
+    status = mbm->request(&ctx, &query, &resp);
+    REQUIRE(status.ok());
+    REQUIRE_FALSE( resp.value().empty() );
+    REQUIRE( resp.value().find("OK") != std::string::npos );
+    REQUIRE( resp.value().find(confile2) != std::string::npos );
 
     // reconfigure FAIL
-    request = "/api/v01/reload?confile=BADFILE";
-    ret = mbm->apiRequest(request.c_str());
-    sinfo.str("");
-    sinfo << ret->info;
-    info = sinfo.str();
-
-    REQUIRE( ret->id == mbm->getId() );
-    REQUIRE_FALSE( info.empty() );
-    REQUIRE( info.find("OK") == std::string::npos );
+    query.set_value("/api/v01/reload?confile=BADFILE");
+    status = mbm->request(&ctx, &query, &resp);
+    REQUIRE(status.ok());
+    REQUIRE_FALSE( resp.value().empty() );
+    REQUIRE( resp.value().find("OK") == std::string::npos );
 }
 // -----------------------------------------------------------------------------
 
@@ -914,7 +905,7 @@ TEST_CASE("MBTCPMaster: F2 to DI", "[modbus][ftodi]")
 {
     InitTest();
 
-    CHECK( ui->isExist(mbID) );
+    CHECK( ui->isExists(mbID) );
     mbs->setReply(10);
     msleep(polltime + 200);
     REQUIRE( ui->getValue(1028) == 1 );

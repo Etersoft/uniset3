@@ -3,10 +3,10 @@
 # See doc: http://www.gnu.org/software/hello/manual/autoconf/Generic-Programs.html
 
 # AC_PREREQ(2.59)
-AC_INIT([uniset2], [3.0.0], pv@etersoft.ru)
+AC_INIT([uniset3], [3.0.0], pv@etersoft.ru)
 AM_INIT_AUTOMAKE([subdir-objects])
 
-LIBVER=0:0:3
+LIBVER=3:0:0
 AC_SUBST(LIBVER)
 
 # AC_CONFIG_MACRO_DIR([m4])
@@ -607,13 +607,13 @@ AC_CONFIG_FILES([Makefile
 				 extensions/Backend-OpenTSDB/Makefile
 				 extensions/Backend-OpenTSDB/libUniSet2BackendOpenTSDB.pc
 				 extensions/tests/Makefile
-				 extensions/tests/SMemoryTest/Makefile
-				 extensions/tests/MBSlaveTest/Makefile
 				 extensions/tests/MQPerfTest/Makefile
 				 extensions/LogDB/Makefile
 				 extensions/LogDB/tests/Makefile
 				 extensions/HttpResolver/Makefile
 				 extensions/HttpResolver/tests/Makefile
+				 extensions/URepository/Makefile
+				 extensions/URepository/tests/Makefile
 				 extensions/UWebSocketGate/Makefile
 				 extensions/UWebSocketGate/tests/Makefile
 				 extensions/UWebSocketGate/libUniSet2UWebSocketGate.pc

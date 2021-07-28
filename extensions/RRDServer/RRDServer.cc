@@ -25,6 +25,7 @@ extern "C" {
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 RRDServer::RRDServer(uniset3::ObjectId objId, xmlNode* cnode, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                      const string& prefix ):
@@ -237,10 +238,10 @@ void RRDServer::initRRD( xmlNode* cnode, int tmID )
         //             cout << "*** argv[" << k << "]='" << argv[k] << "'" << endl;
 
         // Собственно создаём RRD
-        if( !overwrite && file_exist(fname) )
+        if( !overwrite && file_exists(fname) )
         {
             myinfo << myname << "(init): ignore create file='" << fname
-                   << "'. File exist... overwrite=0." << endl;
+                   << "'. File exists... overwrite=0." << endl;
         }
         else
         {
@@ -299,17 +300,17 @@ std::shared_ptr<RRDServer> RRDServer::init_rrdstorage(int argc, const char* cons
 
     if( name.empty() )
     {
-        dcrit << "(RRDServer): Unknown name. Usage: --" <<  prefix << "-name" << endl;
-        return 0;
+        cerr << "(RRDServer): Unknown name. Usage: --" <<  prefix << "-name" << endl;
+        return nullptr;
     }
 
     ObjectId ID = conf->getObjectID(name);
 
     if( ID == uniset3::DefaultObjectId )
     {
-        dcrit << "(RRDServer): Not found ID for '" << name
-              << " in '" << conf->getObjectsSection() << "' section" << endl;
-        return 0;
+        cerr << "(RRDServer): Not found ID for '" << name
+             << " in '" << conf->getObjectsSection() << "' section" << endl;
+        return nullptr;
     }
 
     string confname = conf->getArgParam("--" + prefix + "-confnode", name);
@@ -317,8 +318,8 @@ std::shared_ptr<RRDServer> RRDServer::init_rrdstorage(int argc, const char* cons
 
     if( !cnode )
     {
-        dcrit << "(RRDServer): " << name << "(init): Not found <" + confname + ">" << endl;
-        return 0;
+        cerr << "(RRDServer): " << name << "(init): Not found <" + confname + ">" << endl;
+        return nullptr;
     }
 
     dinfo << "(RRDServer): name = " << name << "(" << ID << ")" << endl;
@@ -352,11 +353,11 @@ void RRDServer::askSensors( uniset3::UIOCommand cmd )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::sysCommand( const uniset3::messages::SystemMessage* sm )
+void RRDServer::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     UObject_SK::sysCommand(sm);
 
-    if( sm->command == SystemMessage::StartUp || sm->command == SystemMessage::WatchDog )
+    if( sm->cmd() == SystemMessage::StartUp || sm->cmd() == SystemMessage::WatchDog )
     {
         for( const auto& it : rrdlist )
         {
@@ -372,24 +373,24 @@ void RRDServer::sysCommand( const uniset3::messages::SystemMessage* sm )
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::sensorInfo( const uniset3::messages::SensorMessage* sm )
+void RRDServer::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
     for( const auto& it : rrdlist )
     {
-        auto s = it.dsmap.find(sm->id);
+        auto s = it.dsmap.find(sm->id());
 
         if( s != it.dsmap.end() )
-            s->second->value = sm->value;
+            s->second->value = sm->value();
 
         // продолжаем искать по другим rrd, т.к. датчик может входить в несколько..
     }
 }
 // -----------------------------------------------------------------------------
-void RRDServer::timerInfo( const uniset3::messages::TimerMessage* tm )
+void RRDServer::timerInfo( const uniset3::umessage::TimerMessage* tm )
 {
     for( const auto& it : rrdlist )
     {
-        if( it.tid == tm->id )
+        if( it.tid == tm->id() )
         {
             ostringstream v;
             v << time(0);

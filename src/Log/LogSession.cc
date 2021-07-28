@@ -145,7 +145,7 @@ namespace uniset3
 					// видимо клиент отвалился или совсем не успевает читать
 					// разрываем сессию..
 					if( mylog.is_info() )
-						mylog.info() << peername << "(LogSession::onEvent): too many lost messages. Close session.." << endl;
+						mylog.info() << peername << "(LogSession::onEvent): too many lost umessage. Close session.." << endl;
 
 					cancelled = true;
 				}

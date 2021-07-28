@@ -1,4 +1,4 @@
-SUBDIRS=SMemoryTest MBSlaveTest MQPerfTest
+SUBDIRS=MQPerfTest
 
 if  HAVE_TESTS
 noinst_PROGRAMS = tests tests_with_conf tests_with_sm sm_perf_test

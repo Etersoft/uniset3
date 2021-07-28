@@ -27,7 +27,7 @@
 #include "SMInterface.h"
 #include "LProcessor.h"
 // --------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -------------------------------------------------------------------------
     /*! Реализация LogicProccessor основанная на заказе датчиков */
@@ -59,9 +59,9 @@ namespace uniset33
             virtual void getInputs() override;
             virtual void setOuts() override;
 
-            void sysCommand( const uniset3::messages::SystemMessage* msg ) override;
-            void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            void sysCommand( const uniset3::umessage::SystemMessage* msg ) override;
+            void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             void askSensors( const uniset3::UIOCommand cmd );
             //        void initOutput();
 
@@ -80,6 +80,6 @@ namespace uniset33
             std::atomic_bool cannceled = { false };
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // ---------------------------------------------------------------------------
 #endif

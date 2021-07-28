@@ -44,8 +44,7 @@ int main(int argc, char** argv)
         auto act = UniSetActivator::Instance();
         act->add(ws);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(false);
         return 0;
     }

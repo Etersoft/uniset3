@@ -100,13 +100,13 @@ namespace uniset3
                 continue;
             }
 
-            inf->undefined = false;
+            inf->sinf.set_undefined(false);
 
             ncrslot(uxml, it, node, inf);
             rslot(uxml, it, node);
             //      read_consumers(xml, it, inf);
 
-            lst.emplace( inf->si.id, std::move(inf) );
+            lst.emplace( inf->sinf.si().id(), std::move(inf) );
         }
 
         return lst;
@@ -153,34 +153,34 @@ namespace uniset3
             return false;
         }
 
-        si.id =    sid;
-        si.node = snode;
+        si.set_id(sid);
+        si.set_node(snode);
         return true;
     }
     // ------------------------------------------------------------------------------------------
     bool IOConfig_XML::getSensorInfo( xmlNode* node,
                                       std::shared_ptr<IOController::USensorInfo>& inf ) const
     {
-        if( !getBaseInfo(node, inf->si) )
+        if( !getBaseInfo(node, *(inf->sinf.mutable_si())) )
             return false;
 
         UniXML::iterator it(node);
 
-        inf->priority = messages::mpMedium;
+        inf->sinf.set_priority(umessage::mpMedium);
         const string prior(it.getProp("priority"));
 
         if( prior == "Low" )
-            inf->priority = messages::mpLow;
+            inf->sinf.set_priority(umessage::mpLow);
         else if( prior == "Medium" )
-            inf->priority = messages::mpMedium;
+            inf->sinf.set_priority(umessage::mpMedium);
         else if( prior == "High" )
-            inf->priority = messages::mpHigh;
+            inf->sinf.set_priority(umessage::mpHigh);
         else
-            inf->priority = messages::mpMedium;
+            inf->sinf.set_priority(umessage::mpMedium);
 
-        inf->type = uniset3::getIOType(it.getProp("iotype"));
+        inf->sinf.set_type(uniset3::getIOType(it.getProp("iotype")));
 
-        if( inf->type == uniset3::UnknownIOType )
+        if( inf->sinf.type() == uniset3::UnknownIOType )
         {
             ostringstream err;
             err << "(IOConfig_XML:getSensorInfo): unknown iotype=" << it.getProp("iotype")
@@ -189,29 +189,31 @@ namespace uniset3
             throw SystemError(err.str());
         }
 
+        auto ci = inf->sinf.mutable_ci();
+
         // калибровка
-        if( inf->type == uniset3::AI || inf->type == uniset3::AO )
+        if( inf->sinf.type() == uniset3::AI || inf->sinf.type() == uniset3::AO )
         {
-            inf->ci.minRaw = it.getIntProp("rmin");
-            inf->ci.maxRaw = it.getIntProp("rmax");
-            inf->ci.minCal = it.getIntProp("cmin");
-            inf->ci.maxCal = it.getIntProp("cmax");
-            inf->ci.precision = it.getIntProp("precision");
+            ci->set_minraw(it.getIntProp("rmin"));
+            ci->set_maxraw(it.getIntProp("rmax"));
+            ci->set_mincal(it.getIntProp("cmin"));
+            ci->set_maxcal(it.getIntProp("cmax"));
+            ci->set_precision(it.getIntProp("precision"));
         }
         else
         {
-            inf->ci.minRaw = 0;
-            inf->ci.maxRaw = 0;
-            inf->ci.minCal = 0;
-            inf->ci.maxCal = 0;
-            inf->ci.precision = 0;
+            ci->set_minraw(0);
+            ci->set_maxraw(0);
+            ci->set_mincal(0);
+            ci->set_maxcal(0);
+            ci->set_precision(0);
         }
 
-        inf->default_val = it.getIntProp("default");
-        inf->dbignore = it.getIntProp("dbignore");
-        inf->value = inf->default_val;
-        inf->undefined = false;
-        inf->real_value = inf->value;
+        inf->sinf.set_default_val(it.getIntProp("default"));
+        inf->sinf.set_dbignore(it.getIntProp("dbignore"));
+        inf->sinf.set_value(inf->sinf.default_val());
+        inf->sinf.set_undefined(false);
+        inf->sinf.set_real_value(inf->sinf.value());
 
         if( !it.getProp("undefined_value").empty() )
             inf->undef_value = it.getIntProp("undefined_value");
@@ -220,9 +222,9 @@ namespace uniset3
 
         if( !d_txt.empty() )
         {
-            inf->depend_sid = conf->getSensorID(d_txt);
+            inf->sinf.set_depend_sid(conf->getSensorID(d_txt));
 
-            if( inf->depend_sid == uniset3::DefaultObjectId )
+            if( inf->sinf.depend_sid() == uniset3::DefaultObjectId )
             {
                 ostringstream err;
                 err << "(IOConfig_XML::getSensorInfo): sensor='"
@@ -248,15 +250,15 @@ namespace uniset3
             // обновляем итераторы...
             it.second->d_usi = it.second;
 
-            if( it.second->depend_sid == DefaultObjectId )
+            if( it.second->sinf.depend_sid() == DefaultObjectId )
                 continue;
 
             uinfo << "(IOConfig_XML::init_depends_signals): "
-                  << " init depend: '" << conf->oind->getMapName(it.second->si.id) << "'"
-                  << " depend_sensor=(" << it.second->depend_sid << ")'" << conf->oind->getMapName(it.second->depend_sid) << "'"
+                  << " init depend: '" << conf->oind->getMapName(it.second->sinf.si().id()) << "'"
+                  << " depend_sensor=(" << it.second->sinf.depend_sid() << ")'" << conf->oind->getMapName(it.second->sinf.depend_sid()) << "'"
                   << endl;
 
-            auto dit = lst.find(it.second->depend_sid);
+            auto dit = lst.find(it.second->sinf.depend_sid());
 
             if( dit != lst.end() )
             {
@@ -288,7 +290,7 @@ namespace uniset3
                 throw uniset3::SystemError(err.str());
             }
 
-            auto inf = iolist.find(si.id);
+            auto inf = iolist.find(si.id());
 
             if( inf == iolist.end() )
             {
@@ -315,16 +317,16 @@ namespace uniset3
                 {
                     ostringstream err;
                     err << "(IOConfig_XML::read_thresholds): FAILED read threshold parameters for "
-                        << conf->oind->getNameById(si.id);
+                        << conf->oind->getNameById(si.id());
 
                     ucrit << err.str() << endl;
                     throw uniset3::SystemError(err.str());
                 }
 
                 ulog3  << "(IOConfig_XML::read_thresholds): \tthreshold low="
-                       << ti->lowlimit << " \thi=" << ti->hilimit
+                       << ti->tinf.lowlimit() << " \thi=" << ti->tinf.hilimit()
                        << " \t sid=" << ti->sid
-                       << " \t invert=" << ti->invert
+                       << " \t invert=" << ti->tinf.invert()
                        << endl << flush;
 
                 // начальная инициализация итератора
@@ -425,11 +427,11 @@ namespace uniset3
             }
         }
 
-        ti->id           = uit.getIntProp("id");
-        ti->lowlimit     = uit.getIntProp("lowlimit");
-        ti->hilimit      = uit.getIntProp("hilimit");
-        ti->invert       = uit.getIntProp("invert");
-        ti->state        = uniset3::NormalThreshold;
+        ti->tinf.set_id(uit.getIntProp("id"));
+        ti->tinf.set_lowlimit(uit.getIntProp("lowlimit"));
+        ti->tinf.set_hilimit(uit.getIntProp("hilimit"));
+        ti->tinf.set_invert(uit.getIntProp("invert"));
+        ti->tinf.set_state(uniset3::NormalThreshold);
         return true;
     }
     // ------------------------------------------------------------------------------------------

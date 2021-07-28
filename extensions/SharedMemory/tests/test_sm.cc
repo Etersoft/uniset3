@@ -262,7 +262,7 @@ TEST_CASE("[SM]: monitonic sensor message", "[sm][monitonic]")
 {
     InitTest();
 
-    REQUIRE( obj->exist() );
+    REQUIRE( obj->isExists() );
 
     // Проверка корректной последовательности прихода SensorMessage.
     // Тест заключается в том, что параллельно вызывается setValue()
@@ -329,8 +329,8 @@ TEST_CASE("[SM]: freezeValue", "[sm][freezeValue]")
     InitTest();
 
     uniset3::SensorInfo si;
-    si.id = 517;
-    si.node = uniset_conf()->getLocalNode();
+    si.set_id(517);
+    si.set_node(uniset_conf()->getLocalNode());
 
     REQUIRE_NOTHROW( ui->setValue(517, 100) );
     REQUIRE( ui->getValue(517) == 100 );

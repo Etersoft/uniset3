@@ -44,7 +44,7 @@ static void print_help()
 {
     printf("Configs:\n");
     printf("-h, --help                  - this message\n");
-    printf("-v, --verbose               - Print all messages to stdout\n");
+    printf("-v, --verbose               - Print all umessage to stdout\n");
     printf("[-i|--iaddr] addr           - LogServer ip or hostname.\n");
     printf("[-p|--port] port            - LogServer port.\n");
     printf("[-c|--command-only]         - Send command and break. (No read logs).\n");

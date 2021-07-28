@@ -33,15 +33,15 @@ using namespace uniset3;
 #define MUTEX_DEBUG(m) {}
 // -----------------------------------------------------------------------------
 uniset_rwmutex::uniset_rwmutex( const std::string& name ):
-	nm(name)
+    nm(name)
 {
-	m = std::unique_ptr<Poco::RWLock>(new Poco::RWLock());
+    m = std::unique_ptr<Poco::RWLock>(new Poco::RWLock());
 }
 
 uniset_rwmutex::uniset_rwmutex():
-	nm("")
+    nm("")
 {
-	m = std::unique_ptr<Poco::RWLock>(new Poco::RWLock());
+    m = std::unique_ptr<Poco::RWLock>(new Poco::RWLock());
 }
 
 uniset_rwmutex::~uniset_rwmutex()
@@ -50,84 +50,84 @@ uniset_rwmutex::~uniset_rwmutex()
 
 std::ostream& uniset3::operator<<(std::ostream& os, uniset_rwmutex& m )
 {
-	return os << m.name();
+    return os << m.name();
 }
 
 void uniset_rwmutex::lock()
 {
-	MUTEX_DEBUG(cerr << nm << " prepare Locked.." << endl;)
-	m->writeLock();
-	MUTEX_DEBUG(cerr << nm << " Locked.." << endl;)
+    MUTEX_DEBUG(cerr << nm << " prepare Locked.." << endl;)
+    m->writeLock();
+    MUTEX_DEBUG(cerr << nm << " Locked.." << endl;)
 }
 void uniset_rwmutex::wrlock()
 {
-	MUTEX_DEBUG(cerr << nm << " prepare WRLocked.." << endl;)
-	m->writeLock();
-	MUTEX_DEBUG(cerr << nm << " WRLocked.." << endl;)
+    MUTEX_DEBUG(cerr << nm << " prepare WRLocked.." << endl;)
+    m->writeLock();
+    MUTEX_DEBUG(cerr << nm << " WRLocked.." << endl;)
 }
 
 void uniset_rwmutex::rlock()
 {
-	MUTEX_DEBUG(cerr << nm << " prepare RLocked.." << endl;)
-	m->readLock();
-	MUTEX_DEBUG(cerr << nm << " RLocked.." << endl;)
+    MUTEX_DEBUG(cerr << nm << " prepare RLocked.." << endl;)
+    m->readLock();
+    MUTEX_DEBUG(cerr << nm << " RLocked.." << endl;)
 }
 
 void uniset_rwmutex::unlock()
 {
-	m->unlock();
-	MUTEX_DEBUG(cerr << nm << " Unlocked.." << endl;)
+    m->unlock();
+    MUTEX_DEBUG(cerr << nm << " Unlocked.." << endl;)
 }
 
 bool uniset_rwmutex::try_rlock()
 {
-	return m->tryReadLock();
+    return m->tryReadLock();
 }
 
 bool uniset_rwmutex::try_wrlock()
 {
-	return m->tryWriteLock();
+    return m->tryWriteLock();
 }
 
 bool uniset_rwmutex::try_lock()
 {
-	return m->tryWriteLock();
+    return m->tryWriteLock();
 }
 // -------------------------------------------------------------------------------------------
 uniset_rwmutex_wrlock::uniset_rwmutex_wrlock( uniset_rwmutex& _m ):
-	m(_m)
+    m(_m)
 {
-	m.wrlock();
+    m.wrlock();
 }
 
 uniset_rwmutex_wrlock::~uniset_rwmutex_wrlock()
 {
-	try
-	{
-		m.unlock();
-	}
-	//catch( Poco::SystemException& ex )
-	catch( std::exception& ex )
-	{
-		std::abort();
-	}
+    try
+    {
+        m.unlock();
+    }
+    //catch( Poco::SystemException& ex )
+    catch( std::exception& ex )
+    {
+        std::abort();
+    }
 }
 // -------------------------------------------------------------------------------------------
 uniset_rwmutex_rlock::uniset_rwmutex_rlock( uniset_rwmutex& _m ):
-	m(_m)
+    m(_m)
 {
-	m.rlock();
+    m.rlock();
 }
 
 uniset_rwmutex_rlock::~uniset_rwmutex_rlock()
 {
-	try
-	{
-		m.unlock();
-	}
-	catch( std::exception& ex )
-	{
-		std::abort();
-	}
+    try
+    {
+        m.unlock();
+    }
+    catch( std::exception& ex )
+    {
+        std::abort();
+    }
 }
 // -----------------------------------------------------------------------------

@@ -71,19 +71,13 @@ int main( int argc, const char** argv )
         auto act = UniSetActivator::Instance();
         act->add(mqtt);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
-
-        ulogany << "\n\n\n";
-        ulogany << "(main): -------------- MQTTPublisher START -------------------------\n\n";
-        dlogany << "\n\n\n";
-        dlogany << "(main): -------------- MQTTPublisher START -------------------------\n\n";
+        act->startup();
         act->run(false);
         return 0;
     }
-    catch( uniset3::Exception& ex )
+    catch( std::exception& ex )
     {
-        cerr << "(mqttpublisher): " << ex << std::endl;
+        cerr << "(mqttpublisher): " << ex.what() << std::endl;
     }
     catch(...)
     {

@@ -88,7 +88,6 @@ namespace uniset3
             ObjectId getDBServer() const noexcept;
             ObjectId getLocalNode() const noexcept;
             std::string getLocalNodeName() const noexcept;
-            const std::string getNSName() const noexcept;
 
             // repository
             std::string getRootSection() const noexcept;
@@ -111,6 +110,7 @@ namespace uniset3
             size_t getCountOfNet() const noexcept;
             timeout_t getRepeatTimeout() const noexcept;
             size_t getRepeatCount() const noexcept;
+            std::string getNodeIP( uniset3::ObjectId node, size_t netNumber=0 ) const noexcept;
 
             uniset3::ObjectId getSensorID( const std::string& name ) const noexcept;
             uniset3::ObjectId getControllerID( const std::string& name ) const noexcept;
@@ -159,7 +159,9 @@ namespace uniset3
             uniset3::ListOfNode::const_iterator listNodesBegin() const noexcept;
             uniset3::ListOfNode::const_iterator listNodesEnd() const noexcept;
 
-            std::string repositoryAddress() const noexcept;
+            int repositoryPort() const noexcept;
+            std::string repositoryAddr() const noexcept;
+            std::string repositoryAddressByNode(  uniset3::ObjectId node, size_t netNumber = 0 ) const noexcept;
 
             /*! интерфейс к карте объектов */
             std::shared_ptr<ObjectIndex> oind;
@@ -230,6 +232,7 @@ namespace uniset3
             std::string lockDir = { "" };
             bool localIOR = { false };
             std::string repAddr = { "" };
+            int repPort = { 0 };
 
             timeout_t heartbeat_msec = { 3000 };
             timeout_t ncreadytimeout_msec = { 180000 };

@@ -363,7 +363,7 @@ namespace uniset3
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(id, node);
+                    chan = resolve(id, node);
 
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->askSensor(&ctx, request, &reply);
@@ -527,9 +527,9 @@ namespace uniset3
         for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
         {
             if( !rep )
-                rep = grpc::CreateChannel(uconf->repositoryAddress(), grpc::InsecureChannelCredentials());
+                rep = grpc::CreateChannel(uconf->repositoryAddr(), grpc::InsecureChannelCredentials());
 
-            std::unique_ptr<Repository_i::Stub> stub(Repository_i::NewStub(rep));
+            std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
             grpc::Status st = stub->registration(&ctx, oRef, &reply);
 
             if( st.ok() )
@@ -557,9 +557,9 @@ namespace uniset3
         for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
         {
             if( !rep )
-                rep = grpc::CreateChannel(uconf->repositoryAddress(), grpc::InsecureChannelCredentials());
+                rep = grpc::CreateChannel(uconf->repositoryAddr(), grpc::InsecureChannelCredentials());
 
-            std::unique_ptr<Repository_i::Stub> stub(Repository_i::NewStub(rep));
+            std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
             grpc::Status st = stub->unregistration(&ctx, request, &reply);
 
             if( st.ok() )
@@ -584,27 +584,19 @@ namespace uniset3
         }
 
         rcache.erase(rid, node);
-#if 0
 
         try
         {
             if( uconf->isLocalIOR() )
             {
-                if( CORBA::is_nil(orb) )
-                    orb = uconf->getORB();
+                const string ior = uconf->iorfile->getIOR(rid);
 
-                string sior;
-
-                if( node == uconf->getLocalNode() )
-                    sior = uconf->iorfile->getIOR(rid);
-                else
-                    sior = httpResolve(rid, node);
-
-                if( !sior.empty() )
+                if( !ior.empty() )
                 {
-                    CORBA::Object_var nso = orb->string_to_object(sior.c_str());
-                    rcache.cache(rid, node, nso); // заносим в кэш
-                    return nso._retn();
+                    auto oref = uconf->iorfile->getRef(ior);
+                    auto chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
+                    rcache.cache(rid, node, chan); // заносим в кэш
+                    return chan;
                 }
 
                 uwarn << "not found IOR-file for " << uconf->oind->getNameById(rid)
@@ -613,109 +605,55 @@ namespace uniset3
                 throw uniset3::ResolveNameError();
             }
 
-            if( node != uconf->getLocalNode() )
+            for( size_t curNet = 0; curNet <= uconf->getCountOfNet(); curNet++)
             {
-                // Получаем доступ к NameService на данном узле
-                ostringstream s;
-                s << uconf << oind->getNodeName(node);
-                string nodeName(s.str());
-                const string bname(nodeName); // сохраняем базовое название
-
-                for( size_t curNet = 1; curNet <= uconf->getCountOfNet(); curNet++)
+                try
                 {
-                    try
-                    {
-                        if( CORBA::is_nil(orb) )
-                            orb = uconf->getORB();
+                    auto repIP = uconf->repositoryAddressByNode(node, curNet);
 
-                        ctx = ORepHelpers::getRootNamingContext( orb, nodeName );
-                        break;
-                    }
-                    //                catch( const CORBA::COMM_FAILURE& ex )
-                    catch( const uniset3::ORepFailed& ex )
-                    {
-                        // нет связи с этим узлом
-                        // пробуем связаться по другой сети
-                        // ПО ПРАВИЛАМ узел в другой должен иметь имя NodeName1...NodeNameX
-                        ostringstream s;
-                        s << bname << curNet;
-                        nodeName = s.str();
-                    }
+                    if( repIP.empty() )
+                        continue;
+
+                    rep = grpc::CreateChannel(repIP, grpc::InsecureChannelCredentials());
+                    break;
                 }
-
-                if( CORBA::is_nil(ctx) )
-                {
-                    // uwarn << "NameService недоступен на узле "<< node << endl;
-                    throw uniset3::NSResolveError();
-                }
-            }
-            else
-            {
-                if( CORBA::is_nil(localctx) )
-                {
-                    ostringstream s;
-                    s << uconf << oind->getNodeName(node);
-                    const string nodeName(s.str());
-
-                    if( CORBA::is_nil(orb) )
-                    {
-                        CORBA::ORB_var _orb = uconf->getORB();
-                        localctx = ORepHelpers::getRootNamingContext( _orb, nodeName );
-                    }
-                    else
-                        localctx = ORepHelpers::getRootNamingContext( orb, nodeName );
-                }
-
-                ctx = localctx;
+                catch( const std::exception& ex ) {}
             }
 
-            CosNaming::Name_var oname = omniURI::stringToName( oind->getNameById(rid).c_str() );
+            if( !rep )
+                throw uniset3::ResolveNameError();
+
+            std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
+            ObjectRef oref;
+            google::protobuf::Int64Value request;
+            request.set_value(rid);
+            grpc::ClientContext ctx;
 
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 try
                 {
-                    CORBA::Object_var nso = ctx->resolve(oname);
-
-                    if( CORBA::is_nil(nso) )
-                        throw uniset3::ResolveNameError();
-
-                    // Для var
-                    rcache.cache(rid, node, nso); // заносим в кэш
-                    return nso._retn();
+                    grpc::Status st = stub->resolve(&ctx, request, &oref);
+                    if( st.ok() )
+                    {
+                        auto chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
+                        rcache.cache(rid, node, chan);
+                        return chan;
+                    }
                 }
-                catch( const CORBA::TRANSIENT& ) {}
+                catch( const std::exception& ) {}
 
                 msleep(uconf->getRepeatTimeout());
             }
 
             throw uniset3::TimeOut();
         }
-        catch(const CosNaming::NamingContext::NotFound& nf) {}
-        catch(const CosNaming::NamingContext::InvalidName& nf) {}
-        catch(const CosNaming::NamingContext::CannotProceed& cp) {}
-        catch( const CORBA::OBJECT_NOT_EXIST& ex )
-        {
-            throw uniset3::ResolveNameError("ObjectNOTExist");
-        }
-        catch( const CORBA::COMM_FAILURE& ex )
-        {
-            throw uniset3::ResolveNameError("CORBA::CommFailure");
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            // ошибка системы коммуникации
-            // uwarn << "UI(resolve): CORBA::SystemException" << endl;
-            throw uniset3::TimeOut();
-        }
-        catch( const uniset3::Exception& ex ) {}
         catch( std::exception& ex )
         {
             ucrit << "UI(resolve): myID=" << myid <<  ": resolve id=" << rid << "@" << node
                   << " catch " << ex.what() << endl;
         }
 
-#endif
         throw uniset3::ResolveNameError();
     }
 
@@ -750,7 +688,7 @@ namespace uniset3
         return "";
     }
     // -------------------------------------------------------------------------------------------
-    void UInterface::send(const uniset3::messages::TransportMessage& msg, uniset3::ObjectId node)
+    void UInterface::send(const uniset3::umessage::TransportMessage& msg, uniset3::ObjectId node)
     {
         ObjectId id = msg.header().consumer();
 
@@ -758,11 +696,7 @@ namespace uniset3
             throw uniset3::ORepFailed("UI(send): ERROR: id=uniset3::DefaultObjectId");
 
         if( node == uniset3::DefaultObjectId )
-        {
-            ostringstream err;
-            err << "UI(send): id='" << id << "' error: node=uniset3::DefaultObjectId";
-            throw uniset3::ORepFailed(err.str());
-        }
+            node = uconf->getLocalNode();
 
         try
         {
@@ -803,33 +737,33 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------------------------
     void UInterface::sendText(const ObjectId name, const std::string& txt, int mtype, const ObjectId node )
     {
-        if ( name == uniset3::DefaultObjectId )
+        if( name == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(sendText): ERROR: id=uniset3::DefaultObjectId");
 
         uniset3::ObjectId onode = (node == uniset3::DefaultObjectId) ? uconf->getLocalNode() : node;
 
-        uniset3::messages::TextMessage msg;
+        uniset3::umessage::TextMessage msg;
         auto header = msg.mutable_header();
-        header->set_type(uniset3::messages::mtTextInfo);
-        header->set_priority(uniset3::messages::mpMedium);
+        header->set_type(uniset3::umessage::mtTextInfo);
+        header->set_priority(uniset3::umessage::mpMedium);
         header->set_node(uconf->getLocalNode());
         header->set_supplier(myid);
         header->set_consumer(name);
         auto ts = uniset3::now_to_uniset_timespec();
         (*header->mutable_ts()) = ts;
-        msg.set_msg(txt);
+        msg.set_txt(txt);
         msg.set_mtype(mtype);
         sendText(msg, onode);
     }
     // ------------------------------------------------------------------------------------------------------------
-    void UInterface::sendText( const uniset3::messages::TextMessage& msg, uniset3::ObjectId node )
+    void UInterface::sendText( const uniset3::umessage::TextMessage& msg, uniset3::ObjectId node )
     {
         if( msg.header().consumer() == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(sendText): ERROR: consumer=uniset3::DefaultObjectId");
 
         ObjectId id = msg.header().consumer();
 
-        uniset3::messages::TransportMessage tm;
+        uniset3::umessage::TransportMessage tm;
         auto header = tm.mutable_header();
         header->set_type(msg.header().type());
         header->set_priority(msg.header().priority());
@@ -997,48 +931,31 @@ namespace uniset3
         throw uniset3::TimeOut(set_err("UI(apiRequest): Timeout", id, node));
     }
     // ------------------------------------------------------------------------------------------------------------
-    std::shared_ptr<grpc::Channel> UInterface::resolve( const std::string& name ) const
-    {
-#warning Not realized yet!
-        return nullptr;
-#if 0
-
-        if( uconf->isLocalIOR() )
-        {
-            params
-
-            if( CORBA::is_nil(orb) )
-                orb = uconf->getORB();
-
-            const string sior( uconf->iorfile->getIOR(oind->getIdByName(name)) );
-
-            if( !sior.empty() )
-                return orb->string_to_object(sior.c_str());
-        }
-
-        return rep.resolve( name );
-#endif
-    }
-    // ------------------------------------------------------------------------------------------------------------
     std::shared_ptr<grpc::Channel> UInterface::resolve( const uniset3::ObjectId id ) const
     {
-#warning Not realized yet!
-        return nullptr;
-#if 0
-
         if( uconf->isLocalIOR() )
         {
-            if( CORBA::is_nil(orb) )
-                orb = uconf->getORB();
+            const string ior = uconf->iorfile->getIOR(id);
 
-            const string sior( uconf->iorfile->getIOR(id) );
-
-            if( !sior.empty() )
-                return orb->string_to_object(sior.c_str());
+            if( !ior.empty() )
+            {
+                auto oref = uconf->iorfile->getRef(ior);
+                return grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
+            }
         }
 
-        return rep.resolve( oind->getNameById(id) );
-#endif
+        std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
+        grpc::ClientContext ctx;
+        google::protobuf::Int64Value request;
+        request.set_value(id);
+
+        ObjectRef oref;
+        grpc::Status st = stub->resolve(&ctx, request, &oref);
+
+        if( !st.ok() )
+            return nullptr;
+
+        return grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
     }
     // ------------------------------------------------------------------------------------------------------------
     std::shared_ptr<grpc::Channel> UInterface::CacheOfResolve::resolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
@@ -1137,29 +1054,39 @@ namespace uniset3
     }
 
     // ------------------------------------------------------------------------------------------------------------
-    bool UInterface::isExist( const uniset3::ObjectId id ) const noexcept
+    bool UInterface::isExists( const uniset3::ObjectId id ) const noexcept
     {
-#warning Not realized yet!
-#if 0
+        std::shared_ptr<grpc::Channel> chan;
+
         try
         {
             if( uconf->isLocalIOR() )
             {
-                if( CORBA::is_nil(orb) )
-                    orb = uconf->getORB();
+                const string ior = uconf->iorfile->getIOR(id);
 
-                const string sior( uconf->iorfile->getIOR(id) );
-
-                if( !sior.empty() )
+                if( !ior.empty() )
                 {
-                    CORBA::Object_var oref = orb->string_to_object(sior.c_str());
-                    return rep.isExist( oref );
+                    auto oref = uconf->iorfile->getRef(ior);
+                    chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
                 }
-
-                return false;
+            }
+            else
+            {
+                chan = resolve(id, uconf->getLocalNode());
             }
 
-            return rep.isExist( oind->getNameById(id) );
+            if( !chan )
+                return false;
+
+            grpc::ClientContext ctx;
+            google::protobuf::Empty req;
+            google::protobuf::BoolValue resp;
+
+            std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+            grpc::Status st = stub->exists(&ctx, req, &resp);
+
+            if( st.ok() )
+                return resp.value();
         }
         catch( const uniset3::Exception& ex )
         {
@@ -1167,35 +1094,29 @@ namespace uniset3
         }
         catch(...) {}
 
-#endif
         return false;
     }
     // ------------------------------------------------------------------------------------------------------------
-    bool UInterface::isExist( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept
+    bool UInterface::isExists( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept
     {
         if( node == uconf->getLocalNode() )
-            return isExist(id);
-
-#warning Not realized yet!
-#if 0
-        CORBA::Object_var oref;
+            return isExists(id);
 
         try
         {
-            try
-            {
-                oref = rcache.resolve(id, node);
-            }
-            catch( const uniset3::NameNotFound& ) {}
+            grpc::ClientContext ctx;
+            std::shared_ptr<grpc::Channel> chan = rcache.resolve(id, node);
+            google::protobuf::Empty req;
+            google::protobuf::BoolValue resp;
 
-            if( CORBA::is_nil(oref) )
-                oref = resolve(id, node);
+            std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+            grpc::Status st = stub->exists(&ctx, req, &resp);
 
-            return rep.isExist( oref );
+            if( st.ok() )
+                return resp.value();
         }
         catch(...) {}
 
-#endif
         return false;
     }
     // --------------------------------------------------------------------------------------------
@@ -1265,7 +1186,7 @@ namespace uniset3
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->askThreshold(&ctx, request, &reply);
@@ -1331,7 +1252,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->getThresholdInfo(&ctx, request, &reply);
@@ -1385,7 +1306,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getRawValue(&ctx, request, &reply);
@@ -1449,7 +1370,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->calibrate(&ctx, request, &reply);
@@ -1504,7 +1425,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getCalibrateInfo(&ctx, request, &reply);
@@ -1553,7 +1474,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensorSeq(&ctx, request, &reply);
@@ -1604,7 +1525,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensorIOInfo(&ctx, request, &reply);
@@ -1656,7 +1577,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->setOutputSeq(&ctx, request, &reply);
@@ -1717,7 +1638,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(sid, node);
+                    chan = resolve(sid, node);
 
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->askSensorsSeq(&ctx, request, &reply);
@@ -1768,7 +1689,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(id, node);
+                    chan = resolve(id, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensors(&ctx, request, &reply);
@@ -1818,7 +1739,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(id, node);
+                    chan = resolve(id, node);
 
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensorsMap(&ctx, request, &reply);
@@ -1868,7 +1789,7 @@ namespace uniset3
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
-                    chan = rcache.resolve(id, node);
+                    chan = resolve(id, node);
 
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->getThresholdsList(&ctx, request, &reply);
@@ -1937,7 +1858,7 @@ namespace uniset3
         {
             try
             {
-                ready = isExist(id, node);
+                ready = isExists(id, node);
 
                 if( ready )
                     break;

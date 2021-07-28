@@ -48,19 +48,13 @@ int main( int argc, const char** argv )
         }
 
         // -------------------------------------------
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
-
+        act->startup();
         act->run(false);
         return 0;
     }
-    catch( CORBA::SystemException& ex )
+    catch( std::exception& ex )
     {
-        cerr << "(mbslave_perf_test): " << ex.NP_minorString() << endl;
-    }
-    catch( Exception& ex )
-    {
-        cerr << "(mbslave_perf_test): " << ex << endl;
+        cerr << "(mbslave_perf_test): " << ex.what() << endl;
     }
     catch(...)
     {

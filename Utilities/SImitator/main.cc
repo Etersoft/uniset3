@@ -62,7 +62,7 @@ int main( int argc, char** argv )
 
         for( auto&& it : lst )
         {
-            uniset3::IOType t = conf->getIOType( it.si.id );
+            uniset3::IOType t = conf->getIOType( it.si.id() );
 
             if( t != uniset3::AI && t != uniset3::AO )
             {
@@ -70,8 +70,8 @@ int main( int argc, char** argv )
                 // return 1;
             }
 
-            if( it.si.node == DefaultObjectId )
-                it.si.node = conf->getLocalNode();
+            if( it.si.node() == DefaultObjectId )
+                it.si.set_node(conf->getLocalNode());
 
             ExtInfo i;
             i.si = it.si;

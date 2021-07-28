@@ -466,8 +466,8 @@ TEST_CASE("[UNetUDP]: check undefined value", "[unetudp][sender]")
     REQUIRE( pack.aValue(0) == 110 );
 
     uniset3::SensorInfo si;
-    si.id = 2;
-    si.node = uniset_conf()->getLocalNode();
+    si.set_id(2);
+    si.set_node(uniset_conf()->getLocalNode());
     ui->setUndefinedState(si, true, 6000 /* TestProc */ );
     msleep(600);
     pack = receive(pack.num() + 1);
@@ -491,9 +491,9 @@ TEST_CASE("[UNetUDP]: perf test", "[unetudp][zero][perf]")
 {
     UniSetUDP::UDPMessage pack;
     REQUIRE(pack.isOk());
-    pack.header.nodeID = 100;
-    pack.header.procID = 100;
-    pack.header.num = 1;
+    pack.setNodeID(100);
+    pack.setProcID(100);
+    pack.setNum(1);
 
     for( size_t i = 0; i < uniset3::UniSetUDP::MaxACount; i++ )
     {
@@ -502,13 +502,13 @@ TEST_CASE("[UNetUDP]: perf test", "[unetudp][zero][perf]")
     }
 
     UniSetUDP::UDPMessage pack2;
+    const std::string s = pack.serializeAsString();
 
     PassiveTimer pt;
 
     for( int i = 0; i < 100000; i++ )
     {
-        memcpy(&pack2, &pack, sizeof(UniSetUDP::UDPMessage));
-        pack2.ntoh();
+        pack2.initFromBuffer((uint8_t*)s.data(), s.size());
     }
 
     cerr << "perf: " << pt.getCurrent() << " msec" << endl;

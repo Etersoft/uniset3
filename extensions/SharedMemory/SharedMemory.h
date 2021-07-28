@@ -36,7 +36,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // --------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*! \page page_SharedMemory Реализация разделяемой между процессами памяти (SharedMemory)
@@ -281,7 +281,7 @@ namespace uniset33
     \section sec_SM_ReservSM Восстановление данных из резервных SM
        Для повышения надёжности работы в SharedMemory предусмотрен механизм восстановления текущего состояния (датчиков)
        из списка резервных SM. После того, как SM запускается и активизируется, но до того, как она
-       выдаст exist()=true и с ней можно будет работать, происходит попытка получить значения всех датчиков
+       выдаст exists()=true и с ней можно будет работать, происходит попытка получить значения всех датчиков
        от резервных SM. Список резервных SM задаётся в секции <ReservList>...</ReservList>.
        При этом попытки получить значения идёт в порядке указанном в списке и прекращаются, при первом успешном
        доступе.
@@ -318,13 +318,13 @@ namespace uniset33
     // -----------------------------------------------------------------------------
     /*! Реалиазция SharedMemory */
     class SharedMemory:
-        public IONotifyController
+        public uniset3::IONotifyController
     {
         public:
 
             // конструктор с конфигурированием через xml
-            SharedMemory( ObjectId id,
-                          const std::shared_ptr<IOConfig_XML>& ioconf,
+            SharedMemory( uniset3::ObjectId id,
+                          const std::shared_ptr<uniset3::IOConfig_XML>& ioconf,
                           const std::string& confname = "" );
 
             virtual ~SharedMemory();
@@ -338,11 +338,10 @@ namespace uniset33
             // функция определяет "готовность" SM к работе.
             // должна использоваться другими процессами, для того,
             // чтобы понять, когда можно получать от SM данные.
-            virtual CORBA::Boolean exist() override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual bool isExists() override;
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
-
-            void addReadItem( IOConfig_XML::ReaderSlot sl );
+            void addReadItem( uniset3::IOConfig_XML::ReaderSlot sl );
 
             // ------------  HISTORY  --------------------
             typedef std::deque<long> HBuffer;
@@ -413,7 +412,7 @@ namespace uniset33
 
             // -------------------------------------------------------------------------------
 
-            inline std::shared_ptr<LogAgregator> logAgregator()
+            inline std::shared_ptr<uniset3::LogAgregator> logAgregator()
             {
                 return loga;
             }
@@ -423,21 +422,20 @@ namespace uniset33
             }
 
         protected:
-            typedef std::list<IOConfig_XML::ReaderSlot> ReadSlotList;
+            typedef std::list<uniset3::IOConfig_XML::ReaderSlot> ReadSlotList;
             ReadSlotList lstRSlot;
 
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual std::string getTimerName(int id) const override;
 
-            void sendEvent( uniset3::messages::SystemMessage& sm );
+            void sendEvent( uniset3::umessage::SystemMessage& sm );
             void initFromReserv();
             bool initFromSM( uniset3::ObjectId sm_id, uniset3::ObjectId sm_node );
 
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
-            bool readItem( const std::shared_ptr<UniXML>& xml, UniXML::iterator& it, xmlNode* sec );
-
+            bool readItem( const std::shared_ptr<uniset3::UniXML>& xml, uniset3::UniXML::iterator& it, xmlNode* sec );
             void buildEventList( xmlNode* cnode );
             void readEventList( const std::string& oname );
 
@@ -465,7 +463,7 @@ namespace uniset33
                                 (т.е. только сброс датчика heartbeat (d_sid) в ноль). */
 
                     bool timer_running;
-                    PassiveTimer ptReboot;
+                    uniset3::PassiveTimer ptReboot;
             };
 
             enum Timers
@@ -485,7 +483,7 @@ namespace uniset33
 
             typedef std::list<HeartBeatInfo> HeartBeatList;
             HeartBeatList hblist; // список датчиков "сердцебиения"
-            std::shared_ptr<WDTInterface> wdt;
+            std::shared_ptr<uniset3::WDTInterface> wdt;
             std::atomic_bool activated = { false };
             std::atomic_bool workready = { false };
             std::atomic_bool cancelled = { false };
@@ -496,7 +494,7 @@ namespace uniset33
             int evntPause;
             int activateTimeout;
 
-            virtual void logging( uniset3::messages::SensorMessage& sm ) override;
+            virtual void logging( uniset3::umessage::SensorMessage& sm ) override;
 
             bool dblogging = { false };
 
@@ -535,7 +533,7 @@ namespace uniset33
             HistorySlot m_historySignal;
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // SharedMemory_H_
 // -----------------------------------------------------------------------------

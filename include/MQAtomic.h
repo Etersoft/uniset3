@@ -21,9 +21,9 @@
 #include <vector>
 #include <memory>
 #include <mutex>
-#include "MessageType.h"
+#include "MessageTypes.pb.h"
 //--------------------------------------------------------------------------
-typedef std::shared_ptr<uniset3::messages::TransportMessage> VoidMessagePtr;
+typedef std::shared_ptr<uniset3::umessage::TransportMessage> VoidMessagePtr;
 //--------------------------------------------------------------------------
 namespace uniset3
 {

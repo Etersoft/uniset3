@@ -26,6 +26,7 @@
 using namespace std;
 using namespace uniset3;
 using namespace uniset3::extensions;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 MBTCPMaster::MBTCPMaster(uniset3::ObjectId objId, uniset3::ObjectId shmId,
                          const std::shared_ptr<SharedMemory>& ic, const std::string& prefix ):
@@ -124,11 +125,11 @@ std::shared_ptr<ModbusClient> MBTCPMaster::initMB( bool reopen )
     return mbtcp;
 }
 // -----------------------------------------------------------------------------
-void MBTCPMaster::sysCommand( const uniset3::messages::SystemMessage* sm )
+void MBTCPMaster::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     MBExchange::sysCommand(sm);
 
-    if( sm->command == SystemMessage::StartUp )
+    if( sm->cmd() == SystemMessage::StartUp )
         pollThread->start();
 }
 // -----------------------------------------------------------------------------
@@ -234,17 +235,21 @@ std::shared_ptr<MBTCPMaster> MBTCPMaster::init_mbmaster(int argc, const char* co
     return make_shared<MBTCPMaster>(ID, icID, ic, prefix);
 }
 // -----------------------------------------------------------------------------
-uniset3::SimpleInfo* MBTCPMaster::getInfo( const char* userparam )
+grpc::Status MBTCPMaster::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
 {
-    uniset3::SimpleInfo_var i = MBExchange::getInfo(userparam);
+    ::google::protobuf::StringValue oinf;
+    grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+    if( !st.ok() )
+        return st;
 
     ostringstream inf;
 
-    inf << i->info << endl;
+    inf << oinf.value() << endl;
     inf << "poll: " << iaddr << ":" << port << " pesrsistent-connection=" << ( force_disconnect ? "NO" : "YES" ) << endl;
 
-    i->info = inf.str().c_str();
-    return i._retn();
+    response->set_value(inf.str());
+    return grpc::Status::OK;
 }
 // ----------------------------------------------------------------------------
 bool MBTCPMaster::reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& newConf )

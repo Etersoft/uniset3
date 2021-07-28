@@ -75,13 +75,30 @@ timeout_t LT_Object::checkTimers( UniSetObject* obj )
 			uniset_rwmutex_wrlock lock(lstMutex);
 			sleepTime = UniSetTimer::WaitUpTime;
 
+            umessage::TransportMessage tm;
+            auto header = tm.mutable_header();
+            header->set_type(umessage::mtTimer);
+            header->set_node(uniset_conf()->getLocalNode());
+            header->set_supplier(obj->getId());
+            header->set_consumer(obj->getId());
+            auto ts = uniset3::now_to_uniset_timespec();
+            (*header->mutable_ts()) = ts;
+
+            umessage::TimerMessage tmsg;
+            grpc::ServerContext context;
+            google::protobuf::Empty empty;
+
 			for( auto li = tlst.begin(); li != tlst.end(); ++li )
 			{
 				if( li->tmr.checkTime() )
-				{
-					// помещаем себе в очередь сообщение
-					TransportMessage tm( TimerMessage(li->id, li->priority, obj->getId()).transport_msg() );
-					obj->push(tm);
+                {
+                    tm.mutable_header()->set_priority(li->priority);
+                    tmsg.set_id(li->id);
+                    *(tmsg.mutable_header()) = tm.header();
+                    tm.set_data(tmsg.SerializeAsString());
+
+                    // помещаем себе в очередь сообщение
+                    obj->push(&context, &tm, &empty);
 
 					// Проверка на количество заданных тактов
 					if( !li->curTick )
@@ -164,7 +181,7 @@ string LT_Object::getTimerName( int id ) const
 }
 // ------------------------------------------------------------------------------------------
 
-timeout_t LT_Object::askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks, uniset3::messages::Priority p )
+timeout_t LT_Object::askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock_t ticks, uniset3::umessage::Priority p )
 {
 	if( timeMS > 0 ) // заказ
 	{

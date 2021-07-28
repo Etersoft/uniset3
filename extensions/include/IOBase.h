@@ -79,16 +79,20 @@ namespace uniset3
             front_state(false),
             rawdata(false)
         {
-            si.id = uniset3::DefaultObjectId;
-            si.node = uniset3::DefaultObjectId;
-            cal.minRaw = cal.maxRaw = cal.minCal = cal.maxCal = cal.precision = 0;
-            ti.invert = false;
-            ti.hilimit = 0;
-            ti.lowlimit = 0;
-            ti.id = uniset3::DefaultObjectId;
-            ti.state = uniset3::NormalThreshold;
-            ti.tv_sec = 0;
-            ti.tv_nsec = 0;
+            si.set_id(uniset3::DefaultObjectId);
+            si.set_node(uniset3::DefaultObjectId);
+            cal.set_minraw(0);
+            cal.set_maxraw(0);
+            cal.set_mincal(0);
+            cal.set_maxcal(0);
+            cal.set_precision(0);
+            ti.set_invert(false);
+            ti.set_hilimit(0);
+            ti.set_lowlimit(0);
+            ti.set_id(uniset3::DefaultObjectId);
+            ti.set_state(uniset3::NormalThreshold);
+            ti.mutable_ts()->set_sec(0);
+            ti.mutable_ts()->set_nsec(0);
         }
 
         bool check_channel_break( long val );     /*!< проверка обрыва провода */

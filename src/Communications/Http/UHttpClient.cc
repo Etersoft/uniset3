@@ -52,7 +52,7 @@ namespace uniset3
 	{
 		session.setHost(host);
 		session.setPort(port);
-		HTTPRequest request(HTTPRequest::HTTP_GET, query, HTTPmessages::HTTP_1_1);
+        HTTPRequest request(HTTPRequest::HTTP_GET, query, HTTPRequest::HTTP_1_1);
 		try
 		{
 			session.sendRequest(request);

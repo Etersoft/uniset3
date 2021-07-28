@@ -49,7 +49,7 @@ class UProxyObject_impl:
 
     protected:
         virtual void askSensors( uniset3::UIOCommand cmd ) override;
-        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
+        virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
 
     private:
 
@@ -57,8 +57,8 @@ class UProxyObject_impl:
         {
             SInfo()
             {
-                si.id = uniset3::DefaultObjectId;
-                si.node = uniset3::DefaultObjectId;
+                si.set_id(uniset3::DefaultObjectId);
+                si.set_node(uniset3::DefaultObjectId);
             }
 
             uniset3::SensorInfo si;
@@ -198,8 +198,8 @@ void UProxyObject_impl::impl_addToAsk( ObjectId id ) throw( UException )
     auto conf = uniset_conf();
 
     UProxyObject_impl::SInfo i;
-    i.si.id = id;
-    i.si.node = conf->getLocalNode();
+    i.si.set_id(id);
+    i.si.set_node(conf->getLocalNode());
 
     auto inf = conf->oind->getObjectInfo(id);
 
@@ -278,12 +278,12 @@ bool UProxyObject_impl::impl_updateValues()
     {
         try
         {
-            i.second.value = ui->getValue(i.second.si.id, i.second.si.node);
+            i.second.value = ui->getValue(i.second.si.id(), i.second.si.node());
             i.second.fvalue = (float)i.second.value / pow(10.0, i.second.precision);
         }
         catch( std::exception& ex )
         {
-            mycrit << myname << "(updateValues): " << i.second.si.id << " error: " << ex.what() << std::endl;
+            mycrit << myname << "(updateValues): " << i.second.si.id() << " error: " << ex.what() << std::endl;
             ret = false;
         }
     }
@@ -297,7 +297,7 @@ bool UProxyObject_impl::impl_smIsOK()
 
     // проверяем по первому датчику
     auto s = smap.begin();
-    return ui->isExist(s->second.si.id, s->second.si.node);
+    return ui->isExists(s->second.si.id(), s->second.si.node());
 }
 // --------------------------------------------------------------------------
 void UProxyObject_impl::impl_askSensor( uniset3::ObjectId id ) throw(UException)
@@ -315,25 +315,25 @@ void UProxyObject_impl::askSensors( uniset3::UIOCommand cmd )
     {
         try
         {
-            ui->askRemoteSensor(i.second.si.id, cmd, i.second.si.node, getId());
+            ui->askRemoteSensor(i.second.si.id(), cmd, i.second.si.node(), getId());
         }
         catch( std::exception& ex )
         {
-            mywarn << myname << "(askSensors): " << i.second.si.id << " error: " << ex.what() << std::endl;
+            mywarn << myname << "(askSensors): " << i.second.si.id() << " error: " << ex.what() << std::endl;
             askOK = false;
         }
     }
 }
 // --------------------------------------------------------------------------
-void UProxyObject_impl::sensorInfo( const SensorMessage* sm )
+void UProxyObject_impl::sensorInfo( const uniset3::umessage::SensorMessage* sm )
 {
     std::unique_lock<std::mutex> lk(mutexSMap);
-    auto i = smap.find(sm->id);
+    auto i = smap.find(sm->id());
 
     if( i != smap.end() )
     {
-        i->second.value = sm->value;
-        i->second.fvalue = (float)sm->value / pow(10.0, sm->ci.precision);
+        i->second.value = sm->value();
+        i->second.fvalue = (float)sm->value() / pow(10.0, sm->ci().precision());
     }
 }
 // --------------------------------------------------------------------------

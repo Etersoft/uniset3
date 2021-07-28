@@ -23,7 +23,7 @@
 #include "UniSetTypes.h"
 #include "proto/unet.pb.h"
 // --------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     namespace UniSetUDP
@@ -98,7 +98,7 @@ namespace uniset33
         uint16_t makeCRC( unsigned char* buf, size_t len ) noexcept;
     }
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // UDPPacket_H_
 // -----------------------------------------------------------------------------

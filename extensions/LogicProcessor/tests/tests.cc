@@ -44,31 +44,22 @@ int main(int argc, const char* argv[] )
         auto nullsm = make_shared<NullSM>(ns_id, "lp-configure.xml");
         act->add(nullsm);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
 
         int tout = 6000;
         PassiveTimer pt(tout);
 
-        while( !pt.checkTime() && !act->exist() )
+        while( !pt.checkTime() && !act->isExists() )
             msleep(100);
 
-        if( !act->exist() )
+        if( !act->isExists() )
         {
-            cerr << "(tests): UActivator not exist! (timeout=" << tout << ")" << endl;
+            cerr << "(tests): UActivator not exists! (timeout=" << tout << ")" << endl;
             return 1;
         }
 
         return session.run();
-    }
-    catch( const SystemError& err )
-    {
-        cerr << "(tests): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(tests): " << ex << endl;
     }
     catch( const std::exception& e )
     {

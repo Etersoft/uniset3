@@ -28,7 +28,7 @@
 #include "IONotifyController.h"
 #include "UniSetObject.h"
 #include "Mutex.h"
-#include "MessageType.h"
+#include "MessageTypes.pb.h"
 #include "ComediInterface.h"
 #include "DigitalFilter.h"
 #include "Calibration.h"
@@ -44,7 +44,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // -------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // ---------------------------------------------------------------------
     /*!
@@ -248,7 +248,7 @@ namespace uniset33
             /*! глобальная функция для вывода help-а */
             static void help_print( int argc, const char* const* argv );
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
             /*! Информация о входе/выходе */
             struct IOInfo:
@@ -323,10 +323,10 @@ namespace uniset33
             void iothread();
 
             // действия при завершении работы
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
             virtual void askSensors( uniset3::UIOCommand cmd );
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
 
@@ -430,7 +430,7 @@ namespace uniset33
         private:
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // IOControl_H_
 // -----------------------------------------------------------------------------

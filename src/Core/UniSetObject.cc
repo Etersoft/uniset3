@@ -349,9 +349,14 @@ namespace uniset3
             thr->join();
     }
     // ------------------------------------------------------------------------------------------
-    ::grpc::Status UniSetObject::exist(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response)
+    bool UniSetObject::isExists()
     {
-        response->set_value(true);
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
+    ::grpc::Status UniSetObject::exists(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response)
+    {
+        response->set_value(isExists());
         return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
@@ -394,16 +399,16 @@ namespace uniset3
             thr->setPriority(p);
     }
     // ------------------------------------------------------------------------------------------
-    ::grpc::Status UniSetObject::push(::grpc::ServerContext* context, const ::uniset3::messages::TransportMessage* request, ::google::protobuf::Empty* response)
+    ::grpc::Status UniSetObject::push(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response)
     {
         // make copy
-        auto vm = make_shared<messages::TransportMessage>(*request);
+        auto vm = make_shared<umessage::TransportMessage>(*request);
 
-        if( request->header().priority() == messages::mpMedium )
+        if( request->header().priority() == umessage::mpMedium )
             mqueueMedium.push(vm);
-        else if( request->header().priority() == messages::mpHigh )
+        else if( request->header().priority() == umessage::mpHigh )
             mqueueHi.push(vm);
-        else if( request->header().priority() == messages::mpLow )
+        else if( request->header().priority() == umessage::mpLow )
             mqueueLow.push(vm);
         else // на всякий по умолчанию medium
             mqueueMedium.push(vm);
@@ -825,7 +830,7 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     void UniSetObject::work()
     {
-        uinfo << myname << ": thread processing messages running..." << endl;
+        uinfo << myname << ": thread processing umessage running..." << endl;
 
         msgpid = thr ? thr->getTID() : Poco::Process::id();
 
@@ -837,7 +842,7 @@ namespace uniset3
         while( isActive() )
             callback();
 
-        uinfo << myname << ": thread processing messages stopped..." << endl;
+        uinfo << myname << ": thread processing umessage stopped..." << endl;
 
         {
             std::unique_lock<std::mutex> locker(m_working);
@@ -871,15 +876,15 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    void UniSetObject::processingMessage( const uniset3::messages::TransportMessage* msg )
+    void UniSetObject::processingMessage( const uniset3::umessage::TransportMessage* msg )
     {
         try
         {
             switch( msg->header().type() )
             {
-                case messages::mtSensorInfo:
+                case umessage::mtSensorInfo:
                 {
-                    messages::SensorMessage m;
+                    umessage::SensorMessage m;
 
                     if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
                     {
@@ -891,9 +896,9 @@ namespace uniset3
                 }
                 break;
 
-                case messages::mtTimer:
+                case umessage::mtTimer:
                 {
-                    messages::TimerMessage m;
+                    umessage::TimerMessage m;
 
                     if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
                     {
@@ -905,9 +910,9 @@ namespace uniset3
                 }
                 break;
 
-                case messages::mtSysCommand:
+                case umessage::mtSysCommand:
                 {
-                    messages::SystemMessage m;
+                    umessage::SystemMessage m;
 
                     if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
                     {
@@ -919,9 +924,9 @@ namespace uniset3
                 }
                 break;
 
-                case messages::mtTextInfo:
+                case umessage::mtTextInfo:
                 {
-                    messages::TextMessage m;
+                    umessage::TextMessage m;
 
                     if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
                     {
@@ -955,7 +960,7 @@ namespace uniset3
         */
     }
     // ------------------------------------------------------------------------------------------
-    timeout_t UniSetObject::askTimer( TimerId timerid, timeout_t timeMS, clock_t ticks, messages::Priority p )
+    timeout_t UniSetObject::askTimer( TimerId timerid, timeout_t timeMS, clock_t ticks, umessage::Priority p )
     {
         timeout_t tsleep = LT_Object::askTimer(timerid, timeMS, ticks, p);
 

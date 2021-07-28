@@ -119,7 +119,30 @@ namespace uniset3
             throw;
         }
     }
-    // -----------------------------------------------------------------------------------------
+
+    // ---------------------------------------------------------------
+    template<class MessageType>
+    uniset3::umessage::TransportMessage to_transport( const MessageType& m )
+    {
+        uniset3::umessage::TransportMessage tm;
+        *(tm.mutable_header()) = m.header();
+        tm.set_data(m.SerializeAsString());
+        return tm;
+    }
+    // ---------------------------------------------------------------
+    template<class MessageType>
+    uniset3::umessage::TransportMessage makeMessage( uniset3::umessage::Priority prior = uniset3::umessage::mpMedium )
+    {
+        MessageType m;
+        m.mutable_header()->set_priority(prior);
+        auto ts = uniset3::now_to_uniset_timespec();
+        *(m.mutable_header()->mutable_ts()) = ts;
+        m.mutable_header()->set_node(uniset3::uniset_conf()->getLocalNode());
+        //    m.mutable_header()->set_supplier(XXX);
+        //    m.mutable_header()->set_consumer(XXX);
+        return m;
+    }
+    // -------------------------------------------------------------------------------------
 } // endof namespace uniset3
 // -----------------------------------------------------------------------------------------
 #endif // UHelpers_H_

@@ -1,24 +1,24 @@
 <?xml version='1.0' encoding="utf-8" ?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version='1.0'
-		             xmlns:date="http://exslt.org/dates-and-times">
+                     xmlns:date="http://exslt.org/dates-and-times">
 
 <xsl:import href="ctl-cpp-common.xsl"/>
 <xsl:output method="text" indent="yes" encoding="utf-8"/>
 
 <xsl:variable name="CLASSNAME">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'class-name'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'class-name'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="BASECLASS">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'base-class'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'base-class'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="OID">
-	<xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'ID'"/></xsl:call-template>
+    <xsl:call-template name="settings-alone"><xsl:with-param name="varname" select="'ID'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="TESTMODE">
-	<xsl:call-template name="settings"><xsl:with-param name="varname" select="'testmode'"/></xsl:call-template>
+    <xsl:call-template name="settings"><xsl:with-param name="varname" select="'testmode'"/></xsl:call-template>
 </xsl:variable>
 <xsl:variable name="ARGPREFIX">
-	<xsl:call-template name="settings"><xsl:with-param name="varname" select="'arg-prefix'"/></xsl:call-template>
+    <xsl:call-template name="settings"><xsl:with-param name="varname" select="'arg-prefix'"/></xsl:call-template>
 </xsl:variable>
 
 <!-- Генерирование заголовочного файла -->
@@ -53,58 +53,58 @@
 // -----------------------------------------------------------------------------
 class <xsl:value-of select="$CLASSNAME"/>_SK:
 <xsl:choose>
-	<xsl:when test="normalize-space($BASECLASS)='UniSetObject'">	public uniset3::UniSetObject</xsl:when>
-	<xsl:when test="normalize-space($BASECLASS)='UniSetManager'">	public uniset3::UniSetManager</xsl:when>
-	<xsl:when test="normalize-space($BASECLASS)!=''">	public <xsl:value-of select="normalize-space($BASECLASS)"/></xsl:when>
-	<xsl:when test="normalize-space($BASECLASS)=''">	public uniset3::UniSetObject</xsl:when>
+    <xsl:when test="normalize-space($BASECLASS)='UniSetObject'">    public uniset3::UniSetObject</xsl:when>
+    <xsl:when test="normalize-space($BASECLASS)='UniSetManager'">    public uniset3::UniSetManager</xsl:when>
+    <xsl:when test="normalize-space($BASECLASS)!=''">    public <xsl:value-of select="normalize-space($BASECLASS)"/></xsl:when>
+    <xsl:when test="normalize-space($BASECLASS)=''">    public uniset3::UniSetObject</xsl:when>
 </xsl:choose>
 {
-	public:
-		<xsl:if test="not(normalize-space($OID))=''">
-				<xsl:value-of select="$CLASSNAME"/>_SK( uniset3::ObjectId id = uniset3::uniset_conf()->getObjectID("<xsl:value-of select="$OID"/>"), xmlNode* node=uniset3::uniset_conf()->getNode("<xsl:value-of select="normalize-space($OID)"/>"), const std::string&amp; argprefix="", xmlNode* globalConfNode=nullptr );
-		</xsl:if>
-		<xsl:if test="normalize-space($OID)=''">
-				<xsl:value-of select="$CLASSNAME"/>_SK( uniset3::ObjectId id, xmlNode* node=uniset3::uniset_conf()->getNode("<xsl:value-of select="normalize-space($OID)"/>"), xmlNode* globalConfNode=nullptr );
-		</xsl:if>
-		<xsl:value-of select="$CLASSNAME"/>_SK();
+    public:
+        <xsl:if test="not(normalize-space($OID))=''">
+                <xsl:value-of select="$CLASSNAME"/>_SK( uniset3::ObjectId id = uniset3::uniset_conf()->getObjectID("<xsl:value-of select="$OID"/>"), xmlNode* node=uniset3::uniset_conf()->getNode("<xsl:value-of select="normalize-space($OID)"/>"), const std::string&amp; argprefix="", xmlNode* globalConfNode=nullptr );
+        </xsl:if>
+        <xsl:if test="normalize-space($OID)=''">
+                <xsl:value-of select="$CLASSNAME"/>_SK( uniset3::ObjectId id, xmlNode* node=uniset3::uniset_conf()->getNode("<xsl:value-of select="normalize-space($OID)"/>"), xmlNode* globalConfNode=nullptr );
+        </xsl:if>
+        <xsl:value-of select="$CLASSNAME"/>_SK();
 
-		virtual ~<xsl:value-of select="$CLASSNAME"/>_SK();
+        virtual ~<xsl:value-of select="$CLASSNAME"/>_SK();
 
-		<xsl:call-template name="COMMON-HEAD-PUBLIC"/>
+        <xsl:call-template name="COMMON-HEAD-PUBLIC"/>
 
-		// Используемые идентификаторы
-		<xsl:for-each select="//sensors/item">
-			<xsl:call-template name="setvar">
-				<xsl:with-param name="GENTYPE" select="'H'"/>
-			</xsl:call-template>
-		</xsl:for-each>
+        // Используемые идентификаторы
+        <xsl:for-each select="//sensors/item">
+            <xsl:call-template name="setvar">
+                <xsl:with-param name="GENTYPE" select="'H'"/>
+            </xsl:call-template>
+        </xsl:for-each>
 
-		// Используемые идентификаторы сообщений
-		<xsl:for-each select="//sensors/item">
-			<xsl:call-template name="setmsg">
-				<xsl:with-param name="GENTYPE" select="'H'"/>
-			</xsl:call-template>
-		</xsl:for-each>
+        // Используемые идентификаторы сообщений
+        <xsl:for-each select="//sensors/item">
+            <xsl:call-template name="setmsg">
+                <xsl:with-param name="GENTYPE" select="'H'"/>
+            </xsl:call-template>
+        </xsl:for-each>
 
-	protected:
-		<xsl:call-template name="COMMON-HEAD-PROTECTED"/>
-		
-	private:
-		<xsl:call-template name="COMMON-HEAD-PRIVATE"/>
+    protected:
+        <xsl:call-template name="COMMON-HEAD-PROTECTED"/>
+        
+    private:
+        <xsl:call-template name="COMMON-HEAD-PRIVATE"/>
 
-		// Используемые идентификаторы
-		<xsl:for-each select="//sensors/item">
-			<xsl:call-template name="setvar">
-				<xsl:with-param name="GENTYPE" select="'H-PRIVATE'"/>
-			</xsl:call-template>
-		</xsl:for-each>
+        // Используемые идентификаторы
+        <xsl:for-each select="//sensors/item">
+            <xsl:call-template name="setvar">
+                <xsl:with-param name="GENTYPE" select="'H-PRIVATE'"/>
+            </xsl:call-template>
+        </xsl:for-each>
 
-		// Используемые идентификаторы сообщений
-		<xsl:for-each select="//sensors/item">
-			<xsl:call-template name="setmsg">
-				<xsl:with-param name="GENTYPE" select="'H-PRIVATE'"/>
-			</xsl:call-template>
-		</xsl:for-each>
+        // Используемые идентификаторы сообщений
+        <xsl:for-each select="//sensors/item">
+            <xsl:call-template name="setmsg">
+                <xsl:with-param name="GENTYPE" select="'H-PRIVATE'"/>
+            </xsl:call-template>
+        </xsl:for-each>
 
 };
 

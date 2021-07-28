@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 TestObject::TestObject( uniset3::ObjectId objId, xmlNode* cnode ):
     TestObject_SK(objId, cnode)
@@ -29,37 +30,37 @@ void TestObject::askNotifyFirstNotNull()
     preAskSensors(uniset3::UIONotifyFirstNotNull);
 }
 // -----------------------------------------------------------------------------
-void TestObject::sysCommand( const uniset3::messages::SystemMessage* sm )
+void TestObject::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     // фиксируем что SM прислала WDT при своём запуске
-    if( sm->command == SystemMessage::WatchDog )
+    if( sm->cmd() == SystemMessage::WatchDog )
         evntIsOK = true;
 }
 // -----------------------------------------------------------------------------
 void TestObject::sensorInfo( const SensorMessage* sm )
 {
-    if( sm->id == monotonic_s )
+    if( sm->id() == monotonic_s )
     {
-        if( (sm->value - lastValue) < 0 )
+        if( (sm->value() - lastValue) < 0 )
             monotonicFailed = true;
 
-        if( (sm->value - lastValue) > 1 )
+        if( (sm->value() - lastValue) > 1 )
         {
-            cerr << "LOST: sm->value=" << sm->value << " last=" << lastValue
-                 << " lost: " << (sm->value - lastValue)
+            cerr << "LOST: sm->value=" << sm->value() << " last=" << lastValue
+                 << " lost: " << (sm->value() - lastValue)
                  << endl;
 
-            lostMessages += (sm->value - lastValue - 1);
+            lostMessages += (sm->value() - lastValue - 1);
         }
 
-        lastValue = sm->value;
+        lastValue = sm->value();
     }
 }
 // -----------------------------------------------------------------------------
 void TestObject::onTextMessage( const TextMessage* msg )
 {
-    lastText = msg->txt;
-    lastTextType =  msg->mtype;
+    lastText = msg->txt();
+    lastTextType =  msg->mtype();
 }
 // -----------------------------------------------------------------------------
 void TestObject::stopHeartbeat()

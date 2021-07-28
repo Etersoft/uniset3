@@ -73,26 +73,6 @@ namespace uniset3
             virtual ::grpc::Status getTimeChange(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ShortIOInfo* response) override;
             virtual ::grpc::Status getSensors(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ShortMapSeq* response) override;
 
-            //            virtual void setUndefinedState( uniset3::ObjectId sid,
-            //                                            CORBA::Boolean undefined,
-            //                                            uniset3::ObjectId sup_id = uniset3::DefaultObjectId ) override;
-
-            //            virtual uniset3::SensorInfoSeq* getSensorSeq( const uniset3::IDSeq& lst ) override;
-            //            virtual uniset3::IDSeq* setOutputSeq( const uniset3::OutSeq& lst, uniset3::ObjectId sup_id ) override;
-
-            //            //     ----------------------------------------------------------------
-            //            virtual uniset3::IOType getIOType( uniset3::ObjectId sid ) override;
-
-            //            virtual uniset3::SensorInfoSeq* getSensorsMap() override;
-            //            virtual uniset3::SensorIOInfo getSensorIOInfo( uniset3::ObjectId sid ) override;
-
-            //            virtual CORBA::Long getRawValue( uniset3::ObjectId sid ) override;
-            //            virtual void calibrate( uniset3::ObjectId sid,
-            //                                    const uniset3::CalibrateInfo& ci,
-            //                                    uniset3::ObjectId adminId ) override;
-
-            //            uniset3::CalibrateInfo getCalibrateInfo( uniset3::ObjectId sid ) override;
-
             class Undefined: public Exception
             {
                 public:
@@ -104,8 +84,6 @@ namespace uniset3
                     long value;
             };
 
-
-
             inline uniset3::SensorInfo SensorInfo( const uniset3::ObjectId sid,
                                                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode())
             {
@@ -115,9 +93,7 @@ namespace uniset3
                 return si;
             };
 
-            uniset3::messages::Priority getPriority( const uniset3::ObjectId id );
-            //            virtual uniset3::ShortIOInfo getTimeChange( const uniset3::ObjectId id ) override;
-            //            virtual uniset3::ShortMapSeq* getSensors() override;
+            uniset3::umessage::Priority getPriority( const uniset3::ObjectId id );
 
 #ifndef DISABLE_REST_API
             // http API
@@ -239,7 +215,7 @@ namespace uniset3
             // ------------------------------
             inline uniset3::SensorIOInfo
             SensorIOInfo(long v, uniset3::IOType t, const uniset3::SensorInfo& si,
-                         uniset3::messages::Priority p = uniset3::messages::mpMedium,
+                         uniset3::umessage::Priority p = uniset3::umessage::mpMedium,
                          long defval = 0, uniset3::CalibrateInfo* ci = 0,
                          uniset3::ObjectId sup_id = uniset3::DefaultObjectId,
                          uniset3::ObjectId depend_sid = uniset3::DefaultObjectId )
@@ -270,7 +246,7 @@ namespace uniset3
             };
 
             //! сохранение информации об изменении состояния датчика
-            virtual void logging( uniset3::messages::SensorMessage& sm );
+            virtual void logging( uniset3::umessage::SensorMessage& sm );
 
             //! сохранение состояния всех датчиков в БД
             virtual void dumpToDB();
@@ -375,12 +351,12 @@ namespace uniset3
                     return sinf;
                 }
 
-                inline uniset3::messages::SensorMessage makeSensorMessage( bool with_lock = false )
+                inline uniset3::umessage::SensorMessage makeSensorMessage( bool with_lock = false )
                 {
-                    uniset3::messages::SensorMessage sm;
+                    uniset3::umessage::SensorMessage sm;
                     auto header = sm.mutable_header();
-                    header->set_type(uniset3::messages::mtSensorInfo);
-                    header->set_priority((uniset3::messages::Priority)sinf.priority());
+                    header->set_type(uniset3::umessage::mtSensorInfo);
+                    header->set_priority((uniset3::umessage::Priority)sinf.priority());
                     header->set_node(sinf.si().node()); // uniset_conf()->getLocalNode());
                     header->set_supplier(sinf.supplier());
                     auto ts = uniset3::now_to_uniset_timespec();
@@ -414,13 +390,13 @@ namespace uniset3
             {
                 UThresholdInfo( uniset3::ThresholdId tid, long low, long hi, bool inv,
                                 uniset3::ObjectId _sid = uniset3::DefaultObjectId ):
-                    sid(_sid),
-                    invert(inv)
+                    sid(_sid)
                 {
                     tinf.set_id(tid);
                     tinf.set_hilimit(hi);
                     tinf.set_lowlimit(low);
                     tinf.set_state(uniset3::NormalThreshold);
+                    tinf.set_invert(inv);
                 }
 
                 uniset3::ThresholdInfo tinf;
@@ -430,9 +406,6 @@ namespace uniset3
 
                 /*! итератор в списке датчиков (для быстрого доступа) */
                 IOController::IOStateList::iterator sit;
-
-                /*! инверсная логика */
-                bool invert;
 
                 inline bool operator== ( const ThresholdInfo& r ) const
                 {

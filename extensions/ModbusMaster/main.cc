@@ -57,19 +57,13 @@ int main( int argc, const char** argv )
         auto act = UniSetActivator::Instance();
         act->add(mb);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
-
-        ulogany << "\n\n\n";
-        ulogany << "(main): -------------- MBTCP Exchange START -------------------------\n\n";
-        dlogany << "\n\n\n";
-        dlogany << "(main): -------------- MBTCP Exchange START -------------------------\n\n";
+        act->startup();
         act->run(false);
         return 0;
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        cerr << "(mbtcpmaster): " << ex << std::endl;
+        cerr << "(mbtcpmaster): " << ex.what() << std::endl;
     }
     catch(...)
     {

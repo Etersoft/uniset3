@@ -46,30 +46,23 @@ int main( int argc, const char** argv )
 
         if( !unet )
         {
-            dcrit << "(unetexchange): init failed.." << endl;
+            cerr << "(unetexchange): init failed.." << endl;
             return 1;
         }
 
         auto act = UniSetActivator::Instance();
         act->add(unet);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
-
-        ulogany << "\n\n\n";
-        ulogany << "(main): -------------- UDPRecevier START -------------------------\n\n";
-        dlogany << "\n\n\n";
-        dlogany << "(main): -------------- UDPReceiver START -------------------------\n\n";
-
+        act->startup();
         act->run(false);
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        dcrit << "(unetexchange): " << ex << std::endl;
+        cerr << "(unetexchange): " << ex.what() << std::endl;
     }
     catch(...)
     {
-        dcrit << "(unetexchange): catch ..." << std::endl;
+        cerr << "(unetexchange): catch ..." << std::endl;
     }
 
     return 0;

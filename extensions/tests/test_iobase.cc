@@ -14,14 +14,14 @@ TEST_CASE("[IOBase]: default constructor", "[iobase][extensions]")
     CHECK( uniset_conf() != nullptr );
 
     IOBase ib;
-    CHECK( ib.si.id == DefaultObjectId );
-    CHECK( ib.si.node == DefaultObjectId );
+    CHECK( ib.si.id() == DefaultObjectId );
+    CHECK( ib.si.node() == DefaultObjectId );
     CHECK( ib.stype == uniset3::UnknownIOType );
 
-    CHECK( ib.cal.minRaw == 0 );
-    CHECK( ib.cal.maxRaw == 0 );
-    CHECK( ib.cal.minCal == 0 );
-    CHECK( ib.cal.maxCal == 0 );
+    CHECK( ib.cal.minraw() == 0 );
+    CHECK( ib.cal.maxraw() == 0 );
+    CHECK( ib.cal.mincal() == 0 );
+    CHECK( ib.cal.maxcal() == 0 );
 
     CHECK( ib.cdiagram == nullptr );
     CHECK( ib.calcrop == true );
@@ -78,15 +78,15 @@ TEST_CASE("[IOBase]: Init from xml", "[iobase][init][extensions]")
         auto shm = make_shared<SMInterface>(shmID, ui, DefaultObjectId);
         IOBase ib;
         IOBase::initItem(&ib, it, shm, "", false);
-        CHECK( ib.si.id == 1 );
-        CHECK( ib.si.node == conf->getLocalNode() );
+        CHECK( ib.si.id() == 1 );
+        CHECK( ib.si.node() == conf->getLocalNode() );
         CHECK( ib.defval == -10 );
         CHECK( ib.calcrop == true );
-        CHECK( ib.cal.precision == 3 );
-        CHECK( ib.cal.minRaw == -100 );
-        CHECK( ib.cal.maxRaw == 100 );
-        CHECK( ib.cal.minCal == 0 );
-        CHECK( ib.cal.maxCal == 50 );
+        CHECK( ib.cal.precision() == 3 );
+        CHECK( ib.cal.minraw() == -100 );
+        CHECK( ib.cal.maxraw() == 100 );
+        CHECK( ib.cal.mincal() == 0 );
+        CHECK( ib.cal.maxcal() == 50 );
     }
 
     SECTION("Init from xml (prefix)")
@@ -102,15 +102,15 @@ TEST_CASE("[IOBase]: Init from xml", "[iobase][init][extensions]")
         auto shm = make_shared<SMInterface>(shmID, ui, DefaultObjectId);
         IOBase ib;
         IOBase::initItem(&ib, it, shm, "myprefix_", false);
-        CHECK( ib.si.id == 10 );
-        CHECK( ib.si.node == conf->getLocalNode() );
+        CHECK( ib.si.id() == 10 );
+        CHECK( ib.si.node() == conf->getLocalNode() );
         CHECK( ib.defval == 5 );
         CHECK( ib.calcrop == false );
-        CHECK( ib.cal.precision == 5 );
-        CHECK( ib.cal.minRaw == -10 );
-        CHECK( ib.cal.maxRaw == 10 );
-        CHECK( ib.cal.minCal == -4 );
-        CHECK( ib.cal.maxCal == 30 );
+        CHECK( ib.cal.precision() == 5 );
+        CHECK( ib.cal.minraw() == -10 );
+        CHECK( ib.cal.maxraw() == 10 );
+        CHECK( ib.cal.mincal() == -4 );
+        CHECK( ib.cal.maxcal() == 30 );
         CHECK( ib.cdiagram != nullptr );
     }
 }

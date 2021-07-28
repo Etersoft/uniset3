@@ -25,7 +25,6 @@
 #include <cmath>
 
 #include "unisetstd.h"
-#include "ORepHelpers.h"
 #include "DBServer_SQLite.h"
 #include "Configuration.h"
 #include "Debug.h"
@@ -33,6 +32,7 @@
 #include "DBLogSugar.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
+using namespace uniset3::umessage;
 using namespace std;
 // --------------------------------------------------------------------------
 DBServer_SQLite::DBServer_SQLite( ObjectId id, const std::string& prefix ):
@@ -59,11 +59,11 @@ DBServer_SQLite::~DBServer_SQLite()
         db->close();
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::sysCommand( const uniset3::messages::SystemMessage* sm )
+void DBServer_SQLite::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     DBServer::sysCommand(sm);
 
-    switch( sm->command )
+    switch( sm->cmd() )
     {
         case SystemMessage::StartUp:
             break;
@@ -91,18 +91,18 @@ void DBServer_SQLite::sysCommand( const uniset3::messages::SystemMessage* sm )
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::confirmInfo( const uniset3::ConfirmMessage* cem )
+void DBServer_SQLite::confirmInfo( const uniset3::umessage::ConfirmMessage* cem )
 {
     try
     {
         ostringstream data;
 
-        data << "UPDATE " << tblName(cem->type)
-             << " SET confirm='" << cem->confirm_time.tv_sec << "'"
-             << " WHERE sensor_id='" << cem->sensor_id << "'"
-             << " AND date='" << dateToString(cem->sensor_time.tv_sec, "-") << " '"
-             << " AND time='" << timeToString(cem->sensor_time.tv_sec, ":") << " '"
-             << " AND time_usec='" << cem->sensor_time.tv_nsec << " '";
+        data << "UPDATE " << tblName(cem->header().type())
+             << " SET confirm='" << cem->confirm_ts().sec() << "'"
+             << " WHERE sensor_id='" << cem->sensor_id() << "'"
+             << " AND date='" << dateToString(cem->sensor_ts().sec(), "-") << " '"
+             << " AND time='" << timeToString(cem->sensor_ts().sec(), ":") << " '"
+             << " AND time_usec='" << cem->sensor_ts().nsec() << " '";
 
         dbinfo <<  myname << "(update_confirm): " << data.str() << endl;
 
@@ -110,10 +110,6 @@ void DBServer_SQLite::confirmInfo( const uniset3::ConfirmMessage* cem )
         {
             dbcrit << myname << "(update_confirm):  db error: " << db->error() << endl;
         }
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        dbcrit << myname << "(update_confirm): " << ex << endl;
     }
     catch( const std::exception& ex )
     {
@@ -126,14 +122,14 @@ void DBServer_SQLite::onTextMessage( const TextMessage* msg )
     try
     {
         ostringstream data;
-        data << "INSERT INTO " << tblName(msg->type)
+        data << "INSERT INTO " << tblName(msg->header().type())
              << "(date, time, time_usec, text, mtype, node) VALUES( '"
-             << dateToString(msg->tm.tv_sec, "-") << "','"   //  date
-             << timeToString(msg->tm.tv_sec, ":") << "','"   //  time
-             << msg->tm.tv_nsec << "','"                //  time_usec
-             << msg->txt << "','"                    // text
-             << msg->mtype << "','"   // mtype
-             << msg->node << "')";                //  node
+             << dateToString(msg->header().ts().sec(), "-") << "','"   //  date
+             << timeToString(msg->header().ts().sec(), ":") << "','"   //  time
+             << msg->header().ts().nsec() << "','"                //  time_usec
+             << msg->txt() << "','"                    // text
+             << msg->mtype() << "','"   // mtype
+             << msg->header().node() << "')";                //  node
 
         dbinfo << myname << "(insert_main_messages): " << data.str() << endl;
 
@@ -142,13 +138,9 @@ void DBServer_SQLite::onTextMessage( const TextMessage* msg )
             dbcrit << myname << "(insert_main_messages): error: " << db->error() << endl;
         }
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        dbcrit << myname << "(insert_main_messages): " << ex << endl;
-    }
-    catch( ... )
-    {
-        dbcrit << myname << "(insert_main_messages): catch..." << endl;
+        dbcrit << myname << "(insert_main_messages): " << ex.what() << endl;
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -210,34 +202,34 @@ void DBServer_SQLite::flushBuffer()
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::sensorInfo( const uniset3::messages::SensorMessage* si )
+void DBServer_SQLite::sensorInfo( const uniset3::umessage::SensorMessage* si )
 {
     try
     {
         // если время не было выставлено (указываем время сохранения в БД)
-        if( !si->tm.tv_sec )
+        if( !si->header().ts().sec() )
         {
             // Выдаём CRIT, но тем не менее сохраняем в БД
 
-            dbcrit << myname << "(insert_main_history): UNKNOWN TIMESTAMP! (tm.tv_sec=0)"
-                   << " for sid=" << si->id
-                   << " supplier=" << uniset_conf()->oind->getMapName(si->supplier)
+            dbcrit << myname << "(insert_main_history): UNKNOWN TIMESTAMP! (tm..sec()=0)"
+                   << " for sid=" << si->id()
+                   << " supplier=" << uniset_conf()->oind->getMapName(si->header().supplier())
                    << endl;
         }
 
-        float val = (float)si->value / (float)pow(10.0, si->ci.precision);
+        float val = (float)si->value() / (float)pow(10.0, si->ci().precision());
 
         // см. DBTABLE AnalogSensors, DigitalSensors
         ostringstream data;
-        data << "INSERT INTO " << tblName(si->type)
+        data << "INSERT INTO " << tblName(si->header().type())
              << "(date, time, time_usec, sensor_id, value, node) VALUES( '"
              // Поля таблицы
-             << dateToString(si->sm_tv.tv_sec, "-") << "','"   //  date
-             << timeToString(si->sm_tv.tv_sec, ":") << "','"   //  time
-             << si->sm_tv.tv_nsec << "',"                //  time_usec
-             << si->id << "','"                    //  sensor_id
+             << dateToString(si->sm_ts().sec(), "-") << "','"   //  date
+             << timeToString(si->sm_ts().sec(), ":") << "','"   //  time
+             << si->sm_ts().nsec() << "',"                //  time_usec
+             << si->id() << "','"                    //  sensor_id
              << val << "','"                //  value
-             << si->node << "')";                //  node
+             << si->header().node() << "')";                //  node
 
         dbinfo <<  myname << "(insert_main_history): " << data.str() << endl;
 
@@ -245,10 +237,6 @@ void DBServer_SQLite::sensorInfo( const uniset3::messages::SensorMessage* si )
         {
             dbcrit << myname <<  "(insert) sensor msg error: " << db->error() << endl;
         }
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        dbcrit << myname << "(insert_main_history): " << ex << endl;
     }
     catch( const std::exception& ex )
     {
@@ -289,9 +277,9 @@ void DBServer_SQLite::initDBServer()
     dbinfo <<  myname << "(init): init connection.." << endl;
     string dbfile(conf->getProp(node, "dbfile"));
 
-    tblMap[uniset3::messages::mtSensorInfo] = "main_history";
-    tblMap[uniset3::messages::Confirm] = "main_history";
-    tblMap[uniset3::messages::TextMessage] = "main_messages";
+    tblMap[uniset3::umessage::mtSensorInfo] = "main_history";
+    tblMap[uniset3::umessage::mtConfirm] = "main_history";
+    tblMap[uniset3::umessage::mtTextInfo] = "main_messages";
 
     PingTime = conf->getPIntProp(node, "pingTime", PingTime);
     ReconnectTime = conf->getPIntProp(node, "reconnectTime", ReconnectTime);
@@ -358,11 +346,11 @@ void DBServer_SQLite::createTables( SQLiteInterface* db )
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_SQLite::timerInfo( const uniset3::messages::TimerMessage* tm )
+void DBServer_SQLite::timerInfo( const uniset3::umessage::TimerMessage* tm )
 {
     DBServer::timerInfo(tm);
 
-    switch( tm->id )
+    switch( tm->id() )
     {
         case DBServer_SQLite::PingTimer:
         {
@@ -405,7 +393,7 @@ void DBServer_SQLite::timerInfo( const uniset3::messages::TimerMessage* tm )
         break;
 
         default:
-            dbwarn << myname << "(timerInfo): Unknown TimerID=" << tm->id << endl;
+            dbwarn << myname << "(timerInfo): Unknown TimerID=" << tm->id() << endl;
             break;
     }
 }

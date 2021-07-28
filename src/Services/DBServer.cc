@@ -24,7 +24,6 @@
 #include <sstream>
 #include <iomanip>
 
-#include "ORepHelpers.h"
 #include "DBServer.h"
 #include "Configuration.h"
 #include "Debug.h"
@@ -35,49 +34,49 @@ using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 DBServer::DBServer( ObjectId id, const std::string& _prefix ):
-	UniSetObject(id),
-	prefix(_prefix)
+    UniSetObject(id),
+    prefix(_prefix)
 {
-	if( getId() == DefaultObjectId )
-	{
-		id = uniset_conf()->getDBServer();
+    if( getId() == DefaultObjectId )
+    {
+        id = uniset_conf()->getDBServer();
 
-		if( id == DefaultObjectId )
-		{
-			ostringstream msg;
-			msg << "(DBServer): Запуск невозможен! НЕ ОПРЕДЕЛЁН ObjectId !!!!!\n";
-			throw Exception(msg.str());
-		}
+        if( id == DefaultObjectId )
+        {
+            ostringstream msg;
+            msg << "(DBServer): Запуск невозможен! НЕ ОПРЕДЕЛЁН ObjectId !!!!!\n";
+            throw Exception(msg.str());
+        }
 
-		setID(id);
-	}
+        setID(id);
+    }
 
-	auto conf = uniset_conf();
+    auto conf = uniset_conf();
 
-	dblog = make_shared<DebugStream>();
-	dblog->setLogName(myname);
-	conf->initLogStream(dblog, prefix + "-log");
+    dblog = make_shared<DebugStream>();
+    dblog->setLogName(myname);
+    conf->initLogStream(dblog, prefix + "-log");
 
-	loga = make_shared<LogAgregator>();
-	loga->add(dblog);
-	loga->add(ulog());
+    loga = make_shared<LogAgregator>();
+    loga->add(dblog);
+    loga->add(ulog());
 
-	xmlNode* cnode = conf->getNode("LocalDBServer");
+    xmlNode* cnode = conf->getNode("LocalDBServer");
 
-	UniXML::iterator it(cnode);
+    UniXML::iterator it(cnode);
 
-	logserv = make_shared<LogServer>(loga);
-	logserv->init( prefix + "-logserver", cnode );
+    logserv = make_shared<LogServer>(loga);
+    logserv->init( prefix + "-logserver", cnode );
 
-	if( findArgParam("--" + prefix + "-run-logserver", conf->getArgc(), conf->getArgv()) != -1 )
-	{
-		logserv_host = conf->getArg2Param("--" + prefix + "-logserver-host", it.getProp("logserverHost"), "localhost");
-		logserv_port = conf->getArgPInt("--" + prefix + "-logserver-port", it.getProp("logserverPort"), getId());
-	}
+    if( findArgParam("--" + prefix + "-run-logserver", conf->getArgc(), conf->getArgv()) != -1 )
+    {
+        logserv_host = conf->getArg2Param("--" + prefix + "-logserver-host", it.getProp("logserverHost"), "localhost");
+        logserv_port = conf->getArgPInt("--" + prefix + "-logserver-port", it.getProp("logserverPort"), getId());
+    }
 }
 
 DBServer::DBServer( const std::string& prefix ):
-	DBServer(uniset_conf()->getDBServer(), prefix )
+    DBServer(uniset_conf()->getDBServer(), prefix )
 {
 }
 //--------------------------------------------------------------------------------------------
@@ -85,68 +84,86 @@ DBServer::~DBServer()
 {
 }
 //--------------------------------------------------------------------------------------------
-void DBServer::processingMessage( const uniset3::messages::TransportMessage* msg )
-{
-	switch(msg->type)
-	{
-		case messages::Confirm:
-			confirmInfo( reinterpret_cast<const uniset3::ConfirmMessage*>(msg) );
-			break;
 
-		default:
-			UniSetObject::processingMessage(msg);
-			break;
-	}
+void DBServer::processingMessage( const uniset3::umessage::TransportMessage* msg )
+{
+    switch(msg->header().type())
+    {
+        case umessage::mtConfirm:
+        {
+            umessage::ConfirmMessage cm;
+
+            if( !cm.ParseFromArray(msg->data().data(), msg->data().size()) )
+            {
+                ucrit << myname << "(processingMessage): Confirm: parse error" << endl;
+                return;
+            }
+
+            confirmInfo(&cm);
+        }
+        break;
+
+        default:
+            UniSetObject::processingMessage(msg);
+            break;
+    }
 
 }
 //--------------------------------------------------------------------------------------------
 bool DBServer::activateObject()
 {
-	UniSetObject::activateObject();
-	initDBServer();
-	return true;
+    UniSetObject::activateObject();
+    initDBServer();
+    return true;
 }
 //--------------------------------------------------------------------------------------------
-void DBServer::sysCommand( const uniset3::messages::SystemMessage* sm )
+void DBServer::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
-	UniSetObject::sysCommand(sm);
+    UniSetObject::sysCommand(sm);
 
-	if(  sm->command == SystemMessage::StartUp )
-	{
-		if( !logserv_host.empty() && logserv_port != 0 && !logserv->isRunning() )
-		{
-			dbinfo << myname << "(init): run log server " << logserv_host << ":" << logserv_port << endl;
-			logserv->async_run(logserv_host, logserv_port);
-		}
-	}
+    if(  sm->cmd() == umessage::SystemMessage::StartUp )
+    {
+        if( !logserv_host.empty() && logserv_port != 0 && !logserv->isRunning() )
+        {
+            dbinfo << myname << "(init): run log server " << logserv_host << ":" << logserv_port << endl;
+            logserv->async_run(logserv_host, logserv_port);
+        }
+    }
 }
 //--------------------------------------------------------------------------------------------
 std::string DBServer::help_print()
 {
-	ostringstream h;
+    ostringstream h;
 
-	h << " Logs: " << endl;
-	h << "--prefix-log-...            - log control" << endl;
-	h << "             add-levels ..." << endl;
-	h << "             del-levels ..." << endl;
-	h << "             set-levels ..." << endl;
-	h << "             logfile filaname" << endl;
-	h << "             no-debug " << endl;
-	h << " LogServer: " << endl;
-	h << "--prefix-run-logserver       - run logserver. Default: localhost:id" << endl;
-	h << "--prefix-logserver-host ip   - listen ip. Default: localhost" << endl;
-	h << "--prefix-logserver-port num  - listen port. Default: ID" << endl;
-	h << LogServer::help_print("prefix-logserver") << endl;
+    h << " Logs: " << endl;
+    h << "--prefix-log-...            - log control" << endl;
+    h << "             add-levels ..." << endl;
+    h << "             del-levels ..." << endl;
+    h << "             set-levels ..." << endl;
+    h << "             logfile filaname" << endl;
+    h << "             no-debug " << endl;
+    h << " LogServer: " << endl;
+    h << "--prefix-run-logserver       - run logserver. Default: localhost:id" << endl;
+    h << "--prefix-logserver-host ip   - listen ip. Default: localhost" << endl;
+    h << "--prefix-logserver-port num  - listen port. Default: ID" << endl;
+    h << LogServer::help_print("prefix-logserver") << endl;
 
-	return h.str();
+    return h.str();
 }
 //--------------------------------------------------------------------------------------------
-SimpleInfo* DBServer::getInfo( const char* userparam )
+grpc::Status DBServer::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
 {
-	uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+    // получаем у самого менеджера
+    ::google::protobuf::StringValue oinf;
+    grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
 
-	const std::string inf = getMonitInfo( std::string(userparam) );
-	i->info = inf.c_str();
-	return i._retn();
+    if( !st.ok() )
+        return st;
+
+    ostringstream inf;
+    inf << oinf.value();
+    inf << getMonitInfo( request->value() );
+    response->set_value(inf.str());
+    return grpc::Status::OK;
 }
 //--------------------------------------------------------------------------------------------

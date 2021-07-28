@@ -7,17 +7,16 @@
 #include <algorithm>
 #include <getopt.h>
 // --------------------------------------------------------------------------
-#include "ORepHelpers.h"
-#include "ObjectRepository.h"
 #include "Exceptions.h"
 #include "UniSetObject.h"
 #include "UniSetTypes.h"
 #include "UniSetManager.h"
-#include "MessageType.h"
 #include "UInterface.h"
 #include "Configuration.h"
 #include "ObjectIndex_XML.h"
+#include "MessageTypes.pb.h"
 #include "Debug.h"
+#include "UHelpers.h"
 // --------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -36,7 +35,6 @@ static struct option longopts[] =
 {
     { "help", no_argument, 0, 'h' },
     { "confile", required_argument, 0, 'c' },
-    { "create", no_argument, 0, 'b' },
     { "exist", no_argument, 0, 'e' },
     { "omap", no_argument, 0, 'o' },
     { "start", no_argument, 0, 's' },
@@ -65,8 +63,7 @@ static struct option longopts[] =
 string conffile("configure.xml");
 
 // --------------------------------------------------------------------------
-static bool commandToAll( const string& section, std::shared_ptr<ObjectRepository>& rep, Command cmd );
-static void createSections(const std::shared_ptr<Configuration>& c );
+static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr<grpc::Channel>& rep, Command cmd );
 static void errDoNotResolve( const std::string& oname );
 static char* checkArg( int ind, int argc, char* argv[] );
 // --------------------------------------------------------------------------
@@ -106,7 +103,6 @@ static void usage()
     cout << "-----------------------------------------\n";
     print_help(24, "-с|--confile file.xml ", "Используемый конфигурационный файл\n");
     cout << endl;
-    print_help(24, "-b|--create ", "Создание репозитория\n");
     print_help(24, "-e|--exist ", "Вызов функции exist() показывающей какие объекты зарегистрированы и доступны.\n");
     print_help(24, "-o|--omap ", "Вывод на экран списка объектов с идентификаторами.\n");
     print_help(24, "-s|--start ", "Посылка SystemMessage::StartUp всем объектам (процессам)\n");
@@ -165,7 +161,7 @@ int main(int argc, char** argv)
 
         while(1)
         {
-            opt = getopt_long(argc, argv, "hk:beosfur:l:i::x:g:w:y:p:vqz:a:m:n:z:j:", longopts, &optindex);
+            opt = getopt_long(argc, argv, "hk:eosfur:l:i::x:g:w:y:p:vqz:a:m:n:z:j:", longopts, &optindex);
 
             if( opt == -1 )
                 break;
@@ -194,14 +190,6 @@ int main(int argc, char** argv)
                     return omap();
                 }
                 break;
-
-                case 'b':    //--create
-                {
-                    auto conf = uniset_init(argc, argv, conffile);
-                    createSections(conf);
-                }
-
-                return 0;
 
                 case 'x':    //--setValue
                 {
@@ -325,10 +313,17 @@ int main(int argc, char** argv)
 
                     verb = true;
                     Command cmd = Exist;
-                    auto rep = make_shared<ObjectRepository>(conf);
-                    commandToAll(conf->getServicesSection(), rep, (Command)cmd);
-                    commandToAll(conf->getControllersSection(), rep, (Command)cmd);
-                    commandToAll(conf->getObjectsSection(), rep, (Command)cmd);
+                    auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
+
+                    if( !rep )
+                    {
+                        cerr << "can't resolve repository" << endl;
+                        return 1;
+                    }
+
+                    commandToAll(ui, conf->getServicesSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getControllersSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getObjectsSection(), rep, (Command)cmd);
                 }
 
                 return 0;
@@ -341,10 +336,17 @@ int main(int argc, char** argv)
                     ui.initBackId(uniset3::AdminID);
 
                     Command cmd = StartUp;
-                    auto rep = make_shared<ObjectRepository>(conf);
-                    commandToAll(conf->getServicesSection(), rep, (Command)cmd);
-                    commandToAll(conf->getControllersSection(), rep, (Command)cmd);
-                    commandToAll(conf->getObjectsSection(), rep, (Command)cmd);
+                    auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
+
+                    if( !rep )
+                    {
+                        cerr << "can't resolve repository" << endl;
+                        return 1;
+                    }
+
+                    commandToAll(ui, conf->getServicesSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getControllersSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getObjectsSection(), rep, (Command)cmd);
                 }
 
                 return 0;
@@ -367,10 +369,17 @@ int main(int argc, char** argv)
                     ui.initBackId(uniset3::AdminID);
 
                     Command cmd = Finish;
-                    auto rep = make_shared<ObjectRepository>(conf);
-                    commandToAll(conf->getServicesSection(), rep, (Command)cmd);
-                    commandToAll(conf->getControllersSection(), rep, (Command)cmd);
-                    commandToAll(conf->getObjectsSection(), rep, (Command)cmd);
+                    auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
+
+                    if( !rep )
+                    {
+                        cerr << "can't resolve repository" << endl;
+                        return 1;
+                    }
+
+                    commandToAll(ui, conf->getServicesSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getControllersSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getObjectsSection(), rep, (Command)cmd);
 
                     if( verb )
                         cout << "(finish): done" << endl;
@@ -408,10 +417,17 @@ int main(int argc, char** argv)
                     ui.initBackId(uniset3::AdminID);
 
                     Command cmd = FoldUp;
-                    auto rep = make_shared<ObjectRepository>(conf);
-                    commandToAll(conf->getServicesSection(), rep, (Command)cmd);
-                    commandToAll(conf->getControllersSection(), rep, (Command)cmd);
-                    commandToAll(conf->getObjectsSection(), rep, (Command)cmd);
+                    auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
+
+                    if( !rep )
+                    {
+                        cerr << "can't resolve repository" << endl;
+                        return 1;
+                    }
+
+                    commandToAll(ui, conf->getServicesSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getControllersSection(), rep, (Command)cmd);
+                    commandToAll(ui, conf->getObjectsSection(), rep, (Command)cmd);
                     //                    cout<<"(foldUp): done"<<endl;
                     return 0;
                 }
@@ -467,31 +483,6 @@ int main(int argc, char** argv)
 
         return 0;
     }
-    catch( const CORBA::SystemException& ex )
-    {
-        if( !quiet )
-            cerr << "поймали CORBA::SystemException: " << ex.NP_minorString() << endl;
-    }
-    catch( const CORBA::Exception& )
-    {
-        if( !quiet )
-            cerr << "поймали CORBA::Exception." << endl;
-    }
-    catch( const omniORB::fatalException& fe )
-    {
-        if( !quiet )
-        {
-            cerr << "поймали omniORB::fatalException: " << endl;
-            cerr << "  file: " << fe.file() << endl;
-            cerr << "  line: " << fe.line() << endl;
-            cerr << "  mesg: " << fe.errmsg() << endl;
-        }
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        if( !quiet )
-            cout << "admin(main): " << ex << endl;
-    }
     catch( std::exception& ex )
     {
         if( !quiet )
@@ -507,7 +498,7 @@ int main(int argc, char** argv)
 }
 
 // ==============================================================================================
-static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository>& rep, Command cmd)
+static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr<grpc::Channel>& rep, Command cmd)
 {
     if( verb )
         cout << "\n||=======********  " << section << "  ********=========||\n" << endl;
@@ -515,164 +506,175 @@ static bool commandToAll(const string& section, std::shared_ptr<ObjectRepository
     uniset3::ios_fmt_restorer ifs(cout);
 
     cout.setf(ios::left, ios::adjustfield);
+    grpc::ClientContext ctx;
+    std::shared_ptr<grpc::Channel> chan;
+    uniset3::ObjectRefList lst;
+    google::protobuf::StringValue request;
+    request.set_value(section);
+
+    std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
 
     try
     {
-        ListObjectName olist;
-        rep->list(section, &olist);
+        auto status = stub->list(&ctx, request, &lst);
 
-        if( olist.empty() )
+        if( !status.ok() )
+        {
+            cerr << "call repository list error: " << status.error_message() << endl;
+            return false;
+        }
+
+        if( !lst.refs().empty() )
         {
             if( verb )
                 cout << "пусто!" << endl;
 
             return false;
         }
-
-        UniSetManager_i_var proc;
-        UniSetObject_i_var obj;
-        string fullName;
-
-        for( const auto& oname : olist )
-        {
-            fullName = section + "/" + oname;
-
-            try
-            {
-                uniset3::ObjectVar o = rep->resolve(fullName);
-                obj = UniSetObject_i::_narrow(o);
-
-                switch( cmd )
-                {
-                    case StartUp:
-                    {
-                        if( CORBA::is_nil(obj) )
-                        {
-                            errDoNotResolve(oname);
-                            break;
-                        }
-
-                        SystemMessage msg(SystemMessage::StartUp);
-                        obj->push( messages::transport(msg) );
-
-                        if( verb )
-                            cout << setw(55) << oname << "   <--- start OK" <<   endl;
-                    }
-                    break;
-
-                    case FoldUp:
-                    {
-                        if(CORBA::is_nil(obj))
-                        {
-                            errDoNotResolve(oname);
-                            break;
-                        }
-
-                        SystemMessage msg(SystemMessage::FoldUp);
-                        obj->push( messages::transport(msg) );
-
-                        if( verb )
-                            cout << setw(55) << oname << "   <--- foldUp OK" <<   endl;
-                    }
-                    break;
-
-                    case Finish:
-                    {
-                        if(CORBA::is_nil(obj))
-                        {
-                            errDoNotResolve(oname);
-                            break;
-                        }
-
-                        SystemMessage msg(SystemMessage::Finish);
-                        obj->push( messages::transport(msg) );
-
-                        if( verb )
-                            cout << setw(55) << oname << "   <--- finish OK" <<   endl;
-                    }
-                    break;
-
-                    case Exist:
-                    {
-                        if( obj->exist() )
-                            cout << "(" << setw(6) << obj->getId() << ")" << setw(55) << oname << "   <--- exist ok\n";
-                        else
-                            cout << "(" << setw(6) << obj->getId() << ")" << setw(55) << oname << "   <--- exist NOT OK\n";
-                    }
-                    break;
-
-                    case Configure:
-                    {
-                        SystemMessage sm(SystemMessage::ReConfiguration);
-                        obj->push(sm.transport_msg());
-
-                        if( verb )
-                            cout << setw(55) << oname << "   <--- configure ok\n";
-                    }
-                    break;
-
-                    case LogRotate:
-                    {
-                        SystemMessage msg(SystemMessage::LogRotate);
-                        obj->push( messages::transport(msg) );
-
-                        if( verb )
-                            cout << setw(55) << oname << "   <--- logrotate ok\n";
-
-                        break;
-                    }
-
-                    default:
-                    {
-                        if( !quiet )
-                            cout << "неизвестная команда -" << cmd << endl;
-
-                        return false;
-                    }
-                }
-            }
-            catch( const CORBA::SystemException& ex )
-            {
-                if( !quiet )
-                    cerr << setw(55) << oname  << "   <--- недоступен!!(CORBA::SystemException): " << ex.NP_minorString() << endl;
-            }
-            catch( const uniset3::Exception& ex )
-            {
-                if( !quiet )
-                    cerr << setw(55) << oname << "   <--- " << ex << endl;
-            }
-            catch( const std::exception& ex )
-            {
-                if( !quiet )
-                    cerr << "std::exception: " << ex.what() << endl;
-            }
-        }
     }
-    catch( const ORepFailed& ex )
+    catch( std::exception& ex )
     {
-        if( !quiet )
-            cerr << "..ORepFailed.." << endl;
-
+        cerr << ex.what();
         return false;
     }
+
+    google::protobuf::Empty empty;
+    google::protobuf::BoolValue boolResponse;
+
+    uniset3::umessage::MessageHeader header;
+    header.set_priority(uniset3::umessage::mpMedium);
+    auto ts = uniset3::now_to_uniset_timespec();
+    (*header.mutable_ts()) = ts;
+    header.set_node(uniset_conf()->getLocalNode());
+    header.set_supplier(AdminID);
+
+    for( const auto& o : lst.refs() )
+    {
+        try
+        {
+            chan = ui.resolve(o.id());
+
+            if( !chan )
+            {
+                cerr  << "(getSensorsInfo): call grpc failed. ID=" << o.id() << endl;
+                continue;
+            }
+
+            auto oname = uniset3::ObjectIndex::getShortName(uniset_conf()->oind->getMapName(o.id()));
+
+            std::unique_ptr<UniSetObject_i::Stub> obj(UniSetObject_i::NewStub(chan));
+            uniset3::umessage::SystemMessage msg;
+            header.set_consumer(o.id());
+            header.set_type(uniset3::umessage::mtSysCommand);
+            *(msg.mutable_header()) = header;
+
+            switch( cmd )
+            {
+                case StartUp:
+                {
+                    msg.set_cmd(uniset3::umessage::SystemMessage::StartUp);
+                    auto tm = uniset3::to_transport(msg);
+
+                    auto status = obj->push(&ctx, tm, &empty);
+
+                    if( !status.ok() )
+                        cerr << setw(55) << oname << " error: " << status.error_message() << endl;
+                    else if( verb )
+                        cout << setw(55) << oname << "   <--- start OK" <<   endl;
+                }
+                break;
+
+                case FoldUp:
+                {
+                    msg.set_cmd(uniset3::umessage::SystemMessage::FoldUp);
+                    auto tm = uniset3::to_transport(msg);
+
+                    auto status = obj->push(&ctx, tm, &empty);
+
+                    if( !status.ok() )
+                        cerr << setw(55) << oname << " error: " << status.error_message() << endl;
+                    else if( verb )
+                        cout << setw(55) << oname << "   <--- foldUp OK" <<   endl;
+                }
+                break;
+
+                case Finish:
+                {
+                    msg.set_cmd(uniset3::umessage::SystemMessage::Finish);
+                    auto tm = uniset3::to_transport(msg);
+
+                    auto status = obj->push(&ctx, tm, &empty);
+
+                    if( !status.ok() )
+                        cerr << setw(55) << oname << " error: " << status.error_message() << endl;
+                    else if( verb )
+                        cout << setw(55) << oname << "   <--- finish OK" <<   endl;
+                }
+                break;
+
+                case Exist:
+                {
+                    auto status = obj->exists(&ctx, empty, &boolResponse);
+
+                    if ( !status.ok() )
+                        cerr << setw(55) << oname << " error: " << status.error_message() << endl;
+                    else
+                    {
+                        if( boolResponse.value() )
+                            cout << "(" << setw(6) << o.id() << ")" << setw(55) << oname << "   <--- exist ok\n";
+                        else
+                            cout << "(" << setw(6) << o.id() << ")" << setw(55) << oname << "   <--- exist NOT OK\n";
+                    }
+                }
+                break;
+
+                case Configure:
+                {
+                    msg.set_cmd(uniset3::umessage::SystemMessage::ReConfiguration);
+                    auto tm = uniset3::to_transport(msg);
+
+                    auto status = obj->push(&ctx, tm, &empty);
+
+                    if( !status.ok() )
+                        cerr << setw(55) << oname << " error: " << status.error_message() << endl;
+                    else if( verb )
+                        cout << setw(55) << oname << "   <--- configure ok\n";
+                }
+                break;
+
+                case LogRotate:
+                {
+                    msg.set_cmd(uniset3::umessage::SystemMessage::LogRotate);
+                    auto tm = uniset3::to_transport(msg);
+
+                    auto status = obj->push(&ctx, tm, &empty);
+
+                    if( !status.ok() )
+                        cerr << setw(55) << oname << " error: " << status.error_message() << endl;
+                    else if( verb )
+                        cout << setw(55) << oname << "   <--- logrotate ok\n";
+                }
+                break;
+
+                default:
+                {
+                    if( !quiet )
+                        cout << "неизвестная команда -" << cmd << endl;
+
+                    return false;
+                }
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            if( !quiet )
+                cerr << "std::exception: " << ex.what() << endl;
+        }
+    } // end of for
 
     return true;
 }
 
-// ==============================================================================================
-static void createSections( const std::shared_ptr<uniset3::Configuration>& rconf )
-{
-    ObjectRepository repf(rconf);
-
-    repf.createRootSection(rconf->getRootSection());
-    repf.createRootSection(rconf->getSensorsSection());
-    repf.createRootSection(rconf->getObjectsSection());
-    repf.createRootSection(rconf->getControllersSection());
-    repf.createRootSection(rconf->getServicesSection());
-
-    if( verb )
-        cout << "(create): created" << endl;
-}
 
 // ==============================================================================================
 int omap()
@@ -718,18 +720,18 @@ int setValue( const string& args, UInterface& ui )
     {
         try
         {
-            uniset3::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id());
 
             if( verb )
             {
                 cout << "  value: " << it.val << endl;
-                cout << "   name: (" << it.si.id << ") " << it.fname << endl;
+                cout << "   name: (" << it.si.id() << ") " << it.fname << endl;
                 cout << " iotype: " << t << endl;
-                cout << "   text: " << conf->oind->getTextName(it.si.id) << "\n\n";
+                cout << "   text: " << conf->oind->getTextName(it.si.id()) << "\n\n";
             }
 
-            if( it.si.node == DefaultObjectId )
-                it.si.node = conf->getLocalNode();
+            if( it.si.node() == DefaultObjectId )
+                it.si.set_node(conf->getLocalNode());
 
             switch(t)
             {
@@ -737,7 +739,7 @@ int setValue( const string& args, UInterface& ui )
                 case uniset3::DO:
                 case uniset3::AI:
                 case uniset3::AO:
-                    ui.setValue(it.si.id, it.val, it.si.node, AdminID);
+                    ui.setValue(it.si.id(), it.val, it.si.node(), AdminID);
                     break;
 
                 default:
@@ -747,13 +749,6 @@ int setValue( const string& args, UInterface& ui )
                     err = 1;
                     break;
             }
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << "(setValue): " << ex << endl;;
-
-            err = 1;
         }
         catch( const std::exception& ex )
         {
@@ -787,17 +782,17 @@ int getValue( const string& args, UInterface& ui )
     {
         try
         {
-            uniset3::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id());
 
             if( !quiet )
             {
-                cout << "   name: (" << it.si.id << ") " << it.fname << endl;
+                cout << "   name: (" << it.si.id() << ") " << it.fname << endl;
                 cout << "   iotype: " << t << endl;
-                cout << "   text: " << conf->oind->getTextName(it.si.id) << "\n\n";
+                cout << "   text: " << conf->oind->getTextName(it.si.id()) << "\n\n";
             }
 
-            if( it.si.node == DefaultObjectId )
-                it.si.node = conf->getLocalNode();
+            if( it.si.node() == DefaultObjectId )
+                it.si.set_node(conf->getLocalNode());
 
             switch(t)
             {
@@ -806,14 +801,14 @@ int getValue( const string& args, UInterface& ui )
                 case uniset3::AO:
                 case uniset3::AI:
                     if( !quiet )
-                        cout << "  value: " << ui.getValue(it.si.id, it.si.node) << endl;
+                        cout << "  value: " << ui.getValue(it.si.id(), it.si.node()) << endl;
                     else
                     {
                         if( csv )
                         {
                             // т.к. может сработать исключение, а нам надо вывести ','
                             // до числа, то сперва получаем val
-                            long val = ui.getValue(it.si.id, it.si.node);
+                            long val = ui.getValue(it.si.id(), it.si.node());
 
                             if( num++ > 0 )
                                 cout << ",";
@@ -821,7 +816,7 @@ int getValue( const string& args, UInterface& ui )
                             cout << val;
                         }
                         else
-                            cout << ui.getValue(it.si.id, it.si.node);
+                            cout << ui.getValue(it.si.id(), it.si.node());
                     }
 
                     break;
@@ -833,13 +828,6 @@ int getValue( const string& args, UInterface& ui )
                     err = 1;
                     break;
             }
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << "(getValue): " << ex << endl;
-
-            err = 1;
         }
         catch( const std::exception& ex )
         {
@@ -866,18 +854,18 @@ int freezeValue( const string& args, bool set, UInterface& ui )
     {
         try
         {
-            uniset3::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id());
 
             if( verb )
             {
                 cout << "  value: " << it.val << endl;
-                cout << "   name: (" << it.si.id << ") " << it.fname << endl;
+                cout << "   name: (" << it.si.id() << ") " << it.fname << endl;
                 cout << " iotype: " << t << endl;
-                cout << "   text: " << conf->oind->getTextName(it.si.id) << "\n\n";
+                cout << "   text: " << conf->oind->getTextName(it.si.id()) << "\n\n";
             }
 
-            if( it.si.node == DefaultObjectId )
-                it.si.node = conf->getLocalNode();
+            if( it.si.node() == DefaultObjectId )
+                it.si.set_node(conf->getLocalNode());
 
             switch(t)
             {
@@ -895,13 +883,6 @@ int freezeValue( const string& args, bool set, UInterface& ui )
                     err = 1;
                     break;
             }
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << (set ? "freeze: " : "unfreeze: ") << ex << endl;;
-
-            err = 1;
         }
         catch( const std::exception& ex )
         {
@@ -926,15 +907,15 @@ int getCalibrate( const std::string& args, UInterface& ui )
 
     for( auto&& it : sl )
     {
-        if( it.si.node == DefaultObjectId )
-            it.si.node = conf->getLocalNode();
+        if( it.si.node() == DefaultObjectId )
+            it.si.set_node(conf->getLocalNode());
 
         try
         {
             if( !quiet )
             {
-                cout << "      name: (" << it.si.id << ") " << it.fname << endl;
-                cout << "      text: " << conf->oind->getTextName(it.si.id) << "\n";
+                cout << "      name: (" << it.si.id() << ") " << it.fname << endl;
+                cout << "      text: " << conf->oind->getTextName(it.si.id()) << "\n";
                 cout << "калибровка: ";
             }
 
@@ -944,13 +925,6 @@ int getCalibrate( const std::string& args, UInterface& ui )
                 cout << ci << endl;
             else
                 cout << ci;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << "(getCalibrate): " << ex << endl;;
-
-            err = 1;
         }
         catch( const std::exception& ex )
         {
@@ -976,26 +950,19 @@ int getRawValue( const std::string& args, UInterface& ui )
 
     for( auto&& it : sl )
     {
-        if( it.si.node == DefaultObjectId )
-            it.si.node = conf->getLocalNode();
+        if( it.si.node() == DefaultObjectId )
+            it.si.set_node(conf->getLocalNode());
 
         try
         {
             if( !quiet )
             {
-                cout << "   name: (" << it.si.id << ") " << it.fname << endl;
-                cout << "   text: " << conf->oind->getTextName(it.si.id) << "\n\n";
+                cout << "   name: (" << it.si.id() << ") " << it.fname << endl;
+                cout << "   text: " << conf->oind->getTextName(it.si.id()) << "\n\n";
                 cout << "  value: " << ui.getRawValue(it.si) << endl;
             }
             else
                 cout << ui.getRawValue(it.si);
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << "(getRawValue): " << ex << endl;;
-
-            err = 1;
         }
         catch( const std::exception& ex )
         {
@@ -1021,52 +988,19 @@ int getTimeChange( const std::string& args, UInterface& ui )
 
     for( auto&& it : sl )
     {
-        if( it.si.node == DefaultObjectId )
-            it.si.node = conf->getLocalNode();
+        if( it.si.node() == DefaultObjectId )
+            it.si.set_node(conf->getLocalNode());
 
         try
         {
             if( !quiet )
             {
-                cout << "   name: (" << it.si.id << ") " << it.fname << endl;
-                cout << "   text: " << conf->oind->getTextName(it.si.id) << "\n\n";
-                cout << ui.getTimeChange(it.si.id, it.si.node) << endl;
+                cout << "   name: (" << it.si.id() << ") " << it.fname << endl;
+                cout << "   text: " << conf->oind->getTextName(it.si.id()) << "\n\n";
+                cout << ui.getTimeChange(it.si.id(), it.si.node()) << endl;
             }
             else
-                cout << ui.getTimeChange(it.si.id, it.si.node);
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            if( !quiet )
-                cerr << "CORBA::SystemException: " << ex.NP_minorString() << endl;
-
-            err = 1;
-        }
-        catch( const CORBA::Exception& )
-        {
-            if( !quiet )
-                cerr << "CORBA::Exception." << endl;
-
-            err = 1;
-        }
-        catch( const omniORB::fatalException& fe )
-        {
-            if( !quiet )
-            {
-                cerr << "omniORB::fatalException: " << endl;
-                cerr << "  file: " << fe.file() << endl;
-                cerr << "  line: " << fe.line() << endl;
-                cerr << "  mesg: " << fe.errmsg() << endl;
-            }
-
-            err = 1;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << "(getChangedTime): " << ex << endl;;
-
-            err = 1;
+                cout << ui.getTimeChange(it.si.id(), it.si.node());
         }
         catch( const std::exception& ex )
         {
@@ -1095,32 +1029,45 @@ int logRotate( const string& arg, UInterface& ui )
     // посылка всем
     if( arg.empty() || arg[0] == '-' )
     {
-        auto rep = make_shared<ObjectRepository>(conf);
-        commandToAll(conf->getServicesSection(), rep, (Command)LogRotate);
-        commandToAll(conf->getControllersSection(), rep, (Command)LogRotate);
-        commandToAll(conf->getObjectsSection(), rep, (Command)LogRotate);
+        auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
+
+        if( !rep )
+        {
+            cerr << "can't resolve repository" << endl;
+            return 1;
+        }
+
+        commandToAll(ui, conf->getServicesSection(), rep, (Command)LogRotate);
+        commandToAll(ui, conf->getControllersSection(), rep, (Command)LogRotate);
+        commandToAll(ui, conf->getObjectsSection(), rep, (Command)LogRotate);
     }
     else // посылка определённому объекту
     {
-        uniset3::ObjectId id = conf->getObjectID(arg);
+        auto lst = uniset3::getSInfoList(arg, conf);
 
-        if( id == DefaultObjectId )
-            id = conf->getControllerID(arg);
-
-        if( id == DefaultObjectId )
-            id = conf->getServiceID(arg);
-
-        if( id == DefaultObjectId )
+        if( lst.empty() )
         {
+
             if( !quiet )
                 cout << "(logrotate): not found ID for name='" << arg << "'" << endl;
 
             return 1;
         }
 
+        auto s = lst.begin();
 
-        TransportMessage tm( SystemMessage(SystemMessage::LogRotate).transport_msg() );
-        ui.send(id, tm);
+        uniset3::umessage::SystemMessage sm;
+        sm.mutable_header()->set_priority(uniset3::umessage::mpMedium);
+        auto ts = uniset3::now_to_uniset_timespec();
+        *(sm.mutable_header()->mutable_ts()) = ts;
+        sm.mutable_header()->set_node(uniset_conf()->getLocalNode());
+        sm.mutable_header()->set_supplier(AdminID);
+        sm.mutable_header()->set_consumer(s->si.id());
+
+        sm.set_cmd(uniset3::umessage::SystemMessage::LogRotate);
+
+        uniset3::umessage::TransportMessage tm = uniset3::to_transport<uniset3::umessage::SystemMessage>(sm);
+        ui.send(tm, s->si.node());
 
         if( verb )
             cout << "\nSend 'LogRotate' to " << arg << " OK.\n";
@@ -1137,31 +1084,45 @@ int configure( const string& arg, UInterface& ui )
     // посылка всем
     if( arg.empty() || arg[0] == '-' )
     {
-        auto rep = make_shared<ObjectRepository>(conf);
-        commandToAll(conf->getServicesSection(), rep, (Command)Configure);
-        commandToAll(conf->getControllersSection(), rep, (Command)Configure);
-        commandToAll(conf->getObjectsSection(), rep, (Command)Configure);
+        auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
+
+        if( !rep )
+        {
+            cerr << "can't resolve repository" << endl;
+            return 1;
+        }
+
+        commandToAll(ui, conf->getServicesSection(), rep, (Command)Configure);
+        commandToAll(ui, conf->getControllersSection(), rep, (Command)Configure);
+        commandToAll(ui, conf->getObjectsSection(), rep, (Command)Configure);
     }
     else // посылка определённому объекту
     {
-        uniset3::ObjectId id = conf->getObjectID(arg);
+        auto lst = uniset3::getSInfoList(arg, conf);
 
-        if( id == DefaultObjectId )
-            id = conf->getControllerID(arg);
-
-        if( id == DefaultObjectId )
-            id = conf->getServiceID(arg);
-
-        if( id == DefaultObjectId )
+        if( lst.empty() )
         {
+
             if( !quiet )
-                cout << "(configure): name='" << arg << "' не найдено!!!\n";
+                cout << "(logrotate): not found ID for name='" << arg << "'" << endl;
 
             return 1;
         }
 
-        TransportMessage tm( SystemMessage(SystemMessage::ReConfiguration).transport_msg() );
-        ui.send(id, tm);
+        auto s = lst.begin();
+
+        uniset3::umessage::SystemMessage sm;
+        sm.mutable_header()->set_priority(uniset3::umessage::mpMedium);
+        auto ts = uniset3::now_to_uniset_timespec();
+        *(sm.mutable_header()->mutable_ts()) = ts;
+        sm.mutable_header()->set_node(uniset_conf()->getLocalNode());
+        sm.mutable_header()->set_supplier(AdminID);
+        sm.mutable_header()->set_consumer(s->si.id());
+
+        sm.set_cmd(uniset3::umessage::SystemMessage::ReConfiguration);
+        uniset3::umessage::TransportMessage tm = uniset3::to_transport<uniset3::umessage::SystemMessage>(sm);
+
+        ui.send(tm, s->si.node());
 
         if( verb )
             cout << "\nSend 'ReConfigure' to " << arg << " OK.\n";
@@ -1178,12 +1139,12 @@ int oinfo(const string& args, UInterface& ui, const string& userparam )
 
     for( auto&& it : sl )
     {
-        if( it.node == DefaultObjectId )
-            it.node = conf->getLocalNode();
+        if( it.node() == DefaultObjectId )
+            it.set_node(conf->getLocalNode());
 
         try
         {
-            cout << ui.getObjectInfo(it.id, userparam, it.node) << endl;
+            cout << ui.getObjectInfo(it.id(), userparam, it.node()) << endl;
         }
         catch( const std::exception& ex )
         {
@@ -1214,10 +1175,10 @@ int sinfo(const string& args, UInterface& ui )
         {
             // проверка есть ли такой датчик, т.к. тут будет выкинуто исключение
             // если его нет
-            uniset3::IOType t = conf->getIOType(it.si.id);
+            uniset3::IOType t = conf->getIOType(it.si.id());
 
-            if( it.si.node == DefaultObjectId )
-                it.si.node = conf->getLocalNode();
+            if( it.si.node() == DefaultObjectId )
+                it.si.set_node(conf->getLocalNode());
 
             auto sinf = ui.getSensorIOInfo(it.si);
 #if 0
@@ -1227,32 +1188,25 @@ int sinfo(const string& args, UInterface& ui )
             CalibrateInfo ci;             /*!< калибровочные параметры */
 #endif
             const int w = 14;
-            print_help(w, "id", std::to_string(it.si.id) + "\n", " ", " : ");
-            print_help(w, "node", std::to_string(it.si.node) + "\n", " ", " : ");
-            print_help(w, "value", std::to_string(sinf.value) + "\n", " ", " : ");
-            print_help(w, "real_value", std::to_string(sinf.real_value) + "\n", " ", " : ");
-            print_help(w, "frozen", std::to_string(sinf.frozen) + "\n", " ", " : ");
-            print_help(w, "undefined", std::to_string(sinf.undefined) + "\n", " ", " : ");
-            print_help(w, "blocked", std::to_string(sinf.blocked) + "\n", " ", " : ");
+            print_help(w, "id", std::to_string(it.si.id()) + "\n", " ", " : ");
+            print_help(w, "node", std::to_string(it.si.node()) + "\n", " ", " : ");
+            print_help(w, "value", std::to_string(sinf.value()) + "\n", " ", " : ");
+            print_help(w, "real_value", std::to_string(sinf.real_value()) + "\n", " ", " : ");
+            print_help(w, "frozen", std::to_string(sinf.frozen()) + "\n", " ", " : ");
+            print_help(w, "undefined", std::to_string(sinf.undefined()) + "\n", " ", " : ");
+            print_help(w, "blocked", std::to_string(sinf.blocked()) + "\n", " ", " : ");
 
-            if( sinf.depend_sid != DefaultObjectId )
-                print_help(w, "depend_sensor", "(" + to_string(sinf.depend_sid) + ")" + ORepHelpers::getShortName(conf->oind->getMapName(sinf.depend_sid)) + "\n", " ", " : ");
+            if( sinf.depend_sid() != DefaultObjectId )
+                print_help(w, "depend_sensor", "(" + to_string(sinf.depend_sid()) + ")" + ObjectIndex::getShortName(conf->oind->getMapName(sinf.depend_sid())) + "\n", " ", " : ");
 
-            if( sinf.supplier == uniset3::AdminID )
+            if( sinf.supplier() == uniset3::AdminID )
                 print_help(w, "supplier", "admin\n", " ", " : ");
             else
-                print_help(w, "supplier", ORepHelpers::getShortName(conf->oind->getMapName(sinf.supplier)) + "\n", " ", " : ");
+                print_help(w, "supplier", ObjectIndex::getShortName(conf->oind->getMapName(sinf.supplier())) + "\n", " ", " : ");
 
             ostringstream ts;
-            ts << dateToString(sinf.tv_sec) << " " << timeToString(sinf.tv_sec) << "." << sinf.tv_nsec << "\n";
+            ts << dateToString(sinf.ts().sec()) << " " << timeToString(sinf.ts().sec()) << "." << sinf.ts().nsec() << "\n";
             print_help(w, "changed", ts.str(), " ", " : ");
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( !quiet )
-                cerr << "(sinfo): " << ex << endl;;
-
-            err = 1;
         }
         catch( const std::exception& ex )
         {
@@ -1300,12 +1254,12 @@ int apiRequest( const string& args, UInterface& ui, const string& query )
 
     for( auto&& it : sl )
     {
-        if( it.node == DefaultObjectId )
-            it.node = conf->getLocalNode();
+        if( it.node() == DefaultObjectId )
+            it.set_node(conf->getLocalNode());
 
         try
         {
-            cout << ui.apiRequest(it.id, q, it.node) << endl;
+            cout << ui.apiRequest(it.id(), q, it.node()) << endl;
         }
         catch( const std::exception& ex )
         {
@@ -1334,12 +1288,12 @@ void sendText( const string& args, UInterface& ui, const string& txt, int mtype 
 
     for( auto&& it : sl )
     {
-        if( it.node == DefaultObjectId )
-            it.node = conf->getLocalNode();
+        if( it.node() == DefaultObjectId )
+            it.set_node(conf->getLocalNode());
 
         try
         {
-            ui.sendText(it.id, txt, it.node);
+            ui.sendText(it.id(), txt, it.node());
         }
         catch( const std::exception& ex )
         {

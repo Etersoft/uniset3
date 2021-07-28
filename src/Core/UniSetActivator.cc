@@ -43,6 +43,7 @@
 #include "Debug.h"
 #include "Configuration.h"
 #include "Mutex.h"
+#include "UHelpers.h"
 
 // ------------------------------------------------------------------------------------------
 using namespace uniset3;
@@ -127,6 +128,15 @@ namespace uniset3
     {
         response->set_value("UniSetActivator");
         return ::grpc::Status::OK;
+    }
+    // ------------------------------------------------------------------------------------------
+    void UniSetActivator::startup()
+    {
+        uniset3:: umessage::SystemMessage sm = makeSystemMessage(uniset3::umessage::SystemMessage::StartUp);
+        auto tm = to_transport<uniset3::umessage::SystemMessage>(sm);
+        grpc::ServerContext ctx;
+        google::protobuf::Empty response;
+        broadcast(&ctx, &tm, &response);
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::run( bool thread, bool terminate_control  )

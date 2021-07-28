@@ -32,7 +32,6 @@
 #include "IOConfig.h"
 
 // ------------------------------------------------------------------------------------------
-using namespace UniversalIO;
 using namespace uniset3;
 using namespace std;
 // ------------------------------------------------------------------------------------------
@@ -42,19 +41,7 @@ IONotifyController::IONotifyController():
     maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
     sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
 {
-
-}
-
-IONotifyController::IONotifyController(const string& name, const string& section, std::shared_ptr<IOConfig> d ):
-    IOController(name, section),
-    restorer(d),
-    askIOMutex(name + "askIOMutex"),
-    trshMutex(name + "trshMutex"),
-    maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
-    sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
-{
-    conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
-    conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
+    ui->setCacheMaxSize(uniset_conf()->getPIntField("ConsumerMaxCache", 5000));
 }
 
 IONotifyController::IONotifyController( ObjectId id, std::shared_ptr<IOConfig> d ):
@@ -67,6 +54,7 @@ IONotifyController::IONotifyController( ObjectId id, std::shared_ptr<IOConfig> d
 {
     conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
     conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
+    ui->setCacheMaxSize(uniset_conf()->getPIntField("ConsumerMaxCache", 5000));
 }
 
 IONotifyController::~IONotifyController()
@@ -123,7 +111,7 @@ void IONotifyController::showStatisticsForConsumer( ostringstream& inf, const st
             // ищем среди заказчиков
             for( const auto& c : i.clst )
             {
-                if( c.id == consumer_id )
+                if( c.ci.id() == consumer_id )
                 {
                     stat.emplace_back(a.first, c);
                     smCount += c.smCount;
@@ -143,7 +131,7 @@ void IONotifyController::showStatisticsForConsumer( ostringstream& inf, const st
 
             for( const auto& c : a.second.clst )
             {
-                if( c.id == consumer_id )
+                if( c.ci.id() == consumer_id )
                 {
                     if( a.first->sid != DefaultObjectId )
                         stat.emplace_back(a.first->sid, c);
@@ -178,7 +166,7 @@ void IONotifyController::showStatisticsForConsumer( ostringstream& inf, const st
         for( const auto& s : stat )
         {
             inf << "        " << "(" << setw(6) << s.sid << ") "
-                << setw(35) << ORepHelpers::getShortName(oind->getMapName(s.sid))
+                << setw(35) << ObjectIndex::getShortName(oind->getMapName(s.sid))
                 << " ["
                 << " lostEvents: " << setw(3) << s.inf.lostEvents
                 << " attempt: " << setw(3) << s.inf.attempt
@@ -214,7 +202,7 @@ void IONotifyController::showStatisticsForLostConsumers( ostringstream& inf )
     for( const auto& l : lostConsumers )
     {
         inf << "        " << "(" << setw(6) << l.first << ") "
-            << setw(35) << std::left << ORepHelpers::getShortName(oind->getMapName(l.first))
+            << setw(35) << std::left << ObjectIndex::getShortName(oind->getMapName(l.first))
             << " lostCount=" << l.second.count
             << endl;
     }
@@ -240,8 +228,8 @@ void IONotifyController::showStatisticsForConsusmers( ostringstream& inf )
 
         for( const auto& c : i.clst )
         {
-            inf << "        " << "(" << setw(6) << c.id << ")"
-                << setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
+            inf << "        " << "(" << setw(6) << c.ci.id() << ")"
+                << setw(35) << ObjectIndex::getShortName(oind->getMapName(c.ci.id()))
                 << " ["
                 << " lostEvents=" << c.lostEvents
                 << " attempt=" << c.attempt
@@ -296,8 +284,8 @@ void IONotifyController::showStatisticsForConsumersWithLostEvent( ostringstream&
         {
             if( c.lostEvents > 0 )
             {
-                inf << "        " << "(" << setw(6) << c.id << ")"
-                    << setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
+                inf << "        " << "(" << setw(6) << c.ci.id() << ")"
+                    << setw(35) << ObjectIndex::getShortName(oind->getMapName(c.ci.id()))
                     << " ["
                     << " lostEvents=" << c.lostEvents
                     << " attempt=" << c.attempt
@@ -350,8 +338,8 @@ void IONotifyController::showStatisticsForSensor( ostringstream& inf, const stri
 
     for( const auto& c : clist->clst )
     {
-        inf << "        (" << setw(6) << c.id << ")"
-            << setw(35) << ORepHelpers::getShortName(oind->getMapName(c.id))
+        inf << "        (" << setw(6) << c.ci.id() << ")"
+            << setw(35) << ObjectIndex::getShortName(oind->getMapName(c.ci.id()))
             << " ["
             << " lostEvents=" << c.lostEvents
             << " attempt=" << c.attempt
@@ -363,17 +351,25 @@ void IONotifyController::showStatisticsForSensor( ostringstream& inf, const stri
     inf << "--------------------------------------------------------------------" << endl;
 }
 // ------------------------------------------------------------------------------------------
-SimpleInfo* IONotifyController::getInfo( const char* userparam )
+grpc::Status IONotifyController::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
 {
-    uniset3::SimpleInfo_var i = IOController::getInfo(userparam);
+    response->set_value("IONotifyController");
+    return ::grpc::Status::OK;
+}
+// ------------------------------------------------------------------------------------------
+grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+{
+    ::google::protobuf::StringValue oinf;
+    grpc::Status st = UniSetManager::getInfo(context, request, &oinf);
 
-    //! \todo Назвать параметры нормально
-    //!
-    const std::string param(userparam);
+    if( !st.ok() )
+        return st;
+
+    auto& param = request->value();
 
     ostringstream inf;
 
-    inf << i->info << endl;
+    inf << oinf.value() << endl;
 
     auto oind = uniset_conf()->oind;
 
@@ -383,8 +379,7 @@ SimpleInfo* IONotifyController::getInfo( const char* userparam )
         showStatisticsForLostConsumers(inf);
         inf << "----------------------------------------------------------------------------------" << endl;
     }
-
-    if( param == "consumers" )
+    else if( param == "consumers" )
     {
         inf << "------------------------------- consumers list ------------------------------" << endl;
         showStatisticsForConsusmers(inf);
@@ -423,9 +418,8 @@ SimpleInfo* IONotifyController::getInfo( const char* userparam )
             << endl;
     }
 
-    i->info = inf.str().c_str();
-
-    return i._retn();
+    response->set_value(inf.str());
+    return grpc::Status::OK;
 }
 
 // ------------------------------------------------------------------------------------------
@@ -440,7 +434,7 @@ bool IONotifyController::addConsumer( ConsumerListInfo& lst, const ConsumerInfo&
 
     for( auto&& it :  lst.clst )
     {
-        if( it.id == ci.id && it.node == ci.node )
+        if( it.ci.id() == ci.id() && it.ci.node() == ci.node() )
         {
             // при перезаказе датчиков количество неудачных попыток послать сообщение
             // считаем что "заказчик" опять на связи
@@ -448,7 +442,7 @@ bool IONotifyController::addConsumer( ConsumerListInfo& lst, const ConsumerInfo&
 
             // выставляем флаг, что заказчик опять "на связи"
             std::lock_guard<std::mutex> lock(lostConsumersMutex);
-            auto c = lostConsumers.find(ci.id);
+            auto c = lostConsumers.find(ci.id());
 
             if( c != lostConsumers.end() )
                 c->second.lost = false;
@@ -457,21 +451,13 @@ bool IONotifyController::addConsumer( ConsumerListInfo& lst, const ConsumerInfo&
         }
     }
 
-    ConsumerInfoExt cinf(ci, 0, maxAttemtps);
-
-    // получаем ссылку
-    try
-    {
-        uniset3::ObjectVar op = ui->resolve(ci.id, ci.node);
-        cinf.ref = UniSetObject_i::_narrow(op);
-    }
-    catch(...) {}
+    ConsumerInfoExt cinf(ci, maxAttemtps);
 
     lst.clst.emplace_front( std::move(cinf) );
 
     // выставляем флаг, что клиент опять "на связи"
     std::lock_guard<std::mutex> lock(lostConsumersMutex);
-    auto c = lostConsumers.find(ci.id);
+    auto c = lostConsumers.find(ci.id());
 
     if( c != lostConsumers.end() )
         c->second.lost = false;
@@ -483,13 +469,13 @@ bool IONotifyController::addConsumer( ConsumerListInfo& lst, const ConsumerInfo&
  *    \param lst - указатель на список из которого происходит удаление потребителя
  *    \param name - имя удаляемого потребителя
 */
-bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerInfo& cons )
+bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerInfo& ci )
 {
     uniset_rwmutex_wrlock l(lst.mut);
 
     for( auto li = lst.clst.begin(); li != lst.clst.end(); ++li )
     {
-        if( li->id == cons.id && li->node == cons.node  )
+        if( li->ci.id() == ci.id() && li->ci.node() == ci.node()  )
         {
             lst.clst.erase(li);
             return true;
@@ -499,47 +485,43 @@ bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerIn
     return false;
 }
 // ------------------------------------------------------------------------------------------
-/*!
- *    \param si         - информация о датчике
- *    \param ci         - информация о заказчике
- *    \param cmd        - команда см. uniset3::UIOCommand
-*/
-void IONotifyController::askSensor(const uniset3::ObjectId sid,
-                                   const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd )
+grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response)
 {
-    ulog2 << "(askSensor): поступил " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
-          << uniset_conf()->oind->getNameById(ci.id) << "@" << ci.node
+    ulog2 << "(askSensor): поступил " << ( request->cmd() == UIODontNotify ? "отказ" : "заказ" ) << " от "
+          << uniset_conf()->oind->getNameById(request->ci().id()) << "@" << request->ci().node()
           << " на аналоговый датчик "
-          << uniset_conf()->oind->getNameById(sid) << endl;
+          << uniset_conf()->oind->getNameById(request->sid()) << endl;
 
     auto li = myioEnd();
 
     try
     {
         // если такого аналогового датчика нет, здесь сработает исключение...
-        localGetValue(li, sid);
+        localGetValue(li, request->sid());
     }
-    catch( uniset3::Undefined& ex ) {}
+    catch( IOController::Undefined& ex ) {}
 
     {
         uniset_rwmutex_wrlock lock(askIOMutex);
-        ask(askIOList, sid, ci, cmd);
+        ask(askIOList, request->sid(), request->ci(), request->cmd());
     }
 
     auto usi = li->second;
 
     // посылка первый раз состояния
-    if( cmd == uniset3::UIONotify || (cmd == UIONotifyFirstNotNull && usi->value) )
+    if( request->cmd() == uniset3::UIONotify || (request->cmd() == UIONotifyFirstNotNull && usi->sinf.value()) )
     {
         ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
 
         if( lst )
         {
             uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
-            SensorMessage smsg( usi->makeSensorMessage(false) );
-            send(*lst, smsg, &ci);
+            umessage::SensorMessage smsg( usi->makeSensorMessage(false) );
+            send(*lst, smsg, &request->ci());
         }
     }
+
+    return grpc::Status::OK;
 }
 // ------------------------------------------------------------------------------------------
 void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
@@ -593,18 +575,18 @@ void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
 }
 // ------------------------------------------------------------------------------------------
 long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInfo>& usi,
-                                        CORBA::Long value, uniset3::ObjectId sup_id )
+                                        long value, uniset3::ObjectId sup_id )
 {
     // оптимизация:
     // if( !usi ) - не проверяем, т.к. считаем что это внутренние функции и несуществующий указатель передать не могут
 
-    CORBA::Long prevValue = value;
+    long prevValue = value;
     {
         uniset_rwmutex_rlock lock(usi->val_lock);
-        prevValue = usi->value;
+        prevValue = usi->sinf.value();
     }
 
-    CORBA::Long curValue = IOController::localSetValue(usi, value, sup_id);
+    long curValue = IOController::localSetValue(usi, value, sup_id);
 
     // Рассылаем уведомления только в случае изменения значения
     // --------
@@ -619,11 +601,11 @@ long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInf
 
         uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
 
-        SensorMessage sm(usi->makeSensorMessage(false));
+        umessage::SensorMessage sm(usi->makeSensorMessage(false));
 
         try
         {
-            if( !usi->dbignore )
+            if( !usi->sinf.dbignore() )
                 logging(sm);
         }
         catch(...) {}
@@ -649,9 +631,11 @@ long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInf
     Возможно нужно ввести своего агента на удалённой стороне, который будет заниматься
     только приёмом сообщений и локальной рассылкой. Lav
 */
-void IONotifyController::send( ConsumerListInfo& lst, const uniset3::messages::SensorMessage& sm, const uniset3::ConsumerInfo* ci  )
+void IONotifyController::send( ConsumerListInfo& lst, const uniset3::umessage::SensorMessage& sm, const uniset3::ConsumerInfo* ci  )
 {
-    TransportMessage tmsg(sm.transport_msg());
+    umessage::TransportMessage tmsg;
+    *(tmsg.mutable_header()) = sm.header();
+    tmsg.set_data(sm.SerializeAsString());
 
     uniset_rwmutex_wrlock l(lst.mut);
 
@@ -659,7 +643,7 @@ void IONotifyController::send( ConsumerListInfo& lst, const uniset3::messages::S
     {
         if( ci )
         {
-            if( ci->id != li->id || ci->node != li->node )
+            if( ci->id() != li->ci.id() || ci->node() != li->ci.node() )
                 continue;
         }
 
@@ -667,37 +651,24 @@ void IONotifyController::send( ConsumerListInfo& lst, const uniset3::messages::S
         {
             try
             {
-                if( CORBA::is_nil(li->ref) )
-                {
-                    CORBA::Object_var op = ui->resolve(li->id, li->node);
-                    li->ref = UniSetObject_i::_narrow(op);
-                }
-
-                tmsg.consumer = li->id;
-                li->ref->push( tmsg );
+                tmsg.mutable_header()->set_consumer(li->ci.id());
+                ui->send(tmsg, li->ci.node());
                 li->smCount++;
                 li->attempt = maxAttemtps; // reinit attempts
                 break;
-            }
-            catch( const CORBA::SystemException& ex )
-            {
-                uwarn << myname << "(IONotifyController::send): attempt=" << (maxAttemtps - li->attempt + 1)
-                      << " from " << maxAttemtps << " "
-                      << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << " (CORBA::SystemException): "
-                      << ex.NP_minorString() << endl;
             }
             catch( const std::exception& ex )
             {
                 uwarn << myname << "(IONotifyController::send): attempt=" <<  (maxAttemtps - li->attempt + 1) << " "
                       << " from " << maxAttemtps << " "
                       << ex.what()
-                      << " for " << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
+                      << " for " << uniset_conf()->oind->getNameById(li->ci.id()) << "@" << li->ci.node() << endl;
             }
             catch(...)
             {
                 ucrit << myname << "(IONotifyController::send): attempt=" <<  (maxAttemtps - li->attempt + 1) << " "
                       << " from " << maxAttemtps << " "
-                      << uniset_conf()->oind->getNameById(li->id) << "@" << li->node
+                      << uniset_conf()->oind->getNameById(li->ci.id()) << "@" << li->ci.node()
                       << " catch..." << endl;
             }
 
@@ -710,11 +681,11 @@ void IONotifyController::send( ConsumerListInfo& lst, const uniset3::messages::S
                 if( maxAttemtps > 0 && --(li->attempt) <= 0 )
                 {
                     uwarn << myname << "(IONotifyController::send): ERASE FROM CONSUMERS:  "
-                          << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
+                          << uniset_conf()->oind->getNameById(li->ci.id()) << "@" << li->ci.node() << endl;
 
                     {
                         std::lock_guard<std::mutex> lock(lostConsumersMutex);
-                        auto& c = lostConsumers[li->id];
+                        auto& c = lostConsumers[li->ci.id()];
 
                         // если уже выставлен флаг что "заказчик" пропал, то не надо увеличивать "счётчик"
                         // видимо мы уже зафиксировали его пропажу на другом датчике...
@@ -729,15 +700,12 @@ void IONotifyController::send( ConsumerListInfo& lst, const uniset3::messages::S
                     --li;
                     break;
                 }
-
-
-                li->ref = UniSetObject_i::_nil();
             }
             catch( const std::exception& ex )
             {
                 uwarn << myname << "(IONotifyController::send): UniSetObject_i::_nil() "
                       << ex.what()
-                      << " for " << uniset_conf()->oind->getNameById(li->id) << "@" << li->node << endl;
+                      << " for " << uniset_conf()->oind->getNameById(li->ci.id()) << "@" << li->ci.node() << endl;
             }
         }
     }
@@ -779,81 +747,77 @@ void IONotifyController::readConf()
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::initItem( std::shared_ptr<USensorInfo>& usi, IOController* ic )
 {
-    if( usi->type == uniset3::AI || usi->type == uniset3::AO )
+    if( usi->sinf.type() == uniset3::AI || usi->sinf.type() == uniset3::AO )
         checkThreshold( usi, false );
 }
 // ------------------------------------------------------------------------------------------
-void IONotifyController::askThreshold(uniset3::ObjectId sid,
-                                      const uniset3::ConsumerInfo& ci,
-                                      uniset3::ThresholdId tid,
-                                      CORBA::Long lowLimit, CORBA::Long hiLimit,  CORBA::Boolean invert,
-                                      uniset3::UIOCommand cmd )
+grpc::Status IONotifyController::askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response)
 {
-    ulog2 << "(askThreshold): " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
-          << uniset_conf()->oind->getNameById(ci.id) << "@" << ci.node
-          << " на порог tid=" << tid
-          << " [" << lowLimit << "," << hiLimit << ",invert=" << invert << "]"
+    ulog2 << "(askThreshold): " << ( request->cmd() == UIODontNotify ? "отказ" : "заказ" ) << " от "
+          << uniset_conf()->oind->getNameById(request->ci().id()) << "@" << request->ci().node()
+          << " на порог tid=" << request->tid()
+          << " [" << request->lowlimit() << "," << request->hilimit() << ",invert=" << request->invert() << "]"
           << " для датчика "
-          << uniset_conf()->oind->getNameById(sid)
+          << uniset_conf()->oind->getNameById(request->sid())
           << endl;
 
-    if( lowLimit > hiLimit )
-        throw uniset3::BadRange();
+    if( request->lowlimit() > request->hilimit() )
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "");
 
     auto li = myioEnd();
 
-    CORBA::Long val = 0;
+    long val = 0;
 
     try
     {
         // если такого датчика нет здесь сработает исключение...
-        val = localGetValue(li, sid);
+        val = localGetValue(li, request->sid());
     }
-    catch( const uniset3::Undefined& ex ) {}
+    catch( const IOController::Undefined& ex ) {}
 
     {
         // lock
         uniset_rwmutex_wrlock lock(trshMutex);
 
-        auto it = findThreshold(sid, tid);
+        auto it = findThreshold(request->sid(), request->tid());
 
-        switch( cmd )
+        switch( request->cmd() )
         {
             case uniset3::UIONotify: // заказ
             case uniset3::UIONotifyChange:
             {
                 if( !it )
-                    it = make_shared<IOController::UThresholdInfo>(tid, lowLimit, hiLimit, invert);
+                    it = make_shared<IOController::UThresholdInfo>(request->tid(), request->lowlimit(), request->hilimit(), request->invert());
 
                 it = addThresholdIfNotExist(li->second, it);
-                addThresholdConsumer(it, ci);
+                addThresholdConsumer(it, request->ci());
 
-                if( cmd == uniset3::UIONotifyChange )
+                if( request->cmd() == uniset3::UIONotifyChange )
                     break;
 
                 // посылка первый раз состояния
-                SensorMessage sm(li->second->makeSensorMessage());
-                sm.consumer   = ci.id;
-                sm.tid        = tid;
+                umessage::SensorMessage sm(li->second->makeSensorMessage());
+                sm.mutable_header()->set_consumer(request->ci().id());
+                sm.set_tid(request->tid());
 
                 // Проверка нижнего предела
-                if( val <= lowLimit )
-                    sm.threshold = false;
+                if( val <= request->lowlimit() )
+                    sm.set_threshold(false);
                 // Проверка верхнего предела
-                else if( val >= hiLimit )
-                    sm.threshold = true;
+                else if( val >= request->hilimit() )
+                    sm.set_threshold(true);
 
                 auto clst = askTMap.find(it.get());
 
                 if( clst != askTMap.end() )
-                    send(clst->second, sm, &ci);
+                    send(clst->second, sm, &request->ci());
             }
             break;
 
             case uniset3::UIODontNotify:     // отказ
             {
                 if( it )
-                    removeThresholdConsumer(li->second, it, ci);
+                    removeThresholdConsumer(li->second, it, request->ci());
             }
             break;
 
@@ -861,6 +825,8 @@ void IONotifyController::askThreshold(uniset3::ObjectId sid,
                 break;
         }
     } // unlock trshMutex
+
+    return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
 std::shared_ptr<IOController::UThresholdInfo>
@@ -871,15 +837,15 @@ IONotifyController::addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi,
 
     for( auto&& t : usi->thresholds )
     {
-        if( ti->id == t->id )
+        if( ti->tinf.id() == t->tinf.id() )
             return t;
     }
 
     struct timespec tm = uniset3::now_to_timespec();
 
-    ti->tv_sec  = tm.tv_sec;
+    ti->tinf.mutable_ts()->set_sec(tm.tv_sec);
 
-    ti->tv_nsec = tm.tv_nsec;
+    ti->tinf.mutable_ts()->set_nsec(tm.tv_nsec);
 
     usi->thresholds.push_back(ti);
 
@@ -906,7 +872,7 @@ bool IONotifyController::removeThresholdConsumer( std::shared_ptr<USensorInfo>& 
 
     for( auto&& t : usi->thresholds )
     {
-        if( t->id == ti->id )
+        if( t->tinf.id() == ti->tinf.id() )
         {
             auto it = askTMap.find(ti.get());
 
@@ -945,7 +911,7 @@ void IONotifyController::checkThreshold( std::shared_ptr<IOController::USensorIn
     // обрабатываем текущее состояние датчика обязательно "залочив" значение..
     uniset_rwmutex_rlock vlock(usi->val_lock);
 
-    SensorMessage sm(usi->makeSensorMessage(false));
+    umessage::SensorMessage sm(usi->makeSensorMessage(false));
 
     // текущее время
     struct timespec tm = uniset3::now_to_timespec();
@@ -957,48 +923,47 @@ void IONotifyController::checkThreshold( std::shared_ptr<IOController::USensorIn
         {
             // Используем здесь значение скопированное в sm.value
             // чтобы не делать ещё раз lock на li->second->value
-            uniset3::ThresholdState state = it->state;
+            uniset3::ThresholdState state = it->tinf.state();
 
-            if( !it->invert )
+            if( !it->tinf.invert() )
             {
                 // Если логика не инвертированная, то срабатывание это - выход за зону >= hilimit
-                if( sm.value <= it->lowlimit  )
+                if( sm.value() <= it->tinf.lowlimit()  )
                     state = uniset3::NormalThreshold;
-                else if( sm.value >= it->hilimit )
+                else if( sm.value() >= it->tinf.hilimit() )
                     state = uniset3::HiThreshold;
             }
             else
             {
                 // Если логика инвертированная, то срабатывание это - выход за зону <= lowlimit
-                if( sm.value >= it->hilimit  )
+                if( sm.value() >= it->tinf.hilimit()  )
                     state = uniset3::NormalThreshold;
-                else if( sm.value <= it->lowlimit )
+                else if( sm.value() <= it->tinf.lowlimit() )
                     state = uniset3::LowThreshold;
             }
 
             // если ничего не менялось..
-            if( it->state == state )
+            if( it->tinf.state() == state )
                 continue;
 
-            it->state = state;
-
-            sm.tid = it->id;
+            it->tinf.set_state(state);
+            sm.set_tid(it->tinf.id());
 
             // если состояние не normal, значит порог сработал,
             // не важно какой.. нижний или верхний (зависит от inverse)
-            sm.threshold = ( state != uniset3::NormalThreshold );
+            sm.set_threshold( state != uniset3::NormalThreshold );
 
             // запоминаем время изменения состояния
-            it->tv_sec     = tm.tv_sec;
-            it->tv_nsec    = tm.tv_nsec;
-            sm.sm_tv   = tm;
+            it->tinf.mutable_ts()->set_sec(tm.tv_sec);
+            it->tinf.mutable_ts()->set_nsec(tm.tv_nsec);
+            *(sm.mutable_sm_ts()) = it->tinf.ts();
 
             // если порог связан с датчиком, то надо его выставить
             if( it->sid != uniset3::DefaultObjectId )
             {
                 try
                 {
-                    localSetValueIt(it->sit, it->sid, (sm.threshold ? 1 : 0), usi->supplier);
+                    localSetValueIt(it->sit, it->sid, (sm.threshold() ? 1 : 0), usi->sinf.supplier());
                 }
                 catch( uniset3::Exception& ex )
                 {
@@ -1030,7 +995,7 @@ std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold(
 
         for( auto&& t : usi->thresholds )
         {
-            if( t->id == tid )
+            if( t->tinf.id() == tid )
                 return t;
         }
     }
@@ -1039,74 +1004,63 @@ std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold(
 }
 // --------------------------------------------------------------------------------------------------------------
 
-uniset3::ThresholdInfo IONotifyController::getThresholdInfo( uniset3::ObjectId sid, uniset3::ThresholdId tid )
+grpc::Status IONotifyController::getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response)
 {
     uniset_rwmutex_rlock lock(trshMutex);
-    auto it = findThreshold(sid, tid);
+    auto it = findThreshold(request->sid(), request->tid());
 
     if( !it )
     {
         ostringstream err;
-        err << myname << "(getThresholds): Not found sensor (" << sid << ") "
-            << uniset_conf()->oind->getNameById(sid);
+        err << myname << "(getThresholds): Not found sensor (" << request->sid() << ") "
+            << uniset_conf()->oind->getNameById(request->sid());
 
         uinfo << err.str() << endl;
-        throw uniset3::NameNotFound(err.str().c_str());
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
     }
 
-    return uniset3::ThresholdInfo(*it);
+    (*response) = it->tinf;
+    return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
-uniset3::ThresholdList* IONotifyController::getThresholds( uniset3::ObjectId sid )
+grpc::Status IONotifyController::getThresholds(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ThresholdList* response)
 {
-    auto it = myiofind(sid);
+    auto it = myiofind(request->value());
 
     if( it == myioEnd() )
     {
         ostringstream err;
-        err << myname << "(getThresholds): Not found sensor (" << sid << ") "
-            << uniset_conf()->oind->getNameById(sid);
+        err << myname << "(getThresholds): Not found sensor (" << request->value() << ") "
+            << uniset_conf()->oind->getNameById(request->value());
 
         uinfo << err.str() << endl;
-        throw uniset3::NameNotFound(err.str().c_str());
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
     }
 
     auto& usi = it->second;
-    uniset3::ThresholdList* res = new uniset3::ThresholdList();
 
     try
     {
-        res->si     = usi->si;
-        res->value  = IOController::localGetValue(usi);
-        res->type   = usi->type;
+        *(response->mutable_si()) = usi->sinf.si();
+        response->set_value(IOController::localGetValue(usi));
+        response->set_type(usi->sinf.type());
     }
     catch( const uniset3::Exception& ex )
     {
         uwarn << myname << "(getThresholds): для датчика "
-              << uniset_conf()->oind->getNameById(usi->si.id)
+              << uniset_conf()->oind->getNameById(usi->sinf.si().id())
               << " " << ex << endl;
     }
 
     uniset_rwmutex_rlock lck(usi->tmut);
-    res->tlist.length( usi->thresholds.size() );
-
-    size_t k = 0;
 
     for( const auto& it2 : usi->thresholds )
-    {
-        res->tlist[k].id       = it2->id;
-        res->tlist[k].hilimit  = it2->hilimit;
-        res->tlist[k].lowlimit = it2->lowlimit;
-        res->tlist[k].state    = it2->state;
-        res->tlist[k].tv_sec   = it2->tv_sec;
-        res->tlist[k].tv_nsec  = it2->tv_nsec;
-        k++;
-    }
+        *(response->mutable_tlist()->add_thresholds()) = it2->tinf;
 
-    return res;
+    return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
-uniset3::ThresholdsListSeq* IONotifyController::getThresholdsList()
+grpc::Status IONotifyController::getThresholdsList(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ThresholdsListSeq* response)
 {
     std::list< std::shared_ptr<USensorInfo> > slist;
 
@@ -1118,69 +1072,44 @@ uniset3::ThresholdsListSeq* IONotifyController::getThresholdsList()
             slist.push_back(usi);
     });
 
-    uniset3::ThresholdsListSeq* res = new uniset3::ThresholdsListSeq();
-
-    res->length( slist.size() );
-
     if( !slist.empty() )
     {
-        size_t i = 0;
-
         for( auto&& it : slist )
         {
+            auto t = response->add_thresholds();
+
             try
             {
-                (*res)[i].si    = it->si;
-                (*res)[i].value = IOController::localGetValue(it);
-                (*res)[i].type  = it->type;
+                *(t->mutable_si()) = it->sinf.si();
+                t->set_value(IOController::localGetValue(it));
+                t->set_type(it->sinf.type());
             }
             catch( const std::exception& ex )
             {
                 uwarn << myname << "(getThresholdsList): for sid="
-                      << uniset_conf()->oind->getNameById(it->si.id)
+                      << uniset_conf()->oind->getNameById(it->sinf.si().id())
                       << " " << ex.what() << endl;
-                continue;
-            }
-            catch( const uniset3::NameNotFound& ex )
-            {
-                uwarn << myname << "(getThresholdsList): uniset3::NameNotFound.. for sid="
-                      << uniset_conf()->oind->getNameById(it->si.id)
-                      << endl;
-
                 continue;
             }
 
             uniset_rwmutex_rlock lck(it->tmut);
-            (*res)[i].tlist.length( it->thresholds.size() );
-
-            size_t k = 0;
 
             for( const auto& it2 : it->thresholds )
-            {
-                (*res)[i].tlist[k].id       = it2->id;
-                (*res)[i].tlist[k].hilimit  = it2->hilimit;
-                (*res)[i].tlist[k].lowlimit = it2->lowlimit;
-                (*res)[i].tlist[k].state    = it2->state;
-                (*res)[i].tlist[k].tv_sec   = it2->tv_sec;
-                (*res)[i].tlist[k].tv_nsec  = it2->tv_nsec;
-                k++;
-            }
-
-            i++;
+                *(t->mutable_tlist()->add_thresholds()) = it2->tinf;
         }
     }
 
-    return res;
+    return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
 void IONotifyController::onChangeUndefinedState( std::shared_ptr<USensorInfo>& usi, IOController* ic )
 {
     uniset_rwmutex_rlock vlock(usi->val_lock);
-    SensorMessage sm( usi->makeSensorMessage(false) );
+    umessage::SensorMessage sm( usi->makeSensorMessage(false) );
 
     try
     {
-        if( !usi->dbignore )
+        if( !usi->sinf.dbignore() )
             logging(sm);
     }
     catch(...) {}
@@ -1192,30 +1121,28 @@ void IONotifyController::onChangeUndefinedState( std::shared_ptr<USensorInfo>& u
 }
 
 // -----------------------------------------------------------------------------
-IDSeq* IONotifyController::askSensorsSeq( const uniset3::IDSeq& lst,
-        const uniset3::ConsumerInfo& ci,
-        uniset3::UIOCommand cmd)
+grpc::Status IONotifyController::askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response)
 {
-    uniset3::IDList badlist; // cписок не найденных идентификаторов
+    AskParams p;
+    p.set_cmd(request->cmd());
+    *(p.mutable_ci()) = request->ci();
 
-    size_t size = lst.length();
-    ObjectId sid;
+    google::protobuf::Empty empty;
 
-    for( size_t i = 0; i < size; i++ )
+    for( const auto& s : request->ids().ids() )
     {
-        sid = lst[i];
-
         try
         {
-            askSensor(sid, ci, cmd);
+            p.set_sid(s);
+            askSensor(context, &p, &empty );
         }
         catch(...)
         {
-            badlist.add(sid);
+            response->add_ids(s);
         }
     }
 
-    return badlist.getIDSeq();
+    return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
@@ -1282,10 +1209,10 @@ Poco::JSON::Object::Ptr IONotifyController::request_consumers( const string& req
     {
         for( const auto& s : slist )
         {
-            auto a = askIOList.find(s.si.id);
+            auto a = askIOList.find(s.si.id());
 
             if( a == askIOList.end() )
-                jdata->add( getConsumers(s.si.id, emptyList, false) );
+                jdata->add( getConsumers(s.si.id(), emptyList, false) );
             else
                 jdata->add( getConsumers(a->first, a->second, false) );
         }
@@ -1330,17 +1257,17 @@ Poco::JSON::Object::Ptr IONotifyController::getConsumers(ObjectId sid, ConsumerL
     auto oind = uniset_conf()->oind;
     auto jsens = uniset3::json::make_child(jret, "sensor");
     jsens->set("id", sid);
-    jsens->set("name", ORepHelpers::getShortName(oind->getMapName(sid)));
+    jsens->set("name", ObjectIndex::getShortName(oind->getMapName(sid)));
 
     auto jcons = uniset3::json::make_child_array(jret, "consumers");
 
     for( const auto& c : ci.clst )
     {
         Poco::JSON::Object::Ptr consumer = new Poco::JSON::Object();
-        consumer->set("id", c.id);
-        consumer->set("name", ORepHelpers::getShortName(oind->getMapName(c.id)));
-        consumer->set("node", c.node);
-        consumer->set("node_name", oind->getNodeName(c.node));
+        consumer->set("id", c.ci.id());
+        consumer->set("name", ObjectIndex::getShortName(oind->getMapName(c.ci.id())));
+        consumer->set("node", c.ci.node());
+        consumer->set("node_name", oind->getNodeName(c.ci.node()));
         consumer->set("lostEvents", c.lostEvents);
         consumer->set("attempt", c.attempt);
         consumer->set("smCount", c.smCount);
@@ -1364,7 +1291,7 @@ Poco::JSON::Object::Ptr IONotifyController::request_lost( const string& req, con
     {
         Poco::JSON::Object::Ptr jcons = new Poco::JSON::Object();
         jcons->set("id", c.first);
-        jcons->set("name",  ORepHelpers::getShortName(oind->getMapName(c.first)));
+        jcons->set("name",  ObjectIndex::getShortName(oind->getMapName(c.first)));
         jcons->set("lostCount",  c.second.count);
         jcons->set("lost", c.second.lost);
         jdata->add(jcons);

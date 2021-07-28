@@ -20,12 +20,13 @@
 #include <deque>
 #include <list>
 #include <memory>
+#include "MessageTypes.pb.h"
 #include "Mutex.h"
 //--------------------------------------------------------------------------
 namespace uniset3
 {
     //--------------------------------------------------------------------------
-    typedef std::shared_ptr<uniset3::messages::TransportMessage> VoidMessagePtr;
+    typedef std::shared_ptr<uniset3::umessage::TransportMessage> VoidMessagePtr;
     //--------------------------------------------------------------------------
 
     /*! \class MQMutex

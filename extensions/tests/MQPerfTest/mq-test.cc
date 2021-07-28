@@ -3,6 +3,7 @@
 #include "Extensions.h"
 #include "UHelpers.h"
 #include "TestProc.h"
+#include "MessageTypes.pb.h"
 // --------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -19,21 +20,26 @@ int main(int argc, const char** argv)
         auto tp = uniset3::make_object<TestProc>("TestProc1", "TestProc");
         act->add(tp);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
 
-        SensorMessage smsg(100, 2);
-        TransportMessage tm( smsg.transport_msg() );
+        uniset3::umessage::SensorMessage smsg;
+        smsg.set_id(100);
+        smsg.set_value(2);
+
+        auto tm = uniset3::to_transport<uniset3::umessage::SensorMessage>(smsg);
 
         size_t num = 0;
         const size_t max = 100000;
         std::chrono::time_point<std::chrono::system_clock> start, end;
         start = std::chrono::system_clock::now();
 
+        grpc::ServerContext ctx;
+        google::protobuf::Empty response;
+
         for( num = 0; num < max; num++ )
         {
-            tp->push(tm);
+            tp->push(&ctx, &tm, &response);
 
             if( tp->isFullQueue() )
                 break;
@@ -48,14 +54,6 @@ int main(int argc, const char** argv)
         std::cerr << "speed: " << ( num > 0 ? ((float)elapsed_seconds / num) : 0 ) << " msg per sec" << endl;
 
         return 0;
-    }
-    catch( const uniset3::SystemError& err )
-    {
-        cerr << "(mq-test): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(mq-test): " << ex << endl;
     }
     catch( const std::exception& e )
     {

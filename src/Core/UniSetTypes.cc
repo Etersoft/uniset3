@@ -25,6 +25,7 @@
 #include <Poco/File.h>
 #include "UniSetTypes.h"
 #include "Configuration.h"
+#include "UHelpers.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -223,7 +224,7 @@ uniset3::IDSeq uniset3::IDList::getIDSeq() const
     return seq;
 }
 // -------------------------------------------------------------------------
-bool uniset3::directory_exist( const std::string& path )
+bool uniset3::directory_exists( const std::string& path )
 {
     try
     {
@@ -235,7 +236,7 @@ bool uniset3::directory_exist( const std::string& path )
     return false;
 }
 // -------------------------------------------------------------------------
-bool uniset3::file_exist( const std::string& filename )
+bool uniset3::file_exists( const std::string& filename )
 {
     std::ifstream file;
 #ifdef HAVE_IOS_NOCREATE
@@ -589,8 +590,8 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdInf
        << " hilim=" << ti.hilimit()
        << " lowlim=" << ti.lowlimit()
        << " state=" << ti.state()
-       << " tv_sec=" << ti.tv().sec()
-       << " tv_nsec=" << ti.tv().nsec()
+       << " ts_sec=" << ti.ts().sec()
+       << " ts_nsec=" << ti.ts().nsec()
        << " invert=" << ti.invert()
        << " ]";
 
@@ -683,6 +684,25 @@ uniset3::Timespec uniset3::now_to_uniset_timespec()
     return to_uniset_timespec(d);
 }
 // -------------------------------------------------------------------------
+bool uniset3::equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept
+{
+    try
+    {
+        return (ts1.sec() == ts2.sec() && ts1.nsec() == ts2.nsec() );
+    }
+    catch(...) {}
+
+    return false;
+}
+// -------------------------------------------------------------------------
+uniset3::Timespec uniset3::to_uniset_timespec(struct timespec ts)
+{
+    uniset3::Timespec t;
+    t.set_sec(ts.tv_sec);
+    t.set_nsec(ts.tv_nsec);
+    return t;
+}
+// -------------------------------------------------------------------------
 uniset3::Timespec uniset3::to_uniset_timespec( const chrono::system_clock::duration& d )
 {
     uniset3::Timespec ts;
@@ -742,3 +762,114 @@ uniset3::KeyType uniset3::key( const uniset3::SensorInfo& si )
     return key(si.id(), si.node());
 }
 // ---------------------------------------------------------------------------------------------------------------
+uniset3::umessage::MessageHeader uniset3::makeMessageHeader(uniset3::umessage::TypeOfMessage type,
+        uniset3::umessage::Priority prior)
+{
+    uniset3::umessage::MessageHeader h;
+    h.set_type(type);
+    h.set_priority(prior);
+    h.set_node(uniset_conf()->getLocalNode());
+    h.set_supplier(DefaultObjectId);
+    h.set_consumer(DefaultObjectId);
+    auto ts = uniset3::now_to_uniset_timespec();
+    *(h.mutable_ts()) = ts;
+    return h;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::umessage::SystemMessage uniset3::makeSystemMessage(uniset3::umessage::SystemMessage::Command cmd)
+{
+    uniset3::umessage::SystemMessage sm;
+    *(sm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtSysCommand, umessage::mpHigh);
+    sm.set_cmd(uniset3::umessage::SystemMessage::ReConfiguration);
+    return sm;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::umessage::SensorMessage uniset3::makeSensorMessage( ObjectId sid, long value, uniset3::IOType type )
+{
+    uniset3::umessage::SensorMessage sm;
+    *(sm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtSensorInfo);
+    sm.set_value(value);
+    sm.set_id(sid);
+    sm.set_sensor_type(type);
+    return sm;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::umessage::TimerMessage uniset3::makeTimerMessage(int tid, uniset3::umessage::Priority prior)
+{
+    uniset3::umessage::TimerMessage tm;
+    *(tm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtTimer, prior);
+    tm.set_id(tid);
+    return tm;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::umessage::ConfirmMessage uniset3::makeConfirmMessage(ObjectId sensor_id,
+        const double& sensor_value,
+        const uniset3::Timespec& sensor_time,
+        const uniset3::Timespec& confirm_time,
+        uniset3::umessage::Priority prior )
+{
+    uniset3::umessage::ConfirmMessage cm;
+    *(cm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtConfirm, prior);
+
+    cm.set_sensor_id(sensor_id);
+    cm.set_sensor_value(sensor_value);
+    *(cm.mutable_sensor_ts()) = sensor_time;
+    *(cm.mutable_confirm_ts()) = confirm_time;
+    return cm;
+}
+
+// --------------------------------------------------------------------------------------------------------------
+uniset3::umessage::TextMessage uniset3::makeTextMessage( const std::string& msg,
+        int mtype,
+        const uniset3::Timespec& ts,
+        const uniset3::ProducerInfo& pi,
+        uniset3::umessage::Priority prior,
+        uniset3::ObjectId consumer )
+{
+    uniset3::umessage::TextMessage tm;
+    auto header = makeMessageHeader(uniset3::umessage::mtTextInfo, prior);
+    *(header.mutable_ts()) = ts;
+    header.set_consumer(consumer);
+    header.set_supplier(pi.id());
+    header.set_node(pi.node());
+    *(tm.mutable_header()) = header;
+    tm.set_mtype(mtype);
+    tm.set_txt(msg);
+    return tm;
+}
+// --------------------------------------------------------------------------------------------------------------
+uniset3::umessage::TextMessage uniset3::makeTextMessage()
+{
+    uniset3::umessage::TextMessage tm;
+    *(tm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtTextInfo, umessage::mpMedium);
+    return tm;
+}
+// ---------------------------------------------------------------------------------------------------------------
+std::string uniset3::strTypeOfMessage( int type )
+{
+    if( type == uniset3::umessage::mtSensorInfo )
+        return "SensorInfo";
+
+    if( type == uniset3::umessage::mtSysCommand )
+        return "SysCommand";
+
+    if( type == uniset3::umessage::mtConfirm )
+        return "Confirm";
+
+    if( type == uniset3::umessage::mtTimer )
+        return "Timer";
+
+    if( type == uniset3::umessage::mtTextInfo )
+        return "TextMessage";
+
+    if( type == uniset3::umessage::mtUnused )
+        return "Unused";
+
+    return "Unkown";
+}
+//--------------------------------------------------------------------------------------------
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::umessage::TypeOfMessage& t )
+{
+    return os << strTypeOfMessage(t);
+}
+//--------------------------------------------------------------------------------------------

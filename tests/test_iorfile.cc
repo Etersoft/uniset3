@@ -16,8 +16,8 @@ TEST_CASE("IORFile", "[iorfile][basic]" )
     IORFile ior(uniset_conf()->getLockDir());
     ior.setIOR(testID, iorstr);
     REQUIRE( ior.getIOR(testID) == iorstr );
-    CHECK( file_exist(ior.getFileName(testID)) );
+    CHECK( file_exists(ior.getFileName(testID)) );
 
     ior.unlinkIOR(testID);
-    CHECK_FALSE( file_exist(ior.getFileName(testID)) );
+    CHECK_FALSE( file_exists(ior.getFileName(testID)) );
 }

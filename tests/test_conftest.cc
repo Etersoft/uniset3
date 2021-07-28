@@ -1,8 +1,8 @@
 #include <catch.hpp>
 // --------------------------------------------------------------------------
 #include <string>
+#include "Exceptions.h"
 #include "Configuration.h"
-#include "ORepHelpers.h"
 // --------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -31,7 +31,7 @@ TEST_CASE( "Configuration", "[Configuration]" )
 
         string ln("/Projects/Sensors/VeryVeryLongNameSensor_ForTest_AS");
         string ln_short("VeryVeryLongNameSensor_ForTest_AS");
-        REQUIRE( ORepHelpers::getShortName(ln) == ln_short );
+        REQUIRE( ObjectIndex::getShortName(ln) == ln_short );
 
         CHECK( conf->oind->getNameById(testID) != "" );
 

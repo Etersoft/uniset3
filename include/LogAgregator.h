@@ -157,7 +157,7 @@ namespace uniset3
 
             // найти лог.. (по полному составному имени)
             std::shared_ptr<DebugStream> getLog( const std::string& logname );
-            bool logExist( std::shared_ptr<DebugStream>& l ) const;
+            bool logExists( std::shared_ptr<DebugStream>& l ) const;
             std::shared_ptr<DebugStream> findByLogName( const std::string& logname ) const;
             // -------------------------------------------------------------------------
 

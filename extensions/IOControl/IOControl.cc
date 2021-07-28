@@ -16,7 +16,6 @@
 // -------------------------------------------------------------------------
 #include <sstream>
 #include <iomanip>
-#include "ORepHelpers.h"
 #include "UniSetTypes.h"
 #include "Extensions.h"
 #include "IOControl.h"
@@ -27,6 +26,7 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     using namespace std;
     using namespace extensions;
+    using namespace uniset3::umessage;
     // -----------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, const std::shared_ptr<IOControl::IOInfo>& inf )
     {
@@ -35,12 +35,12 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, const IOControl::IOInfo& inf )
     {
-        os << "(" << inf.si.id << ")" << uniset_conf()->oind->getMapName(inf.si.id)
+        os << "(" << inf.si.id() << ")" << uniset_conf()->oind->getMapName(inf.si.id())
            << " card=" << inf.ncard << " channel=" << inf.channel << " subdev=" << inf.subdev
            << " aref=" << inf.aref << " range=" << inf.range << " adelay=" << inf.adelay
            << " default=" << inf.defval << " safeval=" << inf.safeval;
 
-        if( inf.cal.minRaw != inf.cal.maxRaw )
+        if( inf.cal.minraw() != inf.cal.maxraw() )
             os << inf.cal;
 
         return os;
@@ -466,14 +466,9 @@ namespace uniset3
                     ptHeartBeat.reset();
                 }
             }
-            catch( const CORBA::SystemException& ex )
+            catch( const std::exception& ex )
             {
-                iolog3 << myname << "(execute): CORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-            }
-            catch( const uniset3::Exception& ex )
-            {
-                iolog3 << myname << "(execute): " << ex << endl;
+                iolog3 << myname << "(execute): " << ex.what() << endl;
             }
             catch(...)
             {
@@ -584,7 +579,7 @@ namespace uniset3
         if( !card || it->subdev == IOBase::DefaultSubdev || it->channel == IOBase::DefaultChannel )
             return;
 
-        if( it->si.id == DefaultObjectId )
+        if( it->si.id() == DefaultObjectId )
         {
             iolog3 << myname << "(iopoll): sid=DefaultObjectId?!" << endl;
             return;
@@ -599,7 +594,7 @@ namespace uniset3
                 int val = card->getAnalogChannel(it->subdev, it->channel, it->range, it->aref, it->adelay);
 
                 iolog3 << myname << "(iopoll): read AI "
-                       << " sid=" << it->si.id
+                       << " sid=" << it->si.id()
                        << " subdev=" << it->subdev
                        << " chan=" << it->channel
                        << " val=" << val
@@ -614,7 +609,7 @@ namespace uniset3
 
                 // немного оптимизации
                 // сразу выставляем.сбрасываем флаг тестирования
-                if( it->si.id == testLamp_s )
+                if( it->si.id() == testLamp_s )
                     isTestLamp = set;
             }
             else if( it->stype == uniset3::AO )
@@ -630,7 +625,7 @@ namespace uniset3
                     long prev_val = it->value;
 
                     if( force_out )
-                        it->value = shm->localGetValue(it->ioit, it->si.id);
+                        it->value = shm->localGetValue(it->ioit, it->si.id());
 
                     switch( it->value )
                     {
@@ -718,26 +713,9 @@ namespace uniset3
                     card->setDigitalChannel(it->subdev, it->channel, set);
             }
         }
-        catch( const uniset3::NameNotFound& ex )
+        catch( const std::exception& ex )
         {
-            iolog3 << myname << "(iopoll):(NameNotFound) " << ex.err << endl;
-        }
-        catch( const uniset3::IOBadParam& ex )
-        {
-            iolog3 << myname << "(iopoll):(IOBadParam) " << ex.err << endl;
-        }
-        catch( const uniset3::BadRange& ex )
-        {
-            iolog3 << myname << "(iopoll): (BadRange)..." << endl;
-        }
-        catch( const CORBA::SystemException& ex )
-        {
-            iolog3 << myname << "(iopoll): СORBA::SystemException: "
-                   << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            iolog3 << myname << "(iopoll): " << ex << endl;
+            iolog3 << myname << "(iopoll): " << ex.what() << endl;
         }
     }
     // --------------------------------------------------------------------------------
@@ -1027,7 +1005,7 @@ namespace uniset3
             }
             catch( const uniset3::Exception& ex)
             {
-                iocrit << myname << "(initIOCard): sid=" << it->si.id << " " << ex << endl;
+                iocrit << myname << "(initIOCard): sid=" << it->si.id() << " " << ex << endl;
             }
         }
     }
@@ -1293,13 +1271,17 @@ namespace uniset3
         cout << LogServer::help_print("prefix-logserver") << endl;
     }
     // -----------------------------------------------------------------------------
-    SimpleInfo* IOControl::getInfo( const char* userparam )
+    grpc::Status IOControl::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
     {
-        uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+        ::google::protobuf::StringValue oinf;
+        grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+        if( !st.ok() )
+            return st;
 
         ostringstream inf;
 
-        inf << i->info << endl;
+        inf << oinf.value() << endl;
 
         inf << "LogServer:  " << logserv_host << ":" << logserv_port << endl;
 
@@ -1336,13 +1318,13 @@ namespace uniset3
 
         inf << vmon.pretty_str() << endl;
 
-        i->info = inf.str().c_str();
-        return i._retn();
+        response->set_value(inf.str());
+        return grpc::Status::OK;
     }
     // -----------------------------------------------------------------------------
     void IOControl::sysCommand( const SystemMessage* sm )
     {
-        switch( sm->command )
+        switch( sm->cmd() )
         {
             case SystemMessage::StartUp:
             {
@@ -1488,7 +1470,7 @@ namespace uniset3
             {
                 try
                 {
-                    shm->askSensor(it->si.id, cmd, myid);
+                    shm->askSensor(it->si.id(), cmd, myid);
                 }
                 catch( const uniset3::Exception& ex )
                 {
@@ -1498,31 +1480,31 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::sensorInfo( const uniset3::messages::SensorMessage* sm )
+    void IOControl::sensorInfo( const uniset3::umessage::SensorMessage* sm )
     {
-        iolog1 << myname << "(sensorInfo): sm->id=" << sm->id
-               << " val=" << sm->value << endl;
+        iolog1 << myname << "(sensorInfo): sm->id=" << sm->id()
+               << " val=" << sm->value() << endl;
 
         if( force_out )
             return;
 
-        if( sm->id == testLamp_s )
+        if( sm->id() == testLamp_s )
         {
-            ioinfo << myname << "(sensorInfo): test_lamp=" << sm->value << endl;
-            isTestLamp = (bool)sm->value;
+            ioinfo << myname << "(sensorInfo): test_lamp=" << sm->value() << endl;
+            isTestLamp = (bool)sm->value();
         }
-        else if( sm->id == testMode_as )
+        else if( sm->id() == testMode_as )
         {
-            testmode = sm->value;
+            testmode = sm->value();
             check_testmode();
         }
 
         for( auto&& it : iomap )
         {
-            if( it->si.id == sm->id )
+            if( it->si.id() == sm->id() )
             {
-                ioinfo << myname << "(sensorInfo): sid=" << sm->id
-                       << " value=" << sm->value
+                ioinfo << myname << "(sensorInfo): sid=" << sm->id()
+                       << " value=" << sm->value()
                        << endl;
 
                 if( it->stype == uniset3::AO )
@@ -1532,8 +1514,8 @@ namespace uniset3
                     {
                         uniset_rwmutex_wrlock lock(it->val_lock);
                         prev_val = it->value;
-                        it->value = sm->value;
-                        cur_val = sm->value;
+                        it->value = sm->value();
+                        cur_val = sm->value();
                     }
 
                     if( it->lamp )
@@ -1623,11 +1605,11 @@ namespace uniset3
                 }
                 else if( it->stype == uniset3::DO )
                 {
-                    iolog1 << myname << "(sensorInfo): DO: sm->id=" << sm->id
-                           << " val=" << sm->value << endl;
+                    iolog1 << myname << "(sensorInfo): DO: sm->id=" << sm->id()
+                           << " val=" << sm->value() << endl;
 
                     uniset_rwmutex_wrlock lock(it->val_lock);
-                    it->value = sm->value ? 1 : 0;
+                    it->value = sm->value() ? 1 : 0;
                 }
 
                 break;
@@ -1635,7 +1617,7 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
-    void IOControl::timerInfo( const uniset3::messages::TimerMessage* tm )
+    void IOControl::timerInfo( const uniset3::umessage::TimerMessage* tm )
     {
 
     }

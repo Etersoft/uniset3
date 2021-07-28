@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package uniset.unet;
+package uniset3.unet;
 
 option optimize_for = LITE_RUNTIME;
 // option cc_enable_arenas = true;

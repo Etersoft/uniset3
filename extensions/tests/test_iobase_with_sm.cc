@@ -151,18 +151,18 @@ TEST_CASE("[IOBase::depend]: AI depend on the AI", "[iobase][depend][ai-ai][exte
         CHECK_FALSE( ib.check_depend(shm) );
 
         IOBase::processingAsAI(&ib, 20, shm, true);
-        REQUIRE( shm->getValue(ib.si.id) == -10 );
+        REQUIRE( shm->getValue(ib.si.id()) == -10 );
 
         shm->setValue(ai, 10);
         CHECK( ib.check_depend(shm) );
         IOBase::processingAsAI(&ib, 20, shm, true);
-        REQUIRE( shm->getValue(ib.si.id) == 20 );
+        REQUIRE( shm->getValue(ib.si.id()) == 20 );
 
         shm->setValue(ai, 2);
         CHECK_FALSE( ib.check_depend(shm) );
 
         IOBase::processingAsAI(&ib, 20, shm, true);
-        REQUIRE( shm->getValue(ib.si.id) == -10 );
+        REQUIRE( shm->getValue(ib.si.id()) == -10 );
     }
 }
 // -----------------------------------------------------------------------------

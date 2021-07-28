@@ -509,7 +509,7 @@ namespace uniset3
 			// обработка сообщения об ошибке...
 			if( rbuf.func() == (qfunc | MBErrMask) )
 			{
-				rbuf.dlen = ErrorRetmessages::szData();
+                rbuf.dlen = ErrorRetMessage::szData();
 
 				if( crcNoCheckit )
 					rbuf.dlen -= szCRC;
@@ -564,23 +564,23 @@ namespace uniset3
 			switch( rbuf.func() )
 			{
 				case fnReadCoilStatus:
-					rbuf.dlen = ReadCoilRetmessages::szHead();
+                    rbuf.dlen = ReadCoilRetMessage::szHead();
 					break;
 
 				case fnReadInputStatus:
-					rbuf.dlen = ReadInputStatusRetmessages::szHead();
+                    rbuf.dlen = ReadInputStatusRetMessage::szHead();
 					break;
 
 				case fnReadOutputRegisters:
-					rbuf.dlen = ReadOutputRetmessages::szHead();
+                    rbuf.dlen = ReadOutputRetMessage::szHead();
 					break;
 
 				case fnReadInputRegisters:
-					rbuf.dlen = ReadInputRetmessages::szHead();
+                    rbuf.dlen = ReadInputRetMessage::szHead();
 					break;
 
 				case fnForceMultipleCoils:
-					rbuf.dlen = ForceCoilsRetmessages::szData();
+                    rbuf.dlen = ForceCoilsRetMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -588,7 +588,7 @@ namespace uniset3
 					break;
 
 				case fnWriteOutputRegisters:
-					rbuf.dlen = WriteOutputRetmessages::szData();
+                    rbuf.dlen = WriteOutputRetMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -596,7 +596,7 @@ namespace uniset3
 					break;
 
 				case fnWriteOutputSingleRegister:
-					rbuf.dlen = WriteSingleOutputRetmessages::szData();
+                    rbuf.dlen = WriteSingleOutputRetMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -604,7 +604,7 @@ namespace uniset3
 					break;
 
 				case fnForceSingleCoil:
-					rbuf.dlen = ForceSingleCoilRetmessages::szData();
+                    rbuf.dlen = ForceSingleCoilRetMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -612,7 +612,7 @@ namespace uniset3
 					break;
 
 				case fnDiagnostics:
-					rbuf.dlen = DiagnosticRetmessages::szHead();
+                    rbuf.dlen = DiagnosticRetMessage::szHead();
 					break;
 
 				case fnMEI:
@@ -620,7 +620,7 @@ namespace uniset3
 					break;
 
 				case fnSetDateTime:
-					rbuf.dlen = SetDateTimeRetmessages::szData();
+                    rbuf.dlen = SetDateTimeRetMessage::szData();
 
 					if( crcNoCheckit )
 						rbuf.dlen -= szCRC;
@@ -628,7 +628,7 @@ namespace uniset3
 					break;
 
 				case fnFileTransfer:
-					rbuf.dlen = FileTransferRetmessages::szHead();
+                    rbuf.dlen = FileTransferRetMessage::szHead();
 					break;
 
 				/*
@@ -668,7 +668,7 @@ namespace uniset3
 			// получаем остальное...
 			if( rbuf.func() == fnReadCoilStatus )
 			{
-				int szDataLen = ReadCoilRetmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = ReadCoilRetMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -728,7 +728,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnReadInputStatus )
 			{
-				int szDataLen = ReadInputStatusRetmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = ReadInputStatusRetMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -788,7 +788,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnReadInputRegisters )
 			{
-				int szDataLen = ReadInputRetmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = ReadInputRetMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -848,7 +848,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnReadOutputRegisters )
 			{
-				int szDataLen = ReadOutputRetmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = ReadOutputRetMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1018,7 +1018,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnDiagnostics )
 			{
-				int szDataLen = DiagnosticRetmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = DiagnosticRetMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;
@@ -1234,7 +1234,7 @@ namespace uniset3
 			}
 			else if( rbuf.func() == fnFileTransfer )
 			{
-				int szDataLen = FileTransferRetmessages::getDataLen(rbuf) + szCRC;
+                int szDataLen = FileTransferRetMessage::getDataLen(rbuf) + szCRC;
 
 				if( crcNoCheckit )
 					szDataLen -= szCRC;

@@ -50,13 +50,13 @@ namespace uniset3
 
             static std::string help_print();
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = "" ) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
         protected:
 
-            virtual void processingMessage( const uniset3::messages::TransportMessage* msg ) override;
-            virtual void sysCommand( const uniset3::messages::SystemMessage* sm ) override;
-            virtual void confirmInfo( const uniset3::ConfirmMessage* cmsg ) {}
+            virtual void processingMessage( const uniset3::umessage::TransportMessage* msg ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
+            virtual void confirmInfo( const uniset3::umessage::ConfirmMessage* cmsg ) {}
 
             virtual bool activateObject() override;
             virtual void initDBServer() {}

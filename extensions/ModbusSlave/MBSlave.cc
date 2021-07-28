@@ -30,6 +30,7 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     using namespace std;
     using namespace uniset3::extensions;
+    using namespace uniset3::umessage;
     using namespace ModbusRTU;
     // -----------------------------------------------------------------------------
     MBSlave::MBSlave(uniset3::ObjectId objId, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic, const string& prefix ):
@@ -939,9 +940,9 @@ namespace uniset3
         updateThresholds();
     }
     // -------------------------------------------------------------------------
-    void MBSlave::sysCommand( const uniset3::messages::SystemMessage* sm )
+    void MBSlave::sysCommand( const uniset3::umessage::SystemMessage* sm )
     {
-        switch( sm->command )
+        switch( sm->cmd() )
         {
             case SystemMessage::StartUp:
             {
@@ -1065,18 +1066,18 @@ namespace uniset3
 
                 try
                 {
-                    shm->askSensor(p->si.id, cmd);
+                    shm->askSensor(p->si.id(), cmd);
                 }
-                catch( const uniset3::Exception& ex )
+                catch( const std::exception& ex )
                 {
-                    mbwarn << myname << "(askSensors): " << ex << std::endl;
+                    mbwarn << myname << "(askSensors): " << ex.what() << std::endl;
                 }
                 catch(...) {}
             }
         }
     }
     // ------------------------------------------------------------------------------------------
-    void MBSlave::sensorInfo( const uniset3::messages::SensorMessage* sm )
+    void MBSlave::sensorInfo( const uniset3::umessage::SensorMessage* sm )
     {
         for( auto&& regs : iomap )
         {
@@ -1084,7 +1085,7 @@ namespace uniset3
 
             for( auto it = rmap.begin(); it != rmap.end(); ++it )
             {
-                if( it->second.si.id == sm->id )
+                if( it->second.si.id() == sm->id() )
                 {
                     IOProperty* p(&it->second);
 
@@ -1092,13 +1093,13 @@ namespace uniset3
                             p->stype == uniset3::DI )
                     {
                         uniset_rwmutex_wrlock lock(p->val_lock);
-                        p->value = sm->value ? 1 : 0;
+                        p->value = sm->value() ? 1 : 0;
                     }
                     else if( p->stype == uniset3::AO ||
                              p->stype == uniset3::AI )
                     {
                         uniset_rwmutex_wrlock lock(p->val_lock);
-                        p->value = sm->value;
+                        p->value = sm->value();
                     }
 
                     int sz = VTypes::wsize(p->vtype);
@@ -1115,14 +1116,14 @@ namespace uniset3
                     {
                         p  = &it->second;
 
-                        if( p->si.id == sm->id )
-                            p->value = sm->value;
+                        if( p->si.id() == sm->id() )
+                            p->value = sm->value();
                     }
 
                     // вообще этого не может случиться
                     // потому-что корректность проверяется при загрузке
                     if( i != sz )
-                        mbcrit << myname << "(sensorInfo): update failed for sid=" << sm->id
+                        mbcrit << myname << "(sensorInfo): update failed for sid=" << sm->id()
                                << " (i=" << i << " sz=" << sz << ")" << endl;
 
                     return;
@@ -1133,7 +1134,7 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     void MBSlave::timerInfo( const TimerMessage* tm )
     {
-        if( tm->id == tmCheckExchange )
+        if( tm->id() == tmCheckExchange )
         {
             if( !tcpserver )
                 return;
@@ -1269,7 +1270,7 @@ namespace uniset3
         RegMap& rmap = iomap[mbaddr]; // создаём элемент (если его ещё нет) и сразу используем
 
         if( mbregFromID )
-            p.mbreg = p.si.id;
+            p.mbreg = p.si.id();
         else
         {
             string r = IOBase::initProp(it, "mbreg", prop_prefix, false);
@@ -1324,8 +1325,8 @@ namespace uniset3
                     mbcrit << myname << "(initItem): BAD USE " << prop_prefix << "nbit=" << nbit
                            << " (for '"
                            << it.getProp("name")
-                           << "') SENSOR ALREADY ADDED sid='" << i->second.si.id << "'"
-                           << "(" << uniset_conf()->oind->getMapName(i->second.si.id) << ")"
+                           << "') SENSOR ALREADY ADDED sid='" << i->second.si.id() << "'"
+                           << "(" << uniset_conf()->oind->getMapName(i->second.si.id()) << ")"
                            << endl;
                     return false;
                 }
@@ -1335,8 +1336,8 @@ namespace uniset3
                     mbcrit << myname << "(initItem): BIT " << prop_prefix << "nbit=" << nbit
                            << " (for "
                            << it.getProp("name")
-                           << ") ALREADY IN USE for sid='" << i->second.bitreg->bvec[nbit].si.id << "'"
-                           << "(" << uniset_conf()->oind->getMapName(i->second.bitreg->bvec[nbit].si.id) << ")"
+                           << ") ALREADY IN USE for sid='" << i->second.bitreg->bvec[nbit].si.id() << "'"
+                           << "(" << uniset_conf()->oind->getMapName(i->second.bitreg->bvec[nbit].si.id()) << ")"
                            << endl;
                     return false;
                 }
@@ -1379,11 +1380,11 @@ namespace uniset3
         if( i != rmap.end() )
         {
             ostringstream err;
-            err << myname << "(initItem): FAIL ADD sid='" << it.getProp("name") << "'(" << p.si.id << ")"
+            err << myname << "(initItem): FAIL ADD sid='" << it.getProp("name") << "'(" << p.si.id() << ")"
                 << " reg='" << ModbusRTU::dat2str(p.mbreg) << "(" << (int)p.mbreg << ")"
                 << " mbfunc=" << mbfunc << " --> regID=" << p.regID
-                << " ALREADY ADDED! for sid='" << uniset_conf()->oind->getMapName(i->second.si.id) << "'("
-                << i->second.si.id << ") regID=" << i->first
+                << " ALREADY ADDED! for sid='" << uniset_conf()->oind->getMapName(i->second.si.id()) << "'("
+                << i->second.si.id() << ") regID=" << i->first
                 << " reg='" << ModbusRTU::dat2str(i->second.mbreg) << "(" << (int)i->second.mbreg << ")"
                 << " wnum=" << i->second.wnum;
 
@@ -1497,7 +1498,7 @@ namespace uniset3
     {
         for( const auto& i : bvec )
         {
-            if( i.si.id == si.id && i.si.node == si.node )
+            if( i.si.id() == si.id() && i.si.node() == si.node() )
                 return true;
         }
 
@@ -1648,7 +1649,7 @@ namespace uniset3
         os  << " reg=" << ModbusRTU::dat2str(p.mbreg) << "(" << (int)p.mbreg << ")[ ";
 
         for( const auto& i : p.bvec )
-            os << "'" << i.si.id << "' ";
+            os << "'" << i.si.id() << "' ";
 
         os << "]";
 
@@ -1658,7 +1659,7 @@ namespace uniset3
     std::ostream& operator<<( std::ostream& os, MBSlave::IOProperty& p )
     {
         os  << "reg=" << ModbusRTU::dat2str(p.mbreg) << "(" << (int)p.mbreg << ")"
-            << " sid=" << p.si.id
+            << " sid=" << p.si.id()
             << " stype=" << p.stype
             << " wnum=" << p.wnum
             << " nbyte=" << p.nbyte
@@ -1873,13 +1874,13 @@ namespace uniset3
         {
             IOProperty* p(&(bp->bvec[i]));
 
-            if( p->si.id == DefaultObjectId )
+            if( p->si.id() == DefaultObjectId )
                 continue;
 
             ModbusRTU::ModbusData dat[] = {d[i]};
 
             mbinfo << myname << "(real_bitreg_write_it): set " << ModbusRTU::dat2str(bp->mbreg) << "(" << (int)bp->mbreg << ")"
-                   << " bit[" << i << "]=" << (int)dat[0]  << " sid=" << p->si.id << endl;
+                   << " bit[" << i << "]=" << (int)dat[0]  << " sid=" << p->si.id() << endl;
 
             size_t k = 0;
             real_write_prop(p, dat, k, 1);
@@ -2068,16 +2069,10 @@ namespace uniset3
             mbwarn << myname << "(real_write_prop): " << ex << endl;
             return ModbusRTU::erBadDataValue;
         }
-        catch( const CORBA::SystemException& ex )
+        catch( const std::exception& ex )
         {
             if( smPingOK )
-                mbcrit << myname << "(real_write_prop): СORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( smPingOK )
-                mbcrit << myname << "(real_write_prop): " << ex << endl;
+                mbcrit << myname << "(real_write_prop): " << ex.what() << endl;
         }
         catch(...)
         {
@@ -2315,7 +2310,7 @@ namespace uniset3
         {
             IOProperty* p(&(bp->bvec[i]));
 
-            if( p->si.id == DefaultObjectId )
+            if( p->si.id() == DefaultObjectId )
             {
                 d.set(i, 0);
                 continue;
@@ -2432,7 +2427,7 @@ namespace uniset3
             else
                 return ModbusRTU::erBadDataAddress;
 
-            mblog3 << myname << "(real_read_prop): read OK. sid=" << p->si.id << " val=" << val << endl;
+            mblog3 << myname << "(real_read_prop): read OK. sid=" << p->si.id() << " val=" << val << endl;
             smPingOK = true;
             return ModbusRTU::erNoError;
         }
@@ -2446,16 +2441,10 @@ namespace uniset3
             mbwarn << myname << "(real_read_prop): " << ex << endl;
             return ModbusRTU::erBadDataValue;
         }
-        catch( const CORBA::SystemException& ex )
+        catch( const std::exception& ex )
         {
             if( smPingOK )
-                mbcrit << myname << "(real_read_prop): CORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( smPingOK )
-                mbcrit << myname << "(real_read_prop): " << ex << endl;
+                mbcrit << myname << "(real_read_prop): " << ex.what() << endl;
         }
         catch(...)
         {
@@ -2463,7 +2452,7 @@ namespace uniset3
                 mbcrit << myname << "(real_read_prop) catch ..." << endl;
         }
 
-        mbwarn << myname << "(real_read_prop): read sid=" << p->si.id << " FAILED!!" << endl;
+        mbwarn << myname << "(real_read_prop): read sid=" << p->si.id() << " FAILED!!" << endl;
 
         smPingOK = false;
         return ModbusRTU::erTimeOut;
@@ -2598,16 +2587,10 @@ namespace uniset3
             mbwarn << myname << "(readCoilStatus): " << ex << endl;
             return ModbusRTU::erBadDataAddress;
         }
-        catch( const CORBA::SystemException& ex )
+        catch( const std::exception& ex )
         {
             if( smPingOK )
-                mbcrit << myname << "(readCoilStatus): СORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( smPingOK )
-                mbcrit << myname << "(readCoilStatus): " << ex << endl;
+                mbcrit << myname << "(readCoilStatus): " << ex.what() << endl;
         }
         catch(...)
         {
@@ -2677,16 +2660,10 @@ namespace uniset3
             mbwarn << myname << "(readInputStatus): " << ex << endl;
             return ModbusRTU::erBadDataAddress;
         }
-        catch( const CORBA::SystemException& ex )
+        catch( const std::exception& ex )
         {
             if( smPingOK )
-                mbcrit << myname << "(readInputStatus): СORBA::SystemException: "
-                       << ex.NP_minorString() << endl;
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            if( smPingOK )
-                mbcrit << myname << "(readInputStatus): " << ex << endl;
+                mbcrit << myname << "(readInputStatus): " << ex.what() << endl;
         }
         catch(...)
         {
@@ -2841,16 +2818,19 @@ namespace uniset3
         return s.str();
     }
     // -------------------------------------------------------------------------
-    uniset3::SimpleInfo* MBSlave::getInfo( const char* userparam )
+    grpc::Status MBSlave::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
     {
-        uniset3::SimpleInfo_var i = UniSetObject::getInfo(userparam);
+        ::google::protobuf::StringValue oinf;
+        grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
+
+        if( !st.ok() )
+            return st;
 
         auto sslot = dynamic_pointer_cast<ModbusTCPServerSlot>(mbslot);
 
-
         ostringstream inf;
 
-        inf << i->info << endl;
+        inf << oinf.value() << endl;
 
         if( sslot ) // т.е. если у нас tcp
         {
@@ -2904,8 +2884,8 @@ namespace uniset3
             inf << endl;
         }
 
-        i->info = inf.str().c_str();
-        return i._retn();
+        response->set_value(inf.str());
+        return grpc::Status::OK;
     }
 
     // ----------------------------------------------------------------------------

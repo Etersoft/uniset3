@@ -47,7 +47,7 @@
 #define vmonit( var ) vmon.add( #var, var )
 #endif
 // -------------------------------------------------------------------------
-namespace uniset33
+namespace uniset3
 {
     // -----------------------------------------------------------------------------
     /*!
@@ -390,7 +390,7 @@ namespace uniset33
                 return mblog;
             }
 
-            virtual uniset3::SimpleInfo* getInfo( const char* userparam = 0 ) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
 #ifndef DISABLE_REST_API
             // http API
@@ -477,9 +477,9 @@ namespace uniset33
 
             std::shared_ptr<SMInterface> shm;
 
-            virtual void sysCommand( const uniset3::messages::SystemMessage* msg ) override;
-            virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-            virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* msg ) override;
+            virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+            virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             void askSensors( uniset3::UIOCommand cmd );
             bool waitSMReady();
             virtual void execute_rtu();
@@ -644,7 +644,7 @@ namespace uniset33
             timeout_t tcpRepeatCreateSocketPause = { 30000 }; /*! пауза между попытками открыть сокет */
     };
     // --------------------------------------------------------------------------
-} // end of namespace uniset33
+} // end of namespace uniset3
 // -----------------------------------------------------------------------------
 #endif // _MBSlave_H_
 // -----------------------------------------------------------------------------

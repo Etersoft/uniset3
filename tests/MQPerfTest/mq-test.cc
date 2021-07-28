@@ -7,6 +7,7 @@
 #include "Exceptions.h"
 #include "MQAtomic.h"
 #include "MQMutex.h"
+#include "UHelpers.h"
 // --------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -18,9 +19,8 @@ const size_t COUNT = 1000000; // сколько сообщений помест�
 // поток записи
 void mq_write_thread()
 {
-    SensorMessage smsg(100, 2);
-    TransportMessage tm( smsg.transport_msg() );
-    auto vm = make_shared<VoidMessage>(tm);
+    uniset3::umessage::SensorMessage smsg = makeSensorMessage(100, 2, uniset3::AI);
+    auto vm = make_shared<uniset3::umessage::TransportMessage>(uniset3::to_transport<uniset3::umessage::SensorMessage>(smsg));
 
     msleep(100);
 
@@ -66,14 +66,16 @@ int main(int argc, const char** argv)
 
         // сперва просто проверка что очередь работает.
         {
-            SensorMessage sm(100, 2);
-            TransportMessage tm( sm.transport_msg() );
-            auto vm = make_shared<VoidMessage>(tm);
+            uniset3::umessage::SensorMessage sm = makeSensorMessage(100, 2, uniset3::AI);
+            auto vm = make_shared<uniset3::umessage::TransportMessage>(uniset3::to_transport<uniset3::umessage::SensorMessage>(sm));
+
             mq.push(vm);
             auto msg = mq.top();
             assert( msg != nullptr );
-            SensorMessage sm2( msg.get() );
-            assert( sm.id == sm2.id );
+
+            uniset3::umessage::SensorMessage sm2;
+            assert(sm2.ParseFromArray(vm->data().data(), vm->data().size()) );
+            assert( sm.id() == sm2.id() );
         }
 
         vector<int> res;
@@ -95,14 +97,6 @@ int main(int argc, const char** argv)
         std::cerr << "average elapsed time [" << tnum << "]: " << avg << " msec for " << COUNT << endl;
 
         return 0;
-    }
-    catch( const uniset3::SystemError& err )
-    {
-        cerr << "(mq-test): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(mq-test): " << ex << endl;
     }
     catch( const std::exception& e )
     {

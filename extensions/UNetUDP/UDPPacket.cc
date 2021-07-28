@@ -122,7 +122,7 @@ namespace uniset3
         return os;
     }
     // -----------------------------------------------------------------------------
-    UDPmessages::UDPMessage()
+    UDPMessage::UDPMessage()
     {
         pb.set_magic(UniSetUDP::UNETUDP_MAGICNUM);
         pb.set_num(0);
@@ -130,17 +130,17 @@ namespace uniset3
         pb.set_nodeid(0);
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::initFromBuffer( uint8_t* rbuf, size_t sz )
+    bool UDPMessage::initFromBuffer( uint8_t* rbuf, size_t sz )
     {
         return pb.ParseFromArray(rbuf, sz);
     }
     // -----------------------------------------------------------------------------
-    std::string UDPmessages::serializeAsString() const noexcept
+    std::string UDPMessage::serializeAsString() const noexcept
     {
         return pb.SerializeAsString();
     }
     // -----------------------------------------------------------------------------
-    size_t UDPmessages::serializeToArray( uint8_t* buf, int sz ) const noexcept
+    size_t UDPMessage::serializeToArray( uint8_t* buf, int sz ) const noexcept
     {
         if( !pb.SerializeToArray(buf, sz) )
             return 0;
@@ -148,42 +148,42 @@ namespace uniset3
         return pb.ByteSizeLong();
     }
     // -----------------------------------------------------------------------------
-    uint32_t UDPmessages::magic() const noexcept
+    uint32_t UDPMessage::magic() const noexcept
     {
         return pb.magic();
     }
     // -----------------------------------------------------------------------------
-    void UDPmessages::setNum( long num ) noexcept
+    void UDPMessage::setNum( long num ) noexcept
     {
         pb.set_num(num);
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::num() const noexcept
+    long UDPMessage::num() const noexcept
     {
         return pb.num();
     }
     // -----------------------------------------------------------------------------
-    void UDPmessages::setNodeID( long num ) noexcept
+    void UDPMessage::setNodeID( long num ) noexcept
     {
         pb.set_nodeid(num);
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::nodeID() const noexcept
+    long UDPMessage::nodeID() const noexcept
     {
         return pb.nodeid();
     }
     // -----------------------------------------------------------------------------
-    void UDPmessages::setProcID( long num ) noexcept
+    void UDPMessage::setProcID( long num ) noexcept
     {
         pb.set_procid(num);
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::procID() const noexcept
+    long UDPMessage::procID() const noexcept
     {
         return pb.procid();
     }
     // -----------------------------------------------------------------------------
-    size_t UDPmessages::addAData( long id, long val ) noexcept
+    size_t UDPMessage::addAData( long id, long val ) noexcept
     {
         if( (size_t)pb.data().aid_size() >= MaxACount )
             return MaxACount;
@@ -193,7 +193,7 @@ namespace uniset3
         return pb.data().aid_size() - 1;
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::setAData( size_t index, long val ) noexcept
+    bool UDPMessage::setAData( size_t index, long val ) noexcept
     {
         if( index < (size_t)pb.data().aid_size() )
         {
@@ -204,7 +204,7 @@ namespace uniset3
         return false;
     }
     // -----------------------------------------------------------------------------
-    size_t UDPmessages::addDData( long id, bool val ) noexcept
+    size_t UDPMessage::addDData( long id, bool val ) noexcept
     {
         if( (size_t)pb.data().did_size()  >= MaxDCount )
             return MaxDCount;
@@ -214,7 +214,7 @@ namespace uniset3
         return pb.data().did_size() - 1;
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::setDData( size_t index, bool val ) noexcept
+    bool UDPMessage::setDData( size_t index, bool val ) noexcept
     {
         if( index < (size_t)pb.data().did_size() )
         {
@@ -225,7 +225,7 @@ namespace uniset3
         return false;
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::dID( size_t index ) const noexcept
+    long UDPMessage::dID( size_t index ) const noexcept
     {
         if( index >= (size_t)pb.data().did_size() )
             return uniset3::DefaultObjectId;
@@ -233,17 +233,17 @@ namespace uniset3
         return pb.data().did(index);
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::dValue( size_t index ) const noexcept
+    bool UDPMessage::dValue( size_t index ) const noexcept
     {
         return pb.data().dvalue(index);
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::aValue(size_t index) const noexcept
+    long UDPMessage::aValue(size_t index) const noexcept
     {
         return pb.data().avalue(index);
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::aID(size_t index) const noexcept
+    long UDPMessage::aID(size_t index) const noexcept
     {
         if( index >= (size_t)pb.data().aid_size() )
             return uniset3::DefaultObjectId;
@@ -251,13 +251,13 @@ namespace uniset3
         return pb.data().aid(index);
     }
     // -----------------------------------------------------------------------------
-    uint16_t UDPmessages::dataCRC() const noexcept
+    uint16_t UDPMessage::dataCRC() const noexcept
     {
         const std::string s = pb.data().SerializeAsString();
         return makeCRC((unsigned char*)s.data(), s.size());
     }
     // -----------------------------------------------------------------------------
-    uint16_t UDPmessages::dataCRCWithBuf( uint8_t* buf, size_t sz ) const noexcept
+    uint16_t UDPMessage::dataCRCWithBuf( uint8_t* buf, size_t sz ) const noexcept
     {
         if( !pb.data().SerializeToArray(buf, sz) )
             return 0;
@@ -265,7 +265,7 @@ namespace uniset3
         return makeCRC((unsigned char*)buf, pb.data().ByteSizeLong());
     }
     // -----------------------------------------------------------------------------
-    long UDPmessages::getDataID() const noexcept
+    long UDPMessage::getDataID() const noexcept
     {
         // в качестве идентификатора берётся ID первого датчика в данных
         // приоритет имеет аналоговые датчики
@@ -279,32 +279,32 @@ namespace uniset3
         return pb.num();
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::isOk() const noexcept
+    bool UDPMessage::isOk() const noexcept
     {
         return ( pb.IsInitialized() && pb.magic() == UniSetUDP::UNETUDP_MAGICNUM );
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::isAFull() const noexcept
+    bool UDPMessage::isAFull() const noexcept
     {
         return ((size_t)pb.data().aid_size() >= MaxACount);
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::isDFull() const noexcept
+    bool UDPMessage::isDFull() const noexcept
     {
         return ((size_t)pb.data().did_size() >= MaxDCount);
     }
     // -----------------------------------------------------------------------------
-    bool UDPmessages::isFull() const noexcept
+    bool UDPMessage::isFull() const noexcept
     {
         return !(((size_t)pb.data().did_size() < MaxDCount) && ((size_t)pb.data().aid_size() < MaxACount));
     }
     // -----------------------------------------------------------------------------
-    size_t UDPmessages::UDPmessages::dsize() const noexcept
+    size_t UDPMessage::UDPMessage::dsize() const noexcept
     {
         return pb.data().did_size();
     }
     // -----------------------------------------------------------------------------
-    size_t UDPmessages::asize() const noexcept
+    size_t UDPMessage::asize() const noexcept
     {
         return pb.data().aid_size();
     }

@@ -20,7 +20,6 @@
 #include <cmath>
 
 #include "unisetstd.h"
-#include "ORepHelpers.h"
 #include "DBServer_PostgreSQL.h"
 #include "Configuration.h"
 #include "Debug.h"
@@ -28,6 +27,7 @@
 #include "DBLogSugar.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
+using namespace uniset3::umessage;
 using namespace std;
 // --------------------------------------------------------------------------
 DBServer_PostgreSQL::DBServer_PostgreSQL(ObjectId id, const std::string& prefix ):
@@ -63,11 +63,11 @@ DBServer_PostgreSQL::~DBServer_PostgreSQL()
         db->close();
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::sysCommand( const uniset3::messages::SystemMessage* sm )
+void DBServer_PostgreSQL::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     DBServer::sysCommand(sm);
 
-    switch( sm->command )
+    switch( sm->cmd() )
     {
         case SystemMessage::StartUp:
             askTimer(FlushInsertBuffer, ibufSyncTimeout);
@@ -87,7 +87,7 @@ void DBServer_PostgreSQL::sysCommand( const uniset3::messages::SystemMessage* sm
 }
 
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::confirmInfo( const uniset3::ConfirmMessage* cem )
+void DBServer_PostgreSQL::confirmInfo( const uniset3::umessage::ConfirmMessage* cem )
 {
     DBServer::confirmInfo(cem);
 
@@ -95,12 +95,12 @@ void DBServer_PostgreSQL::confirmInfo( const uniset3::ConfirmMessage* cem )
     {
         ostringstream data;
 
-        data << "UPDATE " << tblName(cem->type)
-             << " SET confirm='" << cem->confirm_time.tv_sec << "'"
-             << " WHERE sensor_id='" << cem->sensor_id << "'"
-             << " AND date='" << dateToString(cem->sensor_time.tv_sec, "-") << " '"
-             << " AND time='" << timeToString(cem->sensor_time.tv_sec, ":") << " '"
-             << " AND time_usec='" << cem->sensor_time.tv_nsec << " '";
+        data << "UPDATE " << tblName(cem->header().type())
+             << " SET confirm='" << cem->confirm_ts().sec() << "'"
+             << " WHERE sensor_id='" << cem->sensor_id() << "'"
+             << " AND date='" << dateToString(cem->sensor_ts().sec(), "-") << " '"
+             << " AND time='" << timeToString(cem->sensor_ts().sec(), ":") << " '"
+             << " AND time_usec='" << cem->sensor_ts().nsec() << " '";
 
         dbinfo << myname << "(update_confirm): " << data.str() << endl;
 
@@ -112,13 +112,9 @@ void DBServer_PostgreSQL::confirmInfo( const uniset3::ConfirmMessage* cem )
             dbcrit << myname << "(update_confirm):  db error: " << db->error() << endl;
         }
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        dbcrit << myname << "(update_confirm): " << ex << endl;
-    }
-    catch( ... )
-    {
-        dbcrit << myname << "(update_confirm):  catch..." << endl;
+        dbcrit << myname << "(update_confirm): " << ex.what() << endl;
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -127,14 +123,14 @@ void DBServer_PostgreSQL::onTextMessage( const TextMessage* msg )
     try
     {
         ostringstream data;
-        data << "INSERT INTO " << tblName(msg->type)
+        data << "INSERT INTO " << tblName(msg->header().type())
              << "(date, time, time_usec, text, mtype, node) VALUES( '"
-             << dateToString(msg->tm.tv_sec, "-") << "','"   //  date
-             << timeToString(msg->tm.tv_sec, ":") << "','"   //  time
-             << msg->tm.tv_nsec << "','"                //  time_usec
-             << msg->txt << "','"                    // text
-             << msg->mtype << "','"   // mtype
-             << msg->node << "')";                //  node
+             << dateToString(msg->header().ts().sec(), "-") << "','"   //  date
+             << timeToString(msg->header().ts().sec(), ":") << "','"   //  time
+             << msg->header().ts().nsec() << "','"                //  time_usec
+             << msg->txt() << "','"                    // text
+             << msg->mtype() << "','"   // mtype
+             << msg->header().node() << "')";                //  node
 
         dbinfo << myname << "(insert_main_messages): " << data.str() << endl;
 
@@ -143,13 +139,9 @@ void DBServer_PostgreSQL::onTextMessage( const TextMessage* msg )
             dbcrit << myname << "(insert_main_messages): error: " << db->error() << endl;
         }
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        dbcrit << myname << "(insert_main_messages): " << ex << endl;
-    }
-    catch( ... )
-    {
-        dbcrit << myname << "(insert_main_messages): catch..." << endl;
+        dbcrit << myname << "(insert_main_messages): " << ex.what() << endl;
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -277,40 +269,36 @@ bool DBServer_PostgreSQL::writeInsertBufferToDB( const std::string& tableName
     return db->copy(tableName, colNames, wbuf);
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::sensorInfo( const uniset3::messages::SensorMessage* si )
+void DBServer_PostgreSQL::sensorInfo( const uniset3::umessage::SensorMessage* si )
 {
     try
     {
-        if( !si->tm.tv_sec )
+        if( !si->header().ts().sec() )
         {
             // Выдаём CRIT, но тем не менее сохраняем в БД
 
             dbcrit << myname << "(insert_main_history): UNKNOWN TIMESTAMP! (tm.tv_sec=0)"
-                   << " for sid=" << si->id
-                   << " supplier=" << uniset_conf()->oind->getMapName(si->supplier)
+                   << " for sid=" << si->id()
+                   << " supplier=" << uniset_conf()->oind->getMapName(si->header().supplier())
                    << endl;
         }
 
         // (date, time, time_usec, sensor_id, value, node)
         PostgreSQLInterface::Record rec =
         {
-            dateToString(si->sm_tv.tv_sec, "-"), //  date
-            timeToString(si->sm_tv.tv_sec, ":"), //  time
-            std::to_string(si->sm_tv.tv_nsec),
-            std::to_string(si->id),
-            std::to_string(si->value),
-            std::to_string(si->node),
+            dateToString(si->sm_ts().sec(), "-"), //  date
+            timeToString(si->sm_ts().sec(), ":"), //  time
+            std::to_string(si->sm_ts().nsec()),
+            std::to_string(si->id()),
+            std::to_string(si->value()),
+            std::to_string(si->header().node()),
         };
 
         addRecord( std::move(rec) );
     }
-    catch( const uniset3::Exception& ex )
+    catch( const std::exception& ex )
     {
-        dbcrit << myname << "(insert_main_history): " << ex << endl;
-    }
-    catch( ... )
-    {
-        dbcrit << myname << "(insert_main_history): catch ..." << endl;
+        dbcrit << myname << "(insert_main_history): " << ex.what() << endl;
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -359,9 +347,9 @@ void DBServer_PostgreSQL::initDBServer()
     std::string sfactor = conf->getArg2Param("--" + prefix + "-ibuf-overflow-cleanfactor", it.getProp("ibufOverflowCleanFactor"), "0.5");
     ibufOverflowCleanFactor = atof(sfactor.c_str());
 
-    tblMap[uniset3::messages::mtSensorInfo] = "main_history";
-    tblMap[uniset3::messages::Confirm] = "main_history";
-    tblMap[uniset3::messages::TextMessage] = "main_messages";
+    tblMap[uniset3::umessage::mtSensorInfo] = "main_history";
+    tblMap[uniset3::umessage::mtConfirm] = "main_history";
+    tblMap[uniset3::umessage::mtTextInfo] = "main_messages";
 
     PingTime = conf->getArgPInt("--" + prefix + "-pingTime", it.getProp("pingTime"), PingTime);
     ReconnectTime = conf->getArgPInt("--" + prefix + "-reconnectTime", it.getProp("reconnectTime"), ReconnectTime);
@@ -432,11 +420,11 @@ void DBServer_PostgreSQL::createTables( const std::shared_ptr<PostgreSQLInterfac
     }
 }
 //--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::timerInfo( const uniset3::messages::TimerMessage* tm )
+void DBServer_PostgreSQL::timerInfo( const uniset3::umessage::TimerMessage* tm )
 {
     DBServer::timerInfo(tm);
 
-    switch( tm->id )
+    switch( tm->id() )
     {
         case DBServer_PostgreSQL::PingTimer:
         {
@@ -486,7 +474,7 @@ void DBServer_PostgreSQL::timerInfo( const uniset3::messages::TimerMessage* tm )
         break;
 
         default:
-            dbwarn << myname << "(timerInfo): Unknown TimerID=" << tm->id << endl;
+            dbwarn << myname << "(timerInfo): Unknown TimerID=" << tm->id() << endl;
             break;
     }
 }

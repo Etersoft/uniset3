@@ -71,35 +71,25 @@ int main(int argc, const char* argv[] )
 
         obj = make_shared<TestObject>(o_id, o_node);
         act->add(obj);
-
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
 
         int tout = 6000;
         PassiveTimer pt(tout);
 
-        while( !pt.checkTime() && !shm->exist() )
+        while( !pt.checkTime() && !shm->isExists() )
             msleep(100);
 
-        while( !pt.checkTime() && !obj->exist() )
+        while( !pt.checkTime() && !obj->isExists() )
             msleep(100);
 
-        if( !shm->exist() || !obj->exist() )
+        if( !shm->isExists() || !obj->isExists() )
         {
-            cerr << "(tests): SharedMemory not exist! (timeout=" << tout << ")" << endl;
+            cerr << "(tests): SharedMemory not exists! (timeout=" << tout << ")" << endl;
             return 1;
         }
 
         return session.run();
-    }
-    catch( const SystemError& err )
-    {
-        cerr << "(tests): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(tests): " << ex << endl;
     }
     catch( const std::exception& e )
     {

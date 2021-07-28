@@ -44,12 +44,12 @@ namespace uniset3
             void askSensor( uniset3::ObjectId id, uniset3::UIOCommand cmd,
                             uniset3::ObjectId backid = uniset3::DefaultObjectId );
 
-            uniset3::SensorInfoSeq* getSensorsMap();
-            uniset3::ThresholdsListSeq* getThresholdsList();
+            uniset3::SensorIOInfoSeq getSensorsMap();
+            uniset3::ThresholdsListSeq getThresholdsList();
 
             void localSetValue( IOController::IOStateList::iterator& it,
                                 uniset3::ObjectId sid,
-                                CORBA::Long newvalue, uniset3::ObjectId sup_id );
+                                long newvalue, uniset3::ObjectId sup_id );
 
             long localGetValue( IOController::IOStateList::iterator& it,
                                 uniset3::ObjectId sid );
@@ -65,7 +65,7 @@ namespace uniset3
             IOController::IOStateList::iterator ioEnd();
             void initIterator( IOController::IOStateList::iterator& it );
 
-            bool exist();
+            bool exists();
             bool waitSMready( int msec, int pause = 5000 );
             bool waitSMworking( uniset3::ObjectId, int msec, int pause = 3000 );
             bool waitSMreadyWithCancellation( int msec, std::atomic_bool& cancelFlag, int pause = 5000 );
@@ -94,7 +94,10 @@ namespace uniset3
         protected:
             const std::shared_ptr<IONotifyController> ic;
             const std::shared_ptr<UInterface> ui;
-            CORBA::Object_var oref;
+            std::shared_ptr<grpc::Channel> oref;
+            grpc::ServerContext ctx;
+            grpc::ClientContext clictx;
+            google::protobuf::Empty empty;
             uniset3::ObjectId shmID;
             uniset3::ObjectId myid;
             uniset3::uniset_rwmutex shmMutex;

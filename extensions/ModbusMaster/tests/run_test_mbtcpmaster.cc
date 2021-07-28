@@ -56,27 +56,22 @@ int main( int argc, const char* argv[] )
         act->add(shm);
         act->add(mbm);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act->broadcast( sm.transport_msg() );
+        act->startup();
         act->run(true);
 
         int tout = conf->getArgPInt("--timeout", 8000);
         PassiveTimer pt(tout);
 
-        while( !pt.checkTime() && !act->exist() )
+        while( !pt.checkTime() && !act->isExists() )
             msleep(100);
 
-        if( !act->exist() )
+        if( !act->isExists() )
         {
             cerr << "(tests_mbtcpmaster): SharedMemory not exist! (timeout=" << tout << ")" << endl;
             return 1;
         }
 
         return session.run();
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(tests_mbtcpmaster): " << ex << endl;
     }
     catch( const std::exception& e )
     {

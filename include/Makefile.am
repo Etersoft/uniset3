@@ -1,11 +1,11 @@
 ############################################################################
-# This file is part of the UniSet library								  #
+# This file is part of the UniSet library                                  #
 ############################################################################
 
 SUBDIRS=modbus
 
 # install
-devel_include_HEADERS = *.h *.hh *.tcc
+devel_include_HEADERS = *.h *.tcc
 devel_includedir = $(pkgincludedir)
 
 all-local:

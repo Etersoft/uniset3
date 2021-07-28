@@ -79,6 +79,8 @@ namespace uniset3
 
             virtual ~UniSetActivator();
 
+            void startup();
+
             // запуск системы
             // async = true - асинхронный запуск (создаётся отдельный поток).
             // terminate_control = true - управление процессом завершения (обработка сигналов завершения)
