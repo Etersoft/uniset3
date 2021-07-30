@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./uniset2-start.sh -f ./uniset2-admin --confile ./lp-configure.xml --exist
+./uniset3-start.sh -f ./uniset3-admin --confile ./lp-configure.xml --exist

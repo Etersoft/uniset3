@@ -32,7 +32,7 @@ int main(int argc, const char** argv)
     if( argc > 1 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) )
     {
         cout << endl;
-        cout << "Usage: uniset2-iocontrol args1 args2" << endl;
+        cout << "Usage: uniset3-iocontrol args1 args2" << endl;
         cout << endl;
         cout << "--io-confile       - Использовать указанный конф. файл. По умолчанию configure.xml" << endl;
         cout << "--io-logfile fname - выводить логи в файл fname. По умолчанию iocontrol.log" << endl;

@@ -32,7 +32,7 @@ int main(int argc, const char** argv)
         if( argc > 1 && ( strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0 ) )
         {
             cout << endl;
-            cout << "Usage: uniset2-logicproc args1 args2" << endl;
+            cout << "Usage: uniset3-logicproc args1 args2" << endl;
             cout << endl;
             cout << "--sleepTime msec        - Время между шагам рассчёта. По умолчанию: 200 милисек" << endl;
             cout << "--sm-ready-timeout msec - Максимальное время ожидания готовности SharedMemory к работе, перед началом работы. По умолчанию: 2 минуты" << endl;

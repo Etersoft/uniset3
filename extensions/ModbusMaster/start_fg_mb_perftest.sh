@@ -10,7 +10,7 @@ done
 #echo "$MBPARAM"
 #exit 0
 
-./uniset2-start.sh -f ./mb-perf-test --dlog-add-levels crit,warn ${MBPARAM} \
+./uniset3-start.sh -f ./mb-perf-test --dlog-add-levels crit,warn ${MBPARAM} \
 --confile test.xml \
 --smemory-id SharedMemory \
 $*

@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     {
         if( argc < 3 )
         {
-            cout << "uniset2-logdb-conv dbfile [logname1:]logfile1.log [logname2:]logfile2.log..." << endl;
+            cout << "uniset3-logdb-conv dbfile [logname1:]logfile1.log [logname2:]logfile2.log..." << endl;
             cout << "  logfile    - log file" << endl;
             cout << "  [lognameX] - log name for db. Default: name of logfile" << endl;
             cout << "  :          - separator for logname" << endl;

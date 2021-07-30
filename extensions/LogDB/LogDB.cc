@@ -955,7 +955,7 @@ void LogDB::handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPSer
             l.param("limit=M", "limit records for response");
             myhelp.add(l);
 
-            myhelp.emplace(item("apidocs", "https://github.com/Etersoft/uniset2"));
+            myhelp.emplace(item("apidocs", "https://github.com/Etersoft/uniset3"));
             myhelp.get()->stringify(out);
         }
         else

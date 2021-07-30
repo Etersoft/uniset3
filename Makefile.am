@@ -7,7 +7,7 @@ SUBDIRS=. src lib include Utilities tests extensions wrappers docs
 # testsuite
 
 pkgconfigdir 	= $(libdir)/pkgconfig
-pkgconfig_DATA 	= libUniSet2.pc
+pkgconfig_DATA 	= libUniSet3.pc
 
 # Hack for fix build order
 all-local:

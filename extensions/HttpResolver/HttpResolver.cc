@@ -227,7 +227,7 @@ void HttpResolver::handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net::
             uniset3::json::help::object myhelp("help");
             myhelp.emplace(item("help", "this help"));
             myhelp.emplace(item("resolve?name", "resolve name"));
-            //          myhelp.emplace(item("apidocs", "https://github.com/Etersoft/uniset2"));
+            //          myhelp.emplace(item("apidocs", "https://github.com/Etersoft/uniset3"));
 
             item l("resolve?name", "resolve name");
             l.param("format=json|text", "response format");

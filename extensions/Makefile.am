@@ -11,7 +11,7 @@ SUBDIRS = lib include SharedMemory SharedMemory/tests IOControl IOControl/tests 
 
 
 pkgconfigdir 	= $(libdir)/pkgconfig
-pkgconfig_DATA 	= libUniSet2Extensions.pc
+pkgconfig_DATA 	= libUniSet3Extensions.pc
 
 else
 SUBDIRS =

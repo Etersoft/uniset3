@@ -1,11 +1,11 @@
 noinst_PROGRAMS = test test2
 #test2
 
-test_LDADD 		= $(top_builddir)/lib/libUniSet2.la $(POCO_LIBS)
+test_LDADD 		= $(top_builddir)/lib/libUniSet3.la $(POCO_LIBS)
 test_CXXFLAGS	= -I$(top_builddir)/include $(POCO_CGLAGS) -Wno-unused-function
 test_SOURCES 	= TestGen_SK.cc TestGen.cc TestGen-main.cc
 
-test2_LDADD 	= $(top_builddir)/lib/libUniSet2.la $(POCO_LIBS)
+test2_LDADD 	= $(top_builddir)/lib/libUniSet3.la $(POCO_LIBS)
 test2_CXXFLAGS	= -I$(top_builddir)/include $(POCO_CGLAGS) -Wno-unused-function
 test2_SOURCES 	= TestGenAlone_SK.cc TestGenAlone.cc TestGenAlone-main.cc
 

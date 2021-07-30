@@ -1,6 +1,6 @@
 #!/bin/sh
 
-uniset2-start.sh -f ./uniset2-mbslave --confile test.xml  \
+./uniset3-start.sh -f ./uniset3-mbslave --confile test.xml  \
 	--smemory-id SharedMemory \
 	--mbs-name MBSlave1 \
 	--mbs-type TCP --mbs-inet-addr 127.0.0.1 --mbs-inet-port 2048 --mbs-reg-from-id 1 --mbs-my-addr 0x01 \

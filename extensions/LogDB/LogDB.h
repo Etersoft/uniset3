@@ -81,7 +81,7 @@ namespace uniset3
     * Первый - это использование секции в общем файле проекта (configure.xml).
     * Второй способ - позволяет создать отдельный xml-файл с одной настроечной секцией и указать его в аргументах командной строки
     \code
-    uniset2-logdb --single-confile logdbconf.xml
+    uniset3-logdb --single-confile logdbconf.xml
     \endcode
 
 
@@ -144,21 +144,21 @@ namespace uniset3
      При этом обработка запросов REST API реализуется отдельными потоками контролируемыми libpoco.
 
 
-    \section sec_LogDB_ADMIN LogDB Вспомогательная утилита (uniset2-logdb-adm).
+    \section sec_LogDB_ADMIN LogDB Вспомогательная утилита (uniset3-logdb-adm).
 
-       Для "обслуживания БД" (создание, конвертирование, ротация) имеется специальная утилита uniset2-logdb-adm.
+       Для "обслуживания БД" (создание, конвертирование, ротация) имеется специальная утилита uniset3-logdb-adm.
     Т.к. logdb при своём запуске подразумевает, что БД уже создана. То для создания БД можно воспользоваться
     командой
     \code
-     uniset2-logdb-adm create dbfilename
+     uniset3-logdb-adm create dbfilename
     \endcode
 
     Для того, чтобы конвертировать (загрузить) отдельные лог-файлы в базу, можно воспользоваться командой
     \code
-     uniset2-logdb-adm load logfile1 logfile2...logfileN
+     uniset3-logdb-adm load logfile1 logfile2...logfileN
     \endcode
 
-    Более детальное описание параметров см. \b uniset2-logdb-adm \b help
+    Более детальное описание параметров см. \b uniset3-logdb-adm \b help
 
 
     \todo conf: может быть даже добавить поддержку конфигурирования в формате yaml.

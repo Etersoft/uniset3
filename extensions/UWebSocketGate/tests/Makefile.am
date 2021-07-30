@@ -4,8 +4,8 @@ if ENABLE_UWEBSOCKETGATE
 noinst_PROGRAMS = tests-with-sm
 
 tests_with_sm_SOURCES   = tests_with_sm.cc test_uwebsocketgate.cc $(top_builddir)/extensions/UWebSocketGate/UWebSocketGate.cc
-tests_with_sm_LDADD	 = $(top_builddir)/lib/libUniSet2.la $(top_builddir)/extensions/lib/libUniSet2Extensions.la \
-	$(top_builddir)/extensions/SharedMemory/libUniSet2SharedMemory.la \
+tests_with_sm_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la \
+	$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 	$(SIGC_LIBS) $(POCO_LIBS)
 tests_with_sm_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include \
 	-I$(top_builddir)/extensions/UWebSocketGate \

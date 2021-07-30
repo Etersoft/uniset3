@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package uniset3;
+
+option optimize_for = LITE_RUNTIME;
+// ---------------------------------------------------------------------------
+import "UniSetTypes.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+message ObjectRefList 
+{
+    string section = 1;
+    repeated ObjectRef refs = 2;
+}
+// ---------------------------------------------------------------------------
+/*!
+ * \interface Repository_i
+ * \brief Интерфейс репозитория объектов
+*/
+service URepository_i {
+    rpc resolve(google.protobuf.Int64Value) returns(uniset3.ObjectRef) {}
+    rpc registration(ObjectRef) returns(google.protobuf.Empty) {}
+    rpc unregistration(google.protobuf.Int64Value) returns(google.protobuf.Empty) {}
+    
+    rpc list(google.protobuf.StringValue) returns(ObjectRefList){}
+}

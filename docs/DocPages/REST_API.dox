@@ -7,22 +7,22 @@
 
   Второй уровень. Это функция apiRequest(query) которую можно вызывать у каждого
   объекта посредством RPC. Её вызов \b не \b требует наличия запущенного http-сервера.
-  Из консоли вызов можно делать при помощи утилиты uniset2-admin.
+  Из консоли вызов можно делать при помощи утилиты uniset3-admin.
 
   <br>Например так можно получить свойство "textname" для датчика ID=100
   \code
-  uniset2-admin --apiRequest ObjectName "/api/v01/configure/get?100&props=textname"
+  uniset3-admin --apiRequest ObjectName "/api/v01/configure/get?100&props=textname"
   \endcode
 
   <br>А так можно посмотреть текущие параметры для объекта MyProcess
   \code
-  uniset2-admin --apiRequest MyProcess "/api/v01/params/get"
+  uniset3-admin --apiRequest MyProcess "/api/v01/params/get"
   \endcode
 
   <br>Разные процессы могут расширять список базовых поддерживаемых команд.
   Для того, чтобы узнать какие объект поддерживает команды, можно вызвать команду help
   \code
-  uniset2-admin --apiRequest MyProcess "/api/v01/help"
+  uniset3-admin --apiRequest MyProcess "/api/v01/help"
   \endcode
 
   

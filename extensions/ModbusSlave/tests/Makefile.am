@@ -3,9 +3,9 @@ if HAVE_TESTS
 noinst_PROGRAMS = tests-with-sm mbslave-perf-test
 
 tests_with_sm_SOURCES   = tests_with_sm.cc test_mbslave.cc
-tests_with_sm_LDADD	 = $(top_builddir)/lib/libUniSet2.la $(top_builddir)/extensions/lib/libUniSet2Extensions.la \
-	$(top_builddir)/extensions/ModbusSlave/libUniSet2MBSlave.la \
-	$(top_builddir)/extensions/SharedMemory/libUniSet2SharedMemory.la \
+tests_with_sm_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la \
+	$(top_builddir)/extensions/ModbusSlave/libUniSet3MBSlave.la \
+	$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 	$(SIGC_LIBS) $(POCO_LIBS)
 tests_with_sm_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include \
 	-I$(top_builddir)/extensions/ModbusSlave \
@@ -13,9 +13,9 @@ tests_with_sm_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions
 
 
 mbslave_perf_test_SOURCES   = mbslave_perf_test.cc
-mbslave_perf_test_LDADD	 = $(top_builddir)/lib/libUniSet2.la $(top_builddir)/extensions/lib/libUniSet2Extensions.la \
-	$(top_builddir)/extensions/ModbusSlave/libUniSet2MBSlave.la \
-	$(top_builddir)/extensions/SharedMemory/libUniSet2SharedMemory.la \
+mbslave_perf_test_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la \
+	$(top_builddir)/extensions/ModbusSlave/libUniSet3MBSlave.la \
+	$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 	$(SIGC_LIBS) $(POCO_LIBS)
 mbslave_perf_test_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include \
 	-I$(top_builddir)/extensions/ModbusSlave \

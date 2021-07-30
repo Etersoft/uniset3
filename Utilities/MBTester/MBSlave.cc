@@ -8,7 +8,7 @@
 #include "uniset-config.h"
 // -------------------------------------------------------------------------
 #ifndef PACKAGE_URL
-#define PACKAGE_URL "http://git.etersoft.ru/projects/?p=asu/uniset.git;a=summary"
+#define PACKAGE_URL "https://github.com/Etersoft/uniset3"
 #endif
 // -------------------------------------------------------------------------
 using namespace std;

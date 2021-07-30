@@ -353,19 +353,19 @@ AC_SUBST(DOXYGEN)
 AM_CONDITIONAL(HAVE_DOXYGEN, test x$DOXYGEN != x)
 
 if test "x$UNISET_CODEGEN" = x ; then
-	UNISET_CODEGEN="sh \$(top_builddir)/Utilities/codegen/uniset2-codegen --path \$(top_builddir)/Utilities/codegen/"
+	UNISET_CODEGEN="sh \$(top_builddir)/Utilities/codegen/uniset3-codegen --path \$(top_builddir)/Utilities/codegen/"
 fi
 AC_SUBST(UNISET_CODEGEN)
 echo "UNISET_CODEGEN: $UNISET_CODEGEN"
 
 UNISET_CFLAGS="-I \$(top_builddir) -I \$(top_builddir)/include"
 AC_SUBST(UNISET_CFLAGS)
-UNISET_LIBS="\$(top_builddir)/lib/libUniSet2.la"
+UNISET_LIBS="\$(top_builddir)/lib/libUniSet3.la"
 AC_SUBST(UNISET_LIBS)
 
 UNISET_EXT_CFLAGS="-I \$(top_builddir)/extensions/include"
 AC_SUBST(UNISET_EXT_CFLAGS)
-UNISET_EXT_LIBS="\$(top_builddir)/extensions/lib/libUniSet2Extensions.la"
+UNISET_EXT_LIBS="\$(top_builddir)/extensions/lib/libUniSet3Extensions.la"
 AC_SUBST(UNISET_EXT_LIBS)
 
 #AC_LANG_PUSH([C++])
@@ -529,7 +529,7 @@ AC_TYPE_SIGNAL
 AC_CHECK_FUNCS([atexit getcwd])
 
 AC_CONFIG_FILES([Makefile
-				 libUniSet2.pc
+				 libUniSet3.pc
 				 lib/Makefile
 				 proto/Makefile
 				 proto/UniSetTypes/Makefile
@@ -566,46 +566,46 @@ AC_CONFIG_FILES([Makefile
 				 Utilities/MBTester/Makefile
 				 Utilities/SImitator/Makefile
 				 Utilities/codegen/Makefile
-				 Utilities/codegen/uniset2-codegen
+				 Utilities/codegen/uniset3-codegen
 				 Utilities/codegen/tests/Makefile
 				 Utilities/ULog/Makefile
 				 extensions/Makefile
-				 extensions/libUniSet2Extensions.pc
+				 extensions/libUniSet3Extensions.pc
 				 extensions/lib/Makefile
 				 extensions/include/Makefile
 				 extensions/DBServer-MySQL/Makefile
-				 extensions/DBServer-MySQL/libUniSet2MySQL.pc
+				 extensions/DBServer-MySQL/libUniSet3MySQL.pc
 				 extensions/DBServer-SQLite/Makefile
-				 extensions/DBServer-SQLite/libUniSet2SQLite.pc
+				 extensions/DBServer-SQLite/libUniSet3SQLite.pc
 				 extensions/DBServer-PostgreSQL/Makefile
-				 extensions/DBServer-PostgreSQL/libUniSet2PostgreSQL.pc
+				 extensions/DBServer-PostgreSQL/libUniSet3PostgreSQL.pc
 				 extensions/IOControl/Makefile
-				 extensions/IOControl/libUniSet2IOControl.pc
+				 extensions/IOControl/libUniSet3IOControl.pc
 				 extensions/IOControl/tests/Makefile
 				 extensions/ModbusMaster/Makefile
-				 extensions/ModbusMaster/libUniSet2RTU.pc
-				 extensions/ModbusMaster/libUniSet2MBTCPMaster.pc
+				 extensions/ModbusMaster/libUniSet3RTU.pc
+				 extensions/ModbusMaster/libUniSet3MBTCPMaster.pc
 				 extensions/ModbusMaster/tests/Makefile
 				 extensions/ModbusSlave/Makefile
-				 extensions/ModbusSlave/libUniSet2MBSlave.pc
+				 extensions/ModbusSlave/libUniSet3MBSlave.pc
 				 extensions/ModbusSlave/tests/Makefile
 				 extensions/ModbusSlave/epoll-test/Makefile
 				 extensions/LogicProcessor/Makefile
-				 extensions/LogicProcessor/libUniSet2LogicProcessor.pc
+				 extensions/LogicProcessor/libUniSet3LogicProcessor.pc
 				 extensions/LogicProcessor/tests/Makefile
 				 extensions/SMViewer/Makefile
 				 extensions/UNetUDP/Makefile
-				 extensions/UNetUDP/libUniSet2UNetUDP.pc
+				 extensions/UNetUDP/libUniSet3UNetUDP.pc
 				 extensions/UNetUDP/tests/Makefile
 				 extensions/SharedMemory/Makefile
 				 extensions/SharedMemory/tests/Makefile
-				 extensions/SharedMemory/libUniSet2SharedMemory.pc
+				 extensions/SharedMemory/libUniSet3SharedMemory.pc
 				 extensions/RRDServer/Makefile
-				 extensions/RRDServer/libUniSet2RRDServer.pc
+				 extensions/RRDServer/libUniSet3RRDServer.pc
 				 extensions/MQTTPublisher/Makefile
-				 extensions/MQTTPublisher/libUniSet2MQTTPublisher.pc
+				 extensions/MQTTPublisher/libUniSet3MQTTPublisher.pc
 				 extensions/Backend-OpenTSDB/Makefile
-				 extensions/Backend-OpenTSDB/libUniSet2BackendOpenTSDB.pc
+				 extensions/Backend-OpenTSDB/libUniSet3BackendOpenTSDB.pc
 				 extensions/tests/Makefile
 				 extensions/tests/MQPerfTest/Makefile
 				 extensions/LogDB/Makefile
@@ -616,7 +616,7 @@ AC_CONFIG_FILES([Makefile
 				 extensions/URepository/tests/Makefile
 				 extensions/UWebSocketGate/Makefile
 				 extensions/UWebSocketGate/tests/Makefile
-				 extensions/UWebSocketGate/libUniSet2UWebSocketGate.pc
+				 extensions/UWebSocketGate/libUniSet3UWebSocketGate.pc
 				 testsuite/Makefile
 				 wrappers/Makefile
 				 wrappers/python/lib/Makefile

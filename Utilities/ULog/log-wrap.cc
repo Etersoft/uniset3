@@ -17,7 +17,7 @@ using namespace std;
 static void print_help()
 {
     printf("\n");
-    printf("Usage: uniset2-logserver-wrap listen-addr listen-port PROGRAMM ARGS..\n");
+    printf("Usage: uniset3-logserver-wrap listen-addr listen-port PROGRAMM ARGS..\n");
     printf("\n");
 }
 // --------------------------------------------------------------------------

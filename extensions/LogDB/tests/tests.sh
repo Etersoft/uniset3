@@ -30,19 +30,19 @@ trap atexit EXIT
 
 function create_test_db()
 {
-	./uniset2-logdb-adm create -f $dbfile
+	./uniset3-logdb-adm create -f $dbfile
 }
 
 function logdb_run_logserver()
 {
-	./uniset2-test-logserver -i localhost -p 3333 -d 500 1>/dev/null 2>/dev/null &
+	./uniset3-test-logserver -i localhost -p 3333 -d 500 1>/dev/null 2>/dev/null &
 	LOGSERVER_PID=$!
 	return $?
 }
 
 function logdb_run()
 {
-	./uniset2-logdb --logdb-single-confile logdb-tests-conf.xml \
+	./uniset3-logdb --logdb-single-confile logdb-tests-conf.xml \
 	--logdb-dbfile $dbfile \
 	--logdb-db-buffer-size 5 \
 	--logdb-httpserver-host $http_host \

@@ -85,13 +85,13 @@ static void print_help()
     printf("SESControl1/TV1/MyCustomLog\n");
     printf("\n");
     printf("* Show all logs for SESControl1 (only for SESControl1 and it's childrens)\n");
-    printf("uniset2-log -i host -p 30202 --del any --set any SESControl1\n");
+    printf("uniset3-log -i host -p 30202 --del any --set any SESControl1\n");
     printf("* Show all logs for TV1\n");
-    printf("uniset2-log -i host -p 30201 --del any --set any TV1.*\n");
+    printf("uniset3-log -i host -p 30201 --del any --set any TV1.*\n");
     printf("* Show all logs for MyCustomLog\n");
-    printf("uniset2-log -i host -p 30201 --del any --set any MyCustomLog\n");
+    printf("uniset3-log -i host -p 30201 --del any --set any MyCustomLog\n");
     printf("* Show info logs with special text for TV1\n");
-    printf("uniset2-log -i host -p 30202 --del any --set info TV1 --grep [Tt]ransient\n");
+    printf("uniset3-log -i host -p 30202 --del any --set info TV1 --grep [Tt]ransient\n");
 }
 // --------------------------------------------------------------------------
 static char* checkArg( int i, int argc, char* argv[] );

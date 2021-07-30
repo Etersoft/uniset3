@@ -1,3 +1,3 @@
 #!/bin/sh
 
-killall uniset2-unet-udp-tester
+killall uniset3-unet-udp-tester

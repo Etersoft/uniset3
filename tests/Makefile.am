@@ -9,7 +9,7 @@ if HAVE_TESTS
 noinst_PROGRAMS = tests tests_with_conf develop
 
 #umutex threadtst dlog
-tests_LDADD 	= $(top_builddir)/lib/libUniSet2.la $(SIGC_LIBS) $(POCO_LIBS) -lpthread
+tests_LDADD 	= $(top_builddir)/lib/libUniSet3.la $(SIGC_LIBS) $(POCO_LIBS) -lpthread
 tests_CPPFLAGS	= -I$(top_builddir)/include $(SIGC_CFLAGS) $(POCO_CFLAGS)
 tests_SOURCES = tests.cc \
 test_passivetimer.cc \
@@ -33,7 +33,7 @@ test_debugstream.cc
 
 #test_uhttp.cc
 
-tests_with_conf_LDADD   = $(top_builddir)/lib/libUniSet2.la
+tests_with_conf_LDADD   = $(top_builddir)/lib/libUniSet3.la
 tests_with_conf_CPPFLAGS = -I$(top_builddir)/include
 tests_with_conf_SOURCES = tests_with_conf.cc \
 test_conftest.cc \
@@ -45,12 +45,12 @@ test_mqueue.cc \
 test_uobject.cc
 
 # threadtst_SOURCES = threadtst.cc
-# threadtst_LDADD 	= $(top_builddir)/lib/libUniSet2.la ${SIGC_LIBS}
+# threadtst_LDADD 	= $(top_builddir)/lib/libUniSet3.la ${SIGC_LIBS}
 # threadtst_CPPFLAGS	= -I$(top_builddir)/include ${SIGC_CFLAGS}
 # 
 
 
-develop_LDADD   = $(top_builddir)/lib/libUniSet2.la
+develop_LDADD   = $(top_builddir)/lib/libUniSet3.la
 develop_CPPFLAGS = -I$(top_builddir)/include
 develop_SOURCES  = develop.cc
 

@@ -7,11 +7,11 @@
 
 Для управления "заморозкой" существует две возможности
 
-### Заморозка значения при помощи утилиты uniset2-admin
+### Заморозка значения при помощи утилиты uniset3-admin
 Для того, чтобы заморозить какое-то значение достаточно вызвать команду
 
 ```
-uniset2-admin --confile xxx --freezeValue SID@node=value 1
+uniset3-admin --confile xxx --freezeValue SID@node=value 1
 ```
 
 Где:
@@ -24,12 +24,12 @@ uniset2-admin --confile xxx --freezeValue SID@node=value 1
 Можно замораживать или размораживать сразу несколько датчиков.
 - Заморозить датчики
 ```
-uniset2-admin --confile xxx --freezeValue sens1=10,sens2=100,sens3=42 1
+uniset3-admin --confile xxx --freezeValue sens1=10,sens2=100,sens3=42 1
 ```
 
 - Разморозить датчики
 ```
-uniset2-admin --confile xxx --freezeValue sens1,sens2,sens3 0
+uniset3-admin --confile xxx --freezeValue sens1,sens2,sens3 0
 ```
 
 

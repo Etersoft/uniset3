@@ -1,4 +1,4 @@
 #!/bin/sh
 
-uniset2-start.sh -f ./uniset2-logicproc --confile test.xml --schema schema.xml --ulog-add-levels any --dlog-add-levels any
+./uniset3-start.sh -f ./uniset3-logicproc --confile test.xml --schema schema.xml --ulog-add-levels any --dlog-add-levels any
 

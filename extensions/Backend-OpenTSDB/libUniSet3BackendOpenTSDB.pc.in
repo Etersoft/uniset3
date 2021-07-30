@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libUniSet3BackendOpenTSDB
+Description: Support library for UniSet3BackendOpenTSDB
+Requires: libUniSet3Extensions
+Version: @VERSION@
+Libs: -L${libdir} -lUniSet3BackendOpenTSDB
+Cflags: -I${includedir}/@PACKAGE@/extensions

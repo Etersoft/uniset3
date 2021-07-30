@@ -4,9 +4,9 @@ if HAVE_TESTS
 noinst_PROGRAMS = run_test_iocontrol
 
 run_test_iocontrol_SOURCES   = run_test_iocontrol.cc test_iocontrol.cc FakeIOControl.cc
-run_test_iocontrol_LDADD	 = $(top_builddir)/lib/libUniSet2.la $(top_builddir)/extensions/lib/libUniSet2Extensions.la \
-	$(top_builddir)/extensions/IOControl/libUniSet2IOControl.la \
-	$(top_builddir)/extensions/SharedMemory/libUniSet2SharedMemory.la \
+run_test_iocontrol_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la \
+	$(top_builddir)/extensions/IOControl/libUniSet3IOControl.la \
+	$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 	$(SIGC_LIBS) $(POCO_LIBS)
 run_test_iocontrol_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include \
 	-I$(top_builddir)/extensions/IOControl \

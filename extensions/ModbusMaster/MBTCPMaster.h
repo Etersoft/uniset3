@@ -214,9 +214,9 @@ namespace uniset3
      послать команду SystemMessage::Reconfigure или воспользоваться HTTP API, где можно указать файл из
      которого произвести загрузку (см. \ref sec_MBTCP_REST_API).
 
-     Послать команду можно при помощи утилиты uniset2-admin
+     Послать команду можно при помощи утилиты uniset3-admin
      \code
-      uniset2-admin --configure ObjectID
+      uniset3-admin --configure ObjectID
      \endcode
 
      При этом процесс приостанавливает обмен и перезагружает конфигурационный файл с которым был запущен.

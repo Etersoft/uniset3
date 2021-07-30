@@ -414,10 +414,10 @@ in_output2_c(Output1_C)=0
   </smap>
 \endcode
   Данный механизм позволяет посредством этого датчика управлять уровнем вывода логов (mylog) во время работы процесса.
-  Для удобства предусмотрена утилита \b uniset2-log2val позволяющая преобразовать текстовые названия уровней в число,
+  Для удобства предусмотрена утилита \b uniset3-log2val позволяющая преобразовать текстовые названия уровней в число,
   которое необходимо выставить датчику.  Пример:
 \code
-uniset2-log2val info,level1,warn,level9
+uniset3-log2val info,level1,warn,level9
 4117
 \endcode
    Т.е. для того, чтобы включить указанные логи в датчик нужно записать число \b 4117
@@ -436,7 +436,7 @@ uniset2-log2val info,level1,warn,level9
   --argprefix-logserver-port   - по умолчанию ID-объекта
    \endcode
    
-   Непосредственно управление логами производиться при помощи утилиты \b uniset2-log
+   Непосредственно управление логами производиться при помощи утилиты \b uniset3-log
    \code
 -h, --help                  - this message
 -v, --verbose               - Print all messages to stdout
@@ -461,19 +461,19 @@ Note: 'logfilter' -  regexp for name of log. Default: ALL logs.
    
    \section pg_Codegen_vmonitor Мониторинг состояния внутренних переменных
    В генерируемом коде встроена поддержка удалённого просмотра (мониторинга) внутреннего состояния \b ВСЕХ in_xx и out_xxx переменных,
-   а также переменных определённых пользователем. Для этого достаточно использовать утилиту uniset2-vmonit
+   а также переменных определённых пользователем. Для этого достаточно использовать утилиту uniset3-vmonit
    \code
-    Usage: uniset2-vmonit [-s watch_sec] OBJECT_ID[@node] [uniset-admin-options]
+    Usage: uniset3-vmonit [-s watch_sec] OBJECT_ID[@node] [uniset-admin-options]
    \endcode
   Где можно указать (-s sec) как часто обновлять информацию и собственно указать ID (или name) объекта (процесса).
  
-  Утилита требует наличия в системе утилиты watch и на самом деле является обёрткой над утилитой uniset2-admin.
+  Утилита требует наличия в системе утилиты watch и на самом деле является обёрткой над утилитой uniset3-admin.
   
   Например для отслеживания процесса 12000 утилита запускается так:
   \code
-    uniset2-vmonit 12000
+    uniset3-vmonit 12000
   \endcode
-  \note При локальной наладке обычно запуск производиться так: uniset2-start.sh -f uniset2-vmonit ObjectID
+  \note При локальной наладке обычно запуск производиться так: uniset3-start.sh -f uniset3-vmonit ObjectID
   
   \subsection pg_Codegen_vmonitor_myvar Добавление своих переменных в "мониторинг".
   Для добавления своей переменной в "мониторинг" достаточно \b один \b раз (например в конструкторе своего класса)
@@ -502,7 +502,7 @@ Note: 'logfilter' -  regexp for name of log. Default: ALL logs.
          ...
     }
   \endcode
-  После этого они появятся в выводе утилиты uniset2-vmonit
+  После этого они появятся в выводе утилиты uniset3-vmonit
   
   \warning На данный момент поддерживаются только простые типы переменных (bool,short,int,long,double,float см. VMonitor)
   

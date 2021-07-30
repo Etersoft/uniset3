@@ -8,8 +8,8 @@ TestObject_SK.cc TestObject_SK.h: testobject.src.xml
 	$(UNISET_CODEGEN) -l $(top_builddir)/Utilities/codegen -n TestObject --topdir $(top_builddir)/ --ask --no-main testobject.src.xml
 
 tests_SOURCES = TestObject_SK.cc NullSM.cc TestObject.cc test_sm.cc tests.cc
-tests_LDADD	 = $(top_builddir)/lib/libUniSet2.la $(top_builddir)/extensions/lib/libUniSet2Extensions.la \
-	$(top_builddir)/extensions/SharedMemory/libUniSet2SharedMemory.la \
+tests_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la \
+	$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 	$(SIGC_LIBS) $(POCO_LIBS) -lpthread
 tests_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include \
 	-I$(top_builddir)/extensions/SharedMemory $(SIGC_CFLAGS) $(POCO_CFLAGS)

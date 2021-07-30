@@ -30,7 +30,7 @@ int main( int argc, const char** argv )
     if( argc > 1 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) )
     {
         cout << endl;
-        cout << "Usage: uniset2-mbtcpmultimaster args1 args2" << endl;
+        cout << "Usage: uniset3-mbtcpmultimaster args1 args2" << endl;
         cout << endl;
         cout << "--smemory-id objectName  - SharedMemory objectID. Default: get from configure..." << endl;
         cout << "--confile filename       - configuration file. Default: configure.xml" << endl;

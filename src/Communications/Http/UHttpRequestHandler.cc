@@ -115,7 +115,7 @@ namespace uniset3
 					"{\"list\": {\"desc\": \"list of objects\"}},"
 					"{\"ObjectName\": {\"desc\": \"ObjectName information\"}},"
 					"{\"ObjectName/help\": {\"desc\": \"help for ObjectName\"}},"
-					"{\"apidocs\": {\"desc\": \"https://github.com/Etersoft/uniset2\"}}"
+					"{\"apidocs\": {\"desc\": \"https://github.com/Etersoft/uniset3\"}}"
 					"]}";
 			}
 			else if( objectName == "list" )

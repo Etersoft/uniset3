@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package uniset3.umessage;
+
+option optimize_for = LITE_RUNTIME;
+// option cc_enable_arenas = true;
+// ---------------------------------------------------------------------------
+import "UniSetTypes.proto";
+// ---------------------------------------------------------------------------
+
+/*! Базовые типы сообщений */
+enum TypeOfMessage
+{
+    mtUnused = 0;       // Сообщение не содержит информации
+    mtSensorInfo = 1;
+    mtSysCommand = 2;   // Сообщение содержит системную команду
+    mtConfirm = 3;      // Сообщение содержит подтверждение
+    mtTimer = 4;        // Сообщения о срабатывании таймера
+    mtTextInfo = 5;     // текстовое сообщение
+    mtTheLastFieldOfTypeOfMessage = 6; // Обязательно оставьте последним
+}
+
+enum Priority
+{
+    mpLow = 0;
+    mpMedium = 1;
+    mpHigh = 2;
+}
+
+message MessageHeader
+{
+    TypeOfMessage type = 1;
+    Priority priority = 2;
+    int64 node = 3;
+    int64 supplier = 4;
+    int64 consumer = 5;
+    Timespec ts = 6;
+}
+
+message TransportMessage
+{
+    MessageHeader header = 1;
+    bytes data = 2;
+}
+
+message SensorMessage
+{
+    MessageHeader header = 1;
+    int64 id = 2;
+    int64 value = 3;
+    bool undefined = 4;
+    Timespec sm_ts = 5;
+    IOType sensor_type = 6;
+    CalibrateInfo ci = 7;
+
+    // для пороговых датчиков
+    bool threshold = 8;  /*!< TRUE - сработал порог, FALSE - порог отключился */
+    int64 tid = 9;
+}
+
+message SystemMessage
+{
+    enum Command
+    {
+        Unknown = 0;
+        StartUp = 1;    /*! начать работу */
+        FoldUp = 2;     /*! нет связи с главной станцией */
+        Finish = 3;     /*! завершить работу */
+        WatchDog = 4;   /*! контроль состояния */
+        ReConfiguration = 5; /*! обновились параметры конфигурации */
+        NetworkInfo = 6;     /*! обновилась информация о состоянии узлов в сети
+                                 поля
+                                 data[0] - кто
+                                 data[1] - новое состояние(true - connect,  false - disconnect)
+                             */
+        LogRotate = 7;    /*! переоткрыть файлы логов */
+        TheLastFieldOfCommand = 8;
+    };
+
+    MessageHeader header = 1;
+    Command cmd = 2;
+    repeated int64 data = 3;
+}
+
+message TimerMessage
+{
+    MessageHeader header = 1;
+    int64 id = 2;
+}
+
+message ConfirmMessage
+{
+    MessageHeader header = 1;
+    int64 sensor_id = 2;      /* ID датчика (события) */
+    double sensor_value = 3; /* значение датчика (события) */
+    Timespec sensor_ts = 4;   /*!< время срабатывания датчика (события), который квитируем */
+    Timespec confirm_ts = 5;  /*!< время прошедшее до момента квитирования */
+    bool broadcast = 6;
+    /*!
+        признак, что сообщение является пересланным.
+        (т.е. в БД второй раз сохранять не надо, пересылать
+        второй раз тоже не надо).
+    */
+    bool forward = 7;
+}
+
+message TextMessage 
+{
+    MessageHeader header = 1;
+    string txt = 2;
+    int32 mtype = 3;
+}

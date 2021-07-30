@@ -4,7 +4,7 @@
 # Description: uniset netdata python.d module
 # Author: Pavel Vainerman (pv)
 # ----------------------------------------------------------------------------------------------------------
-# Вариант на основе запуска uniset2-admin --сsv id1,id2,id3...
+# Вариант на основе запуска uniset3-admin --сsv id1,id2,id3...
 # ----------------------------------------------------------------------------------------------------------
 # В configure.xml проекта ождается секция <netdata> описывающая
 # charts и параметры.
@@ -29,8 +29,8 @@
 import os
 import sys
 
-import uniset2
-from uniset2 import UniXML
+import uniset3
+from uniset3 import UniXML
 from subprocess import Popen, PIPE
 
 sys.path.append("./python_modules")
@@ -78,7 +78,7 @@ class Service(ExecutableService):
             else:
                 idlist += ",%s"%str(sid)
 
-        uniset_command = self.get_conf_param('uniset_command',"/usr/bin/uniset2-admin --confile %s"%(self.confile))
+        uniset_command = self.get_conf_param('uniset_command',"/usr/bin/uniset3-admin --confile %s"%(self.confile))
 
         command = "%s --csv %s"%(uniset_command,idlist)
         if uniset_port!=None and uniset_port!='':
@@ -151,7 +151,7 @@ class Service(ExecutableService):
             self.definitions = myCharts
             self.order = myOrder
 
-        except uniset2.UniXMLException, e:
+        except uniset3.UniXMLException, e:
             self.error("FAILED load xmlfile=%s err='%s'" % (confile, e.getError()))
             raise RuntimeError
 
@@ -198,7 +198,7 @@ class Service(ExecutableService):
             # params.append(self.get_param(node, 'netdata_divisor', None))
             # params.append(self.get_param(node, 'netdata_hidden', None))
 
-            self.sensors.append([id, uniset2.to_int(node.prop('id'))])
+            self.sensors.append([id, uniset3.to_int(node.prop('id'))])
 
             chart['lines'].append(params)
 

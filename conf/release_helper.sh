@@ -11,8 +11,8 @@ OPTS=$*
 
 [ -z "$TOPDIR" ] && TOPDIR=/var/ftp/pub/Ourside
 
-PKGNAME=uniset2
-SPECNAME=libuniset2.spec
+PKGNAME=uniset3
+SPECNAME=libuniset3.spec
 
 if [ -z "$PLATFORM" ]; then
 	PLATFORM=i586

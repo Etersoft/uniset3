@@ -1,6 +1,6 @@
 #!/bin/sh
 
-uniset2-start.sh -f ./uniset2-rtuexchange --confile test.xml \
+./uniset3-start.sh -f ./uniset3-rtuexchange --confile test.xml \
 	--smemory-id SharedMemory \
 	--rs-dev /dev/cbsideA0 \
 	--rs-name RTUExchange \

@@ -135,7 +135,7 @@ static void usage()
     cout << "Глобальные параметры, которые необходимо передавать через '--'" << endl;
     cout << "-----------------------------------------\n";
     cout << uniset3::Configuration::help() << endl;
-    cout << "Example: uniset2-admin arg1 arg2 arg3 -- global_arg1 global_arg2 ..." << endl;
+    cout << "Example: uniset3-admin arg1 arg2 arg3 -- global_arg1 global_arg2 ..." << endl;
     cout << endl;
 }
 

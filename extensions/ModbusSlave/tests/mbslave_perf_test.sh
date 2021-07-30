@@ -2,10 +2,10 @@
 
 # '--' - нужен для отделения аргументов catch, от наших..
 cd ../../../Utilities/Admin/
-./uniset2-start.sh -f ./create_links.sh
-./uniset2-start.sh -f ./create
+./uniset3-start.sh -f ./create_links.sh
+./uniset3-start.sh -f ./create
 
-./uniset2-start.sh -f ./exist | grep -q UNISET_PLC/Controllers || exit 1
+./uniset3-start.sh -f ./exist | grep -q UNISET_PLC/Controllers || exit 1
 cd -
 
 
@@ -18,4 +18,4 @@ for n in `seq 1 $MAX`; do
    --mbs${n}-log-add-levels crit,warn"
 done
 
-./uniset2-start.sh -f ./mbslave-perf-test --confile test.xml ${PARAMS} --numproc $MAX $*
+./uniset3-start.sh -f ./mbslave-perf-test --confile test.xml ${PARAMS} --numproc $MAX $*
