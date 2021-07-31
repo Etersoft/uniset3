@@ -26,6 +26,12 @@ int main(int argc, char** argv)
         if( !repository )
             return 1;
 
+        if( findArgParam("--status", argc, argv) != -1 )
+        {
+            cout << repository->status() << endl;
+            return 0;
+        }
+
         repository->run();
         return 0;
     }

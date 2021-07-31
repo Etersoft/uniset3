@@ -247,7 +247,7 @@ namespace uniset3
         {
             try
             {
-                ui->registered(myid, getRef(), true);
+                ui->registered(getRef(), true);
                 regOK = true;
                 break;
             }

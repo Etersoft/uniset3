@@ -21,6 +21,9 @@
 #include <sstream>
 #include <iomanip>
 #include <unistd.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <grpcpp/grpcpp.h>
+#include <grpcpp/health_check_service_interface.h>
 
 #include "unisetstd.h"
 #include <Poco/Net/NetException.h>
@@ -75,21 +78,9 @@ URepository::URepository( const string& name, int argc, const char* const* argv,
 
     UniXML::iterator it(cnode);
 
-//    UniXML::iterator dirIt = xml->findNode(xml->getFirstNode(), "LockDir");
-
-//    if( !dirIt )
-//    {
-//        ostringstream err;
-//        err << name << "(init): Not found confnode <LockDir name='..'/>";
-//        rcrit << err.str() << endl;
-//        throw uniset3::SystemError(err.str());
-//    }
-
-
-//    iorfile = make_shared<IORFile>(dirIt.getProp("name"));
-//    rinfo << myname << "(init): IOR directory: " << dirIt.getProp("name") << endl;
-
-
+    addr = it.getProp2("ip", "0.0.0.0");
+    auto port = it.getPIntProp("port", 8111);
+    addr = addr + ":" + to_string(port);
 }
 //--------------------------------------------------------------------------------------------
 URepository::~URepository()
@@ -111,16 +102,97 @@ std::shared_ptr<URepository> URepository::init_repository( int argc, const char*
 // -----------------------------------------------------------------------------
 void URepository::help_print()
 {
-    cout << "Default: prefix='httpresolver'" << endl;
-    cout << "--prefix-host ip          - IP на котором слушает http сервер. По умолчанию: 0.0.0.0" << endl;
-    cout << "--prefix-port num         - Порт на котором принимать запросы. По умолчанию: 8008" << endl;
-    cout << "--prefix-max-queued num   - Размер очереди запросов к http серверу. По умолчанию: 100" << endl;
-    cout << "--prefix-max-threads num  - Разрешённое количество потоков для http-сервера. По умолчанию: 3" << endl;
-    cout << "--prefix-cors-allow addr  - (CORS): Access-Control-Allow-Origin. Default: *" << endl;
+    cout << "Default: prefix='urepository'" << endl;
+    cout << "--prefix-host ip               - IP на котором слушает сервер. По умолчанию: 0.0.0.0" << endl;
+    cout << "--prefix-port num              - Порт на котором принимать запросы. По умолчанию: 8111" << endl;
+    cout << "--prefix-log-add-levels level  - Уровень логов." << endl;
 }
-// -----------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+grpc::Status URepository::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+{
+    ostringstream inf;
+    {
+        uniset3::uniset_rwmutex_rlock l(omutex);
+        inf << "objects: " << omap.size() << endl;
+    }
+
+    response->set_value(inf.str());
+    return grpc::Status::OK;
+}
+// ------------------------------------------------------------------------------------------
 void URepository::run()
 {
-    pause();
+    grpc::EnableDefaultHealthCheckService(true);
+//    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+    grpc::ServerBuilder builder;
+    builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
+    builder.RegisterService(static_cast<URepository_i::Service*>(this));
+    std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+    rinfo << myname << "(run): URepository listening on " << addr << std::endl;
+    server->Wait();
+}
+// -----------------------------------------------------------------------------
+std::string URepository::status()
+{
+    google::protobuf::StringValue request;
+    google::protobuf::StringValue reply;
+    grpc::ClientContext ctx;
+    auto chan = grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+    std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(chan));
+    grpc::Status status = stub->getInfo(&ctx, request, &reply);
+    if( !status.ok() )
+    {
+        ostringstream err;
+        err << "error: (" << status.error_code() << ")" << status.error_message();
+        return err.str();
+    }
+
+    return reply.value();
+}
+// -----------------------------------------------------------------------------
+grpc::Status URepository::resolve(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ObjectRef* response)
+{
+//    rinfo << "call resolve id=" << request->value() << endl;
+    uniset3::uniset_rwmutex_rlock l(omutex);
+    auto i = omap.find(request->value());
+    if( i!=omap.end() )
+    {
+        *response = i->second;
+        return grpc::Status::OK;
+    }
+
+    return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+}
+// -----------------------------------------------------------------------------
+grpc::Status URepository::registration(::grpc::ServerContext* context, const ::uniset3::ObjectRef* request, ::google::protobuf::Empty* response)
+{
+    uniset3::uniset_rwmutex_wrlock l(omutex);
+    omap[request->id()] = *(request);
+    return grpc::Status::OK;
+}
+// -----------------------------------------------------------------------------
+grpc::Status URepository::unregistration(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Empty* response)
+{
+    uniset3::uniset_rwmutex_wrlock l(omutex);
+    auto i = omap.find(request->value());
+    if( i!= omap.end() )
+        omap.erase(i);
+
+    return grpc::Status::OK;
+}
+// -----------------------------------------------------------------------------
+grpc::Status URepository::list(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::uniset3::ObjectRefList* response)
+{
+    uniset3::uniset_rwmutex_rlock l(omutex);
+    for( const auto& o: omap )
+    {
+        if( o.second.path() != request->value() )
+            continue;
+
+        auto r = response->add_refs();
+        *r = o.second;
+    }
+
+    return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------

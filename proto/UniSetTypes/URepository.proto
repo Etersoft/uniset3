@@ -24,4 +24,5 @@ service URepository_i {
     rpc unregistration(google.protobuf.Int64Value) returns(google.protobuf.Empty) {}
     
     rpc list(google.protobuf.StringValue) returns(ObjectRefList){}
+    rpc getInfo(google.protobuf.StringValue) returns (google.protobuf.StringValue) {}
 }

@@ -116,7 +116,7 @@ void IOController::activateInit()
         }
         catch( const uniset3::Exception& ex )
         {
-            ucrit << myname << "(activateInit): " << ex << endl << flush;
+            cerr << myname << "(activateInit): " << ex << endl << flush;
             //std::terminate();
             uterminate();
         }
@@ -487,6 +487,12 @@ void IOController::ioRegistration( std::shared_ptr<USensorInfo>& usi )
         throw ResolveNameError(err.str());
     }
 
+    auto conf  = uniset_conf();
+    auto sref = getRef();
+    sref.set_id(usi->sinf.si().id());
+    sref.set_path(conf->getSensorsSection());
+    sref.set_type("sensor");
+
     try
     {
         for( size_t i = 0; i < 2; i++ )
@@ -495,9 +501,11 @@ void IOController::ioRegistration( std::shared_ptr<USensorInfo>& usi )
             {
                 ulogrep << myname
                         << "(ioRegistration): регистрирую "
-                        << uniset_conf()->oind->getNameById(usi->sinf.si().id()) << endl;
+                        << conf->oind->getNameById(usi->sinf.si().id())
+                        << " addr: " << getRef().addr()
+                        << endl;
 
-                ui->registered( usi->sinf.si().id(), getRef(), true );
+                ui->registered(sref, true);
                 return;
             }
             catch( const ObjectNameAlready& ex )

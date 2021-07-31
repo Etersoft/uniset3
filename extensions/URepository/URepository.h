@@ -21,7 +21,9 @@
 #ifndef URepository_H_
 #define URepository_H_
 // --------------------------------------------------------------------------
+#include <unordered_map>
 #include "UniSetTypes.h"
+#include "Mutex.h"
 #include "DebugStream.h"
 #include "URepository.grpc.pb.h"
 // -------------------------------------------------------------------------
@@ -37,15 +39,13 @@ namespace uniset3
         \section sec_URepository_Comm Общее описание работы URepository
             URepository это сервис, который отдаёт ссылки, позволяющие обращаться к объектам.
 
-        \sa \ref ConfigurationPage_secLocalIOR
-
         \section sec_URepository_Conf Настройка работы URepository
         Для запуска URepository необходимо настроить на каком порту и сетевом интерфейсе будут приниматься запросы.
         Для этого необходимо в настройках прописать следующую секцию
         \code
         <UniSet>
           ...
-          <URepository name="URepository" port="8008" host="0.0.0.0"/>
+          <URepository name="URepository" port="8081" ip="0.0.0.0"/>
           ...
         </UniSet>
         \endcode
@@ -60,7 +60,7 @@ namespace uniset3
             virtual ~URepository();
 
             /*! глобальная функция для инициализации объекта */
-            static std::shared_ptr<URepository> init_repository( int argc, const char* const* argv, const std::string& prefix = "httpresolver-" );
+            static std::shared_ptr<URepository> init_repository( int argc, const char* const* argv, const std::string& prefix = "urepository-" );
 
             /*! глобальная функция для вывода help-а */
             static void help_print();
@@ -71,11 +71,24 @@ namespace uniset3
             }
 
             void run();
+            std::string status();
+
+
+            // proto interface
+            virtual ::grpc::Status resolve(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ObjectRef* response) override;
+            virtual ::grpc::Status registration(::grpc::ServerContext* context, const ::uniset3::ObjectRef* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status unregistration(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status list(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::uniset3::ObjectRefList* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
 
         protected:
+            std::string addr;
+            std::string myname;
+
+            uniset3::uniset_rwmutex omutex;
+            std::unordered_map<uniset3::ObjectId, uniset3::ObjectRef> omap;
 
             std::shared_ptr<DebugStream> rlog;
-            std::string myname;
 
         private:
     };

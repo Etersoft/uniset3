@@ -153,7 +153,7 @@ namespace uniset3
 
             if( port < 0 )
             {
-                throw SystemError("(run): Unknown server port or id ");
+                throw SystemError("(run): Unknown server port or id. Use --activator-grpc-port");
             }
 
             uniset3::uniset_rwmutex_wrlock lock(refmutex);

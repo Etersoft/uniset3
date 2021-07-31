@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # общие функции
-. uniset3-functions.sh
+. ./uniset3-functions.sh
 
 WITH_PID=0
 std=0
@@ -11,7 +11,7 @@ set_repo_port $*
 FG=
 DBG=
 
-runOmniNames
+runRepository
 
 print_usage()
 {

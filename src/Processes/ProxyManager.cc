@@ -77,7 +77,10 @@ bool ProxyManager::activateObject()
     {
         try
         {
-            for( unsigned int i = 0; i < 2; i++ )
+            auto oref = getRef();
+            oref.set_id(it.first);
+
+            for( size_t i = 0; i < 2; i++ )
             {
                 try
                 {
@@ -86,7 +89,7 @@ bool ProxyManager::activateObject()
                             << " (pname=" << it.second->getName() << ") "
                             << uniset_conf()->oind->getNameById(it.first) << endl;
 
-                    ui->registered(it.first, getRef(), true);
+                    ui->registered(oref, true);
                     break;
                 }
                 catch( uniset3::ObjectNameAlready& ex )
@@ -104,10 +107,9 @@ bool ProxyManager::activateObject()
                 }
             }
         }
-        catch( const uniset3::Exception& ex )
+        catch( const std::exception& ex )
         {
-            ucrit << myname << "(activate): " << ex << endl << flush;
-            //std::terminate();
+            cerr << myname << "(activate): " << ex.what() << endl << flush;
             uterminate();
         }
     }

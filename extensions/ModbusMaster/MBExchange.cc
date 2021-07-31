@@ -1866,8 +1866,7 @@ namespace uniset3
 
                 if( mbconf->devices.empty() )
                 {
-                    mbcrit << myname << "(sysCommand): ************* ITEM MAP EMPTY! terminated... *************" << endl << flush;
-                    //                  std::terminate();
+                    cerr << myname << "(sysCommand): ************* ITEM MAP EMPTY! terminated... *************" << endl << flush;
                     uterminate();
                     return;
                 }
@@ -1901,7 +1900,7 @@ namespace uniset3
 
                 if( !isProcActive() )
                 {
-                    mbcrit << myname << "(sysCommand): ************* don`t activate?! ************" << endl << flush;
+                    cerr << myname << "(sysCommand): ************* don`t activate?! ************" << endl << flush;
                     uterminate();
                     return;
                 }
@@ -2050,8 +2049,7 @@ namespace uniset3
                 << "(askSensors): Не дождались готовности(work) SharedMemory к работе в течение "
                 << activateTimeout << " мсек";
 
-            mbcrit << err.str() << endl << flush;
-            //          std::terminate();  // прерываем (перезапускаем) процесс...
+            cerr << err.str() << endl << flush;
             uterminate();
             return;
         }

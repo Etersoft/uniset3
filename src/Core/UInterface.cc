@@ -101,13 +101,13 @@ namespace uniset3
             google::protobuf::Int64Value request;
             request.set_value(id);
             google::protobuf::Int64Value reply;
-            grpc::ClientContext ctx;
 
             for( size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 if( !chan )
                     chan = resolve( id, node );
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getValue(&ctx, request, &reply);
 
@@ -154,7 +154,6 @@ namespace uniset3
             request.set_id(si.id());
             request.set_sup_id(sup_id);
             request.set_undefined(undefined);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -167,6 +166,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve( si.id(), si.node() );
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->setUndefinedState(&ctx, request, &reply);
 
@@ -207,7 +207,6 @@ namespace uniset3
             request.set_sup_id(sup_id);
             request.set_set(set);
             request.set_value(value);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -220,6 +219,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(si.id(), si.node());
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->freezeValue(&ctx, request, &reply);
 
@@ -274,7 +274,6 @@ namespace uniset3
             request.set_id(id);
             request.set_sup_id(sup_id);
             request.set_value(value);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -287,6 +286,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->setValue(&ctx, request, &reply);
 
@@ -352,7 +352,6 @@ namespace uniset3
             request.set_sid(id);
             request.mutable_ci()->set_id(backid);
             request.mutable_ci()->set_node(uconf->getLocalNode());
-            grpc::ClientContext ctx;
 
             try
             {
@@ -365,6 +364,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->askSensor(&ctx, request, &reply);
 
@@ -413,7 +413,6 @@ namespace uniset3
             RetIOType reply;
             google::protobuf::Int64Value request;
             request.set_value(id);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -426,6 +425,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getIOType(&ctx, request, &reply);
 
@@ -472,7 +472,6 @@ namespace uniset3
             std::shared_ptr<grpc::Channel> chan;
             google::protobuf::StringValue reply;
             google::protobuf::Empty request;
-            grpc::ClientContext ctx;
 
             try
             {
@@ -485,6 +484,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
                 grpc::Status st = stub->getType(&ctx, request, &reply);
 
@@ -511,24 +511,24 @@ namespace uniset3
     }
 
     // ------------------------------------------------------------------------------------------------------------
-    void UInterface::registered( const uniset3::ObjectId id, const uniset3::ObjectRef oRef, bool force ) const
+    void UInterface::registered( const uniset3::ObjectRef oRef, bool force ) const
     {
         // если включён режим использования локальных файлов
         // то пишем IOR в файл
         if( uconf->isLocalIOR() )
         {
-            uconf->iorfile->setIOR(id, IORFile::makeIOR(oRef));
+            uconf->iorfile->setIOR(oRef.id(), IORFile::makeIOR(oRef));
             return;
         }
 
         google::protobuf::Empty reply;
-        grpc::ClientContext ctx;
 
         for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
         {
             if( !rep )
                 rep = grpc::CreateChannel(uconf->repositoryAddr(), grpc::InsecureChannelCredentials());
 
+            grpc::ClientContext ctx;
             std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
             grpc::Status st = stub->registration(&ctx, oRef, &reply);
 
@@ -552,13 +552,13 @@ namespace uniset3
         google::protobuf::Empty reply;
         google::protobuf::Int64Value request;
         request.set_value(id);
-        grpc::ClientContext ctx;
 
         for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
         {
             if( !rep )
                 rep = grpc::CreateChannel(uconf->repositoryAddr(), grpc::InsecureChannelCredentials());
 
+            grpc::ClientContext ctx;
             std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
             grpc::Status st = stub->unregistration(&ctx, request, &reply);
 
@@ -627,12 +627,11 @@ namespace uniset3
             ObjectRef oref;
             google::protobuf::Int64Value request;
             request.set_value(rid);
-            grpc::ClientContext ctx;
-
             for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 try
                 {
+                    grpc::ClientContext ctx;
                     grpc::Status st = stub->resolve(&ctx, request, &oref);
                     if( st.ok() )
                     {
@@ -640,8 +639,12 @@ namespace uniset3
                         rcache.cache(rid, node, chan);
                         return chan;
                     }
+                    else if( st.error_code() == grpc::StatusCode::NOT_FOUND )
+                    {
+                        throw uniset3::ResolveNameError();
+                    }
                 }
-                catch( const std::exception& ) {}
+                catch( const std::exception& ex ){}
 
                 msleep(uconf->getRepeatTimeout());
             }
@@ -702,7 +705,6 @@ namespace uniset3
         {
             std::shared_ptr<grpc::Channel> chan;
             google::protobuf::Empty reply;
-            grpc::ClientContext ctx;
 
             try
             {
@@ -715,6 +717,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
                 grpc::Status st = stub->push(&ctx, msg, &reply);
 
@@ -795,7 +798,6 @@ namespace uniset3
             ShortIOInfo reply;
             google::protobuf::Int64Value request;
             request.set_value(id);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -808,6 +810,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getTimeChange(&ctx, request, &reply);
 
@@ -847,7 +850,6 @@ namespace uniset3
             google::protobuf::StringValue reply;
             google::protobuf::StringValue request;
             request.set_value(params);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -860,6 +862,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
                 grpc::Status st = stub->getInfo(&ctx, request, &reply);
 
@@ -873,7 +876,7 @@ namespace uniset3
         catch( const std::exception& ex )
         {
             rcache.erase(id, node);
-            throw uniset3::SystemError("UI(getTimeChange): " + string(ex.what()));
+            throw uniset3::SystemError("UI(getInfo): " + string(ex.what()));
         }
 
         rcache.erase(id, node);
@@ -898,7 +901,6 @@ namespace uniset3
             google::protobuf::StringValue reply;
             google::protobuf::StringValue request;
             request.set_value(query);
-            grpc::ClientContext ctx;
 
             try
             {
@@ -911,6 +913,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
                 grpc::Status st = stub->request(&ctx, request, &reply);
 
@@ -1163,7 +1166,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             google::protobuf::Empty reply;
             AskThresholdParams request;
@@ -1188,6 +1190,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->askThreshold(&ctx, request, &reply);
 
@@ -1236,7 +1239,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             ThresholdInfo reply;
             GetThresholdInfoParams request;
@@ -1254,6 +1256,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->getThresholdInfo(&ctx, request, &reply);
 
@@ -1291,7 +1294,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             google::protobuf::Int64Value reply;
             google::protobuf::Int64Value request;
@@ -1308,6 +1310,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getRawValue(&ctx, request, &reply);
 
@@ -1353,7 +1356,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             google::protobuf::Empty reply;
             CalibrateParams request;
@@ -1372,6 +1374,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->calibrate(&ctx, request, &reply);
 
@@ -1409,7 +1412,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             CalibrateInfo reply;
             google::protobuf::Int64Value request;
@@ -1427,6 +1429,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getCalibrateInfo(&ctx, request, &reply);
 
@@ -1460,7 +1463,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             SensorIOInfoSeq reply;
             IDSeq request(lst.getIDSeq());
@@ -1476,6 +1478,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensorSeq(&ctx, request, &reply);
 
@@ -1510,7 +1513,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             SensorIOInfo reply;
             google::protobuf::Int64Value request;
@@ -1527,6 +1529,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensorIOInfo(&ctx, request, &reply);
 
@@ -1561,7 +1564,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             IDSeq reply;
             SetOutputParams request;
@@ -1579,6 +1581,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->setOutputSeq(&ctx, request, &reply);
 
@@ -1619,7 +1622,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             IDSeq reply;
             AskSeqParams request;
@@ -1640,6 +1642,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(sid, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->askSensorsSeq(&ctx, request, &reply);
 
@@ -1674,7 +1677,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             ShortMapSeq reply;
             google::protobuf::Empty request;
@@ -1691,6 +1693,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensors(&ctx, request, &reply);
 
@@ -1725,7 +1728,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             SensorIOInfoSeq reply;
             google::protobuf::Empty request;
@@ -1741,6 +1743,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan));
                 grpc::Status st = stub->getSensorsMap(&ctx, request, &reply);
 
@@ -1775,7 +1778,6 @@ namespace uniset3
 
         try
         {
-            grpc::ClientContext ctx;
             std::shared_ptr<grpc::Channel> chan;
             ThresholdsListSeq reply;
             google::protobuf::Empty request;
@@ -1791,6 +1793,7 @@ namespace uniset3
                 if( !chan )
                     chan = resolve(id, node);
 
+                grpc::ClientContext ctx;
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan));
                 grpc::Status st = stub->getThresholdsList(&ctx, request, &reply);
 

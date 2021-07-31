@@ -400,7 +400,6 @@ void UNetExchange::sysCommand( const uniset3::umessage::SystemMessage* sm )
             {
                 if( !cancelled )
                 {
-                    //                  std::terminate();
                     uterminate();
                 }
 
@@ -493,7 +492,7 @@ void UNetExchange::askSensors( uniset3::UIOCommand cmd )
             << "(askSensors): Не дождались готовности(work) SharedMemory к работе в течение "
             << activateTimeout << " мсек";
 
-        unetcrit << err.str() << endl << flush;
+        cerr << err.str() << endl << flush;
         uterminate();
         throw SystemError(err.str());
     }

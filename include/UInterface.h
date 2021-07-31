@@ -161,7 +161,7 @@ namespace uniset3
             /*! регистрация объекта в репозитории
              *  throw(uniset3::ORepFailed)
              */
-            void registered(const uniset3::ObjectId id, const uniset3::ObjectRef oRef, bool force = false) const;
+            void registered(const uniset3::ObjectRef oRef, bool force = false) const;
 
             // throw(uniset3::ORepFailed)
             void unregister(const uniset3::ObjectId id);

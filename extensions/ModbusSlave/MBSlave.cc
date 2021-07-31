@@ -583,7 +583,7 @@ namespace uniset3
 
         if( vaddr.empty() )
         {
-            mbcrit << "(execute_rtu): Unknown my modbus addresses!" << endl << flush;
+            cerr << "(execute_rtu): Unknown my modbus addresses!" << endl << flush;
             //std::terminate();
             uterminate();
             return;
@@ -623,7 +623,7 @@ namespace uniset3
     {
         if( !tcpserver )
         {
-            mbcrit << myname << "(execute_tcp): DYNAMIC CAST ERROR (mbslot --> ModbusTCPServerSlot)" << std::endl << flush;
+            cerr << myname << "(execute_tcp): DYNAMIC CAST ERROR (mbslot --> ModbusTCPServerSlot)" << std::endl << flush;
             //          std::terminate();
             uterminate();
             return;
@@ -646,8 +646,7 @@ namespace uniset3
 
         if( vaddr.empty() )
         {
-            mbcrit << "(execute_tcp): Unknown my modbus addresses!" << endl << flush;
-            //          std::terminate();
+            cerr << "(execute_tcp): Unknown my modbus addresses!" << endl << flush;
             uterminate();
             return;
         }
@@ -685,11 +684,10 @@ namespace uniset3
 
                 if( tcpBreakIfFailRun )
                 {
-                    mbcrit << myname << "(execute_tcp): error run tcpserver: "
+                    cerr << myname << "(execute_tcp): error run tcpserver: "
                            << tcpserver->getInetAddress()
                            << ":" << tcpserver->getInetPort() << " err: not active.."
                            << endl << flush;
-                    //                  std::terminate();
                     uterminate();
                     return;
                 }
@@ -948,8 +946,7 @@ namespace uniset3
             {
                 if( iomap.empty() )
                 {
-                    mbcrit << myname << "(sysCommand): iomap EMPTY! terminated..." << endl << flush;
-                    //                  std::terminate();
+                    cerr << myname << "(sysCommand): iomap EMPTY! terminated..." << endl << flush;
                     uterminate();
                     return;
                 }
@@ -1050,7 +1047,7 @@ namespace uniset3
                 << "(askSensors): Не дождались готовности(work) SharedMemory к работе в течение "
                 << activateTimeout << " мсек";
 
-            mbcrit << err.str() << endl << flush;
+            cerr << err.str() << endl << flush;
             uterminate();
             throw SystemError(err.str());
         }
