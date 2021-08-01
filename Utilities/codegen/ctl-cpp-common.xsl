@@ -173,7 +173,7 @@
         void askSensor( uniset3::ObjectId sid, uniset3::UIOCommand, uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
         void updateValues();
 
-        virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+        virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
         virtual bool setMsg( uniset3::ObjectId code, bool state = true ) noexcept;
 
@@ -621,7 +621,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preSysCommand( const uniset3::umess
 }
 // -----------------------------------------------------------------------------
 
-grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(grpc::ServerContext* context, const google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
     google::protobuf::StringValue binfo;
     <xsl:if test="not(normalize-space($BASECLASS)='')">auto status = <xsl:value-of select="$BASECLASS"/>::getInfo(context, request, &amp;binfo);</xsl:if>

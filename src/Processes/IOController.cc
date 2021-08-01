@@ -23,8 +23,10 @@
 #include "UInterface.h"
 #include "IOController.h"
 #include "Debug.h"
+#include "UHelpers.h"
 // ------------------------------------------------------------------------------------------
 using namespace uniset3;
+using namespace uniset3::umessage;
 using namespace std;
 // ------------------------------------------------------------------------------------------
 IOController::IOController():
@@ -51,8 +53,11 @@ IOController::~IOController()
 }
 
 // ------------------------------------------------------------------------------------------
-::grpc::Status IOController::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
+::grpc::Status IOController::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
 {
+    if( request->id() != getId() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     response->set_value("IOController");
     return ::grpc::Status::OK;
 }
@@ -70,6 +75,9 @@ bool IOController::activateObject()
 // ------------------------------------------------------------------------------------------
 bool IOController::deactivateObject()
 {
+    if( !isActive() )
+        return true;
+
     sensorsUnregistration();
     return UniSetManager::deactivateObject();
 }
@@ -123,13 +131,13 @@ void IOController::activateInit()
     }
 }
 // ------------------------------------------------------------------------------------------
-::grpc::Status IOController::getValue(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Int64Value* response)
+::grpc::Status IOController::getValue(::grpc::ServerContext* context, const ::uniset3::GetValueParams* request, ::google::protobuf::Int64Value* response)
 {
     auto li = ioList.end();
 
     try
     {
-        response->set_value(localGetValue(li, request->value()));
+        response->set_value(localGetValue(li, request->id()));
         return grpc::Status::OK;
     }
     catch (...)
@@ -137,7 +145,7 @@ void IOController::activateInit()
     }
 
     ostringstream err;
-    err << "(IOController::getValue): sid=" << request->value() << " not found";
+    err << "(IOController::getValue): sid=" << request->id() << " not found";
     return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
 }
 // ------------------------------------------------------------------------------------------
@@ -461,9 +469,9 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
     return retValue;
 }
 // ------------------------------------------------------------------------------------------
-grpc::Status IOController::getIOType(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::RetIOType* response)
+grpc::Status IOController::getIOType(::grpc::ServerContext* context, const ::uniset3::GetIOTypeParams* request, ::uniset3::RetIOType* response)
 {
-    auto li = ioList.find(request->value());
+    auto li = ioList.find(request->id());
 
     if( li != ioList.end() )
     {
@@ -472,7 +480,7 @@ grpc::Status IOController::getIOType(::grpc::ServerContext* context, const ::goo
     }
 
     ostringstream err;
-    err << myname << "(getIOType): датчик имя: " << uniset_conf()->oind->getNameById(request->value()) << " не найден";
+    err << myname << "(getIOType): датчик имя: " << uniset_conf()->oind->getNameById(request->id()) << " не найден";
     return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
 }
 // ---------------------------------------------------------------------------
@@ -540,9 +548,7 @@ void IOController::logging( uniset3::umessage::SensorMessage& sm )
         }
 
         sm.mutable_header()->set_consumer(dbserverID);
-        umessage::TransportMessage tm;
-        auto header = tm.mutable_header();
-        *header = sm.header();
+        umessage::TransportMessage tm = to_transport<SensorMessage>(sm);
         ui->send(std::move(tm), uniset_conf()->getLocalNode());
         isPingDBServer = true;
     }
@@ -578,7 +584,7 @@ void IOController::dumpToDB()
     }    // unlock
 }
 // --------------------------------------------------------------------------------------------------------------
-grpc::Status IOController::getSensorsMap(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::SensorIOInfoSeq* response)
+grpc::Status IOController::getSensorsMap(::grpc::ServerContext* context, const ::uniset3::GetSensorsMapParams* request, ::uniset3::SensorIOInfoSeq* response)
 {
     size_t i = 0;
 
@@ -603,9 +609,9 @@ uniset3::umessage::Priority IOController::getPriority( const uniset3::ObjectId s
     return uniset3::umessage::mpMedium; // ??
 }
 // --------------------------------------------------------------------------------------------------------------
-grpc::Status IOController::getSensorIOInfo(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::SensorIOInfo* response)
+grpc::Status IOController::getSensorIOInfo(::grpc::ServerContext* context, const ::uniset3::GetSensorIOInfoParams* request, ::uniset3::SensorIOInfo* response)
 {
-    auto it = ioList.find(request->value());
+    auto it = ioList.find(request->id());
 
     if( it != ioList.end() )
     {
@@ -616,22 +622,22 @@ grpc::Status IOController::getSensorIOInfo(::grpc::ServerContext* context, const
 
     // -------------
     ostringstream err;
-    err << myname << "(getSensorIOInfo): Unknown sensor (" << request->value() << ")"
-        << uniset_conf()->oind->getNameById(request->value());
+    err << myname << "(getSensorIOInfo): Unknown sensor (" << request->id() << ")"
+        << uniset_conf()->oind->getNameById(request->id());
 
     uinfo << err.str() << endl;
     return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
 }
 // --------------------------------------------------------------------------------------------------------------
-grpc::Status IOController::getRawValue(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Int64Value* response)
+grpc::Status IOController::getRawValue(::grpc::ServerContext* context, const ::uniset3::GetRawValueParams* request, ::google::protobuf::Int64Value* response)
 {
-    auto it = ioList.find(request->value());
+    auto it = ioList.find(request->id());
 
     if( it == ioList.end() )
     {
         ostringstream err;
-        err << myname << "(getRawValue): Unknown analog sensor (" << request->value() << ")"
-            << uniset_conf()->oind->getNameById(request->value());
+        err << myname << "(getRawValue): Unknown analog sensor (" << request->id() << ")"
+            << uniset_conf()->oind->getNameById(request->id());
         return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
     }
 
@@ -675,15 +681,15 @@ grpc::Status IOController::calibrate(::grpc::ServerContext* context, const ::uni
     return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
-grpc::Status IOController::getCalibrateInfo(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::CalibrateInfo* response )
+grpc::Status IOController::getCalibrateInfo(::grpc::ServerContext* context, const ::uniset3::GetCalibrateInfoParams* request, ::uniset3::CalibrateInfo* response )
 {
-    auto it = ioList.find(request->value());
+    auto it = ioList.find(request->id());
 
     if( it == ioList.end() )
     {
         ostringstream err;
-        err << myname << "(calibrate): Unknown analog sensor (" << request->value() << ")"
-            << uniset_conf()->oind->getNameById(request->value());
+        err << myname << "(calibrate): Unknown analog sensor (" << request->id() << ")"
+            << uniset_conf()->oind->getNameById(request->id());
         return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
     }
 
@@ -806,14 +812,17 @@ IOController::IOStateList::iterator IOController::myiofind( const uniset3::Objec
     return ioList.find(id);
 }
 // -----------------------------------------------------------------------------
-grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::uniset3::IDSeq* request, ::uniset3::SensorIOInfoSeq* response)
+grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::uniset3::GetSensorSeqParams* request, ::uniset3::SensorIOInfoSeq* response)
 {
+    if( request->id() != getId() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     uniset3::SensorIOInfo unk;
     unk.mutable_si()->set_id(DefaultObjectId);
     unk.mutable_si()->set_node(DefaultObjectId);
     unk.set_undefined(true);
 
-    for( const auto& id : request->ids() )
+    for( const auto& id : request->seq().ids() )
     {
         auto it = ioList.find(id);
 
@@ -833,6 +842,9 @@ grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::
 // -----------------------------------------------------------------------------
 grpc::Status IOController::setOutputSeq(::grpc::ServerContext* context, const ::uniset3::SetOutputParams* request, ::uniset3::IDSeq* response)
 {
+    if( request->id() != getId() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     uniset3::IDList badlist; // список не найденных идентификаторов
 
     for(const auto& s : request->lst().sensors())
@@ -854,9 +866,9 @@ grpc::Status IOController::setOutputSeq(::grpc::ServerContext* context, const ::
     return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
-grpc::Status IOController::getTimeChange(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ShortIOInfo* response)
+grpc::Status IOController::getTimeChange(::grpc::ServerContext* context, const ::uniset3::GetTimeChangeParams* request, ::uniset3::ShortIOInfo* response)
 {
-    auto ait = ioList.find(request->value());
+    auto ait = ioList.find(request->id());
 
     if( ait != ioList.end() )
     {
@@ -871,14 +883,17 @@ grpc::Status IOController::getTimeChange(::grpc::ServerContext* context, const :
     // -------------
     ostringstream err;
     err << myname << "(getChangedTime): вход(выход) с именем "
-        << uniset_conf()->oind->getNameById(request->value()) << " не найден";
+        << uniset_conf()->oind->getNameById(request->id()) << " не найден";
 
     uinfo << err.str() << endl;
     return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
 }
 // -----------------------------------------------------------------------------
-grpc::Status IOController::getSensors(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ShortMapSeq* response)
+grpc::Status IOController::getSensors(::grpc::ServerContext* context, const ::uniset3::GetSensorsParams* request, ::uniset3::ShortMapSeq* response)
 {
+    if( getId() != request->id() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     for( const auto& it : ioList )
     {
         auto s = response->add_sensors();
@@ -965,8 +980,11 @@ void IOController::USensorInfo::checkDepend( std::shared_ptr<USensorInfo>& d_it,
         ic->localSetValue( d_usi, sinf.real_value(), sup_id );
 }
 // -----------------------------------------------------------------------------
-grpc::Status IOController::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+grpc::Status IOController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
+    if( request->id() != getId() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetManager::getInfo(context, request, &oinf);
 

@@ -1019,8 +1019,9 @@ namespace uniset3
         return false;
     }
     // ----------------------------------------------------------------------------
-    grpc::Status SharedMemory::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response )
+    grpc::Status SharedMemory::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
     {
+
         ::google::protobuf::StringValue oinf;
         grpc::Status st = IONotifyController::getInfo(context, request, &oinf);
 

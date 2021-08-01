@@ -120,6 +120,12 @@ grpc::Status URepository::getInfo(::grpc::ServerContext* context, const ::google
     return grpc::Status::OK;
 }
 // ------------------------------------------------------------------------------------------
+::grpc::Status URepository::exists(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response)
+{
+    response->set_value(true);
+    return grpc::Status::OK;
+}
+// ------------------------------------------------------------------------------------------
 void URepository::run()
 {
     grpc::EnableDefaultHealthCheckService(true);

@@ -127,9 +127,12 @@ void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
 {
     grpc::ClientContext ctx;
     std::shared_ptr<grpc::Channel> chan;
-    google::protobuf::Empty request;
+    GetSensorsMapParams request;
+    request.set_id(iocontrollerID);
     uniset3::SensorIOInfoSeq smap;
     uniset3::ThresholdsListSeq tlist;
+    uniset3::GetThresholdsListParams trequest;
+    trequest.set_id(iocontrollerID);
 
     try
     {
@@ -158,7 +161,7 @@ void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
         try
         {
             std::unique_ptr<IONotifyController_i::Stub> inc(IONotifyController_i::NewStub(chan));
-            auto status = inc->getThresholdsList(&ctx, request, &tlist);
+            auto status = inc->getThresholdsList(&ctx, trequest, &tlist);
 
             if( status.ok() )
                 updateThresholds(tlist, iocontrollerID);

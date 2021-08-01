@@ -23,6 +23,16 @@ message SensorInfo
     int64 node = 2;  /*!< узел на котором он находится */
 }
 
+message GetValueParams
+{
+   int64 id = 1;
+}
+
+message GetRawValueParams
+{
+   int64 id = 1;
+}
+
 message SetValueParams {
     int64 id = 1;
     int64 value = 2;
@@ -36,6 +46,11 @@ message FreezeValueParams {
     int64 sup_id = 4;
 }
 
+message GetIOTypeParams
+{
+    int64 id = 1;
+}
+
 message SetUndefinedParams {
     int64 id = 1;
     bool undefined = 2;
@@ -47,6 +62,11 @@ message CalibrateParams
     int64 id = 1;
     CalibrateInfo ci = 2;
     int64 adminId = 3;
+}
+
+message GetCalibrateInfoParams
+{
+    int64 id = 1;
 }
 
 message RetIOType
@@ -84,7 +104,7 @@ message SensorIOInfoSeq
 message OutInfo
 {
     SensorInfo si = 1;    /*!< идентификатор выхода */
-    int64 value = 2;       /*!< значение */
+    int64 value = 2;      /*!< значение */
 }
 
 message OutSeq
@@ -94,8 +114,9 @@ message OutSeq
 
 message SetOutputParams
 {
-    OutSeq lst = 1;
-    int64 supplier = 2;
+    int64 id = 1;  // service Id
+    OutSeq lst = 2;
+    int64 supplier = 3;
 }
 
 /*! Информация о датчике */
@@ -118,35 +139,61 @@ message ShortMapSeq
     repeated ShortMap sensors = 1;
 }
 
+message GetSensorsMapParams
+{
+    int64 id = 1; // servcice Id
+}
+
+message GetSensorIOInfoParams
+{
+    int64 id = 1;
+}
+
+message GetSensorSeqParams
+{
+    int64 id = 1; // servcice Id
+    uniset3.IDSeq seq = 2;
+}
+
+message GetTimeChangeParams
+{
+    int64 id = 1;
+}
+
+message GetSensorsParams
+{
+    int64 id = 1; // servcice Id
+}
+
 // ---------------------------------------------------------------------------
 /*! 
  * \interface IOController_i 
  * \brief Базовый интерфейс для создания контролеров ввода/вывода  
  */ 
 service IOController_i {
-    rpc getValue(google.protobuf.Int64Value) returns(google.protobuf.Int64Value) {}
+    rpc getValue(GetValueParams) returns(google.protobuf.Int64Value) {}
     rpc setValue(SetValueParams) returns(google.protobuf.Empty) {}
     rpc freezeValue(FreezeValueParams) returns(google.protobuf.Empty) {}
-    rpc getIOType(google.protobuf.Int64Value) returns(RetIOType) {}
+    rpc getIOType(GetIOTypeParams) returns(RetIOType) {}
     
     // установка неопределённого состояния
     // (пока работает только для аналоговых датчиков)
     rpc setUndefinedState(SetUndefinedParams) returns(google.protobuf.Empty) {}
     
     /*! Получени неколиброванного значения */
-    rpc getRawValue(google.protobuf.Int64Value) returns(google.protobuf.Int64Value) {}
+    rpc getRawValue(GetRawValueParams) returns(google.protobuf.Int64Value) {}
     
     // --- Интерфейс получения информации о всех датчиках ---
     rpc calibrate(CalibrateParams) returns(google.protobuf.Empty) {}
-    rpc getCalibrateInfo(google.protobuf.Int64Value) returns(CalibrateInfo) {}
+    rpc getCalibrateInfo(GetCalibrateInfoParams) returns(CalibrateInfo) {}
     
-    rpc getSensorsMap(google.protobuf.Empty) returns(SensorIOInfoSeq) {}
-    rpc getSensorIOInfo(google.protobuf.Int64Value) returns(SensorIOInfo) {}
+    rpc getSensorsMap(GetSensorsMapParams) returns(SensorIOInfoSeq) {}
+    rpc getSensorIOInfo(GetSensorIOInfoParams) returns(SensorIOInfo) {}
     
     // -- Функции работы со списком датчиков --
     
     /*! Получение состояния датчиков. */
-    rpc getSensorSeq(uniset3.IDSeq) returns(SensorIOInfoSeq) {}
+    rpc getSensorSeq(GetSensorSeqParams) returns(SensorIOInfoSeq) {}
     
     /*!
         Выставить состояние группы датчиков/выходов (дискретных или аналоговых).
@@ -155,8 +202,8 @@ service IOController_i {
     */
     rpc setOutputSeq(SetOutputParams) returns(uniset3.IDSeq) {}
 
-    rpc getTimeChange(google.protobuf.Int64Value) returns(ShortIOInfo) {}
-    rpc getSensors(google.protobuf.Empty) returns(ShortMapSeq){}
+    rpc getTimeChange(GetTimeChangeParams) returns(ShortIOInfo) {}
+    rpc getSensors(GetSensorsParams) returns(ShortMapSeq){}
 }
 // ---------------------------------------------------------------------------
 message AskParams
@@ -168,9 +215,10 @@ message AskParams
 
 message AskSeqParams
 {
-    uniset3.IDSeq ids = 1;
-    uniset3.ConsumerInfo ci = 2;
-    uniset3.UIOCommand cmd = 3;
+    int64 id = 1; // servcice Id
+    uniset3.IDSeq ids = 2;
+    uniset3.ConsumerInfo ci = 3;
+    uniset3.UIOCommand cmd = 4;
 }
 
 
@@ -214,6 +262,16 @@ message GetThresholdInfoParams
     int64 tid = 2;
 }
 
+message GetThresholdsParams
+{
+    int64 id = 1;
+}
+
+message GetThresholdsListParams
+{
+    int64 id = 1; // service Id
+}
+
 message ThresholdList
 {
     SensorInfo si = 1;
@@ -239,9 +297,9 @@ message ThresholdsListSeq
 */
 service IONotifyController_i
 {
-    /*! Универсальная функция заказа уведомления об изменении датчика.
-     * \sa UniversalIO::IOController::askSensor()
-    */
+    // СДЕЛАТЬ askSensor с returns(SensorMessage)
+
+    /*! Закакз уведомления об изменении датчика */
     rpc askSensor(AskParams) returns(google.protobuf.Empty){}
 
     /*!
@@ -269,8 +327,8 @@ service IONotifyController_i
     rpc getThresholdInfo(GetThresholdInfoParams) returns(ThresholdInfo) {}
 
     /*! получить список порогов для датчика "si" */
-    rpc getThresholds(google.protobuf.Int64Value) returns(ThresholdList) {}
+    rpc getThresholds(GetThresholdsParams) returns(ThresholdList) {}
 
     /*! получить список ВСЕХ датчиков по которым созданы пороги */
-    rpc getThresholdsList(google.protobuf.Empty) returns(ThresholdsListSeq) {}
+    rpc getThresholdsList(GetThresholdsListParams) returns(ThresholdsListSeq) {}
 }

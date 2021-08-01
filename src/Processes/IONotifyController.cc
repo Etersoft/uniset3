@@ -21,8 +21,6 @@
 
 #include <sstream>
 #include <time.h>
-#include <sys/times.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <iomanip>
 
@@ -30,10 +28,12 @@
 #include "IONotifyController.h"
 #include "Debug.h"
 #include "IOConfig.h"
+#include "UHelpers.h"
 
 // ------------------------------------------------------------------------------------------
-using namespace uniset3;
 using namespace std;
+using namespace uniset3;
+using namespace uniset3::umessage;
 // ------------------------------------------------------------------------------------------
 IONotifyController::IONotifyController():
     askIOMutex("askIOMutex"),
@@ -351,21 +351,27 @@ void IONotifyController::showStatisticsForSensor( ostringstream& inf, const stri
     inf << "--------------------------------------------------------------------" << endl;
 }
 // ------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
+grpc::Status IONotifyController::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
 {
+    if( getId() != request->id() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     response->set_value("IONotifyController");
     return ::grpc::Status::OK;
 }
 // ------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
+    if( request->id() != getId() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetManager::getInfo(context, request, &oinf);
 
     if( !st.ok() )
         return st;
 
-    auto& param = request->value();
+    auto& param = request->params();
 
     ostringstream inf;
 
@@ -488,8 +494,9 @@ bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerIn
 grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response)
 {
     ulog2 << "(askSensor): поступил " << ( request->cmd() == UIODontNotify ? "отказ" : "заказ" ) << " от "
+          << "(" << request->ci().id() << ")"
           << uniset_conf()->oind->getNameById(request->ci().id()) << "@" << request->ci().node()
-          << " на аналоговый датчик "
+          << " на датчик "
           << uniset_conf()->oind->getNameById(request->sid()) << endl;
 
     auto li = myioEnd();
@@ -593,7 +600,6 @@ long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInf
     if( prevValue == curValue )
         return curValue;
 
-
     {
         // с учётом того, что параллельно с этой функцией может
         // выполняться askSensor, то
@@ -614,7 +620,7 @@ long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInf
 
         if( lst )
             send(*lst, sm);
-    }
+    } // unlock value
 
     // проверка порогов
     try
@@ -633,9 +639,7 @@ long IONotifyController::localSetValue( std::shared_ptr<IOController::USensorInf
 */
 void IONotifyController::send( ConsumerListInfo& lst, const uniset3::umessage::SensorMessage& sm, const uniset3::ConsumerInfo* ci  )
 {
-    umessage::TransportMessage tmsg;
-    *(tmsg.mutable_header()) = sm.header();
-    tmsg.set_data(sm.SerializeAsString());
+    umessage::TransportMessage tmsg = to_transport<SensorMessage>(sm);
 
     uniset_rwmutex_wrlock l(lst.mut);
 
@@ -1023,15 +1027,15 @@ grpc::Status IONotifyController::getThresholdInfo(::grpc::ServerContext* context
     return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getThresholds(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ThresholdList* response)
+grpc::Status IONotifyController::getThresholds(::grpc::ServerContext* context, const ::uniset3::GetThresholdsParams* request, ::uniset3::ThresholdList* response)
 {
-    auto it = myiofind(request->value());
+    auto it = myiofind(request->id());
 
     if( it == myioEnd() )
     {
         ostringstream err;
-        err << myname << "(getThresholds): Not found sensor (" << request->value() << ") "
-            << uniset_conf()->oind->getNameById(request->value());
+        err << myname << "(getThresholds): Not found sensor (" << request->id() << ") "
+            << uniset_conf()->oind->getNameById(request->id());
 
         uinfo << err.str() << endl;
         return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
@@ -1060,8 +1064,11 @@ grpc::Status IONotifyController::getThresholds(::grpc::ServerContext* context, c
     return grpc::Status::OK;
 }
 // --------------------------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getThresholdsList(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ThresholdsListSeq* response)
+grpc::Status IONotifyController::getThresholdsList(::grpc::ServerContext* context, const ::uniset3::GetThresholdsListParams* request, ::uniset3::ThresholdsListSeq* response)
 {
+    if( getId() != request->id() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     std::list< std::shared_ptr<USensorInfo> > slist;
 
     // ищем все датчики, у которых не пустой список порогов

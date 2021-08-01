@@ -9,6 +9,28 @@ import "MessageTypes.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 // ---------------------------------------------------------------------------
+message GetTypeParams
+{
+    int64 id = 1;
+}
+
+message RequestParams
+{
+    int64 id = 1;
+    string query = 2;
+}
+
+message ExistsParams
+{
+    int64 id = 1;
+}
+
+message GetInfoParams
+{
+    int64 id = 1;
+    string params = 2;
+}
+
 /*!
  * \interface UniSetObject_i
  * \brief Базовый интерфейс для всех объектов
@@ -18,14 +40,13 @@ import "google/protobuf/empty.proto";
  *
 */
 service UniSetObject_i {
-    rpc getId(google.protobuf.Empty) returns(google.protobuf.Int64Value) {}   /*!< получение идентификатора объекта */
-    rpc getType(google.protobuf.Empty) returns(google.protobuf.StringValue) {}   /*!< получение типа uniset-объекта */
-    rpc getInfo(google.protobuf.StringValue) returns (google.protobuf.StringValue) {}
+    rpc getType(GetTypeParams) returns(google.protobuf.StringValue) {}   /*!< получение типа uniset-объекта */
+    rpc getInfo(GetInfoParams) returns (google.protobuf.StringValue) {}
     
     /*! REST API. query: /api/version/query_for_object[?param1&param2...] */
-    rpc request(google.protobuf.StringValue) returns (google.protobuf.StringValue) {}
+    rpc request(RequestParams) returns (google.protobuf.StringValue) {}
 
-    rpc exists(google.protobuf.Empty) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
+    rpc exists(ExistsParams) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
 
     /*!  Функция посылки сообщения объекту */
     rpc push(uniset3.umessage.TransportMessage) returns(google.protobuf.Empty) {}

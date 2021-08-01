@@ -26,6 +26,7 @@
 #include <mutex>
 #include <atomic>
 #include <chrono>
+#include <memory>
 
 // for stack trace
 // --------------------
@@ -44,6 +45,11 @@
 #include "Configuration.h"
 #include "Mutex.h"
 #include "UHelpers.h"
+#include "UniSetObjectProxy.h"
+#include "UniSetManagerProxy.h"
+#include "IOControllerProxy.h"
+#include "IONotifyControllerProxy.h"
+
 
 // ------------------------------------------------------------------------------------------
 using namespace uniset3;
@@ -78,18 +84,13 @@ namespace uniset3
 
     // ---------------------------------------------------------------------------
     UniSetActivator::UniSetActivator():
-        UniSetManager(uniset3::DefaultObjectId)
+        myname("UniSetActivator")
     {
         UniSetActivator::init();
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::init()
     {
-        if( getId() == DefaultObjectId )
-            myname = "UniSetActivator";
-
-        offThread(); // отключение потока обработки сообщений
-
         auto conf = uniset_conf();
 
 #ifndef DISABLE_REST_API
@@ -97,9 +98,7 @@ namespace uniset3
         if( findArgParam("--activator-run-httpserver", conf->getArgc(), conf->getArgv()) != -1 )
         {
             httpHost = conf->getArgParam("--activator-httpserver-host", "localhost");
-            ostringstream s;
-            s << (getId() == DefaultObjectId ? 8080 : getId() );
-            httpPort = conf->getArgInt("--activator-httpserver-port", s.str());
+            httpPort = conf->getArgInt("--activator-httpserver-port", "8080");
             ulog1 << myname << "(init): http server parameters " << httpHost << ":" << httpPort << endl;
             httpCORS_allow = conf->getArgParam("--activator-httpserver-cors-allow", "*");
         }
@@ -124,10 +123,36 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    ::grpc::Status UniSetActivator::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
+    bool UniSetActivator::add( const std::shared_ptr<UniSetObject>& obj )
     {
-        response->set_value("UniSetActivator");
-        return ::grpc::Status::OK;
+        uniset_rwmutex_wrlock lock(omutex);
+        auto i = objects.find(obj->getId());
+
+        if( i == objects.end() )
+            objects.emplace(obj->getId(), obj);
+
+        auto ion = std::dynamic_pointer_cast<IONotifyController>(obj);
+
+        if( ion )
+            ionproxy.add(ion);
+
+        auto io = std::dynamic_pointer_cast<IOController>(obj);
+
+        if( io )
+            ioproxy.add(io);
+
+        auto m = std::dynamic_pointer_cast<UniSetManager>(obj);
+
+        if( m )
+            mproxy.add(m);
+
+        oproxy.add(obj);
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
+    bool UniSetActivator::isExists() const noexcept
+    {
+        return active;
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::startup()
@@ -135,37 +160,53 @@ namespace uniset3
         uniset3:: umessage::SystemMessage sm = makeSystemMessage(uniset3::umessage::SystemMessage::StartUp);
         auto tm = to_transport<uniset3::umessage::SystemMessage>(sm);
         grpc::ServerContext ctx;
-        google::protobuf::Empty response;
-        broadcast(&ctx, &tm, &response);
+        google::protobuf::Empty reply;
+
+        for( auto&& o : objects )
+        {
+            try
+            {
+                o.second->push(&ctx, &tm, &reply);
+            }
+            catch( std::exception& ex ) {}
+        }
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::run( bool thread, bool terminate_control  )
     {
-        ulogsys << myname << "(run): создаю менеджер " << endl;
+        ulogsys << myname << "(run): ..." << endl;
+
+        oproxy.lock();
+        mproxy.lock();
+        ioproxy.lock();
+        ionproxy.lock();
 
         termControl = terminate_control;
-        auto aptr = std::static_pointer_cast<UniSetActivator>(get_ptr());
         auto conf = uniset_conf();
 
+        grpcHost = conf->getArgParam("--activator-grpc-host", "0.0.0.0");
+        grpcPort = conf->getArgInt("--activator-grpc-port", "0");
+
+        ostringstream addr;
+        addr << grpcHost << ":" << grpcPort;
+        builder.AddListeningPort(addr.str(), grpc::InsecureServerCredentials(), &grpcPort);
+        builder.RegisterService(static_cast<UniSetManager_i::Service*>(&mproxy));
+        builder.RegisterService(static_cast<UniSetObject_i::Service*>(&oproxy));
+        builder.RegisterService(static_cast<IOController_i::Service*>(&ioproxy));
+        builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
+        server = builder.BuildAndStart();
+
+        uinfo << "Server listening on " << grpcHost << ":" << grpcPort << std::endl;
+
+        // INIT
         {
-            auto host = conf->getArgParam("--activator-grpc-host", "0.0.0.0");
-            auto port = conf->getArgInt("--activator-grpc-port", to_string(myid));
+            ostringstream tmp;
+            tmp << grpcHost << ":" << grpcPort;
+            const string realAddr = tmp.str();
 
-            if( port < 0 )
-            {
-                throw SystemError("(run): Unknown server port or id. Use --activator-grpc-port");
-            }
-
-            uniset3::uniset_rwmutex_wrlock lock(refmutex);
-            ostringstream addr;
-            addr << host << ":" << port;
-            oref.set_addr(addr.str());
+            for( auto&& o : objects )
+                o.second->init(realAddr);
         }
-
-        initGRPC(aptr);
-
-        UniSetManager::activate(); // а там вызывается активация всех подчиненных объектов и менеджеров
-        active = true;
 
         if( termControl )
             set_signals(true);
@@ -188,17 +229,20 @@ namespace uniset3
         }
 
 #endif
+        // ACTIVATE
+        uinfo << myname << "(run): activate objects.." << endl;
+        active = true;
 
-        if( thread )
+        for( auto&& o : objects )
+            o.second->activate();
+
+        if( !thread )
         {
-            uinfo << myname << "(run): запускаемся с созданием отдельного потока...  " << endl;
-            srvthr = std::shared_ptr<ThreadCreator<UniSetActivator>>(new ThreadCreator<UniSetActivator>(this, &UniSetActivator::mainWork), ServiceThreadDeleter());
-            srvthr->start();
-        }
-        else
-        {
-            uinfo << myname << "(run): запускаемся без создания отдельного потока...  " << endl;
-            mainWork();
+            std::unique_lock<std::mutex> lk(g_donemutex);
+            g_doneevent.wait_for(lk, std::chrono::milliseconds(TERMINATE_TIMEOUT_SEC * 1000), []()
+            {
+                return (g_done == true);
+            });
             shutdown();
         }
     }
@@ -225,12 +269,11 @@ namespace uniset3
         }
 
         ulogsys << myname << "(shutdown): deactivate...  " << endl;
-        deactivate();
-        ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
 
-        //        ulogsys << myname << "(shutdown): discard request..." << endl;
-        //        pman->discard_requests(true);
-        //        ulogsys << myname << "(shutdown): discard request ok." << endl;
+        for( auto&& o : objects )
+            o.second->deactivate();
+
+        ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
 
 #ifndef DISABLE_REST_API
 
@@ -240,29 +283,12 @@ namespace uniset3
 #endif
 
 #if 0
-        ulogsys << myname << "(shutdown): pman deactivate... " << endl;
-        pman->deactivate(false, true);
-        ulogsys << myname << "(shutdown): pman deactivate ok. " << endl;
 
-        try
+        if( server && grpcPort >= 0 )
         {
-            ulogsys << myname << "(shutdown): shutdown orb...  " << endl;
-
-            if( orb )
-                orb->shutdown(true);
-
-            ulogsys << myname << "(shutdown): shutdown ok." << endl;
-        }
-        catch( const omniORB::fatalException& fe )
-        {
-            ucrit << myname << "(shutdown): : поймали omniORB::fatalException:" << endl;
-            ucrit << myname << "(shutdown):   file: " << fe.file() << endl;
-            ucrit << myname << "(shutdown):   line: " << fe.line() << endl;
-            ucrit << myname << "(shutdown):   mesg: " << fe.errmsg() << endl;
-        }
-        catch( const std::exception& ex )
-        {
-            ucrit << myname << "(shutdown): " << ex.what() << endl;
+            ulogsys << myname << "(shutdown): shutdown grpc server..." << endl;
+            server->Shutdown();
+            ulogsys << myname << "(shutdown): shutdown grpc server [OK]" << endl;
         }
 
 #endif
@@ -380,41 +406,21 @@ namespace uniset3
         //  sigaction(SIGSEGV, &act, &oact);
     }
     // ------------------------------------------------------------------------------------------
-    void UniSetActivator::mainWork()
-    {
-        ulogsys << myname << "(work): запускаем orb на обработку запросов..." << endl;
-
-        auto mref = getRef();
-
-        try
-        {
-            grpc::ServerBuilder builder;
-            builder.AddListeningPort(mref.addr(), grpc::InsecureServerCredentials());
-            builder.RegisterService(static_cast<UniSetManager_i::Service*>(this));
-            builder.RegisterService(static_cast<UniSetObject_i::Service*>(this));
-            server = builder.BuildAndStart();
-            uinfo << "Server listening on " << mref.addr() << std::endl;
-            server->Wait();
-        }
-        catch( std::exception& ex )
-        {
-            ucrit << myname << "(work): catch: " << ex.what() << endl;
-        }
-
-        ulogsys << myname << "(work): orb thread stopped!" << endl << flush;
-    }
-    // ------------------------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
     Poco::JSON::Object::Ptr UniSetActivator::httpGetByName( const string& name, const Poco::URI::QueryParameters& p )
     {
+#if 0
+
         if( name == myname )
             return httpGet(p);
 
-        auto obj = deepFindObject(name);
+        auto obj = deepFind            msleep(10000);
+        Object(name);
 
         if( obj )
             return obj->httpGet(p);
 
+#endif
         ostringstream err;
         err << "Object '" << name << "' not found";
 
@@ -425,6 +431,7 @@ namespace uniset3
     {
         Poco::JSON::Array::Ptr jdata = new Poco::JSON::Array();
 
+#if 0
         std::vector<std::shared_ptr<UniSetObject>> vec;
         vec.reserve(objectsCount());
 
@@ -435,11 +442,14 @@ namespace uniset3
         for( const auto& o : vec )
             jdata->add(o->getName());
 
+#endif
         return jdata;
     }
     // ------------------------------------------------------------------------------------------
     Poco::JSON::Object::Ptr UniSetActivator::httpHelpByName( const string& name, const Poco::URI::QueryParameters& p )
     {
+#if 0
+
         if( name == myname )
             return httpHelp(p);
 
@@ -448,6 +458,7 @@ namespace uniset3
         if( obj )
             return obj->httpHelp(p);
 
+#endif
         ostringstream err;
         err << "Object '" << name << "' not found";
         throw uniset3::NameNotFound(err.str());
@@ -455,6 +466,8 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     Poco::JSON::Object::Ptr UniSetActivator::httpRequestByName( const string& name, const std::string& req, const Poco::URI::QueryParameters& p)
     {
+#if 0
+
         if( name == myname )
             return httpRequest(req, p);
 
@@ -468,6 +481,7 @@ namespace uniset3
         if( obj )
             return obj->httpRequest(req, p);
 
+#endif
         ostringstream err;
         err << "Object '" << name << "' not found";
         throw uniset3::NameNotFound(err.str());

@@ -39,7 +39,8 @@ service UniSetManager_i {
 }
 // ---------------------------------------------------------------------------
 message ObjectsInfoParams {
-    int32 MaxLength = 1;
-    string userparams = 2;
+    int64 id = 1;
+    int32 maxLength = 2;
+    string userparams = 3;
 }
 // ---------------------------------------------------------------------------

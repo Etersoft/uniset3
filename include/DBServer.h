@@ -50,7 +50,7 @@ namespace uniset3
 
             static std::string help_print();
 
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
         protected:
 

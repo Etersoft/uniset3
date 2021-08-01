@@ -62,6 +62,8 @@ namespace uniset3
             Configuration( int argc, const char* const* argv,
                            const std::string& fileConf, uniset3::ObjectInfo* objectsMap );
 
+            static int getFirstUnusedPort();
+
             /// Получить значение полей с путём path
             std::string getField(const std::string& path) const noexcept;
             /// Получить число из поле с путём path

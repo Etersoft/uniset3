@@ -46,9 +46,10 @@
 //---------------------------------------------------------------------------
 namespace uniset3
 {
-    //---------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     class UniSetActivator;
     class UniSetManager;
+    class UniSetObjectProxy;
 
     //---------------------------------------------------------------------------
     class UniSetObject;
@@ -84,11 +85,10 @@ namespace uniset3
             virtual ~UniSetObject();
 
             // Функции объявленые в IDL
-            virtual ::grpc::Status getId(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::Int64Value* response) override;
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status request(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response) override;
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response) override;
             virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
 
             virtual bool isExists();
@@ -120,7 +120,6 @@ namespace uniset3
 
             std::shared_ptr<UInterface> ui; /*!< универсальный интерфейс для работы с другими процессами */
             std::string myname;
-            std::weak_ptr<UniSetManager> mymngr;
 
             /*! обработка приходящих сообщений */
             virtual void processingMessage( const uniset3::umessage::TransportMessage* msg );
@@ -202,12 +201,15 @@ namespace uniset3
         private:
 
             friend class UniSetManager;
+            friend class UniSetObjectProxy;
+            friend class IOControllerProxy;
+            friend class IONotifyControllerProxy;
             friend class UniSetActivator;
 
             /*! функция потока */
             void work();
             //! Инициализация параметров объекта
-            bool init( const std::weak_ptr<UniSetManager>& om );
+            virtual bool init( const std::string& svcAddr );
             //! Прямая деактивизация объекта
             bool deactivate();
             //! Непосредственная активизация объекта

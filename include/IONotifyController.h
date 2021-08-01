@@ -138,16 +138,16 @@ namespace uniset3
 
             virtual ~IONotifyController();
 
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
-            // IDL
-            virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response) override;
-            virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response) override;
-            virtual ::grpc::Status askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response) override;
-            virtual ::grpc::Status getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response) override;
-            virtual ::grpc::Status getThresholds(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ThresholdList* response) override;
-            virtual ::grpc::Status getThresholdsList(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ThresholdsListSeq* response) override;
+            // ------  GRPC интерфейс ------
+            virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response);
+            virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response);
+            virtual ::grpc::Status askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response);
+            virtual ::grpc::Status getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response);
+            virtual ::grpc::Status getThresholds(::grpc::ServerContext* context, const ::uniset3::GetThresholdsParams* request, ::uniset3::ThresholdList* response);
+            virtual ::grpc::Status getThresholdsList(::grpc::ServerContext* context, const ::uniset3::GetThresholdsListParams* request, ::uniset3::ThresholdsListSeq* response);
 
             // --------------------------------------------
 
@@ -248,6 +248,7 @@ namespace uniset3
         private:
 
             friend class NCRestorer;
+            friend class IONotifyControllerProxy;
 
             //----------------------
             bool addConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );     //!< добавить потребителя сообщения

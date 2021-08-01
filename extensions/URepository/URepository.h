@@ -80,6 +80,7 @@ namespace uniset3
             virtual ::grpc::Status unregistration(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status list(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::uniset3::ObjectRefList* response) override;
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response) override;
 
         protected:
             std::string addr;

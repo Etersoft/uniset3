@@ -8,7 +8,7 @@
  ВСЕ ВАШИ ИЗМЕНЕНИЯ БУДУТ ПОТЕРЯНЫ.
 */ 
 // --------------------------------------------------------------------------
-// generate timestamp: 2021-07-30+03:00
+// generate timestamp: 2021-08-01+03:00
 // -----------------------------------------------------------------------------
 #ifndef UObject_SK_H_
 #define UObject_SK_H_
@@ -39,7 +39,7 @@ class UObject_SK:
         void askSensor( uniset3::ObjectId sid, uniset3::UIOCommand, uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
         void updateValues();
 
-        virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+        virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
         virtual bool setMsg( uniset3::ObjectId code, bool state = true ) noexcept;
 

@@ -741,7 +741,7 @@ const std::string MBTCPMultiMaster::MBSlaveInfo::getShortInfo() const
     return s.str();
 }
 // -----------------------------------------------------------------------------
-grpc::Status MBTCPMultiMaster::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+grpc::Status MBTCPMultiMaster::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetObject::getInfo(context, request, &oinf);

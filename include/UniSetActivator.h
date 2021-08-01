@@ -22,18 +22,19 @@
 #ifndef UniSetActivator_H_
 #define UniSetActivator_H_
 // --------------------------------------------------------------------------
-#include <deque>
 #include <memory>
 #include "UniSetTypes.h"
-#include "UniSetObject.h"
-#include "UniSetManager.h"
-//#include "OmniThreadCreator.h"
 #include "UHttpRequestHandler.h"
 #include "UHttpServer.h"
+#include "UniSetObject.h"
+#include "UniSetObjectProxy.h"
+#include "UniSetManagerProxy.h"
+#include "IOControllerProxy.h"
+#include "IONotifyControllerProxy.h"
 //----------------------------------------------------------------------------------------
 namespace uniset3
 {
-    /*! \page pg_Act Активтор объектов
+    /*! \page pg_Act Активатор объектов
      *
      * Активатор объектов предназначен для запуска, после которого объекты становятся доступны для удалённого
      * вызова.
@@ -56,19 +57,16 @@ namespace uniset3
     typedef std::shared_ptr<UniSetActivator> UniSetActivatorPtr;
     //----------------------------------------------------------------------------------------
     /*! \class UniSetActivator
-     *    Создает POA менеджер и регистрирует в нем объекты.
-     *    Для обработки CORBA-запросов создается поток или передаются ресурсы
-     *        главного потока см. void activate(bool thread)
-     *    \warning Активатор может быть создан только один. Для его создания используйте код:
+     *  Создаёт и запускает grpc-сервисы (прокси), которые перенаправляют запросы конкретным объектам
+     *  \warning Активатор может быть создан только один. Для его создания используйте код:
      \code
          ...
          auto act = UniSetActivator::Instance()
          ...
     \endcode
-     * Активатор в свою очередь сам является менеджером(и объектом) и обладает всеми его свойствами
     */
     class UniSetActivator:
-        public UniSetManager
+        public std::enable_shared_from_this<UniSetActivator>
 #ifndef DISABLE_REST_API
         , public uniset3::UHttp::IHttpRequestRegistry
 #endif
@@ -79,7 +77,9 @@ namespace uniset3
 
             virtual ~UniSetActivator();
 
+            bool add( const std::shared_ptr<UniSetObject>& obj );
             void startup();
+            bool isExists() const noexcept;
 
             // запуск системы
             // async = true - асинхронный запуск (создаётся отдельный поток).
@@ -95,9 +95,6 @@ namespace uniset3
             // прерывание работы
             void terminate();
 
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
-
-
 #ifndef DISABLE_REST_API
             // Поддержка REST API (IHttpRequestRegistry)
             virtual Poco::JSON::Object::Ptr httpGetByName( const std::string& name, const Poco::URI::QueryParameters& p ) override;
@@ -107,8 +104,6 @@ namespace uniset3
 #endif
 
         protected:
-
-            void mainWork();
 
             // уносим в protected, т.к. Activator должен быть только один..
             UniSetActivator();
@@ -120,10 +115,20 @@ namespace uniset3
             static void on_finish_timeout();
             static void set_signals( bool set );
 
-            std::shared_ptr< ThreadCreator<UniSetActivator> > srvthr;
-
+            std::atomic_bool active = { false };
+            grpc::ServerBuilder builder;
             std::unique_ptr<grpc::Server> server;
+            int grpcPort = { 0 };
+            std::string grpcHost;
             bool termControl = { true };
+            std::string myname;
+
+            mutable uniset3::uniset_rwmutex omutex;
+            std::unordered_map<ObjectId, std::shared_ptr<UniSetObject>> objects;
+            uniset3::UniSetObjectProxy oproxy;
+            uniset3::UniSetManagerProxy mproxy;
+            uniset3::IOControllerProxy ioproxy;
+            uniset3::IONotifyControllerProxy ionproxy;
 
 #ifndef DISABLE_REST_API
             std::shared_ptr<uniset3::UHttp::UHttpServer> httpserv;

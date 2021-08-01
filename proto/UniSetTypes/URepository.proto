@@ -25,4 +25,6 @@ service URepository_i {
     
     rpc list(google.protobuf.StringValue) returns(ObjectRefList){}
     rpc getInfo(google.protobuf.StringValue) returns (google.protobuf.StringValue) {}
+    
+    rpc exists(google.protobuf.Empty) returns(google.protobuf.BoolValue){}
 }

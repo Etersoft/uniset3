@@ -294,6 +294,7 @@ namespace uniset3
         protected:
             std::string set_err(const std::string& pre, const uniset3::ObjectId id, const uniset3::ObjectId node) const;
             std::string httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
+            std::shared_ptr<grpc::Channel> resolveRepository( uniset3::ObjectId node ) const;
 
         private:
             void init();

@@ -40,11 +40,10 @@ int main(int argc, char** argv)
 
         auto conf = uniset_init(argc, argv, "configure.xml");
 
-
         // определяем ID объекта
         string name = conf->getArgParam("--name");
 
-        if( name.empty())
+        if( name.empty() )
         {
             cerr << "(nullController): не задан ObjectId!!! (--name)\n";
             return 0;

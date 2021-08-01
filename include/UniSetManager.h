@@ -30,28 +30,8 @@
 namespace uniset3
 {
     //---------------------------------------------------------------------------
-    class UniSetActivator;
-
-    class UniSetManager;
-    typedef std::list< std::shared_ptr<UniSetManager> > UniSetManagerList;
-    //---------------------------------------------------------------------------
-    /*! \class UniSetManager
-     *    \par
-     *    Содержит в себе функции управления объектами. их регистрации и т.п.
-     *    Создается менеджер объектов, после чего вызывается initObjects()
-     *    для инициализации объектов которыми управляет
-     *    данный менеджер...
-     *    Менеджер в свою очередь сам является объектом и обладает всеми его свойствами
-     *
-     *     Для пересылки сообщения всем подчиненным объектам используется
-     *        функция UniSetManager::broadcast(const TransportMessage& msg)
-     *    \par
-     *     У базового менеджера имеются базовые три функции см. UniSetManager_i.
-     *    \note Только при вызове функции UniSetManager::broadcast() происходит
-     *        формирование сообщения всем подчиненным объектам... Если команда происходит
-     *    при помощи push, то пересылки всем подчинённым объектам не происходит...
-     *
-     *
+    /*! Реализация grpc-интерфейса UniSetManager_i
+     * Позволяет управлять группой объектов добавляемых функцией add().
     */
     class UniSetManager:
         public UniSetObject,
@@ -62,9 +42,8 @@ namespace uniset3
 
             virtual ~UniSetManager();
 
-
             // ------  функции объявленые в интерфейсе(IDL) ------
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status broadcast(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status getObjectsInfo(::grpc::ServerContext* context, const ::uniset3::ObjectsInfoParams* request, ::uniset3::SimpleInfoSeq* response) override;
 
@@ -80,20 +59,8 @@ namespace uniset3
 
             UniSetManager();
 
-            virtual bool addManager( const std::shared_ptr<UniSetManager>& mngr );
-            virtual bool removeManager( const std::shared_ptr<UniSetManager>& mngr );
-            virtual bool addObject( const std::shared_ptr<UniSetObject>& obj );
-            virtual bool removeObject( const std::shared_ptr<UniSetObject>& obj );
-
-            enum OManagerCommand { deactiv, activ, initial };
-            friend std::ostream& operator<<( std::ostream& os, uniset3::UniSetManager::OManagerCommand& cmd );
-
-            // работа со списком объектов
-            void objects(OManagerCommand cmd);
-            // работа со списком менеджеров
-            void managers(OManagerCommand cmd);
-
-            void initGRPC( const std::weak_ptr<UniSetManager>& rmngr );
+            friend class UniSetManagerProxy;
+            virtual bool init( const std::string& svcAddr );
 
             //! \note Переопределяя, не забывайте вызвать базовую
             virtual bool activateObject() override;
@@ -101,7 +68,6 @@ namespace uniset3
             virtual bool deactivateObject() override;
 
             const std::shared_ptr<UniSetObject> findObject( const std::string& name ) const;
-            const std::shared_ptr<UniSetManager> findManager( const std::string& name ) const;
 
             // рекурсивный поиск по всем объектам
             const std::shared_ptr<UniSetObject> deepFindObject( const std::string& name ) const;
@@ -109,24 +75,11 @@ namespace uniset3
             // рекурсивное наполнение списка объектов
             void getAllObjectsList(std::vector<std::shared_ptr<UniSetObject> >& vec, size_t lim = 1000 );
 
-            typedef UniSetManagerList::iterator MListIterator;
-
-            // Функции для работы со списками подчинённых объектов
-            // ---------------
-            typedef std::function<void(const std::shared_ptr<UniSetObject>&)> OFunction;
-            void apply_for_objects( OFunction f );
-
-            typedef std::function<void(const std::shared_ptr<UniSetManager>&)> MFunction;
-            void apply_for_managers( MFunction f );
-
         private:
 
-            UniSetManagerList mlist;
-            ObjectsList olist;
-
+            std::list< std::shared_ptr<UniSetObject> > olist;
             mutable uniset3::uniset_rwmutex olistMutex;
-            mutable uniset3::uniset_rwmutex mlistMutex;
     };
     // -------------------------------------------------------------------------
-} // end of uniset namespace
+} // end of uniset3 namespace
 #endif

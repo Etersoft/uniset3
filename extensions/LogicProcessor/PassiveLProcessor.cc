@@ -151,7 +151,7 @@ void PassiveLProcessor::sysCommand( const uniset3::umessage::SystemMessage* sm )
         {
             if( !shm->waitSMreadyWithCancellation(smReadyTimeout, cannceled) )
             {
-                cer << myname << "(ERR): SM not ready. Terminated... " << endl << flush;
+                cerr << myname << "(ERR): SM not ready. Terminated... " << endl << flush;
                 uterminate();
                 return;
             }

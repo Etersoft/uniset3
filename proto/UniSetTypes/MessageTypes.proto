@@ -39,13 +39,13 @@ message MessageHeader
 
 message TransportMessage
 {
-    MessageHeader header = 1;
+    MessageHeader header = 100;
     bytes data = 2;
 }
 
 message SensorMessage
 {
-    MessageHeader header = 1;
+    MessageHeader header = 100;
     int64 id = 2;
     int64 value = 3;
     bool undefined = 4;

@@ -390,7 +390,7 @@ namespace uniset3
                 return mblog;
             }
 
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
 #ifndef DISABLE_REST_API
             // http API

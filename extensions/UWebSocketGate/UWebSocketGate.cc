@@ -190,7 +190,7 @@ void UWebSocketGate::sensorInfo( const SensorMessage* sm )
         s->sensorInfo(sm);
 }
 //--------------------------------------------------------------------------------------------
-grpc::Status UWebSocketGate::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+grpc::Status UWebSocketGate::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetObject::getInfo(context, request, &oinf);

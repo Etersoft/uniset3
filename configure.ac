@@ -551,6 +551,7 @@ AC_CONFIG_FILES([Makefile
 				 tests/Makefile
 				 tests/UniXmlTest/Makefile
 				 tests/MQPerfTest/Makefile
+				 tests/GRPCTest/Makefile
 				 tests/PocoTest/Makefile
 				 tests/UHttpTest/Makefile
 				 tests/TCPSocketTest/Makefile

@@ -313,6 +313,11 @@ namespace uniset3
     }
 
     // -------------------------------------------------------------------------
+    int Configuration::getFirstUnusedPort()
+    {
+        return 0;
+    }
+    // -------------------------------------------------------------------------
     std::string Configuration::getArg2Param( const std::string& name, const std::string& defval, const std::string& defval2 ) const noexcept
     {
         return uniset3::getArg2Param(name, _argc, _argv, defval, defval2);
@@ -1262,7 +1267,7 @@ namespace uniset3
 
         auto oinf = oind->getObjectInfo(node);
 
-        if( !oinf->xmlnode )
+        if( !oinf || !oinf->xmlnode )
             return "";
 
         if( netNumber == 0 )

@@ -72,4 +72,5 @@ TEST_CASE("UInterface", "[UInterface]")
     CHECK( ui.getTextName(sid) == "Команда 1" );
 
     CHECK( ui.getNodeId("localhost") == 1000 );
+
 }

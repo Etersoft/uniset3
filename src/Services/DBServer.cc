@@ -151,8 +151,11 @@ std::string DBServer::help_print()
     return h.str();
 }
 //--------------------------------------------------------------------------------------------
-grpc::Status DBServer::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+grpc::Status DBServer::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
+    if( getId() != request->id() )
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
     // получаем у самого менеджера
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetObject::getInfo(context, request, &oinf);
@@ -162,7 +165,7 @@ grpc::Status DBServer::getInfo(::grpc::ServerContext* context, const ::google::p
 
     ostringstream inf;
     inf << oinf.value();
-    inf << getMonitInfo( request->value() );
+    inf << getMonitInfo( request->params() );
     response->set_value(inf.str());
     return grpc::Status::OK;
 }

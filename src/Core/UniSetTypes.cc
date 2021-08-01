@@ -780,7 +780,7 @@ uniset3::umessage::SystemMessage uniset3::makeSystemMessage(uniset3::umessage::S
 {
     uniset3::umessage::SystemMessage sm;
     *(sm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtSysCommand, umessage::mpHigh);
-    sm.set_cmd(uniset3::umessage::SystemMessage::ReConfiguration);
+    sm.set_cmd(cmd);
     return sm;
 }
 // ---------------------------------------------------------------------------------------------------------------
@@ -791,6 +791,7 @@ uniset3::umessage::SensorMessage uniset3::makeSensorMessage( ObjectId sid, long 
     sm.set_value(value);
     sm.set_id(sid);
     sm.set_sensor_type(type);
+    sm.set_tid(uniset3::DefaultThresholdId);
     return sm;
 }
 // ---------------------------------------------------------------------------------------------------------------
@@ -865,7 +866,7 @@ std::string uniset3::strTypeOfMessage( int type )
     if( type == uniset3::umessage::mtUnused )
         return "Unused";
 
-    return "Unkown";
+    return "Unknown";
 }
 //--------------------------------------------------------------------------------------------
 std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::umessage::TypeOfMessage& t )

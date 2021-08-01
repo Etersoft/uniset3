@@ -78,13 +78,12 @@ TEST_CASE("SystemMessage", "[basic][message types][SystemMessage]" )
     {
         SystemMessage sm = makeSystemMessage();
         CHECK( sm.header().type() == mtSysCommand );
-        CHECK( sm.header().priority() == mpMedium );
+        CHECK( sm.header().priority() == mpHigh );
         CHECK( sm.header().node() == conf->getLocalNode() );
         CHECK( sm.header().supplier() == DefaultObjectId );
         CHECK( sm.header().consumer() == DefaultObjectId );
         CHECK( sm.cmd() == SystemMessage::Unknown );
-        CHECK( sm.data(0) == 0 );
-        CHECK( sm.data(1) == 0 );
+        CHECK( sm.data_size() == 0 );
     }
 
     SECTION("Default SystemMessage")

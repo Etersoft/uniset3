@@ -338,7 +338,7 @@ namespace uniset3
             // функция определяет "готовность" SM к работе.
             // должна использоваться другими процессами, для того,
             // чтобы понять, когда можно получать от SM данные.
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
             virtual bool isExists() override;
 
             void addReadItem( uniset3::IOConfig_XML::ReaderSlot sl );

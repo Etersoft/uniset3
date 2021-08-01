@@ -128,20 +128,11 @@ namespace uniset3
      *    \param om - указатель на менеджер, управляющий объектом
      *    \return Возвращает \a true если инициализация прошла успешно, и \a false если нет
     */
-    bool UniSetObject::init( const std::weak_ptr<UniSetManager>& om )
+    bool UniSetObject::init( const std::string& svcAddr )
     {
         uinfo << myname << ": init..." << endl;
-        this->mymngr = om;
-
-        auto m = mymngr.lock();
-
-        if( m )
-        {
-            auto mref = m->getRef();
-            uniset3::uniset_rwmutex_wrlock lock(refmutex);
-            oref.set_addr(mref.addr());
-        }
-
+        uniset3::uniset_rwmutex_wrlock lock(refmutex);
+        oref.set_addr(svcAddr);
         uinfo << myname << ": init ok..." << endl;
         return true;
     }
@@ -219,15 +210,6 @@ namespace uniset3
         {
             ulogrep << myname << "(registration): Don`t registration. myid=DefaultObjectId \n";
             return;
-        }
-
-        auto m = mymngr.lock();
-
-        if( !m )
-        {
-            uwarn << myname << "(registration): unknown my manager" << endl;
-            string err(myname + ": unknown my manager");
-            throw ORepFailed(err);
         }
 
         {
@@ -354,15 +336,9 @@ namespace uniset3
         return true;
     }
     // ------------------------------------------------------------------------------------------
-    ::grpc::Status UniSetObject::exists(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::BoolValue* response)
+    ::grpc::Status UniSetObject::exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response)
     {
         response->set_value(isExists());
-        return ::grpc::Status::OK;
-    }
-    // ------------------------------------------------------------------------------------------
-    ::grpc::Status UniSetObject::getId(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::Int64Value* response)
-    {
-        response->set_value(myid);
         return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
@@ -371,7 +347,7 @@ namespace uniset3
         return myid;
     }
     // ------------------------------------------------------------------------------------------
-    ::grpc::Status UniSetObject::getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response)
+    ::grpc::Status UniSetObject::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
     {
         response->set_value(getStrType());
         return ::grpc::Status::OK;
@@ -669,33 +645,19 @@ namespace uniset3
         {
             uinfo << myname << "(deactivate): ..." << endl;
 
-            auto m = mymngr.lock();
-
-            if( m )
+            try
             {
-                //                PortableServer::POA_var poamngr = m->getPOA();
-
-                //                if( !PortableServer::POA_Helper::is_nil(poamngr) )
-                //                {
-                try
-                {
-                    deactivateObject();
-                }
-                catch( std::exception& ex )
-                {
-                    uwarn << myname << "(deactivate): " << ex.what() << endl;
-                }
-
-                unregistration();
-                //                    PortableServer::ObjectId_var oid = poamngr->servant_to_id(static_cast<PortableServer::ServantBase*>(this));
-                //                    poamngr->deactivate_object(oid);
-                uinfo << myname << "(deactivate): finished..." << endl;
-                waitFinish();
-                return true;
-                //                }
+                deactivateObject();
+            }
+            catch( std::exception& ex )
+            {
+                uwarn << myname << "(deactivate): " << ex.what() << endl;
             }
 
-            uwarn << myname << "(deactivate): manager already destroyed.." << endl;
+            unregistration();
+            uinfo << myname << "(deactivate): finished..." << endl;
+            waitFinish();
+            return true;
         }
         catch( std::exception& ex )
         {
@@ -709,93 +671,6 @@ namespace uniset3
     bool UniSetObject::activate()
     {
         uinfo << myname << ": activate..." << endl;
-
-        auto m = mymngr.lock();
-
-        if( !m )
-        {
-            ostringstream err;
-            err << myname << "(activate): mymngr=NULL!!! activate failure...";
-            ucrit << err.str() << endl;
-            throw SystemError(err.str());
-        }
-
-#if 0
-        PortableServer::POA_var poa = m->getPOA();
-
-        if( poa == NULL || CORBA::is_nil(poa) )
-        {
-            string err(myname + ": не задан менеджер");
-            throw ORepFailed(err);
-        }
-
-        bool actOK = false;
-        auto conf = uniset_conf();
-
-        for( size_t i = 0; i < conf->getRepeatCount(); i++ )
-        {
-            try
-            {
-                if( conf->isTransientIOR() )
-                {
-                    // activate witch generate id
-                    poa->activate_object(static_cast<PortableServer::ServantBase*>(this));
-                    actOK = true;
-                    break;
-                }
-                else
-                {
-                    // А если myid==uniset3::DefaultObjectId
-                    // то myname = noname. ВСЕГДА!
-                    if( myid == uniset3::DefaultObjectId )
-                    {
-                        uwarn << myname << "(activate): Не задан ID!!! IGNORE ACTIVATE..." << endl;
-                        // вызываем на случай если она переопределена в дочерних классах
-                        // Например в UniSetManager, если здесь не вызвать, то не будут инициализированы подчинённые объекты.
-                        // (см. UniSetManager::activateObject)
-                        activateObject();
-                        return false;
-                    }
-
-                    // Always use the same object id.
-                    PortableServer::ObjectId_var oid = PortableServer::string_to_ObjectId(myname.c_str());
-
-                    // Activate object...
-                    poa->activate_object_with_id(oid, this);
-                    actOK = true;
-                    break;
-                }
-            }
-            catch( const CORBA::Exception& ex )
-            {
-                if( string(ex._name()) != "ObjectAlreadyActive" )
-                {
-                    ostringstream err;
-                    err << myname << "(activate): ACTIVATE ERROR: " << ex._name();
-                    ucrit << myname << "(activate): " << err.str() << endl;
-                    throw uniset3::SystemError(err.str());
-                }
-
-                uwarn << myname << "(activate): IGNORE.. catch " << ex._name() << endl;
-            }
-
-            msleep( conf->getRepeatTimeout() );
-        }
-
-        if( !actOK )
-        {
-            ostringstream err;
-            err << myname << "(activate): DON`T ACTIVATE..";
-            ucrit << myname << "(activate): " << err.str() << endl;
-            throw uniset3::SystemError(err.str());
-        }
-
-        {
-            uniset3::uniset_rwmutex_wrlock lock(refmutex);
-            oref = poa->servant_to_reference(static_cast<PortableServer::ServantBase*>(this) );
-        }
-
-#endif
         registration();
 
         // Запускаем поток обработки сообщений
@@ -971,7 +846,7 @@ namespace uniset3
     }
     // ------------------------------------------------------------------------------------------
 
-    ::grpc::Status UniSetObject::getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+    ::grpc::Status UniSetObject::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
     {
         ostringstream info;
         info.setf(ios::left, ios::adjustfield);
@@ -1012,7 +887,7 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
 
     //    SimpleInfo UniSetObject::apiRequest( const char* request )
-    ::grpc::Status UniSetObject::request(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response)
+    ::grpc::Status UniSetObject::request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request, ::google::protobuf::StringValue* response)
     {
 #ifdef DISABLE_REST_API
         return getInfo(context, request, response)
@@ -1021,10 +896,10 @@ namespace uniset3
 
         try
         {
-            Poco::URI uri(request->value());
+            Poco::URI uri(request->query());
 
             if( ulog()->is_level9() )
-                ulog()->level9() << myname << "(apiRequest): request: " << request->value() << endl;
+                ulog()->level9() << myname << "(apiRequest): request: " << request->query() << endl;
 
             ostringstream out;
             std::string query = "";
@@ -1123,7 +998,7 @@ namespace uniset3
     ostream& operator<<(ostream& os, UniSetObject& obj )
     {
         grpc::ServerContext ctx;
-        ::google::protobuf::StringValue params;
+        const ::uniset3::GetInfoParams params;
         ::google::protobuf::StringValue response;
         obj.getInfo(&ctx, &params, &response);
         return os << response.value();

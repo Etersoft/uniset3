@@ -48,13 +48,13 @@ void run_test(std::size_t concurrency, int bound, shared_ptr<SharedMemory>& shm 
     {
         grpc::ServerContext ctx;
         int num = bound;
-        google::protobuf::Int64Value sid;
-        sid.set_value(begSensorID + rand() % 10000);
+        ::uniset3::GetValueParams sid;
+        sid.set_id(begSensorID + rand() % 10000);
         google::protobuf::Int64Value ret;
 
         while (num--)
         {
-            sid.set_value(begSensorID + rand() % 10000);
+            sid.set_id(begSensorID + rand() % 10000);
             shm->getValue(&ctx, &sid, &ret);
         }
     };

@@ -106,11 +106,12 @@ void SMInterface::setValue( uniset3::ObjectId id, long value )
 // --------------------------------------------------------------------------
 long SMInterface::getValue( uniset3::ObjectId id )
 {
+
     if( ic )
     {
         BEG_FUNC1(SMInterface::getValue)
-        google::protobuf::Int64Value request;
-        request.set_value(id);
+        GetValueParams request;
+        request.set_id(id);
         google::protobuf::Int64Value response;
         auto status = ic->getValue(&ctx, &request, &response);
 
@@ -156,12 +157,14 @@ void SMInterface::askSensor( uniset3::ObjectId id, uniset3::UIOCommand cmd, unis
 // --------------------------------------------------------------------------
 uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
 {
+    GetSensorsMapParams request;
     if( ic )
     {
         SensorIOInfoSeq seq;
 
         BEG_FUNC1(SMInterface::getSensorsMap)
-        auto status = ic->getSensorsMap(&ctx, &empty, &seq);
+        request.set_id(ic->getId());
+        auto status = ic->getSensorsMap(&ctx, &request, &seq);
 
         if( !status.ok() )
             throw SystemError(status.error_message());
@@ -173,7 +176,8 @@ uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
     BEG_FUNC(SMInterface::getSensorsMap)
     auto shm = IOController_i::NewStub(oref);
     SensorIOInfoSeq seq;
-    auto status = shm->getSensorsMap(&clictx, empty, &seq);
+    request.set_id(shmID);
+    auto status = shm->getSensorsMap(&clictx, request, &seq);
 
     if( !status.ok() )
         throw SystemError(status.error_message());
@@ -184,11 +188,13 @@ uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
 // --------------------------------------------------------------------------
 uniset3::ThresholdsListSeq SMInterface::getThresholdsList()
 {
+    GetThresholdsListParams request;
     if( ic )
     {
         BEG_FUNC1(SMInterface::getThresholdsList)
         ThresholdsListSeq seq;
-        auto status = ic->getThresholdsList(&ctx, &empty, &seq);
+        request.set_id(ic->getId());
+        auto status = ic->getThresholdsList(&ctx, &request, &seq);
 
         if( !status.ok() )
             throw SystemError(status.error_message());
@@ -200,7 +206,8 @@ uniset3::ThresholdsListSeq SMInterface::getThresholdsList()
     BEG_FUNC(SMInterface::getThresholdsList)
     auto shm = IONotifyController_i::NewStub(oref);
     ThresholdsListSeq seq;
-    auto status = shm->getThresholdsList(&clictx, empty, &seq);
+    request.set_id(shmID);
+    auto status = shm->getThresholdsList(&clictx, request, &seq);
 
     if( !status.ok() )
         throw SystemError(status.error_message());
@@ -358,8 +365,9 @@ std::string SMInterface::apiRequest( const std::string& query )
     if( ic )
     {
         BEG_FUNC1(SMInterface::apiRequest)
-        google::protobuf::StringValue req;
-        req.set_value(query);
+        RequestParams req;
+        req.set_query(query);
+        req.set_id(ic->getId());
         google::protobuf::StringValue resp;
         auto status = ic->request(&ctx, &req, &resp);
 

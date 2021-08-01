@@ -538,8 +538,9 @@ static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr
         return false;
     }
 
-    google::protobuf::Empty empty;
+    ExistsParams exparam;
     google::protobuf::BoolValue boolResponse;
+    google::protobuf::Empty empty;
 
     uniset3::umessage::MessageHeader header;
     header.set_priority(uniset3::umessage::mpMedium);
@@ -614,7 +615,8 @@ static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr
 
                 case Exist:
                 {
-                    auto status = obj->exists(&ctx, empty, &boolResponse);
+                    exparam.set_id(o.id());
+                    auto status = obj->exists(&ctx, exparam, &boolResponse);
 
                     if ( !status.ok() )
                         cerr << setw(55) << oname << " error: " << status.error_message() << endl;

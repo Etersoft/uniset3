@@ -268,7 +268,7 @@ namespace uniset3
 
             static void help_print( int argc, const char* const* argv );
 
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
         protected:
             virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;

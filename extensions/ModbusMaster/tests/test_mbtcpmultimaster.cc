@@ -278,11 +278,12 @@ TEST_CASE("MBTCPMultiMaster: reload config (HTTP API)", "[modbus][reload-api][mb
     InitTest();
 
     grpc::ServerContext ctx;
-    google::protobuf::StringValue query;
+    RequestParams query;
     google::protobuf::StringValue resp;
 
     // default reconfigure
-    query.set_value("/api/v01/reload");
+    query.set_id(mbmm->getId());
+    query.set_query("/api/v01/reload");
     auto status = mbmm->request(&ctx, &query, &resp);
     REQUIRE(status.ok());
 
@@ -291,7 +292,7 @@ TEST_CASE("MBTCPMultiMaster: reload config (HTTP API)", "[modbus][reload-api][mb
 
 
     // reconfigure from other file
-    query.set_value("/api/v01/reload?confile=" + confile2);
+    query.set_query("/api/v01/reload?confile=" + confile2);
     status = mbmm->request(&ctx, &query, &resp);
     REQUIRE(status.ok());
 
@@ -300,7 +301,7 @@ TEST_CASE("MBTCPMultiMaster: reload config (HTTP API)", "[modbus][reload-api][mb
     REQUIRE( resp.value().find(confile2) != std::string::npos );
 
     // reconfigure FAIL
-    query.set_value("/api/v01/reload?confile=BADFILE");
+    query.set_query("/api/v01/reload?confile=BADFILE");
     status = mbmm->request(&ctx, &query, &resp);
     REQUIRE(status.ok());
     REQUIRE_FALSE( resp.value().empty() );

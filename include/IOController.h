@@ -52,26 +52,26 @@ namespace uniset3
             IOController( const uniset3::ObjectId id );
             virtual ~IOController();
 
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
+            virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
             // ----------------------------------------------------------------
             // Публичный (IDL) интерфейс IOController_i
             // ----------------------------------------------------------------
-            virtual ::grpc::Status getValue(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Int64Value* response) override;
+            virtual ::grpc::Status getValue(::grpc::ServerContext* context, const ::uniset3::GetValueParams* request, ::google::protobuf::Int64Value* response) override;
             virtual ::grpc::Status setValue(::grpc::ServerContext* context, const ::uniset3::SetValueParams* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status freezeValue(::grpc::ServerContext* context, const ::uniset3::FreezeValueParams* request, ::google::protobuf::Empty* response) override;
-            virtual ::grpc::Status getIOType(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::RetIOType* response) override;
+            virtual ::grpc::Status getIOType(::grpc::ServerContext* context, const ::uniset3::GetIOTypeParams* request, ::uniset3::RetIOType* response) override;
             virtual ::grpc::Status setUndefinedState(::grpc::ServerContext* context, const ::uniset3::SetUndefinedParams* request, ::google::protobuf::Empty* response) override;
-            virtual ::grpc::Status getRawValue(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::google::protobuf::Int64Value* response) override;
+            virtual ::grpc::Status getRawValue(::grpc::ServerContext* context, const ::uniset3::GetRawValueParams* request, ::google::protobuf::Int64Value* response) override;
             virtual ::grpc::Status calibrate(::grpc::ServerContext* context, const ::uniset3::CalibrateParams* request, ::google::protobuf::Empty* response) override;
-            virtual ::grpc::Status getCalibrateInfo(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::CalibrateInfo* response) override;
-            virtual ::grpc::Status getSensorsMap(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::SensorIOInfoSeq* response) override;
-            virtual ::grpc::Status getSensorIOInfo(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::SensorIOInfo* response) override;
-            virtual ::grpc::Status getSensorSeq(::grpc::ServerContext* context, const ::uniset3::IDSeq* request, ::uniset3::SensorIOInfoSeq* response) override;
+            virtual ::grpc::Status getCalibrateInfo(::grpc::ServerContext* context, const ::uniset3::GetCalibrateInfoParams* request, ::uniset3::CalibrateInfo* response) override;
+            virtual ::grpc::Status getSensorsMap(::grpc::ServerContext* context, const ::uniset3::GetSensorsMapParams* request, ::uniset3::SensorIOInfoSeq* response) override;
+            virtual ::grpc::Status getSensorIOInfo(::grpc::ServerContext* context, const ::uniset3::GetSensorIOInfoParams* request, ::uniset3::SensorIOInfo* response) override;
+            virtual ::grpc::Status getSensorSeq(::grpc::ServerContext* context, const ::uniset3::GetSensorSeqParams* request, ::uniset3::SensorIOInfoSeq* response) override;
             virtual ::grpc::Status setOutputSeq(::grpc::ServerContext* context, const ::uniset3::SetOutputParams* request, ::uniset3::IDSeq* response) override;
-            virtual ::grpc::Status getTimeChange(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ShortIOInfo* response) override;
-            virtual ::grpc::Status getSensors(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::uniset3::ShortMapSeq* response) override;
+            virtual ::grpc::Status getTimeChange(::grpc::ServerContext* context, const ::uniset3::GetTimeChangeParams* request, ::uniset3::ShortIOInfo* response) override;
+            virtual ::grpc::Status getSensors(::grpc::ServerContext* context, const ::uniset3::GetSensorsParams* request, ::uniset3::ShortMapSeq* response) override;
 
             class Undefined: public Exception
             {
@@ -267,6 +267,7 @@ namespace uniset3
         private:
             friend class NCRestorer;
             friend class SMInterface;
+            friend class IOControllerProxy;
 
             std::mutex siganyMutex;
             ChangeSignal sigAnyChange;
