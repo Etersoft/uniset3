@@ -138,8 +138,8 @@ namespace uniset3
 
             virtual ~IONotifyController();
 
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
+            virtual std::string getStrType() const override;
 
             // ------  GRPC интерфейс ------
             virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response);

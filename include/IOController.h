@@ -52,9 +52,8 @@ namespace uniset3
             IOController( const uniset3::ObjectId id );
             virtual ~IOController();
 
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
-
+            virtual std::string getStrType() const override;
             // ----------------------------------------------------------------
             // Публичный (IDL) интерфейс IOController_i
             // ----------------------------------------------------------------

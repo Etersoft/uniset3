@@ -151,6 +151,11 @@ std::string DBServer::help_print()
     return h.str();
 }
 //--------------------------------------------------------------------------------------------
+std::string DBServer::getStrType() const
+{
+    return "DBServer";
+}
+//--------------------------------------------------------------------------------------------
 grpc::Status DBServer::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
     if( getId() != request->id() )

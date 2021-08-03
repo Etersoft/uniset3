@@ -98,6 +98,7 @@ namespace uniset3
     std::ostream& operator<<( std::ostream& os, const uniset3::ThresholdInfo& ti );
     std::ostream& operator<<( std::ostream& os, const uniset3::ShortIOInfo& s );
     std::ostream& operator<<( std::ostream& os, const uniset3::ThresholdState& s);
+    std::ostream& operator<<( std::ostream& os, const uniset3::ObjectRef& o);
 
     /*! Команды для управления лампочками */
     enum LampCommand

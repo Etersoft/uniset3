@@ -94,7 +94,7 @@ namespace uniset3
             virtual bool isExists();
             uniset3::ObjectId getId() const;
             std::string getName() const;
-            const std::string getStrType();
+            virtual std::string getStrType() const;
 
             //            virtual uniset3::SimpleInfo getInfo( const std::string& userparam = "" );
             //            // обёртка для вызова HTTP API через RPC

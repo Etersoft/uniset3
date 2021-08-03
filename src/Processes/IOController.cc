@@ -53,13 +53,9 @@ IOController::~IOController()
 }
 
 // ------------------------------------------------------------------------------------------
-::grpc::Status IOController::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
+std::string IOController::getStrType() const
 {
-    if( request->id() != getId() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
-    response->set_value("IOController");
-    return ::grpc::Status::OK;
+    return "IOController";
 }
 // ------------------------------------------------------------------------------------------
 bool IOController::activateObject()

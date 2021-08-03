@@ -351,13 +351,9 @@ void IONotifyController::showStatisticsForSensor( ostringstream& inf, const stri
     inf << "--------------------------------------------------------------------" << endl;
 }
 // ------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
+std::string IONotifyController::getStrType() const
 {
-    if( getId() != request->id() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
-    response->set_value("IONotifyController");
-    return ::grpc::Status::OK;
+    return "IONotifyController";
 }
 // ------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)

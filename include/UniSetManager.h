@@ -43,10 +43,9 @@ namespace uniset3
             virtual ~UniSetManager();
 
             // ------  функции объявленые в интерфейсе(IDL) ------
-            virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status broadcast(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status getObjectsInfo(::grpc::ServerContext* context, const ::uniset3::ObjectsInfoParams* request, ::uniset3::SimpleInfoSeq* response) override;
-
+            virtual std::string getStrType() const override;
             // --------------------------
             std::shared_ptr<UniSetManager> get_mptr();
             virtual bool add( const std::shared_ptr<UniSetObject>& obj );

@@ -105,6 +105,7 @@ TEST_CASE("UInterface", "[UInterface]")
     SECTION( "send" )
     {
         auto sm = makeSensorMessage(sid, 10, uniset3::AI);
+        sm.mutable_header()->set_consumer(testOID);
         TransportMessage tm = uniset3::to_transport<SensorMessage>(sm);
         REQUIRE_NOTHROW( ui->send(tm) );
     }

@@ -34,14 +34,12 @@ namespace uniset3
             IORFile( const std::string& iordir );
             ~IORFile();
 
-            static std::string makeIOR(uniset3::ObjectRef ref);
-            static uniset3::ObjectRef getRef(const std::string& s);
+            std::string getIOR( const ObjectId id ) const;
+            uniset3::ObjectRef getRef( const ObjectId id ) const;
+            void setIOR( const ObjectId id, const uniset3::ObjectRef& ref ) const; // throw ORepFailed
+            void unlinkIOR( const ObjectId id ) const;
 
-            std::string getIOR( const ObjectId id );
-            void setIOR( const ObjectId id, const std::string& sior );
-            void unlinkIOR( const ObjectId id );
-
-            std::string getFileName( const ObjectId id );
+            std::string getFileName( const ObjectId id ) const;
 
         private:
             const std::string iordir;

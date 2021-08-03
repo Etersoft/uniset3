@@ -874,3 +874,11 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::umessage::Ty
     return os << strTypeOfMessage(t);
 }
 //--------------------------------------------------------------------------------------------
+std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ObjectRef& o)
+{
+    return os
+           << "id=" << o.id()
+           << " type=" << o.type()
+           << " addr=" << o.addr()
+           << " path=" << o.path();
+}

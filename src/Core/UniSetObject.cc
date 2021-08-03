@@ -33,7 +33,6 @@
 #include "Exceptions.h"
 #include "UInterface.h"
 #include "UniSetObject.h"
-#include "UniSetManager.h"
 #include "UniSetActivator.h"
 #include "Debug.h"
 
@@ -133,7 +132,8 @@ namespace uniset3
         uinfo << myname << ": init..." << endl;
         uniset3::uniset_rwmutex_wrlock lock(refmutex);
         oref.set_addr(svcAddr);
-        uinfo << myname << ": init ok..." << endl;
+        oref.set_type(getStrType());
+        uinfo << myname << ": init ok [" << oref << "]" << endl;
         return true;
     }
     // ------------------------------------------------------------------------------------------
@@ -338,6 +338,9 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     ::grpc::Status UniSetObject::exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response)
     {
+        if( request->id() != getId() )
+            return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
         response->set_value(isExists());
         return ::grpc::Status::OK;
     }
@@ -349,6 +352,9 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     ::grpc::Status UniSetObject::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
     {
+        if( request->id() != getId() )
+            return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+
         response->set_value(getStrType());
         return ::grpc::Status::OK;
     }
@@ -358,7 +364,7 @@ namespace uniset3
         return myname;
     }
     // ------------------------------------------------------------------------------------------
-    const string UniSetObject::getStrType()
+    string UniSetObject::getStrType() const
     {
         return "UniSetObject";
     }

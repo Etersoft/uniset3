@@ -27,7 +27,6 @@
 #include "PassiveTimer.h"
 #include "IOController.grpc.pb.h"
 #include "UniSetObject.grpc.pb.h"
-#include "UniSetManager.grpc.pb.h"
 #include "UHelpers.h"
 
 // -----------------------------------------------------------------------------
@@ -570,7 +569,7 @@ namespace uniset3
         // то пишем IOR в файл
         if( uconf->isLocalIOR() )
         {
-            uconf->iorfile->setIOR(oRef.id(), IORFile::makeIOR(oRef));
+            uconf->iorfile->setIOR(oRef.id(), oRef);
             return;
         }
 
@@ -646,20 +645,17 @@ namespace uniset3
         {
             if( uconf->isLocalIOR() )
             {
-                const string ior = uconf->iorfile->getIOR(rid);
-
-                if( !ior.empty() )
+                if( node != uconf->getLocalNode() )
                 {
-                    auto oref = uconf->iorfile->getRef(ior);
-                    auto chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
-                    rcache.cache(rid, node, chan); // заносим в кэш
-                    return chan;
+                    ostringstream err;
+                    err << "UI(resolve): localIOR=1 but node!='" <<  uconf->getLocalNode() << "'(LocalNode)";
+                    throw uniset3::ResolveNameError(err.str());
                 }
 
-                uwarn << "not found IOR-file for " << uconf->oind->getNameById(rid)
-                      << " node=" << uconf->oind->getNameById(node)
-                      << endl;
-                throw uniset3::ResolveNameError();
+                auto oref = uconf->iorfile->getRef(rid);
+                auto chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
+                rcache.cache(rid, node, chan); // заносим в кэш
+                return chan;
             }
 
             ObjectRef oref;
@@ -997,13 +993,8 @@ namespace uniset3
     {
         if( uconf->isLocalIOR() )
         {
-            const string ior = uconf->iorfile->getIOR(id);
-
-            if( !ior.empty() )
-            {
-                auto oref = uconf->iorfile->getRef(ior);
-                return grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
-            }
+            auto oref = uconf->iorfile->getRef(id);
+            return grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
 
             throw uniset3::ResolveNameError("UI(resolve): ID=" + to_string(id));
         }
@@ -1129,13 +1120,8 @@ namespace uniset3
         {
             if( uconf->isLocalIOR() )
             {
-                const string ior = uconf->iorfile->getIOR(id);
-
-                if( !ior.empty() )
-                {
-                    auto oref = uconf->iorfile->getRef(ior);
-                    chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
-                }
+                auto oref = uconf->iorfile->getRef(id);
+                chan = grpc::CreateChannel(oref.addr(), grpc::InsecureChannelCredentials());
             }
             else
             {
@@ -1167,22 +1153,37 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------------------------
     bool UInterface::isExists( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept
     {
-        if( node == uconf->getLocalNode() )
-            return isExists(id);
+        if( node == uconf->getLocalNode() || node == DefaultObjectId )
+            return isExists(id); // local node
+
+        ExistsParams req;
+        req.set_id(id);
+        google::protobuf::BoolValue resp;
+        std::shared_ptr<grpc::Channel> chan;
 
         try
         {
-            grpc::ClientContext ctx;
-            std::shared_ptr<grpc::Channel> chan = rcache.resolve(id, node);
-            ExistsParams req;
-            req.set_id(id);
-            google::protobuf::BoolValue resp;
+            chan = rcache.resolve(id, node);
+        }
+        catch( const uniset3::NameNotFound&  ) {}
 
-            std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
-            grpc::Status st = stub->exists(&ctx, req, &resp);
+        try
+        {
+            for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
+            {
+                if( !chan )
+                    chan = resolve(id, node);
 
-            if( st.ok() )
-                return resp.value();
+                grpc::ClientContext ctx;
+                std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan));
+                grpc::Status st = stub->exists(&ctx, req, &resp);
+
+                if( st.ok() )
+                    return resp.value();
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
         }
         catch(...) {}
 

@@ -53,10 +53,9 @@ UniSetManager::~UniSetManager()
     olist.clear();
 }
 // ------------------------------------------------------------------------------------------
-::grpc::Status UniSetManager::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
+std::string UniSetManager::getStrType() const
 {
-    response->set_value("UniSetManager");
-    return ::grpc::Status::OK;
+    return "UniSetManager";
 }
 // ------------------------------------------------------------------------------------------
 bool UniSetManager::add( const std::shared_ptr<UniSetObject>& obj )

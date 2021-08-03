@@ -23,21 +23,19 @@
 using namespace uniset3;
 using namespace std;
 // -----------------------------------------------------------------------------------------
-std::string IORFile::makeIOR(uniset3::ObjectRef ref)
-{
-    //    ostringstream s;
-    //    s << ref.id() << "|" << ref.addr();
-    //    return s.str();
-
-    return ref.SerializeAsString();
-}
+//std::string IORFile::makeIOR( const uniset3::ObjectRef& ref )
+//{
+//    return ref.SerializeAsString();
+//}
 // -----------------------------------------------------------------------------------------
-uniset3::ObjectRef IORFile::getRef( const std::string& s )
-{
-    uniset3::ObjectRef ref;
-    ref.ParseFromArray(s.data(), s.size());
-    return ref;
-}
+//uniset3::ObjectRef IORFile::makeRef( const std::string& s )
+//{
+//    uniset3::ObjectRef ref;
+//    if( !ref.ParseFromString(s) )
+//        throw ResolveNameError();
+//
+//    return ref;
+//}
 // -----------------------------------------------------------------------------------------
 IORFile::IORFile( const std::string& dir ):
     iordir(dir)
@@ -50,35 +48,51 @@ IORFile::~IORFile()
 
 }
 // -----------------------------------------------------------------------------------------
-string IORFile::getIOR( const ObjectId id )
+string IORFile::getIOR( const ObjectId id ) const
 {
     const string fname( getFileName(id) );
-    ifstream ior_file(fname.c_str());
+    ifstream ior_file(fname.c_str(), ios::binary);
     string sior;
     ior_file >> sior;
-
+    ior_file.close();
     return sior;
 }
 // -----------------------------------------------------------------------------------------
-void IORFile::setIOR( const ObjectId id, const string& sior )
+void IORFile::setIOR( const ObjectId id, const uniset3::ObjectRef& ref ) const
 {
     const string fname( getFileName(id) );
-    ofstream ior_file(fname.c_str(), ios::out | ios::trunc);
+    ofstream ior_file(fname.c_str(), ios::out | ios::trunc | ios::binary);
 
     if( !ior_file )
-        throw ORepFailed("(IORFile): не смог создать ior-файл " + fname);
+        throw ORepFailed("(IORFile): can't open ior-file " + fname);
 
-    ior_file << sior << endl;
+    if( !ref.SerializeToOstream(&ior_file) )
+        throw ORepFailed("(IORFile): can't save ior-file " + fname);
+
     ior_file.close();
 }
 // -----------------------------------------------------------------------------------------
-void IORFile::unlinkIOR( const ObjectId id )
+uniset3::ObjectRef IORFile::getRef( const ObjectId id ) const
+{
+    ObjectRef oref;
+    const string fname( getFileName(id) );
+    ifstream ior_file(fname.c_str(), ios::binary);
+    if( !ior_file )
+        throw ORepFailed("(IORFile): can't open ior-file " + fname);
+
+    if( !oref.ParseFromIstream(&ior_file) )
+        throw ResolveNameError("(IORFile): can't parse oref from file '" + fname + "'");
+
+    return oref;
+}
+// -----------------------------------------------------------------------------------------
+void IORFile::unlinkIOR( const ObjectId id ) const
 {
     const string fname( getFileName(id) );
     unlink(fname.c_str());
 }
 // -----------------------------------------------------------------------------------------
-string IORFile::getFileName( const ObjectId id )
+string IORFile::getFileName( const ObjectId id ) const
 {
     ostringstream fname;
     fname << iordir << id;
