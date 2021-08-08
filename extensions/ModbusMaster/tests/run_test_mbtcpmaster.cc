@@ -56,7 +56,6 @@ int main( int argc, const char* argv[] )
         act->add(shm);
         act->add(mbm);
 
-        act->startup();
         act->run(true);
 
         int tout = conf->getArgPInt("--timeout", 8000);

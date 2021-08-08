@@ -1,13 +1,10 @@
 #!/bin/sh
 
 # '--' - нужен для отделения аргументов catch, от наших..
-cd ../../../Utilities/Admin/
-./uniset3-start.sh -f ./create_links.sh
-./uniset3-start.sh -f ./create
 
-./uniset3-start.sh -f ./exist | grep -q UNISET_PLC/Controllers || exit 1
-cd -
+. ./testsuite-functions.sh
 
+init_testsuite || exit 1
 
 MAX=200
 
@@ -18,4 +15,4 @@ for n in `seq 1 $MAX`; do
    --mbs${n}-log-add-levels crit,warn"
 done
 
-./uniset3-start.sh -f ./mbslave-perf-test --confile test.xml ${PARAMS} --numproc $MAX $*
+./uniset3-start.sh -f ./mbslave-perf-test --confile test.xml ${PARAMS} --numproc $MAX --lockDir ${ULOCKDIR} $*

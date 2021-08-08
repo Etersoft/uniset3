@@ -1,14 +1,11 @@
 #!/bin/sh
 
-# '--' - нужен для отделения аргументов catch, от наших..
-cd ../../../Utilities/Admin/
-./uniset3-start.sh -f ./create_links.sh
-./uniset3-start.sh -f ./create
+. ./testsuite-functions.sh
 
-./uniset3-start.sh -f ./exist | grep -q UNISET_PLC/Controllers || exit 1
-cd -
+init_testsuite || exit 1
 
 ./uniset3-start.sh -f ./run_test_iocontrol $* -- --confile iocontrol-test-configure.xml --e-startup-pause 10 \
+--lockDir ${ULOCKDIR} \
 --io-name IOControl1 \
 --smemory-id SharedMemory \
 --io-s-filter-field io \

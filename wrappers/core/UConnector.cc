@@ -233,7 +233,6 @@ void UConnector::activate_objects() throw(UException)
     try
     {
         auto act = uniset3::UniSetActivator::Instance();
-        act->startup();
         act->run(true);
     }
     catch( const std::exception& ex )

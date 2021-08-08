@@ -47,11 +47,10 @@ namespace uniset3
         for( size_t i = 0; i < cards.size(); i++ )
         {
             if( cards[i] )
-            {
-                delete (FakeComediInterface*)cards[i];
                 cards[i] = nullptr;
-            }
         }
+
+        delete (FakeComediInterface*)fcard;
     }
 
     // --------------------------------------------------------------------------------

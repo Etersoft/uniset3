@@ -12,6 +12,7 @@ using namespace uniset3;
 // -----------------------------------------------------------------------------
 static shared_ptr<UInterface> ui;
 extern shared_ptr<TestObject> obj;
+extern ObjectId shmID;
 // -----------------------------------------------------------------------------
 void InitTest()
 {
@@ -26,6 +27,7 @@ void InitTest()
     }
 
     REQUIRE( obj != nullptr );
+    REQUIRE( ui->isExists(shmID) );
 }
 // -----------------------------------------------------------------------------
 /*
@@ -146,23 +148,23 @@ TEST_CASE("[SM]: askDoNotNotify", "[sm][ask]")
 
     ui->setValue(509, 1);
     msleep(200);
-    CHECK( obj->in_sensor_s );
+    REQUIRE( obj->in_sensor_s );
 
     obj->askDoNotNotify();
 
     ui->setValue(509, 0); // !!
     msleep(200);
-    CHECK( obj->in_sensor_s ); //не поменялось значение
+    REQUIRE( obj->in_sensor_s ); //не поменялось значение
 
     obj->askNotifyChange();
     msleep(200);
-    CHECK( obj->in_sensor_s ); // не менялось..
+    REQUIRE( obj->in_sensor_s ); // не менялось..
     ui->setValue(509, 1);
     msleep(200);
-    CHECK( obj->in_sensor_s );
+    REQUIRE( obj->in_sensor_s );
     ui->setValue(509, 0);
     msleep(200);
-    CHECK_FALSE( obj->in_sensor_s );
+    REQUIRE_FALSE( obj->in_sensor_s );
 
     obj->askDoNotNotify();
     ui->setValue(509, 1);
@@ -171,7 +173,7 @@ TEST_CASE("[SM]: askDoNotNotify", "[sm][ask]")
 
     obj->askNotifyFirstNotNull();
     msleep(200);
-    CHECK( obj->in_sensor_s ); // должно придти т.к. равно "1"
+    REQUIRE( obj->in_sensor_s ); // должно придти т.к. равно "1"
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("[SM]: heartbeat test N2", "[sm][heartbeat]")

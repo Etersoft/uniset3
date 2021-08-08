@@ -37,8 +37,6 @@ int main( int argc, const char* argv[] )
         auto act = UniSetActivator::Instance();
 
         act->add(to);
-
-        act->startup();
         act->run(true);
         return session.run();
     }

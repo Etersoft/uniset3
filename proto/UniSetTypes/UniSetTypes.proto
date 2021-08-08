@@ -5,6 +5,12 @@ package uniset3;
 option optimize_for = LITE_RUNTIME;
 // option cc_enable_arenas = true;
 // ---------------------------------------------------------------------------
+message MetaData
+{
+    string key = 1;
+    string val = 2;
+}
+
 /*! Информация об объекте */
 message ObjectRef
 {
@@ -12,6 +18,7 @@ message ObjectRef
     string addr = 2; // ip:port
     string path = 3;
     string type = 4;
+    repeated MetaData metadata = 5;
 }
 
 /*! Типы входов/выходов */

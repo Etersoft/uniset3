@@ -67,14 +67,12 @@ int main( int argc,char* argv[] )
                 &lt;&lt; " в секции " &lt;&lt; conf->getObjectsSection() &lt;&lt; endl;
             return 1;
         }
-    
+
         auto obj = make_shared&lt;<xsl:value-of select="$CLASSNAME"/>&gt;(ID);
 
         auto act = UniSetActivator::Instance();
         act-&gt;add(obj);
 
-        SystemMessage sm(SystemMessage::StartUp);
-        act-&gt;broadcast( sm.transport_msg() );
         act-&gt;run(false);
         return 0;
     }

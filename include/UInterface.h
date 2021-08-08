@@ -157,7 +157,6 @@ namespace uniset3
                     const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------
             // Работа с репозиторием
-
             /*! регистрация объекта в репозитории
              *  throw(uniset3::ORepFailed)
              */
@@ -166,10 +165,21 @@ namespace uniset3
             // throw(uniset3::ORepFailed)
             void unregister(const uniset3::ObjectId id);
 
-            std::shared_ptr<grpc::Channel> resolve( const uniset3::ObjectId id ) const;
+            struct ORefInfo
+            {
+                ORefInfo(){}
+                ORefInfo(std::shared_ptr<grpc::Channel>& chan, const uniset3::ObjectRef& oref ):
+                    c(chan), ref(oref){}
+
+                std::shared_ptr<grpc::Channel> c;
+                uniset3::ObjectRef ref;
+                void addMetaData(grpc::ClientContext& ctx);
+            };
+
+            std::shared_ptr<ORefInfo> resolve( const uniset3::ObjectId id ) const;
 
             // throw(uniset3::ResolveNameError, uniset3::TimeOut);
-            std::shared_ptr<grpc::Channel> resolve(const uniset3::ObjectId id, const uniset3::ObjectId node) const;
+            std::shared_ptr<ORefInfo> resolve(const uniset3::ObjectId id, const uniset3::ObjectId node) const;
 
             // Проверка доступности объекта или датчика
             bool isExists( const uniset3::ObjectId id ) const noexcept;
@@ -246,9 +256,9 @@ namespace uniset3
                     ~CacheOfResolve() {};
 
                     //  throw(uniset3::NameNotFound, uniset3::SystemError)
-                    std::shared_ptr<grpc::Channel> resolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
+                    std::shared_ptr<UInterface::ORefInfo> resolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
 
-                    void cache(const uniset3::ObjectId id, const uniset3::ObjectId node, std::shared_ptr<grpc::Channel>& chan ) const;
+                    void cache(const uniset3::ObjectId id, const uniset3::ObjectId node, std::shared_ptr<ORefInfo>& chan ) const;
                     void erase( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
 
                     inline void setMaxSize( size_t ms ) noexcept
@@ -270,10 +280,10 @@ namespace uniset3
 
                     struct Item
                     {
-                        Item( std::shared_ptr<grpc::Channel>& c ): chan(c), ncall(0) {}
-                        Item(): chan(nullptr), ncall(0) {}
+                        Item( std::shared_ptr<ORefInfo>& c ): oinf(c), ncall(0) {}
+                        Item(): ncall(0) {}
 
-                        std::shared_ptr<grpc::Channel> chan;
+                        std::shared_ptr<ORefInfo> oinf;
                         size_t ncall; // счётчик обращений
 
                         bool operator<( const CacheOfResolve::Item& rhs ) const
@@ -285,8 +295,8 @@ namespace uniset3
                     typedef std::unordered_map<uniset3::KeyType, Item> CacheMap;
                     mutable CacheMap mcache;
                     mutable uniset3::uniset_rwmutex cmutex;
-                    size_t MaxSize = { 20 };      /*!< максимальный размер кэша */
-                    size_t minCallCount = { 20 }; /*!< минимальное количество вызовов, меньше которого ссылка считается устаревшей */
+                    size_t MaxSize = { 50 };      /*!< максимальный размер кэша */
+                    size_t minCallCount = { 50 }; /*!< минимальное количество вызовов, меньше которого ссылка считается устаревшей */
             };
 
             void initBackId( uniset3::ObjectId backid );

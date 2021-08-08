@@ -190,8 +190,8 @@ namespace uniset3
         ostringstream addr;
         addr << grpcHost << ":" << grpcPort;
         builder.AddListeningPort(addr.str(), grpc::InsecureServerCredentials(), &grpcPort);
-        builder.RegisterService(static_cast<UniSetManager_i::Service*>(&mproxy));
         builder.RegisterService(static_cast<UniSetObject_i::Service*>(&oproxy));
+        builder.RegisterService(static_cast<UniSetManager_i::Service*>(&mproxy));
         builder.RegisterService(static_cast<IOController_i::Service*>(&ioproxy));
         builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
         server = builder.BuildAndStart();
@@ -235,6 +235,9 @@ namespace uniset3
 
         for( auto&& o : objects )
             o.second->activate();
+
+
+        startup();
 
         if( !thread )
         {

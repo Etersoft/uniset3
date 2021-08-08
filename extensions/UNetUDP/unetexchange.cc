@@ -53,7 +53,6 @@ int main( int argc, const char** argv )
         auto act = UniSetActivator::Instance();
         act->add(unet);
 
-        act->startup();
         act->run(false);
     }
     catch( const std::exception& ex )

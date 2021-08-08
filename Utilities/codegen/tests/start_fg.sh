@@ -2,7 +2,7 @@
 
 ulimit -Sc 1000000
 
-uniset3-start.sh -f ./test --name TestProc --confile test.xml --ulog-add-levels system,warn,crit \
+./uniset3-start.sh -f ./test --name TestProc --confile test.xml --ulog-add-levels system,warn,crit \
 --test-sm-ready-timeout 15000 --test-run-logserver $* 
 #--test-log-add-levels any $*
 

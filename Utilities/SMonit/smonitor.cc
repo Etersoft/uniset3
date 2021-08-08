@@ -42,7 +42,6 @@ int main( int argc, const char** argv )
         auto smon = make_shared<SMonitor>(ID);
         act->add(smon);
 
-        act->startup();
         act->run(false);
         return 0;
     }

@@ -382,7 +382,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::updateOutputs( bool _force )
     {
         SensorMessage _sm = makeSensorMessage(<xsl:value-of select="../../@name"/>, (long)<xsl:call-template name="setprefix"/><xsl:value-of select="../../@name"/>,uniset3::AI);
         _sm.mutable_header()->set_consumer(getId());
-        _sm.mutable_header()->set_node(node);
+        _sm.mutable_header()->set_node(uniset_conf()->getLocalNode());
         sensorInfo(&amp;_sm);
     }
 </xsl:if>

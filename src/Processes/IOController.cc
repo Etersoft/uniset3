@@ -496,6 +496,9 @@ void IOController::ioRegistration( std::shared_ptr<USensorInfo>& usi )
     sref.set_id(usi->sinf.si().id());
     sref.set_path(conf->getSensorsSection());
     sref.set_type("sensor");
+    auto md = sref.add_metadata();
+    md->set_key(uniset3::MetaDataServiceId);
+    md->set_val(to_string(getId()));
 
     try
     {
@@ -810,9 +813,6 @@ IOController::IOStateList::iterator IOController::myiofind( const uniset3::Objec
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::uniset3::GetSensorSeqParams* request, ::uniset3::SensorIOInfoSeq* response)
 {
-    if( request->id() != getId() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
     uniset3::SensorIOInfo unk;
     unk.mutable_si()->set_id(DefaultObjectId);
     unk.mutable_si()->set_node(DefaultObjectId);
@@ -838,9 +838,6 @@ grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::
 // -----------------------------------------------------------------------------
 grpc::Status IOController::setOutputSeq(::grpc::ServerContext* context, const ::uniset3::SetOutputParams* request, ::uniset3::IDSeq* response)
 {
-    if( request->id() != getId() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
     uniset3::IDList badlist; // список не найденных идентификаторов
 
     for(const auto& s : request->lst().sensors())
@@ -887,9 +884,6 @@ grpc::Status IOController::getTimeChange(::grpc::ServerContext* context, const :
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getSensors(::grpc::ServerContext* context, const ::uniset3::GetSensorsParams* request, ::uniset3::ShortMapSeq* response)
 {
-    if( getId() != request->id() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
     for( const auto& it : ioList )
     {
         auto s = response->add_sensors();
@@ -978,9 +972,6 @@ void IOController::USensorInfo::checkDepend( std::shared_ptr<USensorInfo>& d_it,
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
-    if( request->id() != getId() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetManager::getInfo(context, request, &oinf);
 

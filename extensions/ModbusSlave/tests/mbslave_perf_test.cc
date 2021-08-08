@@ -48,7 +48,6 @@ int main( int argc, const char** argv )
         }
 
         // -------------------------------------------
-        act->startup();
         act->run(false);
         return 0;
     }

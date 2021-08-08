@@ -102,7 +102,6 @@ int main(int argc, char* argv[] )
         auto act = UniSetActivator::Instance();
 
         act->add(shm);
-        act->startup();
         act->run(true);
 
         int tout = 10000;

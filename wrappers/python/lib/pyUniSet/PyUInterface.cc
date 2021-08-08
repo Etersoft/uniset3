@@ -190,8 +190,7 @@ void pyUInterface::uniset_activate_objects()throw(UException)
 {
 	try
 	{
-        auto act = uniset3::UniSetActivator::Instance();
-        act->startup();
+		auto act = uniset3::UniSetActivator::Instance();
 		act->run(true);
 	}
 	catch( const std::exception& ex )

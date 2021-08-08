@@ -55,6 +55,8 @@ namespace uniset3
     typedef std::string ObjectType;
     typedef std::list<NodeInfo> ListOfNode;
 
+    const std::string MetaDataServiceId = {"service_id"};
+
     class Configuration;
     // ---------------------------------------------------------------
     // Вспомогательные типы данных и константы

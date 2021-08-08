@@ -21,6 +21,7 @@
 		<LogDir name="./"/>
 		<DocDir name="./"/>
 		<LockDir name="./"/>
+		<LocalIOR name="1"/>
 		<Services></Services>
 	</UniSet>
 	<dlog name="dlog"/>

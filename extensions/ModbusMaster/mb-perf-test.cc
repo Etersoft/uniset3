@@ -76,7 +76,6 @@ int main( int argc, const char** argv )
             act->add(mb);
         }
 
-        act->startup();
         act->run(false);
         return 0;
     }

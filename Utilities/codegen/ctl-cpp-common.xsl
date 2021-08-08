@@ -1151,6 +1151,7 @@ std::string <xsl:value-of select="$CLASSNAME"/>_SK::help() const noexcept
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 </xsl:template>
 
@@ -1414,7 +1415,7 @@ end_private(false)
         </xsl:if>
         </xsl:if>
     </xsl:for-each>
-    
+
     <xsl:for-each select="//msgmap/item">
     <xsl:if test="normalize-space(@default)=''">m_<xsl:value-of select="@name"/> = 0;
     prev_m_<xsl:value-of select="@name"/> = 0;
@@ -1423,10 +1424,10 @@ end_private(false)
     prev_m_<xsl:value-of select="@name"/> = <xsl:value-of select="@default"/>;
     </xsl:if>
     </xsl:for-each>
-    
+
     si.set_id(uniset3::DefaultObjectId);
     si.set_node(conf->getLocalNode());
-    
+
     sleep_msec = conf->getArgPInt("--" + argprefix + "sleep-msec","<xsl:call-template name="settings"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>", <xsl:call-template name="settings"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>);
 
     string s_resetTime("<xsl:call-template name="settings"><xsl:with-param name="varname" select="'resetMsgTime'"/></xsl:call-template>");
@@ -1465,7 +1466,7 @@ end_private(false)
     <xsl:if test="normalize-space(@no_vmonit)=''">
     vmonit(<xsl:value-of select="@name"/>);
     </xsl:if>
-    
+
     <xsl:if test="normalize-space(@min)!=''">
     if( <xsl:value-of select="@name"/> &lt; <xsl:value-of select="@min"/> )
     {
@@ -1493,7 +1494,6 @@ end_private(false)
     vmonit(activateTimeout);
     vmonit(smReadyTimeout);
     vmonit(smTestID);
-    
 
     // help надо выводить в конце, когда уже все переменные инициализированы по умолчанию
     if( uniset3::findArgParam("--" + argprefix + "help",uniset_conf()->getArgc(),uniset_conf()->getArgv()) != -1 )

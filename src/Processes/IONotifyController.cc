@@ -358,9 +358,6 @@ std::string IONotifyController::getStrType() const
 // ------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
-    if( request->id() != getId() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetManager::getInfo(context, request, &oinf);
 
@@ -1062,15 +1059,11 @@ grpc::Status IONotifyController::getThresholds(::grpc::ServerContext* context, c
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::getThresholdsList(::grpc::ServerContext* context, const ::uniset3::GetThresholdsListParams* request, ::uniset3::ThresholdsListSeq* response)
 {
-    if( getId() != request->id() )
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
     std::list< std::shared_ptr<USensorInfo> > slist;
 
     // ищем все датчики, у которых не пустой список порогов
     for_iolist([&slist]( std::shared_ptr<USensorInfo>& usi )
     {
-
         if( !usi->thresholds.empty() )
             slist.push_back(usi);
     });

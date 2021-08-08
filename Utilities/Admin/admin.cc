@@ -311,6 +311,9 @@ int main(int argc, char** argv)
                     UInterface ui(conf);
                     ui.initBackId(uniset3::AdminID);
 
+                    cout << "exists: " << ui.isExists(10) << endl;
+                    return 0;
+
                     verb = true;
                     Command cmd = Exist;
                     auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());
@@ -507,7 +510,7 @@ static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr
 
     cout.setf(ios::left, ios::adjustfield);
     grpc::ClientContext ctx;
-    std::shared_ptr<grpc::Channel> chan;
+    std::shared_ptr<UInterface::ORefInfo> chan;
     uniset3::ObjectRefList lst;
     google::protobuf::StringValue request;
     request.set_value(section);
@@ -561,9 +564,12 @@ static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr
                 continue;
             }
 
+            grpc::ClientContext octx;
+            chan->addMetaData(octx);
+
             auto oname = uniset3::ObjectIndex::getShortName(uniset_conf()->oind->getMapName(o.id()));
 
-            std::unique_ptr<UniSetObject_i::Stub> obj(UniSetObject_i::NewStub(chan));
+            std::unique_ptr<UniSetObject_i::Stub> obj(UniSetObject_i::NewStub(chan->c));
             uniset3::umessage::SystemMessage msg;
             header.set_consumer(o.id());
             header.set_type(uniset3::umessage::mtSysCommand);

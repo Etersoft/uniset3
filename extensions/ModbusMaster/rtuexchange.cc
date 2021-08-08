@@ -65,7 +65,6 @@ int main( int argc, char** argv )
         auto act = UniSetActivator::Instance();
         act->add(rs);
 
-        act->startup();
         act->run(false);
         return 0;
     }

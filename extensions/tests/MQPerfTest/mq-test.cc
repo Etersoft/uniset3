@@ -20,7 +20,6 @@ int main(int argc, const char** argv)
         auto tp = uniset3::make_object<TestProc>("TestProc1", "TestProc");
         act->add(tp);
 
-        act->startup();
         act->run(true);
 
         uniset3::umessage::SensorMessage smsg;

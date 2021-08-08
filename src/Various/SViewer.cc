@@ -125,8 +125,7 @@ void SViewer::readSection( const string& section, const string& secRoot )
 // ---------------------------------------------------------------------------
 void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
 {
-    grpc::ClientContext ctx;
-    std::shared_ptr<grpc::Channel> chan;
+    std::shared_ptr<UInterface::ORefInfo> chan;
     GetSensorsMapParams request;
     request.set_id(iocontrollerID);
     uniset3::SensorIOInfoSeq smap;
@@ -140,13 +139,15 @@ void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
 
         if( !chan )
         {
-            cerr  << "(getSensorsInfo): call grpc failed. ID=" << iocontrollerID << endl;
+            cerr  << "(getSensorsInfo): grpc resolve failed. Controller ID=" << iocontrollerID << endl;
             return;
         }
 
         try
         {
-            std::unique_ptr<IOController_i::Stub> ic(IOController_i::NewStub(chan));
+            grpc::ClientContext ctx;
+            chan->addMetaData(ctx);
+            std::unique_ptr<IOController_i::Stub> ic(IOController_i::NewStub(chan->c));
 
             auto status = ic->getSensorsMap(&ctx, request, &smap);
 
@@ -160,7 +161,9 @@ void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
 
         try
         {
-            std::unique_ptr<IONotifyController_i::Stub> inc(IONotifyController_i::NewStub(chan));
+            grpc::ClientContext ctx;
+            chan->addMetaData(ctx);
+            std::unique_ptr<IONotifyController_i::Stub> inc(IONotifyController_i::NewStub(chan->c));
             auto status = inc->getThresholdsList(&ctx, trequest, &tlist);
 
             if( status.ok() )

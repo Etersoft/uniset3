@@ -39,7 +39,11 @@ ComediInterface::ComediInterface( const std::string& dev, const std::string& cna
 // -----------------------------------------------------------------------------
 ComediInterface::~ComediInterface()
 {
-
+    if( card )
+    {
+	comedi_close(card);
+	card = nullptr;
+    }
 }
 // -----------------------------------------------------------------------------
 int ComediInterface::getAnalogChannel( int subdev, int channel, int range, int aref, int adelay ) const

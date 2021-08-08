@@ -307,7 +307,7 @@ TEST_CASE("[REST API: /lost]", "[restapi][lost]")
     //   "object":{"id":5003,"isActive":true,"lostMessages":0,"maxSizeOfMessageQueue":1000,"msgCount":0,"name":"SharedMemory","objectType":"IONotifyController"}
     //  }
 
-    // Сперва имитируем зазачика (который "исчезнет").
+    // Сперва имитируем заказчика (который "исчезнет").
     const ObjectId myID = 6013; // TestProc2
     const ObjectId sid = 122; // test sensor
 
@@ -318,7 +318,8 @@ TEST_CASE("[REST API: /lost]", "[restapi][lost]")
         shm->setValue(sid, i);
 
     // проверяем список "потерянных"
-    std::string s = shm->apiRequest("/lost");
+    const std::string s = shm->apiRequest("/lost");
+
     Poco::JSON::Parser parser;
     auto result = parser.parse(s);
     Poco::JSON::Object::Ptr json = result.extract<Poco::JSON::Object::Ptr>();
@@ -327,10 +328,19 @@ TEST_CASE("[REST API: /lost]", "[restapi][lost]")
     auto jarr = json->get("lost consumers").extract<Poco::JSON::Array::Ptr>();
     REQUIRE(jarr);
 
-    auto jret = jarr->getObject(0);
-    REQUIRE(jret);
+    bool myIdLost = false;
+    for( size_t i=0; i< jarr->size(); i++ )
+    {
+        auto jret = jarr->getObject(i);
+        REQUIRE(jret);
+        if( jret->get("id").convert<ObjectId>() == myID )
+        {
+            myIdLost = true;
+            break;
+        }
+    }
 
-    REQUIRE( jret->get("id").convert<ObjectId>() == myID );
+    REQUIRE( myIdLost );
 }
 // -----------------------------------------------------------------------------
 #endif // ifndef DISABLE_REST_API

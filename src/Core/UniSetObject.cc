@@ -338,9 +338,6 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     ::grpc::Status UniSetObject::exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response)
     {
-        if( request->id() != getId() )
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
         response->set_value(isExists());
         return ::grpc::Status::OK;
     }
@@ -352,9 +349,6 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     ::grpc::Status UniSetObject::getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response)
     {
-        if( request->id() != getId() )
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
         response->set_value(getStrType());
         return ::grpc::Status::OK;
     }

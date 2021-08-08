@@ -174,10 +174,12 @@ uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
     }
 
     BEG_FUNC(SMInterface::getSensorsMap)
-    auto shm = IOController_i::NewStub(oref);
+    auto shm = IOController_i::NewStub(oref->c);
     SensorIOInfoSeq seq;
     request.set_id(shmID);
-    auto status = shm->getSensorsMap(&clictx, request, &seq);
+    grpc::ClientContext ctx;
+    oref->addMetaData(ctx);
+    auto status = shm->getSensorsMap(&ctx, request, &seq);
 
     if( !status.ok() )
         throw SystemError(status.error_message());
@@ -204,10 +206,12 @@ uniset3::ThresholdsListSeq SMInterface::getThresholdsList()
     }
 
     BEG_FUNC(SMInterface::getThresholdsList)
-    auto shm = IONotifyController_i::NewStub(oref);
+    auto shm = IONotifyController_i::NewStub(oref->c);
     ThresholdsListSeq seq;
     request.set_id(shmID);
-    auto status = shm->getThresholdsList(&clictx, request, &seq);
+    grpc::ClientContext ctx;
+    oref->addMetaData(ctx);
+    auto status = shm->getThresholdsList(&ctx, request, &seq);
 
     if( !status.ok() )
         throw SystemError(status.error_message());
@@ -236,12 +240,14 @@ void SMInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefin
     }
 
     BEG_FUNC(SMInterface::setUndefinedState)
-    auto shm = IOController_i::NewStub(oref);
+    auto shm = IOController_i::NewStub(oref->c);
     SetUndefinedParams request;
     request.set_id(si.id());
     request.set_undefined(undefined);
     request.set_sup_id(sup_id);
-    auto status = shm->setUndefinedState(&clictx, request, &empty);
+    grpc::ClientContext ctx;
+    oref->addMetaData(ctx);
+    auto status = shm->setUndefinedState(&ctx, request, &empty);
 
     if( !status.ok() )
         throw SystemError(status.error_message());

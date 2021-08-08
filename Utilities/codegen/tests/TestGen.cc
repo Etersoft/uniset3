@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
+using namespace uniset3::umessage;
 // -----------------------------------------------------------------------------
 TestGen::TestGen( uniset3::ObjectId id, xmlNode* confnode ):
     TestGen_SK( id, confnode )
@@ -60,18 +61,18 @@ void TestGen::step()
 // -----------------------------------------------------------------------------
 void TestGen::sensorInfo( const SensorMessage* sm )
 {
-    if( sm->id == input1_s )
+    if( sm->id() == input1_s )
         out_output1_c = in_input1_s; // sm->state
 }
 // -----------------------------------------------------------------------------
-void TestGen::timerInfo( const uniset3::messages::TimerMessage* tm )
+void TestGen::timerInfo( const uniset3::umessage::TimerMessage* tm )
 {
-    if( tm->id == 1 )
+    if( tm->id() == 1 )
     {
         askTimer(1, 0);
         askTimer(2, 3000);
     }
-    else if( tm->id == 2 )
+    else if( tm->id() == 2 )
     {
         askTimer(1, 2000);
         askTimer(2, 0);
@@ -89,7 +90,7 @@ void TestGen::httpGetUserData( Poco::JSON::Object::Ptr& jdata )
 // -----------------------------------------------------------------------------
 #endif
 // -----------------------------------------------------------------------------
-void TestGen::sysCommand( const uniset3::messages::SystemMessage* sm )
+void TestGen::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     if( sm->cmd() == SystemMessage::StartUp )
         askTimer(1, 2000);

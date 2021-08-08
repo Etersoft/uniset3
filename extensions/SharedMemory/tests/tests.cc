@@ -15,6 +15,7 @@ using namespace uniset3;
 using namespace uniset3::extensions;
 // --------------------------------------------------------------------------
 std::shared_ptr<TestObject> obj;
+ObjectId shmID;
 // --------------------------------------------------------------------------
 int main(int argc, const char* argv[] )
 {
@@ -42,6 +43,8 @@ int main(int argc, const char* argv[] )
 
         if( !shm )
             return 1;
+
+        shmID = shm->getId();
 
         auto act = UniSetActivator::Instance();
 
@@ -71,7 +74,6 @@ int main(int argc, const char* argv[] )
 
         obj = make_shared<TestObject>(o_id, o_node);
         act->add(obj);
-        act->startup();
         act->run(true);
 
         int tout = 6000;

@@ -44,7 +44,6 @@ int main(int argc, const char* argv[] )
         auto nullsm = make_shared<NullSM>(ns_id, "lp-configure.xml");
         act->add(nullsm);
 
-        act->startup();
         act->run(true);
 
         int tout = 6000;

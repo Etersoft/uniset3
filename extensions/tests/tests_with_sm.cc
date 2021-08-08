@@ -18,6 +18,7 @@ static shared_ptr<SMInterface> smi;
 static shared_ptr<SharedMemory> shm;
 static shared_ptr<UInterface> ui;
 static ObjectId myID = 6000;
+static ObjectId shmID = DefaultObjectId;
 // --------------------------------------------------------------------------
 shared_ptr<SharedMemory> shmInstance()
 {
@@ -70,10 +71,11 @@ int main(int argc, const char* argv[] )
         if( !shm )
             return 1;
 
+        shmID = shm->getId();
+
         auto act = UniSetActivator::Instance();
 
         act->add(shm);
-        act->startup();
         act->run(true);
 
         int tout = 6000;

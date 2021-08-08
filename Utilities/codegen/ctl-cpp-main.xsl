@@ -78,8 +78,6 @@ int main( int argc, const char** argv )
         auto act = UniSetActivator::Instance();
         act-&gt;add(obj);
 
-        SystemMessage sm(SystemMessage::StartUp); 
-        act-&gt;broadcast( sm.transport_msg() );
         act-&gt;run(false);
         return 0;
     }

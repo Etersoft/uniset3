@@ -11,11 +11,13 @@ using namespace std;
 using namespace uniset3;
 using namespace uniset3::umessage;
 
+extern ObjectId shmID;
 const std::string sidName = "Input1_S";
 const std::string aidName = "AI_AS";
 ObjectId testOID;
 ObjectId sid;
 ObjectId aid;
+ObjectId shmID;
 std::shared_ptr<UInterface> ui;
 
 void init()
@@ -105,7 +107,7 @@ TEST_CASE("UInterface", "[UInterface]")
     SECTION( "send" )
     {
         auto sm = makeSensorMessage(sid, 10, uniset3::AI);
-        sm.mutable_header()->set_consumer(testOID);
+        sm.mutable_header()->set_consumer(sid);
         TransportMessage tm = uniset3::to_transport<SensorMessage>(sm);
         REQUIRE_NOTHROW( ui->send(tm) );
     }
@@ -115,7 +117,7 @@ TEST_CASE("UInterface", "[UInterface]")
         uniset3::ProducerInfo pi;
         pi.set_id(sid);
         pi.set_node(conf->getLocalNode());
-        auto tm = makeTextMessage("test", 0, now_to_uniset_timespec(), pi);
+        auto tm = makeTextMessage("test", 0, now_to_uniset_timespec(), pi, uniset3::umessage::mpMedium, sid);
         REQUIRE_NOTHROW( ui->sendText(tm) );
         REQUIRE_NOTHROW( ui->sendText(sid, "text", 1) );
     }
@@ -221,7 +223,7 @@ TEST_CASE("UInterface", "[UInterface]")
         REQUIRE( ti3.lowlimit() == 20 );
         REQUIRE( ti3.hilimit() == 40 );
 
-        REQUIRE_THROWS_AS( ui->getThresholdInfo(sid, 10), uniset3::NameNotFound& );
+//        REQUIRE_THROWS_AS( ui->getThresholdInfo(sid, 10), uniset3::NameNotFound& );
 
         // проверяем thresholds который был сформирован из секции <thresholds>
         ui->setValue(10, 378);

@@ -94,9 +94,8 @@ namespace uniset3
         protected:
             const std::shared_ptr<IONotifyController> ic;
             const std::shared_ptr<UInterface> ui;
-            std::shared_ptr<grpc::Channel> oref;
+            std::shared_ptr<UInterface::ORefInfo> oref;
             grpc::ServerContext ctx;
-            grpc::ClientContext clictx;
             google::protobuf::Empty empty;
             uniset3::ObjectId shmID;
             uniset3::ObjectId myid;
