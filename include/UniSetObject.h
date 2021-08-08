@@ -151,6 +151,9 @@ namespace uniset3
             //! Деактивация объекта (переопределяется для необходимых действий при завершении работы)
             virtual bool deactivateObject();
 
+            //! Момент после активации всех объектов
+            virtual bool postActivateObjects();
+
             // прерывание работы всей программы (с вызовом shutdown)
             void uterminate();
 

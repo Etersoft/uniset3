@@ -593,6 +593,11 @@ namespace uniset3
         return true;
     }
     // ------------------------------------------------------------------------------------------
+    bool UniSetObject::postActivateObjects()
+    {
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
     bool UniSetObject::deactivateObject()
     {
         return true;

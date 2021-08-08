@@ -1832,20 +1832,30 @@ namespace uniset3
         }
     }
     // -----------------------------------------------------------------------------
+    bool MBExchange::postActivateObjects()
+    {
+        if( !UniSetObject::postActivateObjects() )
+            return false;
+
+        if( !shm->isLocalwork() )
+        {
+            mbconf->initDeviceList(uniset_conf()->getConfXML());
+            MBConfig::rtuQueryOptimization(mbconf->devices, mbconf->maxQueryCount);
+            initIterators();
+        }
+
+        return true;
+    }
+    // -----------------------------------------------------------------------------
     bool MBExchange::activateObject()
     {
-        // блокирование обработки Starsp
+        // блокирование обработки Startup
         // пока не пройдёт инициализация датчиков
         // см. sysCommand()
         {
             setProcActive(false);
             uniset3::uniset_rwmutex_rlock l(mutex_start);
             UniSetObject::activateObject();
-
-            if( !shm->isLocalwork() )
-                MBConfig::rtuQueryOptimization(mbconf->devices, mbconf->maxQueryCount);
-
-            initIterators();
             setProcActive(true);
         }
 
@@ -1872,9 +1882,6 @@ namespace uniset3
                 }
 
                 mbinfo << myname << "(sysCommand): device map size= " << mbconf->devices.size() << endl;
-
-                if( !shm->isLocalwork() )
-                    mbconf->initDeviceList(uniset_conf()->getConfXML());
 
                 if( !waitSMReady() )
                 {

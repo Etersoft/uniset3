@@ -513,19 +513,24 @@ void UNetExchange::sensorInfo( const uniset3::umessage::SensorMessage* sm )
         sender2->updateSensor( sm->id(), sm->value() );
 }
 // ------------------------------------------------------------------------------------------
-bool UNetExchange::activateObject()
+bool UNetExchange::postActivateObjects()
 {
-    // блокирование обработки Starsp
+    if( !UniSetObject::postActivateObjects() )
+        return false;
+
+    // блокирование обработки Startup
     // пока не пройдёт инициализация датчиков
     // см. sysCommand()
-    {
-        activated = false;
-        uniset3::uniset_rwmutex_wrlock l(mutex_start);
-        UniSetObject::activateObject();
-        initIterators();
-        activated = true;
-    }
-
+    uniset3::uniset_rwmutex_wrlock l(mutex_start);
+    initIterators();
+    activated = true;
+    return true;
+}
+// ------------------------------------------------------------------------------------------
+bool UNetExchange::activateObject()
+{
+    activated = false;
+    UniSetObject::activateObject();
     return true;
 }
 // ------------------------------------------------------------------------------------------

@@ -68,25 +68,38 @@ HttpResolver::HttpResolver( const string& name, int argc, const char* const* arg
     {
         ostringstream err;
         err << name << "(init): Not found confnode <HttpResolver name='" << name << "'...>";
-        rcrit << err.str() << endl;
+        cerr << err.str() << endl;
         throw uniset3::SystemError(err.str());
     }
 
     UniXML::iterator it(cnode);
 
-    UniXML::iterator dirIt = xml->findNode(xml->getFirstNode(), "LockDir");
+    auto lockDir = uniset3::getArgParam("--lockDir", argc, argv, "");
 
-    if( !dirIt )
+    if( lockDir.empty() )
+    {
+        UniXML::iterator dirIt = xml->findNode(xml->getFirstNode(), "LockDir");
+        if( !dirIt )
+        {
+            ostringstream err;
+            err << name << "(init): Not found confnode <LockDir name='..'/>";
+            cerr << err.str() << endl;
+            throw uniset3::SystemError(err.str());
+        }
+
+        lockDir = dirIt.getProp("name");
+    }
+
+    if( !uniset3::directory_exists(lockDir))
     {
         ostringstream err;
-        err << name << "(init): Not found confnode <LockDir name='..'/>";
-        rcrit << err.str() << endl;
+        err << name << "(init): directory '" << lockDir << "' not exist";
+        cerr << err.str() << endl;
         throw uniset3::SystemError(err.str());
     }
 
-
-    iorfile = make_shared<IORFile>(dirIt.getProp("name"));
-    rinfo << myname << "(init): IOR directory: " << dirIt.getProp("name") << endl;
+    iorfile = make_shared<IORFile>(lockDir);
+    rinfo << myname << "(init): IOR directory: " << lockDir << endl;
 
     httpHost = uniset3::getArgParam("--" + prefix + "host", argc, argv, it.getProp2("host", "0.0.0.0"));
     httpPort = uniset3::getArgInt("--" + prefix + "port", argc, argv, it.getProp2("port", "8008"));
@@ -280,17 +293,17 @@ std::string HttpResolver::httpTextResolve(  const std::string& query, const Poco
 {
     if( query.empty() )
     {
-        uwarn << myname << "undefined parameters for resolve" << endl;
+        rwarn << myname << "undefined parameters for resolve" << endl;
         return "";
     }
 
     if( uniset3::is_digit(query) )
     {
-        uinfo << myname << " resolve " << query << endl;
+        rinfo << myname << " resolve " << query << endl;
         return iorfile->getIOR( uniset3::uni_atoi(query) );
     }
 
-    uwarn << myname << "unknown parameter type '" << query << "'" << endl;
+    rwarn << myname << "unknown parameter type '" << query << "'" << endl;
     return "";
 }
 // -----------------------------------------------------------------------------

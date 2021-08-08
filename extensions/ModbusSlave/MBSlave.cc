@@ -1145,6 +1145,21 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
+    bool MBSlave::postActivateObjects()
+    {
+        if( !UniSetObject::activateObject() )
+            return false;
+
+        // блокирование обработки StartUp
+        // пока не пройдёт инициализация датчиков
+        // см. sysCommand()
+        uniset3::uniset_rwmutex_wrlock l(mutex_start);
+        initIterators();
+        activated = true;
+        startNotifyEvent.notify_all();
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
     bool MBSlave::activateObject()
     {
         // блокирование обработки StartUp
@@ -1152,11 +1167,7 @@ namespace uniset3
         // см. sysCommand()
         {
             activated = false;
-            uniset3::uniset_rwmutex_wrlock l(mutex_start);
             UniSetObject::activateObject();
-            initIterators();
-            activated = true;
-            startNotifyEvent.notify_all();
         }
 
         return true;

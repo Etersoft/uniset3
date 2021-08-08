@@ -329,6 +329,7 @@ namespace uniset3
             virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
+            virtual bool postActivateObjects() override;
 
             // начальная инициализация выходов
             void initOutputs();

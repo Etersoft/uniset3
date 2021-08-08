@@ -8,6 +8,11 @@ function create_lock_dir()
     mkdir -p ${ULOCKDIR}
 }
 
+function local_exit()
+{
+    echo "exit.."
+}
+
 atexit()
 {
     local rc=$?
@@ -15,8 +20,12 @@ atexit()
 
     [ -d "$ULOCKDIR" ] && rm -rf $ULOCKDIR
 
+    local_exit
+
     exit $rc
 }
+
+
 
 function init_testsuite()
 {

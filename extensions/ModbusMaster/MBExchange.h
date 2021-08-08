@@ -94,6 +94,7 @@ namespace uniset3
             virtual void initOutput();
             virtual bool deactivateObject() override;
             virtual bool activateObject() override;
+            virtual bool postActivateObjects() override;
             virtual void initIterators();
             virtual void initValues();
             virtual bool reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& mbconf );

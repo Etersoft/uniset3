@@ -877,19 +877,22 @@ namespace uniset3
         return true;
     }
     // ------------------------------------------------------------------------------------------
+    bool IOControl::postActivateObjects()
+    {
+        if( !UniSetObject::postActivateObjects() )
+            return false;
 
+        activated = true;
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
     bool IOControl::activateObject()
     {
         // блокирование обработки Startup
         // пока не пройдёт инициализация датчиков
         // см. sysCommand()
-        {
-            activated = false;
-            UniSetObject::activateObject();
-            activated = true;
-        }
-
-        return true;
+        activated = false;
+        return UniSetObject::activateObject();
     }
     // ------------------------------------------------------------------------------------------
     bool IOControl::deactivateObject()

@@ -2,24 +2,21 @@
 
 HTTP_RESOLVER_PID=
 
-function atexit()
-{
-	trap - EXIT
-
-	[ -n "$HTTP_RESOLVER_PID" ] && kill $HTTP_RESOLVER_PID 2>/dev/null
-	sleep 3
-	[ -n "$HTTP_RESOLVER_PID" ] && kill -9 $HTTP_RESOLVER_PID 2>/dev/null
-
-	exit $RET
-}
-
-trap atexit EXIT
-
 . ./testsuite-functions.sh
+
+function local_exit()
+{
+    [ -n "$HTTP_RESOLVER_PID" ] && kill $HTTP_RESOLVER_PID 2>/dev/null
+    sleep 3
+    [ -n "$HTTP_RESOLVER_PID" ] && kill -9 $HTTP_RESOLVER_PID 2>/dev/null
+}
 
 init_testsuite || exit 1
 
-../uniset3-httpresolver --confile uresolver-test-configure.xml &
+
+../uniset3-httpresolver --confile uresolver-test-configure.xml --lockDir ${ULOCKDIR} &
+# --httpresolver-log-add-levels any &
+
 HTTP_RESOLVER_PID=$!
 
 sleep 5

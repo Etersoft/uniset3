@@ -260,6 +260,7 @@ namespace uniset3
 
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
+            virtual bool postActivateObjects() override;
 
             // действия при завершении работы
             void termSenders();

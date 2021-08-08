@@ -16,6 +16,13 @@ enum ErrorCode {
     errUndefined = 3;  /*!< Значение не определено (например: обрыв датчика) */
 }
 
+message UndefinedDetails
+{
+   int64 sid = 1;
+   int64 value = 2;
+}
+
+
 /*! Информация о датчике */
 message SensorInfo
 {
@@ -84,7 +91,7 @@ message SensorIOInfo
     bool blocked = 3;                  /*!< данное значение блокировано другим */
     bool frozen = 4;                   /*!< данное значение "заморожено" */
     int64 real_value = 5;              /*!< запомненное состояние, до блокировки или заморозки */
-    uniset3.IOType type = 6;     /*!< тип */
+    uniset3.IOType type = 6;     /*!< тиNewStub(oref)п */
     int32 priority = 7;                /*!< приоритет уведомления */
     SensorInfo si = 8;
     int64 default_val = 9;             /*!< значение по умолчанию */

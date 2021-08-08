@@ -136,9 +136,14 @@ void IOController::activateInit()
         response->set_value(localGetValue(li, request->id()));
         return grpc::Status::OK;
     }
-    catch (...)
+    catch( const IOController::Undefined& ex )
     {
+        UndefinedDetails d;
+        d.set_sid(request->id());
+        d.set_value(ex.value);
+        return grpc::Status(grpc::StatusCode::UNKNOWN, ex.what(), d.SerializeAsString());
     }
+    catch( ... ){}
 
     ostringstream err;
     err << "(IOController::getValue): sid=" << request->id() << " not found";
@@ -173,7 +178,7 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
 
         if( usi->sinf.undefined() )
         {
-            auto ex = Undefined();
+            auto ex = IOController::Undefined();
             ex.value = usi->sinf.value();
             throw ex;
         }
@@ -191,7 +196,15 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
 grpc::Status IOController::setUndefinedState(::grpc::ServerContext* context, const ::uniset3::SetUndefinedParams* request, ::google::protobuf::Empty* response)
 {
     auto li = ioList.end();
-    localSetUndefinedState( li, request->undefined(), request->id() );
+    try
+    {
+        localSetUndefinedState( li, request->undefined(), request->id() );
+    }
+    catch( uniset3::NameNotFound& ex )
+    {
+        return grpc::Status(grpc::StatusCode::NOT_FOUND, ex.what());
+    }
+
     return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------

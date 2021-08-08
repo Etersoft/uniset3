@@ -28,6 +28,7 @@
 #include "IOController.grpc.pb.h"
 #include "UniSetObject.grpc.pb.h"
 #include "UHelpers.h"
+#include "IOController.h"
 
 // -----------------------------------------------------------------------------
 namespace uniset3
@@ -115,11 +116,25 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    if( st.error_code() == grpc::StatusCode::UNKNOWN )
+                    {
+                        uniset3::IOController::Undefined ex(st.error_message());
+                        UndefinedDetails d;
+                        if( d.ParseFromString(st.error_details()) )
+                            ex.value = d.value();
+
+                        throw ex;
+                    }
                 }
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
+        }
+        catch( const uniset3::IOController::Undefined& ex )
+        {
+            throw ex;
         }
         catch( const std::exception& ex )
         {

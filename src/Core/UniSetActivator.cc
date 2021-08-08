@@ -236,6 +236,8 @@ namespace uniset3
         for( auto&& o : objects )
             o.second->activate();
 
+        for( auto&& o : objects )
+            o.second->postActivateObjects();
 
         startup();
 
