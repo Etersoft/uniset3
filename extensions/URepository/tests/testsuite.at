@@ -2,6 +2,6 @@ m4_include(package.m4)
 
 AT_COLOR_TESTS
 
-AT_INIT([HttpResolver tests])
+AT_INIT([URepository tests])
 
-m4_include(uresolver-tests.at)
+m4_include(urepository-tests.at)

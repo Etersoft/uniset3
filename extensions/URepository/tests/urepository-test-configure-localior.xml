@@ -23,7 +23,7 @@
 		<LockDir name="./"/>
 		<Services></Services>
 		<LocalIOR name="1"/>
-		<HttpResolver name="HttpResolver" port="8008"/>
+		<URepository name="URepository" port="8111"/>
 	</UniSet>
 	<dlog name="dlog"/>
 	<settings>

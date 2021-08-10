@@ -451,6 +451,7 @@ if test ${buildtests} = true; then
 	AC_CONFIG_TESTDIR(extensions/IOControl/tests)
 	AC_CONFIG_TESTDIR(extensions/LogDB/tests)
 	AC_CONFIG_TESTDIR(extensions/HttpResolver/tests)
+	AC_CONFIG_TESTDIR(extensions/URepository/tests)
 
 	TESTSUITE_DIR="\$(top_builddir)/testsuite"
 	AC_SUBST(TESTSUITE_DIR)

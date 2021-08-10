@@ -24,11 +24,6 @@ static void InitTest()
         CHECK( ui->getObjectIndex() != nullptr );
         CHECK( ui->getConf() == conf );
     }
-
-    REQUIRE( conf->getHttpResovlerPort() == 8008 );
-    REQUIRE( conf->isLocalIOR() );
-    REQUIRE_NOTHROW( ui->resolve(TestProc) );
-    REQUIRE( ui->isExists(TestProc) );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("HttpResolver: resolve", "[urepository][ui]")

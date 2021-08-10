@@ -25,7 +25,9 @@
 #include "UniSetTypes.h"
 #include "Mutex.h"
 #include "DebugStream.h"
+#include "IORFile.h"
 #include "URepository.grpc.pb.h"
+
 // -------------------------------------------------------------------------
 namespace uniset3
 {
@@ -88,6 +90,8 @@ namespace uniset3
 
             uniset3::uniset_rwmutex omutex;
             std::unordered_map<uniset3::ObjectId, uniset3::ObjectRef> omap;
+            std::shared_ptr<IORFile> iorfile;
+            bool localIOR;
 
             std::shared_ptr<DebugStream> rlog;
 

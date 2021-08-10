@@ -72,11 +72,40 @@ URepository::URepository( const string& name, int argc, const char* const* argv,
     {
         ostringstream err;
         err << name << "(init): Not found confnode <URepository name='" << name << "'...>";
-        rcrit << err.str() << endl;
+        cerr << err.str() << endl;
         throw uniset3::SystemError(err.str());
     }
 
     UniXML::iterator it(cnode);
+
+    auto lockDir = uniset3::getArgParam("--lockDir", argc, argv, "");
+
+    if( lockDir.empty() )
+    {
+        UniXML::iterator dirIt = xml->findNode(xml->getFirstNode(), "LockDir");
+        if( !dirIt )
+        {
+            ostringstream err;
+            err << name << "(init): Not found confnode <LockDir name='..'/>";
+            cerr << err.str() << endl;
+            throw uniset3::SystemError(err.str());
+        }
+
+        lockDir = dirIt.getProp("name");
+    }
+
+    iorfile = make_shared<IORFile>(lockDir);
+
+    if( findArgParam("--localIOR", argc, argv) != -1 )
+        localIOR = true;
+    else
+    {
+        UniXML::iterator locIt = xml->findNode(xml->getFirstNode(), "LocalIOR");
+        if( locIt )
+            localIOR = locIt.getIntProp("name");
+    }
+
+    rinfo << myname << "(init): localIOR=" << localIOR << " IOR directory: " << lockDir << endl;
 
     addr = it.getProp2("ip", "0.0.0.0");
     auto port = it.getPIntProp("port", 8111);
@@ -158,7 +187,24 @@ std::string URepository::status()
 // -----------------------------------------------------------------------------
 grpc::Status URepository::resolve(::grpc::ServerContext* context, const ::google::protobuf::Int64Value* request, ::uniset3::ObjectRef* response)
 {
-//    rinfo << "call resolve id=" << request->value() << endl;
+    rinfo << myname << "(resolve): id=" << request->value() << "[localIOR=" << localIOR << "]" << endl;
+
+    if( localIOR )
+    {
+        try
+        {
+            *response = iorfile->getRef(request->value());
+            return grpc::Status::OK;
+        }
+        catch(ORepFailed& ex )
+        {
+            return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
+        }
+        catch(...){}
+
+        return grpc::Status(grpc::StatusCode::INTERNAL, "");
+    }
+
     uniset3::uniset_rwmutex_rlock l(omutex);
     auto i = omap.find(request->value());
     if( i!=omap.end() )
