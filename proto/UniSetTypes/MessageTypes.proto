@@ -17,17 +17,19 @@ enum Priority
 
 message MessageHeader
 {
-    Priority priority = 2;
-    int64 node = 3;
-    int64 supplier = 4;
-    int64 consumer = 5;
-    Timespec ts = 6;
+    Priority priority = 1;
+    int64 node = 2;
+    int64 supplier = 3;
+    int64 consumer = 4;
+    Timespec ts = 5;
 }
 
 message TransportMessage
 {
-    MessageHeader header = 1;
-    google.protobuf.Any data = 2;
+    Priority priority = 1;
+    int64 supplier = 2;
+    int64 consumer = 3;
+    google.protobuf.Any data = 4;
 }
 
 message SensorMessage

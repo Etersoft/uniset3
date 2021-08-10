@@ -762,7 +762,7 @@ namespace uniset3
     // -------------------------------------------------------------------------------------------
     void UInterface::send(const uniset3::umessage::TransportMessage& msg, uniset3::ObjectId node)
     {
-        ObjectId id = msg.header().consumer();
+        ObjectId id = msg.consumer();
 
         if( id == uniset3::DefaultObjectId )
             throw uniset3::ORepFailed("UI(send): ERROR: id=uniset3::DefaultObjectId");

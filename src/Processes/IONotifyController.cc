@@ -648,7 +648,7 @@ void IONotifyController::send( ConsumerListInfo& lst, const uniset3::umessage::S
         {
             try
             {
-                tmsg.mutable_header()->set_consumer(li->ci.id());
+                tmsg.set_consumer(li->ci.id());
                 ui->send(tmsg, li->ci.node());
                 li->smCount++;
                 li->attempt = maxAttemtps; // reinit attempts

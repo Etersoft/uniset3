@@ -60,28 +60,28 @@ TEST_CASE( "UObject: priority umessage", "[uobject]" )
     // но так же контролируем что порядок извлечения правильный
     // в порядке поступления в очередь
     auto m = uobj->getOneMessage();
-    REQUIRE( m->header().priority() == umessage::mpHigh );
-    REQUIRE( m->header().consumer() == 300 );
+    REQUIRE( m->priority() == umessage::mpHigh );
+    REQUIRE( m->consumer() == 300 );
     m = uobj->getOneMessage();
-    REQUIRE( m->header().priority() == umessage::mpHigh );
-    REQUIRE( m->header().consumer() == 301 );
+    REQUIRE( m->priority() == umessage::mpHigh );
+    REQUIRE( m->consumer() == 301 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->header().priority() == umessage::mpMedium );
-    REQUIRE( m->header().consumer() == 200 );
+    REQUIRE( m->priority() == umessage::mpMedium );
+    REQUIRE( m->consumer() == 200 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->header().priority() == umessage::mpLow );
-    REQUIRE( m->header().consumer() == 100 );
+    REQUIRE( m->priority() == umessage::mpLow );
+    REQUIRE( m->consumer() == 100 );
 
     pushMessage(201, umessage::mpMedium);
     m = uobj->getOneMessage();
-    REQUIRE( m->header().priority() == umessage::mpMedium );
-    REQUIRE( m->header().consumer() == 201 );
+    REQUIRE( m->priority() == umessage::mpMedium );
+    REQUIRE( m->consumer() == 201 );
 
     m = uobj->getOneMessage();
-    REQUIRE( m->header().priority() == umessage::mpLow );
-    REQUIRE( m->header().consumer() == 101 );
+    REQUIRE( m->priority() == umessage::mpLow );
+    REQUIRE( m->consumer() == 101 );
 
     REQUIRE( uobj->mqEmpty() == true );
 }

@@ -76,14 +76,17 @@ timeout_t LT_Object::checkTimers( UniSetObject* obj )
 			sleepTime = UniSetTimer::WaitUpTime;
 
             umessage::TransportMessage tm;
-            auto header = tm.mutable_header();
+            tm.set_supplier(obj->getId());
+            tm.set_consumer(obj->getId());
+
+            umessage::TimerMessage tmsg;
+            auto header = tmsg.mutable_header();
             header->set_node(uniset_conf()->getLocalNode());
             header->set_supplier(obj->getId());
             header->set_consumer(obj->getId());
             auto ts = uniset3::now_to_uniset_timespec();
             (*header->mutable_ts()) = ts;
 
-            umessage::TimerMessage tmsg;
             grpc::ServerContext context;
             google::protobuf::Empty empty;
 
@@ -91,9 +94,9 @@ timeout_t LT_Object::checkTimers( UniSetObject* obj )
 			{
 				if( li->tmr.checkTime() )
                 {
-                    tm.mutable_header()->set_priority(li->priority);
+                    tm.set_priority(li->priority);
+                    tmsg.mutable_header()->set_priority(li->priority);
                     tmsg.set_id(li->id);
-                    *(tmsg.mutable_header()) = tm.header();
                     tm.mutable_data()->PackFrom(tmsg);
 
                     // помещаем себе в очередь сообщение

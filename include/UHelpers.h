@@ -125,7 +125,9 @@ namespace uniset3
             uniset3::umessage::TransportMessage to_transport( const TMessage& m )
     {
         uniset3::umessage::TransportMessage tm;
-        *(tm.mutable_header()) = m.header();
+        tm.set_priority(m.header().priority());
+        tm.set_consumer(m.header().consumer());
+        tm.set_supplier(m.header().supplier());
         tm.mutable_data()->PackFrom(m);
         return tm;
     }

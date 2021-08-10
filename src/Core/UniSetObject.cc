@@ -381,11 +381,11 @@ namespace uniset3
         // make copy
         auto vm = make_shared<umessage::TransportMessage>(*request);
 
-        if( request->header().priority() == umessage::mpMedium )
+        if( request->priority() == umessage::mpMedium )
             mqueueMedium.push(vm);
-        else if( request->header().priority() == umessage::mpHigh )
+        else if( request->priority() == umessage::mpHigh )
             mqueueHi.push(vm);
-        else if( request->header().priority() == umessage::mpLow )
+        else if( request->priority() == umessage::mpLow )
             mqueueLow.push(vm);
         else // на всякий по умолчанию medium
             mqueueMedium.push(vm);

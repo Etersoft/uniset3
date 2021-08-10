@@ -605,7 +605,7 @@ namespace uniset3
         for( const auto& it : elst )
         {
             bool ok = false;
-            tm.mutable_header()->set_consumer(it);
+            tm.set_consumer(it);
 
             for( size_t i = 0; i < 2; i++ )
             {
