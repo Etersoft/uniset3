@@ -6,7 +6,7 @@ if HAVE_EXTENTIONS
 SUBDIRS = lib include SharedMemory SharedMemory/tests IOControl IOControl/tests LogicProcessor LogicProcessor/tests \
 	ModbusMaster  ModbusSlave  SMViewer UNetUDP UNetUDP/tests \
 	DBServer-MySQL DBServer-SQLite DBServer-PostgreSQL MQTTPublisher \
-	RRDServer tests ModbusMaster/tests ModbusSlave/tests LogDB LogDB/tests \
+	tests ModbusMaster/tests ModbusSlave/tests LogDB LogDB/tests \
 	Backend-OpenTSDB HttpResolver HttpResolver/tests URepository URepository/tests UWebSocketGate UWebSocketGate/tests
 
 

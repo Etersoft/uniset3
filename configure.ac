@@ -603,8 +603,6 @@ AC_CONFIG_FILES([Makefile
 				 extensions/SharedMemory/Makefile
 				 extensions/SharedMemory/tests/Makefile
 				 extensions/SharedMemory/libUniSet3SharedMemory.pc
-				 extensions/RRDServer/Makefile
-				 extensions/RRDServer/libUniSet3RRDServer.pc
 				 extensions/MQTTPublisher/Makefile
 				 extensions/MQTTPublisher/libUniSet3MQTTPublisher.pc
 				 extensions/Backend-OpenTSDB/Makefile
