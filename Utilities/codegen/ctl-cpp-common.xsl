@@ -281,7 +281,6 @@
         virtual bool activateObject() override;
         virtual bool deactivateObject() override;
         virtual std::string getMonitInfo() const { return ""; } /*!&lt; пользовательская информация выводимая в getInfo() */
-        virtual std::string getTypeOfMessage( int t ) const { return uniset3::strTypeOfMessage(t); } /*!&lt; получение названия типа сообщения. Используется в getInfo() */
 <xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
 #ifndef DISABLE_REST_API
         virtual void httpGetUserData( Poco::JSON::Object::Ptr&amp; jdata ){} /*!&lt;  для пользовательских данных в httpGet() */
@@ -428,7 +427,7 @@
         std::unordered_map&lt;const uniset3::ObjectId,size_t, StatHashFn&gt; smStat; /*!&lt; количество сообщений по датчикам */
         size_t processingMessageCatchCount = { 0 }; /*!&lt; количество исключений пойманных в processingMessage */
 
-        std::unordered_map&lt;long,size_t&gt; msgTypeStat; /*!&lt; количество сообщений по типам */
+        std::unordered_map&lt;std::string,size_t&gt; msgTypeStat; /*!&lt; количество сообщений по типам */
 
         std::string ostate = { "" }; /*!&lt; состояние процесса (выводится в getInfo()) */
         </xsl:if>
@@ -446,61 +445,57 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::u
     try
     {
         <xsl:if test="normalize-space($STAT)='1'">
-        msgTypeStat[_msg-&gt;header().type()] += 1;
+        msgTypeStat[_msg->data().value()] += 1;
         </xsl:if>
-        switch( _msg-&gt;header().type() )
+        if( _msg->data().Is&lt;umessage::SensorMessage&gt;() )
         {
-            case uniset3::umessage::mtSensorInfo:
-            {
-                uniset3::umessage::SensorMessage sm;
-                if( !sm.ParseFromArray(_msg-&gt;data().data(), _msg-&gt;data().size()) )
-                {
-                    mycrit  &lt;&lt; myname &lt;&lt; "(processingMessage): SensorInfo: parse error" &lt;&lt; endl;
-                    return;
-                }
+             uniset3::umessage::SensorMessage sm;
+             if( !_msg->data().UnpackTo(&amp;sm) )
+             {
+                 mycrit  &lt;&lt; myname &lt;&lt; "(processingMessage): SensorInfo: parse error" &lt;&lt; endl;
+                 return;
+             }
 
-                <xsl:if test="normalize-space($STAT)='1'">
-                smStat[sm.id()] += 1;
-                </xsl:if>
-                preSensorInfo(&amp;sm);
-            }
-            break;
-
-            case uniset3::umessage::mtTimer:
-            {
-                uniset3::umessage::TimerMessage tm;
-                if( !tm.ParseFromArray(_msg-&gt;data().data(), _msg-&gt;data().size()) )
-                {
-                    mycrit  &lt;&lt; myname &lt;&lt; "(processingMessage): TimerInfo: parse error" &lt;&lt; endl;
-                    return;
-                }
-
-                preTimerInfo(&amp;tm);
-            }
-            break;
-
-            case uniset3::umessage::mtSysCommand:
-            {
-                uniset3::umessage::SystemMessage m;
-                if( !m.ParseFromArray(_msg-&gt;data().data(), _msg-&gt;data().size()) )
-                {
-                    mycrit  &lt;&lt; myname &lt;&lt; "(processingMessage): SysCommand: parse error" &lt;&lt; endl;
-                    return;
-                }
-
-                preSysCommand(&amp;m);
-            }
-            break;
-
-            default:
-            <xsl:choose>
-                  <xsl:when test="normalize-space($BASECLASS)='UniSetObject'">    UniSetObject::processingMessage(_msg);</xsl:when>
-                <xsl:when test="normalize-space($BASECLASS)='UniSetManager'">    UniSetManager::processingMessage(_msg);</xsl:when>
-                <xsl:when test="normalize-space($BASECLASS)!=''">    <xsl:value-of select="normalize-space($BASECLASS)"/>::processingMessage(_msg);</xsl:when>
-                <xsl:when test="normalize-space($BASECLASS)=''">    UniSetObject::processingMessage(_msg);</xsl:when>
-            </xsl:choose>
-                break;
+             <xsl:if test="normalize-space($STAT)='1'">
+             smStat[sm.id()] += 1;
+             </xsl:if>
+             preSensorInfo(&amp;sm);
+             return;
         }
+
+        if( _msg->data().Is&lt;umessage::TimerMessage&gt;() )
+        {
+             uniset3::umessage::TimerMessage tm;
+             if( !_msg->data().UnpackTo(&amp;tm) )
+             {
+                 mycrit  &lt;&lt; myname &lt;&lt; "(processingMessage): TimerInfo: parse error" &lt;&lt; endl;
+                 return;
+            }
+
+            preTimerInfo(&amp;tm);
+            return;
+        }
+
+        if( _msg->data().Is&lt;umessage::SystemMessage&gt;() )
+        {
+
+            uniset3::umessage::SystemMessage m;
+            if( !_msg->data().UnpackTo(&amp;m) )
+            {
+                mycrit  &lt;&lt; myname &lt;&lt; "(processingMessage): SysCommand: parse error" &lt;&lt; endl;
+                return;
+            }
+
+            preSysCommand(&amp;m);
+            return;
+        }
+
+        <xsl:choose>
+           <xsl:when test="normalize-space($BASECLASS)='UniSetObject'">    UniSetObject::processingMessage(_msg);</xsl:when>
+           <xsl:when test="normalize-space($BASECLASS)='UniSetManager'">    UniSetManager::processingMessage(_msg);</xsl:when>
+           <xsl:when test="normalize-space($BASECLASS)!=''">    <xsl:value-of select="normalize-space($BASECLASS)"/>::processingMessage(_msg);</xsl:when>
+           <xsl:when test="normalize-space($BASECLASS)=''">    UniSetObject::processingMessage(_msg);</xsl:when>
+        </xsl:choose>
     }
     catch( const std::exception&amp; ex )
     {
@@ -626,15 +621,15 @@ grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(::grpc::ServerConte
     google::protobuf::StringValue binfo;
     <xsl:if test="not(normalize-space($BASECLASS)='')">auto status = <xsl:value-of select="$BASECLASS"/>::getInfo(context, request, &amp;binfo);</xsl:if>
     <xsl:if test="normalize-space($BASECLASS)=''">auto status = UniSetObject::getInfo(context, request, &amp;binfo);</xsl:if>
-    
+
     if( !status.ok() )
         return status;
-    
+
     ostringstream inf;
-    
+
     inf &lt;&lt; binfo.value() &lt;&lt; endl;
     inf &lt;&lt; "process state: " &lt;&lt; ostate &lt;&lt; endl;
-    
+
     if( logserv /* &amp;&amp; userparam &lt; 0 */ )
     {
         inf &lt;&lt; "LogServer: " &lt;&lt; logserv_host &lt;&lt; ":" &lt;&lt; logserv_port 
@@ -644,17 +639,17 @@ grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(::grpc::ServerConte
     }
     else
         inf &lt;&lt; "LogServer: NONE" &lt;&lt; endl;
-    
+
     <xsl:if test="normalize-space($STAT)='1'">
     
     inf &lt;&lt; "statistics: " &lt;&lt; endl
         &lt;&lt; "  processingMessageCatchCount: " &lt;&lt; processingMessageCatchCount &lt;&lt; endl;
     inf &lt;&lt; "  Type of umessage: " &lt;&lt; endl;
     for( const auto&amp; s: msgTypeStat )
-        inf &lt;&lt; "    (" &lt;&lt; s.first &lt;&lt; ")" &lt;&lt; setw(10)  &lt;&lt; getTypeOfMessage(s.first) &lt;&lt; ": " &lt;&lt; setw(5) &lt;&lt; s.second &lt;&lt; endl;
+        inf &lt;&lt; "    (" &lt;&lt; setw(10) &lt;&lt; s.first &lt;&lt; "):" &lt;&lt; setw(5) &lt;&lt; s.second &lt;&lt; endl;
     inf &lt;&lt; endl;
     </xsl:if>
-    
+
     inf &lt;&lt; dumpIO() &lt;&lt; endl;
     inf &lt;&lt; endl;
     auto timers = getTimersList();
@@ -671,7 +666,7 @@ grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(::grpc::ServerConte
     inf &lt;&lt; vmon.pretty_str() &lt;&lt; endl;
     inf &lt;&lt; endl;
     inf &lt;&lt; getMonitInfo() &lt;&lt; endl;
-    
+
     response->set_value(inf.str());
     return grpc::Status::OK;
 }

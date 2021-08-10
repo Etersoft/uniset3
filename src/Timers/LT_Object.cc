@@ -77,7 +77,6 @@ timeout_t LT_Object::checkTimers( UniSetObject* obj )
 
             umessage::TransportMessage tm;
             auto header = tm.mutable_header();
-            header->set_type(umessage::mtTimer);
             header->set_node(uniset_conf()->getLocalNode());
             header->set_supplier(obj->getId());
             header->set_consumer(obj->getId());
@@ -95,7 +94,7 @@ timeout_t LT_Object::checkTimers( UniSetObject* obj )
                     tm.mutable_header()->set_priority(li->priority);
                     tmsg.set_id(li->id);
                     *(tmsg.mutable_header()) = tm.header();
-                    tm.set_data(tmsg.SerializeAsString());
+                    tm.mutable_data()->PackFrom(tmsg);
 
                     // помещаем себе в очередь сообщение
                     obj->push(&context, &tm, &empty);

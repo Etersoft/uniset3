@@ -91,9 +91,6 @@ namespace uniset3
 
     typedef std::list<std::string> ListObjectName;    /*!< Список объектов типа ObjectName */
 
-    std::string strTypeOfMessage( int type );
-    std::ostream& operator<<( std::ostream& os, const uniset3::umessage::TypeOfMessage& t );
-
     uniset3::IOType getIOType( const std::string& s ) noexcept;
     std::string iotype2str( const uniset3::IOType& t ) noexcept;
     std::ostream& operator<<( std::ostream& os, const uniset3::IOType t );
@@ -330,8 +327,7 @@ namespace uniset3
 
     // Всякие helper-ы
     // ---------------------------------------------------------------
-    umessage::MessageHeader makeMessageHeader(uniset3::umessage::TypeOfMessage t = uniset3::umessage::mtUnused,
-                                              uniset3::umessage::Priority p = uniset3::umessage::mpMedium);
+    umessage::MessageHeader makeMessageHeader( uniset3::umessage::Priority p = uniset3::umessage::mpMedium );
     umessage::SystemMessage makeSystemMessage(umessage::SystemMessage::Command cmd = umessage::SystemMessage::Unknown);
     umessage::SensorMessage makeSensorMessage(ObjectId sid, long value, uniset3::IOType type);
     umessage::TimerMessage makeTimerMessage(int tid=uniset3::DefaultTimerId, uniset3::umessage::Priority p = uniset3::umessage::mpMedium);

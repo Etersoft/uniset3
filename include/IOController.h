@@ -355,7 +355,6 @@ namespace uniset3
                 {
                     uniset3::umessage::SensorMessage sm;
                     auto header = sm.mutable_header();
-                    header->set_type(uniset3::umessage::mtSensorInfo);
                     header->set_priority((uniset3::umessage::Priority)sinf.priority());
                     header->set_node(sinf.si().node()); // uniset_conf()->getLocalNode());
                     header->set_supplier(sinf.supplier());

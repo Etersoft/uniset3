@@ -143,7 +143,7 @@ void IOController::activateInit()
         d.set_value(ex.value);
         return grpc::Status(grpc::StatusCode::UNKNOWN, ex.what(), d.SerializeAsString());
     }
-    catch( ... ){}
+    catch( ... ) {}
 
     ostringstream err;
     err << "(IOController::getValue): sid=" << request->id() << " not found";
@@ -196,6 +196,7 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
 grpc::Status IOController::setUndefinedState(::grpc::ServerContext* context, const ::uniset3::SetUndefinedParams* request, ::google::protobuf::Empty* response)
 {
     auto li = ioList.end();
+
     try
     {
         localSetUndefinedState( li, request->undefined(), request->id() );

@@ -77,6 +77,7 @@ uniset3::ObjectRef IORFile::getRef( const ObjectId id ) const
     ObjectRef oref;
     const string fname( getFileName(id) );
     ifstream ior_file(fname.c_str(), ios::binary);
+
     if( !ior_file )
         throw ORepFailed("(IORFile): can't open ior-file " + fname);
 

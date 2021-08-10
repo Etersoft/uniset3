@@ -177,7 +177,6 @@ namespace uniset3
 
             virtual void initDBServer() override;
             virtual void initDB( const std::unique_ptr<SQLiteInterface>& db ) {};
-            virtual void initDBTableMap( DBTableMap& tblMap ) {};
 
             virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
@@ -188,11 +187,6 @@ namespace uniset3
 
             bool writeToBase( const std::string& query );
             void createTables( SQLiteInterface* db );
-
-            inline std::string tblName(int key)
-            {
-                return tblMap[key];
-            }
 
             enum Timers
             {
@@ -216,10 +210,6 @@ namespace uniset3
 
             void flushBuffer();
             uniset3::uniset_rwmutex mqbuf;
-
-        private:
-            DBTableMap tblMap;
-
     };
     // ----------------------------------------------------------------------------------
 } // end of namespace uniset3

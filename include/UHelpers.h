@@ -121,12 +121,12 @@ namespace uniset3
     }
 
     // ---------------------------------------------------------------
-    template<class MessageType>
-    uniset3::umessage::TransportMessage to_transport( const MessageType& m )
+    template<class TMessage>
+            uniset3::umessage::TransportMessage to_transport( const TMessage& m )
     {
         uniset3::umessage::TransportMessage tm;
         *(tm.mutable_header()) = m.header();
-        tm.set_data(m.SerializeAsString());
+        tm.mutable_data()->PackFrom(m);
         return tm;
     }
     // ---------------------------------------------------------------

@@ -177,7 +177,6 @@ namespace uniset3
 
             virtual void initDBServer() override;
             virtual void initDB( const std::unique_ptr<MySQLInterface>& db ) {};
-            virtual void initDBTableMap(DBTableMap& tblMap) {};
 
             virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
@@ -188,11 +187,6 @@ namespace uniset3
 
             bool writeToBase( const std::string& query );
             void createTables( MySQLInterface* db );
-
-            inline std::string tblName( int key )
-            {
-                return tblMap[key].c_str();
-            }
 
             enum Timers
             {
@@ -218,7 +212,6 @@ namespace uniset3
             uniset3::uniset_rwmutex mqbuf;
 
         private:
-            DBTableMap tblMap;
 
     };
     // ----------------------------------------------------------------------------------

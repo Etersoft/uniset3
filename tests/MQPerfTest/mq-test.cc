@@ -74,7 +74,7 @@ int main(int argc, const char** argv)
             assert( msg != nullptr );
 
             uniset3::umessage::SensorMessage sm2;
-            assert(sm2.ParseFromArray(vm->data().data(), vm->data().size()) );
+            assert( vm->data().UnpackTo(&sm2) );
             assert( sm.id() == sm2.id() );
         }
 

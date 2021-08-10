@@ -121,6 +121,7 @@ namespace uniset3
                     {
                         uniset3::IOController::Undefined ex(st.error_message());
                         UndefinedDetails d;
+
                         if( d.ParseFromString(st.error_details()) )
                             ex.value = d.value();
 
@@ -821,7 +822,6 @@ namespace uniset3
 
         uniset3::umessage::TextMessage msg;
         auto header = msg.mutable_header();
-        header->set_type(uniset3::umessage::mtTextInfo);
         header->set_priority(uniset3::umessage::mpMedium);
         header->set_node(uconf->getLocalNode());
         header->set_supplier(myid);

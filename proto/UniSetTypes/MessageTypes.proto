@@ -5,21 +5,9 @@ package uniset3.umessage;
 option optimize_for = LITE_RUNTIME;
 // option cc_enable_arenas = true;
 // ---------------------------------------------------------------------------
+import "google/protobuf/any.proto";
 import "UniSetTypes.proto";
 // ---------------------------------------------------------------------------
-
-/*! Базовые типы сообщений */
-enum TypeOfMessage
-{
-    mtUnused = 0;       // Сообщение не содержит информации
-    mtSensorInfo = 1;
-    mtSysCommand = 2;   // Сообщение содержит системную команду
-    mtConfirm = 3;      // Сообщение содержит подтверждение
-    mtTimer = 4;        // Сообщения о срабатывании таймера
-    mtTextInfo = 5;     // текстовое сообщение
-    mtTheLastFieldOfTypeOfMessage = 6; // Обязательно оставьте последним
-}
-
 enum Priority
 {
     mpLow = 0;
@@ -29,7 +17,6 @@ enum Priority
 
 message MessageHeader
 {
-    TypeOfMessage type = 1;
     Priority priority = 2;
     int64 node = 3;
     int64 supplier = 4;
@@ -39,13 +26,13 @@ message MessageHeader
 
 message TransportMessage
 {
-    MessageHeader header = 100;
-    bytes data = 2;
+    MessageHeader header = 1;
+    google.protobuf.Any data = 2;
 }
 
 message SensorMessage
 {
-    MessageHeader header = 100;
+    MessageHeader header = 1;
     int64 id = 2;
     int64 value = 3;
     bool undefined = 4;

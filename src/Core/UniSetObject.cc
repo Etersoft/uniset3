@@ -40,6 +40,7 @@
 using namespace std;
 namespace uniset3
 {
+    using namespace uniset3::umessage;
 
 #define CREATE_TIMER    unisetstd::make_unique<PassiveCondTimer>();
     // new PassiveSysTimer();
@@ -760,71 +761,61 @@ namespace uniset3
     {
         try
         {
-            switch( msg->header().type() )
+            if( msg->data().Is<umessage::SensorMessage>() )
             {
-                case umessage::mtSensorInfo:
+                umessage::SensorMessage m;
+
+                if( !msg->data().UnpackTo(&m) )
                 {
-                    umessage::SensorMessage m;
-
-                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
-                    {
-                        ucrit << myname << "(processingMessage): SensorInfo: parse error" << endl;
-                        return;
-                    }
-
-                    sensorInfo(&m);
+                    ucrit << myname << "(processingMessage): SensorInfo: parse error" << endl;
+                    return;
                 }
-                break;
 
-                case umessage::mtTimer:
-                {
-                    umessage::TimerMessage m;
-
-                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
-                    {
-                        ucrit << myname << "(processingMessage): TimerInfo: parse error" << endl;
-                        return;
-                    }
-
-                    timerInfo(&m);
-                }
-                break;
-
-                case umessage::mtSysCommand:
-                {
-                    umessage::SystemMessage m;
-
-                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
-                    {
-                        ucrit << myname << "(processingMessage): SysCommand: parse error" << endl;
-                        return;
-                    }
-
-                    sysCommand(&m);
-                }
-                break;
-
-                case umessage::mtTextInfo:
-                {
-                    umessage::TextMessage m;
-
-                    if( !m.ParseFromArray(msg->data().data(), msg->data().size()) )
-                    {
-                        ucrit << myname << "(processingMessage): TextMessage: parse error" << endl;
-                        return;
-                    }
-
-                    onTextMessage( &m );
-                }
-                break;
-
-                default:
-                    break;
+                sensorInfo(&m);
+                return;
             }
-        }
-        catch( const uniset3::Exception& ex )
-        {
-            ucrit  << myname << "(processingMessage): " << ex << endl;
+
+            if( msg->data().Is<umessage::TimerMessage>() )
+            {
+                umessage::TimerMessage m;
+
+                if( !msg->data().UnpackTo(&m) )
+                {
+                    ucrit << myname << "(processingMessage): TimerInfo: parse error" << endl;
+                    return;
+                }
+
+                timerInfo(&m);
+                return;
+            }
+
+            if( msg->data().Is<umessage::SystemMessage>() )
+            {
+                umessage::SystemMessage m;
+
+                if( !msg->data().UnpackTo(&m) )
+                {
+                    ucrit << myname << "(processingMessage): SysCommand: parse error" << endl;
+                    return;
+                }
+
+                sysCommand(&m);
+                return;
+            }
+
+            if( msg->data().Is<umessage::TextMessage>() )
+            {
+                umessage::TextMessage m;
+
+                if( !msg->data().UnpackTo(&m) )
+                {
+                    ucrit << myname << "(processingMessage): TextMessage: parse error" << endl;
+                    return;
+                }
+
+                onTextMessage( &m );
+                return;
+            }
         }
         catch( const std::exception& ex )
         {

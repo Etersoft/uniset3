@@ -18,7 +18,6 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
     SECTION("Default consturctor")
     {
         auto sm = makeSensorMessage(DefaultObjectId,0,uniset3::DI);
-        CHECK( sm.header().type() == mtSensorInfo );
         CHECK( sm.header().priority() == mpMedium );
         CHECK( sm.header().node() == conf->getLocalNode() );
         CHECK( sm.header().supplier() == DefaultObjectId );
@@ -58,11 +57,8 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
 
         auto tm = uniset3::to_transport<SensorMessage>(sm);
 
-        REQUIRE(tm.header().type() == mtSensorInfo );
-
         SensorMessage sm2;
-        REQUIRE( sm2.ParseFromArray(tm.data().data(), tm.data().size()) );
-        REQUIRE( sm2.header().type() == mtSensorInfo );
+        REQUIRE( tm.data().UnpackTo(&sm2) );
         REQUIRE( sm2.id() == sid );
         REQUIRE( sm2.value() == val );
         REQUIRE( sm2.sensor_type() == uniset3::AI );
@@ -77,7 +73,6 @@ TEST_CASE("SystemMessage", "[basic][message types][SystemMessage]" )
     SECTION("Default consturctor")
     {
         SystemMessage sm = makeSystemMessage();
-        CHECK( sm.header().type() == mtSysCommand );
         CHECK( sm.header().priority() == mpHigh );
         CHECK( sm.header().node() == conf->getLocalNode() );
         CHECK( sm.header().supplier() == DefaultObjectId );
@@ -103,11 +98,9 @@ TEST_CASE("SystemMessage", "[basic][message types][SystemMessage]" )
         REQUIRE( sm.cmd() == cmd );
 
         auto tm = to_transport<SystemMessage>(sm);
-        REQUIRE(tm.header().type() == mtSysCommand );
 
         SystemMessage sm2;
-        REQUIRE( sm2.ParseFromArray(tm.data().data(), tm.data().size()) );
-        REQUIRE( sm2.header().type() == mtSysCommand );
+        REQUIRE( tm.data().UnpackTo(&sm2) );
         REQUIRE( sm2.cmd() == cmd );
         REQUIRE( sm2.data(0) == dat );
     }
@@ -121,7 +114,6 @@ TEST_CASE("TimerMessage", "[basic][message types][TimerMessage]" )
     SECTION("Default consturctor")
     {
         TimerMessage tm = makeTimerMessage();
-        CHECK( tm.header().type() == mtTimer );
         CHECK( tm.header().priority() == mpMedium );
         CHECK( tm.header().node() == conf->getLocalNode() );
         CHECK( tm.header().supplier() == DefaultObjectId );
@@ -144,11 +136,8 @@ TEST_CASE("TimerMessage", "[basic][message types][TimerMessage]" )
 
         auto m = to_transport<TimerMessage>(tm);
 
-        REQUIRE(m.header().type() == mtTimer );
-
         TimerMessage tm2;
-        REQUIRE( tm2.ParseFromArray(m.data().data(), m.data().size()) );
-        REQUIRE( tm2.header().type() == mtTimer );
+        REQUIRE( m.data().UnpackTo(&tm2) );
         REQUIRE( tm2.id() == tid );
     }
 }
@@ -169,7 +158,6 @@ TEST_CASE("ConfirmMessage", "[basic][message types][ConfirmMessage]" )
     SECTION("Default consturctor")
     {
         ConfirmMessage cm = makeConfirmMessage(sid, val, t_event, t_confirm);
-        CHECK( cm.header().type() == mtConfirm );
         CHECK( cm.header().priority() == mpMedium );
         CHECK( cm.header().node() == conf->getLocalNode() );
         CHECK( cm.header().supplier() == DefaultObjectId );
@@ -191,10 +179,9 @@ TEST_CASE("ConfirmMessage", "[basic][message types][ConfirmMessage]" )
         REQUIRE( equal(cm.confirm_ts(), t_confirm) );
 
         auto tm = to_transport<ConfirmMessage>(cm);
-        REQUIRE(tm.header().type() == mtConfirm );
 
         ConfirmMessage cm2;
-        REQUIRE( cm2.ParseFromArray(tm.data().data(), tm.data().size()) );
+        REQUIRE( tm.data().UnpackTo(&cm2) );
         REQUIRE( cm2.sensor_id() == sid );
         REQUIRE( cm2.sensor_value() == val );
         REQUIRE( equal(cm2.sensor_ts(), t_event) );
@@ -210,7 +197,6 @@ TEST_CASE("TextMessage", "[basic][message types][TextMessage]" )
     SECTION("Default consturctor")
     {
         TextMessage tm = makeTextMessage();
-        CHECK( tm.header().type() == mtTextInfo );
         CHECK( tm.header().priority() == mpMedium );
         CHECK( tm.header().node() == conf->getLocalNode() );
         CHECK( tm.header().supplier() == DefaultObjectId );
@@ -241,10 +227,9 @@ TEST_CASE("TextMessage", "[basic][message types][TextMessage]" )
         REQUIRE( tm.mtype() == 3 );
 
         auto m = to_transport<TextMessage>(tm);
-        REQUIRE( m.header().type() == mtTextInfo );
 
         TextMessage tm2;
-        REQUIRE( tm2.ParseFromArray(m.data().data(), m.data().size()) );
+        REQUIRE( m.data().UnpackTo(&tm2) );
         REQUIRE( tm2.header().consumer() == consumer );
         REQUIRE( tm2.header().node() == pi.node() );
         REQUIRE( tm2.header().supplier() == pi.id() );

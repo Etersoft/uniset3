@@ -87,27 +87,21 @@ DBServer::~DBServer()
 
 void DBServer::processingMessage( const uniset3::umessage::TransportMessage* msg )
 {
-    switch(msg->header().type())
+    if( msg->data().Is<umessage::ConfirmMessage>() )
     {
-        case umessage::mtConfirm:
+        umessage::ConfirmMessage cm;
+
+        if( !msg->data().UnpackTo(&cm) )
         {
-            umessage::ConfirmMessage cm;
-
-            if( !cm.ParseFromArray(msg->data().data(), msg->data().size()) )
-            {
-                ucrit << myname << "(processingMessage): Confirm: parse error" << endl;
-                return;
-            }
-
-            confirmInfo(&cm);
+            ucrit << myname << "(processingMessage): Confirm: parse error" << endl;
+            return;
         }
-        break;
 
-        default:
-            UniSetObject::processingMessage(msg);
-            break;
+        confirmInfo(&cm);
+        return;
     }
 
+    UniSetObject::processingMessage(msg);
 }
 //--------------------------------------------------------------------------------------------
 bool DBServer::activateObject()

@@ -464,6 +464,7 @@ namespace uniset3
                 lockDir = it.getProp("name");
 
                 const string tmp = getArgParam("--lockDir");
+
                 if( !tmp.empty() )
                     lockDir = tmp;
 

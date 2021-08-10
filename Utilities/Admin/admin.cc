@@ -572,7 +572,6 @@ static bool commandToAll( UInterface& ui, const string& section, std::shared_ptr
             std::unique_ptr<UniSetObject_i::Stub> obj(UniSetObject_i::NewStub(chan->c));
             uniset3::umessage::SystemMessage msg;
             header.set_consumer(o.id());
-            header.set_type(uniset3::umessage::mtSysCommand);
             *(msg.mutable_header()) = header;
 
             switch( cmd )

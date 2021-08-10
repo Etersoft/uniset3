@@ -81,7 +81,6 @@ namespace uniset3
 
             virtual void initDBServer() override;
             virtual void initDB( std::unique_ptr<PostgreSQLInterface>& db ) {};
-            virtual void initDBTableMap( DBTableMap& tblMap ) {};
 
             virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
@@ -93,11 +92,6 @@ namespace uniset3
 
             bool writeToBase( const std::string& query );
             void createTables( const std::shared_ptr<PostgreSQLInterface>& db );
-
-            inline std::string tblName(int key)
-            {
-                return tblMap[key];
-            }
 
             enum Timers
             {
@@ -123,8 +117,6 @@ namespace uniset3
                                                 , const InsertBuffer& ibuf );
 
         private:
-            DBTableMap tblMap;
-
             int PingTime = { 15000 };
             int ReconnectTime = { 30000 };
 

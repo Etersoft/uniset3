@@ -97,7 +97,7 @@ void DBServer_SQLite::confirmInfo( const uniset3::umessage::ConfirmMessage* cem 
     {
         ostringstream data;
 
-        data << "UPDATE " << tblName(cem->header().type())
+        data << "UPDATE main_history"
              << " SET confirm='" << cem->confirm_ts().sec() << "'"
              << " WHERE sensor_id='" << cem->sensor_id() << "'"
              << " AND date='" << dateToString(cem->sensor_ts().sec(), "-") << " '"
@@ -122,7 +122,7 @@ void DBServer_SQLite::onTextMessage( const TextMessage* msg )
     try
     {
         ostringstream data;
-        data << "INSERT INTO " << tblName(msg->header().type())
+        data << "INSERT INTO main_messages"
              << "(date, time, time_usec, text, mtype, node) VALUES( '"
              << dateToString(msg->header().ts().sec(), "-") << "','"   //  date
              << timeToString(msg->header().ts().sec(), ":") << "','"   //  time
@@ -221,7 +221,7 @@ void DBServer_SQLite::sensorInfo( const uniset3::umessage::SensorMessage* si )
 
         // см. DBTABLE AnalogSensors, DigitalSensors
         ostringstream data;
-        data << "INSERT INTO " << tblName(si->header().type())
+        data << "INSERT INTO main_history"
              << "(date, time, time_usec, sensor_id, value, node) VALUES( '"
              // Поля таблицы
              << dateToString(si->sm_ts().sec(), "-") << "','"   //  date
@@ -251,7 +251,6 @@ void DBServer_SQLite::initDBServer()
 
     if( connect_ok )
     {
-        initDBTableMap(tblMap);
         initDB(db);
         return;
     }
@@ -276,10 +275,6 @@ void DBServer_SQLite::initDBServer()
 
     dbinfo <<  myname << "(init): init connection.." << endl;
     string dbfile(conf->getProp(node, "dbfile"));
-
-    tblMap[uniset3::umessage::mtSensorInfo] = "main_history";
-    tblMap[uniset3::umessage::mtConfirm] = "main_history";
-    tblMap[uniset3::umessage::mtTextInfo] = "main_messages";
 
     PingTime = conf->getPIntProp(node, "pingTime", PingTime);
     ReconnectTime = conf->getPIntProp(node, "reconnectTime", ReconnectTime);
@@ -313,7 +308,6 @@ void DBServer_SQLite::initDBServer()
         askTimer(DBServer_SQLite::PingTimer, PingTime);
         //        createTables(db);
         initDB(db);
-        initDBTableMap(tblMap);
         flushBuffer();
     }
 }

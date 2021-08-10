@@ -138,24 +138,19 @@ void ProxyManager::processingMessage( const uniset3::umessage::TransportMessage*
 {
     try
     {
-        switch(msg->header().type())
+        if( msg->data().Is<umessage::SystemMessage>() )
         {
-            case umessage::mtSysCommand:
-                allMessage(msg);
-                break;
-
-            default:
-            {
-                auto it = omap.find(msg->header().consumer());
-
-                if( it != omap.end() )
-                    it->second->processingMessage(msg);
-                else
-                    ucrit << myname << "(processingMessage): не найден объект "
-                          << " consumer= " << msg->header().consumer() << endl;
-            }
-            break;
+            allMessage(msg);
+            return;
         }
+
+        auto it = omap.find(msg->header().consumer());
+
+        if( it != omap.end() )
+            it->second->processingMessage(msg);
+        else
+            ucrit << myname << "(processingMessage): не найден объект "
+                  << " consumer= " << msg->header().consumer() << endl;
     }
     catch( const uniset3::Exception& ex )
     {

@@ -95,7 +95,7 @@ void DBServer_PostgreSQL::confirmInfo( const uniset3::umessage::ConfirmMessage* 
     {
         ostringstream data;
 
-        data << "UPDATE " << tblName(cem->header().type())
+        data << "UPDATE main_history"
              << " SET confirm='" << cem->confirm_ts().sec() << "'"
              << " WHERE sensor_id='" << cem->sensor_id() << "'"
              << " AND date='" << dateToString(cem->sensor_ts().sec(), "-") << " '"
@@ -123,7 +123,7 @@ void DBServer_PostgreSQL::onTextMessage( const TextMessage* msg )
     try
     {
         ostringstream data;
-        data << "INSERT INTO " << tblName(msg->header().type())
+        data << "INSERT INTO main_messages"
              << "(date, time, time_usec, text, mtype, node) VALUES( '"
              << dateToString(msg->header().ts().sec(), "-") << "','"   //  date
              << timeToString(msg->header().ts().sec(), ":") << "','"   //  time
@@ -309,7 +309,6 @@ void DBServer_PostgreSQL::initDBServer()
 
     if( connect_ok )
     {
-        initDBTableMap(tblMap);
         initDB(db);
         return;
     }
@@ -347,10 +346,6 @@ void DBServer_PostgreSQL::initDBServer()
     std::string sfactor = conf->getArg2Param("--" + prefix + "-ibuf-overflow-cleanfactor", it.getProp("ibufOverflowCleanFactor"), "0.5");
     ibufOverflowCleanFactor = atof(sfactor.c_str());
 
-    tblMap[uniset3::umessage::mtSensorInfo] = "main_history";
-    tblMap[uniset3::umessage::mtConfirm] = "main_history";
-    tblMap[uniset3::umessage::mtTextInfo] = "main_messages";
-
     PingTime = conf->getArgPInt("--" + prefix + "-pingTime", it.getProp("pingTime"), PingTime);
     ReconnectTime = conf->getArgPInt("--" + prefix + "-reconnectTime", it.getProp("reconnectTime"), ReconnectTime);
 
@@ -384,7 +379,6 @@ void DBServer_PostgreSQL::initDBServer()
         askTimer(DBServer_PostgreSQL::PingTimer, PingTime);
         //        createTables(db);
         initDB(db);
-        initDBTableMap(tblMap);
         flushBuffer();
     }
 }

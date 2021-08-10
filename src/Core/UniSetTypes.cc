@@ -762,11 +762,9 @@ uniset3::KeyType uniset3::key( const uniset3::SensorInfo& si )
     return key(si.id(), si.node());
 }
 // ---------------------------------------------------------------------------------------------------------------
-uniset3::umessage::MessageHeader uniset3::makeMessageHeader(uniset3::umessage::TypeOfMessage type,
-        uniset3::umessage::Priority prior)
+uniset3::umessage::MessageHeader uniset3::makeMessageHeader( uniset3::umessage::Priority prior )
 {
     uniset3::umessage::MessageHeader h;
-    h.set_type(type);
     h.set_priority(prior);
     h.set_node(uniset_conf()->getLocalNode());
     h.set_supplier(DefaultObjectId);
@@ -779,7 +777,7 @@ uniset3::umessage::MessageHeader uniset3::makeMessageHeader(uniset3::umessage::T
 uniset3::umessage::SystemMessage uniset3::makeSystemMessage(uniset3::umessage::SystemMessage::Command cmd)
 {
     uniset3::umessage::SystemMessage sm;
-    *(sm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtSysCommand, umessage::mpHigh);
+    *(sm.mutable_header()) = makeMessageHeader(umessage::mpHigh);
     sm.set_cmd(cmd);
     return sm;
 }
@@ -787,7 +785,7 @@ uniset3::umessage::SystemMessage uniset3::makeSystemMessage(uniset3::umessage::S
 uniset3::umessage::SensorMessage uniset3::makeSensorMessage( ObjectId sid, long value, uniset3::IOType type )
 {
     uniset3::umessage::SensorMessage sm;
-    *(sm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtSensorInfo);
+    *(sm.mutable_header()) = makeMessageHeader();
     sm.set_value(value);
     sm.set_id(sid);
     sm.set_sensor_type(type);
@@ -798,7 +796,7 @@ uniset3::umessage::SensorMessage uniset3::makeSensorMessage( ObjectId sid, long 
 uniset3::umessage::TimerMessage uniset3::makeTimerMessage(int tid, uniset3::umessage::Priority prior)
 {
     uniset3::umessage::TimerMessage tm;
-    *(tm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtTimer, prior);
+    *(tm.mutable_header()) = makeMessageHeader(prior);
     tm.set_id(tid);
     return tm;
 }
@@ -810,7 +808,7 @@ uniset3::umessage::ConfirmMessage uniset3::makeConfirmMessage(ObjectId sensor_id
         uniset3::umessage::Priority prior )
 {
     uniset3::umessage::ConfirmMessage cm;
-    *(cm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtConfirm, prior);
+    *(cm.mutable_header()) = makeMessageHeader(prior);
 
     cm.set_sensor_id(sensor_id);
     cm.set_sensor_value(sensor_value);
@@ -828,7 +826,7 @@ uniset3::umessage::TextMessage uniset3::makeTextMessage( const std::string& msg,
         uniset3::ObjectId consumer )
 {
     uniset3::umessage::TextMessage tm;
-    auto header = makeMessageHeader(uniset3::umessage::mtTextInfo, prior);
+    auto header = makeMessageHeader(prior);
     *(header.mutable_ts()) = ts;
     header.set_consumer(consumer);
     header.set_supplier(pi.id());
@@ -842,43 +840,23 @@ uniset3::umessage::TextMessage uniset3::makeTextMessage( const std::string& msg,
 uniset3::umessage::TextMessage uniset3::makeTextMessage()
 {
     uniset3::umessage::TextMessage tm;
-    *(tm.mutable_header()) = makeMessageHeader(uniset3::umessage::mtTextInfo, umessage::mpMedium);
+    *(tm.mutable_header()) = makeMessageHeader(umessage::mpMedium);
     return tm;
 }
 // ---------------------------------------------------------------------------------------------------------------
-std::string uniset3::strTypeOfMessage( int type )
-{
-    if( type == uniset3::umessage::mtSensorInfo )
-        return "SensorInfo";
-
-    if( type == uniset3::umessage::mtSysCommand )
-        return "SysCommand";
-
-    if( type == uniset3::umessage::mtConfirm )
-        return "Confirm";
-
-    if( type == uniset3::umessage::mtTimer )
-        return "Timer";
-
-    if( type == uniset3::umessage::mtTextInfo )
-        return "TextMessage";
-
-    if( type == uniset3::umessage::mtUnused )
-        return "Unused";
-
-    return "Unknown";
-}
-//--------------------------------------------------------------------------------------------
-std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::umessage::TypeOfMessage& t )
-{
-    return os << strTypeOfMessage(t);
-}
-//--------------------------------------------------------------------------------------------
 std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ObjectRef& o)
 {
-    return os
-           << "id=" << o.id()
-           << " type=" << o.type()
-           << " addr=" << o.addr()
-           << " path=" << o.path();
+    os
+            << "id=" << o.id()
+            << " type=" << o.type()
+            << " addr=" << o.addr()
+            << " path=" << o.path();
+    os << "[";
+
+    for( const auto& m : o.metadata() )
+        os << " " << m.key() << "=" << m.val();
+
+    os << " ]";
+
+    return os;
 }

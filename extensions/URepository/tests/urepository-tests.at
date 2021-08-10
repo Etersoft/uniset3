@@ -2,6 +2,6 @@ AT_SETUP([URepository tests])
 AT_CHECK([$abs_top_builddir/testsuite/at-test-launch.sh $abs_top_builddir/extensions/URepository/tests run_test_urepository.sh],[0],[ignore],[ignore])
 AT_CLEANUP
 
-AT_SETUP([URepository(localIOR) tests])
+AT_SETUP([URepository tests (localIOR)])
 AT_CHECK([$abs_top_builddir/testsuite/at-test-launch.sh $abs_top_builddir/extensions/URepository/tests run_test_urepository_localior.sh],[0],[ignore],[ignore])
 AT_CLEANUP
