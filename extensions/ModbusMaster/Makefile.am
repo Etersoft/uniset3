@@ -4,9 +4,9 @@ libMBMaster_la_LIBADD	= $(top_builddir)/lib/libUniSet3.la \
 								$(top_builddir)/extensions/lib/libUniSet3Extensions.la \
 								$(SIGC_LIBS)
 libMBMaster_la_CXXFLAGS	= -I$(top_builddir)/extensions/include -I$(top_builddir)/extensions/SharedMemory $(SIGC_CFLAGS)
-libMBMaster_la_SOURCES 	= MBExchange.cc MBConfig.cc RTUStorage.cc
+libMBMaster_la_SOURCES 	= MBExchange.cc MBConfig.cc
 
-bin_PROGRAMS 		= @PACKAGE@-mbtcpmaster @PACKAGE@-mbtcpmultimaster @PACKAGE@-rtuexchange @PACKAGE@-mtr-conv @PACKAGE@-rtu188-state @PACKAGE@-vtconv @PACKAGE@-mtr-setup @PACKAGE@-mtr-read
+bin_PROGRAMS 		= @PACKAGE@-mbtcpmaster @PACKAGE@-mbtcpmultimaster @PACKAGE@-rtuexchange @PACKAGE@-mtr-conv @PACKAGE@-vtconv @PACKAGE@-mtr-setup @PACKAGE@-mtr-read
 lib_LTLIBRARIES 	= libUniSet3MBTCPMaster.la libUniSet3RTU.la
 
 # -------------------- Mobus TCP -------------------
@@ -70,11 +70,6 @@ libUniSet3RTU_la_SOURCES  = RTUExchange.cc
 @PACKAGE@_vtconv_SOURCES	= vtconv.cc
 @PACKAGE@_vtconv_LDADD	= $(top_builddir)/extensions/lib/libUniSet3Extensions.la $(top_builddir)/lib/libUniSet3.la
 @PACKAGE@_vtconv_CXXFLAGS = -I$(top_builddir)/extensions/include
-
-@PACKAGE@_rtu188_state_LDADD 		= libUniSet3RTU.la libMBMaster.la \
-		$(top_builddir)/extensions/lib/libUniSet3Extensions.la $(top_builddir)/lib/libUniSet3.la
-@PACKAGE@_rtu188_state_CXXFLAGS	= -I$(top_builddir)/extensions/include
-@PACKAGE@_rtu188_state_SOURCES		= rtustate.cc
 
 # install
 devel_include_HEADERS = *.h

@@ -35,7 +35,6 @@
 #include "IOBase.h"
 #include "VTypes.h"
 #include "MTR.h"
-#include "RTUStorage.h"
 #include "modbus/ModbusClient.h"
 #include "LogAgregator.h"
 #include "LogServer.h"
@@ -119,7 +118,6 @@ namespace uniset3
             // т.к. в них идёт итерирование в случае если запрос в несколько регистров
             void updateRTU(MBConfig::RegMap::iterator& it);
             void updateMTR(MBConfig::RegMap::iterator& it);
-            void updateRTU188(MBConfig::RegMap::iterator& it);
             void updateRSProperty( MBConfig::RSProperty* p, bool write_only = false );
             virtual void updateRespondSensors();
 

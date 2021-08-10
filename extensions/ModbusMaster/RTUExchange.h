@@ -23,7 +23,6 @@
 #include <vector>
 #include "MBExchange.h"
 #include "modbus/ModbusRTUMaster.h"
-#include "RTUStorage.h"
 // --------------------------------------------------------------------------
 namespace uniset3
 {

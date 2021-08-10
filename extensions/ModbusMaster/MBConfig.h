@@ -30,7 +30,6 @@
 #include "IOBase.h"
 #include "VTypes.h"
 #include "MTR.h"
-#include "RTUStorage.h"
 #include "modbus/ModbusClient.h"
 #include "Configuration.h"
 // -------------------------------------------------------------------------
@@ -66,7 +65,6 @@ namespace uniset3
                 safeExternalControl = 2     /*!< управление сбросом по внешнему датчику */
             };
 
-
             friend std::string to_string( const SafeMode& m );
             friend std::ostream& operator<<( std::ostream& os, const SafeMode& m );
 
@@ -75,7 +73,6 @@ namespace uniset3
                 dtUnknown,      /*!< неизвестный */
                 dtRTU,          /*!< RTU (default) */
                 dtMTR,          /*!< MTR (DEIF) */
-                dtRTU188        /*!< RTU188 (Fastwell) */
             };
 
             static DeviceType getDeviceType( const std::string& dtype ) noexcept;
@@ -132,10 +129,6 @@ namespace uniset3
                 ModbusRTU::RegID regID = { 0 };
 
                 std::shared_ptr<RTUDevice> dev;
-
-                // only for RTU188
-                RTUStorage::RTUJack rtuJack = { RTUStorage::nUnknown };
-                int rtuChan = { 0 };
 
                 // only for MTR
                 MTR::MTRType mtrType = { MTR::mtUnknown };    /*!< тип регистра (согласно спецификации на MTR) */
@@ -199,7 +192,6 @@ namespace uniset3
 
                 // специфические поля для RS
                 ComPort::Speed speed = { ComPort::ComSpeed38400 };
-                std::shared_ptr<RTUStorage> rtu188;
 
                 std::string getShortInfo() const;
             };
@@ -282,7 +274,6 @@ namespace uniset3
             RSProperty* addProp( PList& plist, RSProperty&& p );
 
             bool initMTRitem(UniXML::iterator& it, std::shared_ptr<RegInfo>& p );
-            bool initRTU188item(UniXML::iterator& it, std::shared_ptr<RegInfo>& p );
             bool initRSProperty( RSProperty& p, UniXML::iterator& it );
             bool initRegInfo(std::shared_ptr<RegInfo>& r, UniXML::iterator& it, std::shared_ptr<RTUDevice>& dev  );
             bool initRTUDevice( std::shared_ptr<RTUDevice>& d, UniXML::iterator& it );

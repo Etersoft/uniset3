@@ -235,76 +235,47 @@ bool RTUExchange::poll()
 
         d->prev_numreply.store(d->numreply);
 
-        if( d->dtype == MBConfig::dtRTU188 )
+
+        dlog3 << myname << "(poll): ask addr=" << ModbusRTU::addr2str(d->mbaddr)
+              << " regs=" << d->pollmap.size() << endl;
+
+        for( auto&& m : d->pollmap )
         {
-            if( !d->rtu188 )
+            if( m.first != 0 && (ncycle % m.first) != 0 )
                 continue;
 
-            dlog3 << myname << "(pollRTU188): poll RTU188 "
-                  << " mbaddr=" << ModbusRTU::addr2str(d->mbaddr)
-                  << endl;
+            auto rmap = m.second;
 
-            try
+            for( auto&& it = rmap->begin(); it != rmap->end(); ++it )
             {
-                if( rs_pre_clean )
-                    mb->cleanupChannel();
-
-                d->rtu188->poll(mbrtu);
-                d->numreply++;
-                allNotRespond = false;
-            }
-            catch( ModbusRTU::mbException& ex )
-            {
-                if( d->numreply != d->prev_numreply )
+                try
                 {
-                    dlog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
-                          << " -> " << ex << endl;
-                }
-            }
-        }
-        else
-        {
-            dlog3 << myname << "(poll): ask addr=" << ModbusRTU::addr2str(d->mbaddr)
-                  << " regs=" << d->pollmap.size() << endl;
-
-            for( auto&& m : d->pollmap )
-            {
-                if( m.first != 0 && (ncycle % m.first) != 0 )
-                    continue;
-
-                auto rmap = m.second;
-
-                for( auto&& it = rmap->begin(); it != rmap->end(); ++it )
-                {
-                    try
+                    if( d->dtype == MBConfig::dtRTU || d->dtype == MBConfig::dtMTR )
                     {
-                        if( d->dtype == MBConfig::dtRTU || d->dtype == MBConfig::dtMTR )
-                        {
-                            if( rs_pre_clean )
-                                mb->cleanupChannel();
+                        if( rs_pre_clean )
+                            mb->cleanupChannel();
 
-                            if( pollRTU(d, it) )
-                            {
-                                d->numreply++;
-                                allNotRespond = false;
-                            }
+                        if( pollRTU(d, it) )
+                        {
+                            d->numreply++;
+                            allNotRespond = false;
                         }
                     }
-                    catch( ModbusRTU::mbException& ex )
-                    {
-                        dlog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
-                              << " reg=" << ModbusRTU::dat2str(it->second->mbreg)
-                              << " for sensors: ";
-                        mbconf->print_plist(dlog()->level3(), it->second->slst);
-                        dlog()->level3(false) << " err: " << ex << endl;
-                    }
-
-                    if( it == rmap->end() )
-                        break;
-
-                    if( !isProcActive() )
-                        return false;
                 }
+                catch( ModbusRTU::mbException& ex )
+                {
+                    dlog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
+                          << " reg=" << ModbusRTU::dat2str(it->second->mbreg)
+                          << " for sensors: ";
+                    mbconf->print_plist(dlog()->level3(), it->second->slst);
+                    dlog()->level3(false) << " err: " << ex << endl;
+                }
+
+                if( it == rmap->end() )
+                    break;
+
+                if( !isProcActive() )
+                    return false;
             }
         }
     }

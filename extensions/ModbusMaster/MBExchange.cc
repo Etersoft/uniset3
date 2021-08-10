@@ -1001,8 +1001,6 @@ namespace uniset3
                             updateRTU(it);
                         else if( d->dtype == MBConfig::dtMTR )
                             updateMTR(it);
-                        else if( d->dtype == MBConfig::dtRTU188 )
-                            updateRTU188(it);
                     }
                     catch( const std::exception& ex )
                     {
@@ -1778,56 +1776,6 @@ namespace uniset3
             catch(...)
             {
                 mblog3 << myname << "(updateMTR): catch ..." << endl;
-            }
-        }
-    }
-    // -----------------------------------------------------------------------------
-    void MBExchange::updateRTU188( MBConfig::RegMap::iterator& rit )
-    {
-        auto& r = rit->second;
-
-        if( !r || !r->dev || !r->dev->rtu188 )
-            return;
-
-        using namespace ModbusRTU;
-
-        bool save = isWriteFunction( r->mbfunc );
-
-        // пока-что функции записи в обмене с RTU188
-        // не реализованы
-        if( isWriteFunction(r->mbfunc) )
-        {
-            mblog3 << myname << "(updateRTU188): write reg(" << dat2str(r->mbreg) << ") to RTU188 NOT YET!!!" << endl;
-            return;
-        }
-
-        if( !isUpdateSM(save, r->dev->mode) )
-            return;
-
-        for( auto it = r->slst.begin(); it != r->slst.end(); ++it )
-        {
-            try
-            {
-                bool safeMode = isSafeMode(r->dev) && it->safevalDefined;
-
-                if( it->stype == uniset3::DI )
-                {
-                    bool set = safeMode ? (bool)it->safeval : r->dev->rtu188->getState(r->rtuJack, r->rtuChan, it->stype);
-                    IOBase::processingAsDI( &(*it), set, shm, force );
-                }
-                else if( it->stype == uniset3::AI )
-                {
-                    long val = safeMode ? it->safeval : r->dev->rtu188->getInt(r->rtuJack, r->rtuChan, it->stype);
-                    IOBase::processingAsAI( &(*it), val, shm, force );
-                }
-            }
-            catch( const std::exception& ex )
-            {
-                mblog3 << myname << "(updateRTU188): " << ex.what() << endl;
-            }
-            catch(...)
-            {
-                mblog3 << myname << "(updateRTU188): catch ..." << endl;
             }
         }
     }

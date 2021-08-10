@@ -116,9 +116,6 @@ namespace uniset3
         if( dtype == "rtu" || dtype == "RTU" )
             return dtRTU;
 
-        if( dtype == "rtu188" || dtype == "RTU188" )
-            return dtRTU188;
-
         return dtUnknown;
     }
     // -----------------------------------------------------------------------------
@@ -472,21 +469,6 @@ namespace uniset3
             if( !initMTRitem(it, r) )
                 return false;
         }
-        else if( dev->dtype == MBConfig::dtRTU188 )
-        {
-            // only for RTU188
-            if( !initRTU188item(it, r) )
-                return false;
-
-            uniset3::IOType t = uniset3::getIOType(IOBase::initProp(it, "iotype", prop_prefix, false));
-            r->mbreg = RTUStorage::getRegister(r->rtuJack, r->rtuChan, t);
-            r->mbfunc = RTUStorage::getFunction(r->rtuJack, r->rtuChan, t);
-
-            // т.к. с RTU188 свой обмен
-            // mbreg и mbfunc поля не используются
-            return true;
-
-        }
         else
         {
             mbcrit << myname << "(initRegInfo): Unknown mbtype='" << dev->dtype
@@ -561,13 +543,6 @@ namespace uniset3
         }
 
         d->mbaddr = ModbusRTU::str2mbAddr(addr);
-
-        if( d->dtype == MBConfig::dtRTU188 )
-        {
-            if( !d->rtu188 )
-                d->rtu188 = make_shared<RTUStorage>(d->mbaddr);
-        }
-
         return true;
     }
     // ------------------------------------------------------------------------------------------
@@ -605,45 +580,28 @@ namespace uniset3
         ModbusRTU::ModbusData mbreg = 0;
         int fn = IOBase::initIntProp(it, "mbfunc", prop_prefix, false);
 
-        if( dev->dtype == dtRTU188 )
+        if( mbregFromID )
+            mbreg = p.si.id(); // conf->getSensorID(it.getProp("name"));
+        else
         {
-            auto r_tmp = make_shared<RegInfo>();
+            const string reg( IOBase::initProp(it, "mbreg", prop_prefix, false) );
 
-            if( !initRTU188item(it, r_tmp) )
+            if( reg.empty() )
             {
-                mbcrit << myname << "(initItem): init RTU188 failed for " << it.getProp("name") << endl;
-                r_tmp.reset();
+                mbcrit << myname << "(initItem): unknown mbreg(" << prop_prefix << ") for " << it.getProp("name") << endl;
                 return false;
             }
 
-            mbreg = RTUStorage::getRegister(r_tmp->rtuJack, r_tmp->rtuChan, p.stype);
-            fn = RTUStorage::getFunction(r_tmp->rtuJack, r_tmp->rtuChan, p.stype);
+            mbreg = ModbusRTU::str2mbData(reg);
         }
-        else
+
+        if( p.nbit != -1 )
         {
-            if( mbregFromID )
-                mbreg = p.si.id(); // conf->getSensorID(it.getProp("name"));
-            else
+            if( fn == ModbusRTU::fnReadCoilStatus || fn == ModbusRTU::fnReadInputStatus )
             {
-                const string reg( IOBase::initProp(it, "mbreg", prop_prefix, false) );
-
-                if( reg.empty() )
-                {
-                    mbcrit << myname << "(initItem): unknown mbreg(" << prop_prefix << ") for " << it.getProp("name") << endl;
-                    return false;
-                }
-
-                mbreg = ModbusRTU::str2mbData(reg);
-            }
-
-            if( p.nbit != -1 )
-            {
-                if( fn == ModbusRTU::fnReadCoilStatus || fn == ModbusRTU::fnReadInputStatus )
-                {
-                    mbcrit << myname << "(initItem): MISMATCHED CONFIGURATION!  nbit=" << (int)p.nbit << " func=" << fn
-                           << " for " << it.getProp("name") << endl;
-                    return false;
-                }
+                mbcrit << myname << "(initItem): MISMATCHED CONFIGURATION!  nbit=" << (int)p.nbit << " func=" << fn
+                       << " for " << it.getProp("name") << endl;
+                return false;
             }
         }
 
@@ -870,42 +828,6 @@ namespace uniset3
         return true;
     }
     // ------------------------------------------------------------------------------------------
-    bool MBConfig::initRTU188item( UniXML::iterator& it, std::shared_ptr<RegInfo>& p )
-    {
-        const string jack(IOBase::initProp(it, "jack", prop_prefix, false));
-        const string chan(IOBase::initProp(it, "channel", prop_prefix, false));
-
-        if( jack.empty() )
-        {
-            mbcrit << myname << "(readRTU188Item): Unknown " << prop_prefix << "jack='' "
-                   << " for " << it.getProp("name") << endl;
-            return false;
-        }
-
-        p->rtuJack = RTUStorage::s2j(jack);
-
-        if( p->rtuJack == RTUStorage::nUnknown )
-        {
-            mbcrit << myname << "(readRTU188Item): Unknown " << prop_prefix << "jack=" << jack
-                   << " for " << it.getProp("name") << endl;
-            return false;
-        }
-
-        if( chan.empty() )
-        {
-            mbcrit << myname << "(readRTU188Item): Unknown channel='' "
-                   << " for " << it.getProp("name") << endl;
-            return false;
-        }
-
-        p->rtuChan = uniset3::uni_atoi(chan);
-
-        mblog2 << myname << "(readRTU188Item): add jack='" << jack << "'"
-               << " channel='" << p->rtuChan << "'" << endl;
-
-        return true;
-    }
-    // ------------------------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, const MBConfig::DeviceType& dt )
     {
         switch(dt)
@@ -916,10 +838,6 @@ namespace uniset3
 
             case MBConfig::dtMTR:
                 os << "MTR";
-                break;
-
-            case MBConfig::dtRTU188:
-                os << "RTU188";
                 break;
 
             default:
