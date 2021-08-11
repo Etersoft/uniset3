@@ -7,7 +7,6 @@ extensions/LogicProcessor
 extensions/ModbusMaster
 extensions/ModbusMaster/tests
 extensions/ModbusSlave
-extensions/RRDServer
 extensions/SharedMemory
 extensions/SMDBServer
 extensions/SMViewer
@@ -26,7 +25,6 @@ Utilities/codegen/tests
 Utilities/MBTester
 Utilities/NullController
 /usr/include/sigc++-2.0
-/usr/include/omniORB4
 /usr/include/Poco
 /usr/include/c++/5
 /usr/include/libxml2

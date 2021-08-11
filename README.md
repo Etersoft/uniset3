@@ -1,14 +1,13 @@
-UniSet ![Gihub testsuite Status](https://github.com/Etersoft/uniset3/actions/workflows/testsuite.yml/badge.svg) [![Build Status](https://travis-ci.org/Etersoft/uniset3.svg?branch=master)](https://travis-ci.org/Etersoft/uniset3) [![Coverity Scan Build Status](https://scan.coverity.com/projects/etersoft-uniset3/badge.svg)](https://scan.coverity.com/projects/etersoft-uniset3)
+UniSet ![Gihub testsuite Status](https://github.com/Etersoft/uniset3/actions/workflows/testsuite.yml/badge.svg) [![Build Status](https://travis-ci.org/Etersoft/uniset3.svg?branch=master)](https://travis-ci.org/Etersoft/uniset3)
 ======
 
 UniSet is a library for distributed control systems development.
 There are set of base components to construct this kind of systems:
 * base interfaces for your implementation of control algorithms.
 * algorithms for a discrete and analog input/output based on COMEDI interface.
-* IPC mechanism based on CORBA (omniORB).
+* IPC mechanism based on GRPC (protobuf).
 * logging system based on MySQL, SQLite, PostgreSQL databases.
 * logging to TSDB (influxdb, opentsdb)
-* logging to RRD
 * supported MQTT (libmosquittopp)
 * fast network protocol based on udp (UNet)
 * Web interface to display logging and statistic information.
@@ -25,9 +24,6 @@ in python scripts.
 
 libuniset requires minimum C++11
 
-More information:
-* [RU] https://habr.com/post/278535/
-* [RU] https://habr.com/post/171711/
-* [RU] https://wiki.etersoft.ru/UniSet2/docs/
+UniSet3 based on [UniSet2](https://github.com/Etersoft/uniset2)
 
 periodically checked by [PVS-Studio Analyzer](https://www.viva64.com/en/pvs-studio/)
