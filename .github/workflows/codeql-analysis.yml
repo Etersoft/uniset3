@@ -46,8 +46,8 @@ jobs:
 
       - name: install packages
         run: |
-          sudo apt-get install libcomedi-dev libpoco-dev libmysqlclient-dev libomniorb4-dev libprotobuf-dev protobuf-compiler \
-          libev-dev omniidl xsltproc librrd-dev libsigc++-2.0-dev \
+          sudo apt-get install libcomedi-dev libpoco-dev libmysqlclient-dev libprotobuf-dev protobuf-compiler \
+          libev-dev xsltproc librrd-dev libsigc++-2.0-dev \
           libsqlite3-dev python-dev libmosquittopp-dev libpoco-dev swig
           wget https://github.com/catchorg/Catch2/releases/download/v1.11.0/catch.hpp -O include/catch.hpp
 
