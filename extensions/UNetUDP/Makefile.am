@@ -1,3 +1,5 @@
+SUBDIRS=proto
+
 bin_PROGRAMS = @PACKAGE@-unetexchange @PACKAGE@-unet-udp-tester @PACKAGE@-unet-multicast-tester
 
 # не забывайте править версию в2.pc-файле

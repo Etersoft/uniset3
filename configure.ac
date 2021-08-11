@@ -580,6 +580,7 @@ AC_CONFIG_FILES([Makefile
 				 extensions/SMViewer/Makefile
 				 extensions/UNetUDP/Makefile
 				 extensions/UNetUDP/libUniSet3UNetUDP.pc
+				 extensions/UNetUDP/proto/Makefile
 				 extensions/UNetUDP/tests/Makefile
 				 extensions/SharedMemory/Makefile
 				 extensions/SharedMemory/tests/Makefile

@@ -11,6 +11,6 @@ PROTOFLAGS=-I$(INCPROTODIR)/UniSetTypes
 include $(top_builddir)/proto/proto.mk
 
 proto_include_HEADERS = *.proto
-proto_includedir = $(datadir)/@PACKAGE@/proto
+proto_includedir = $(pkgincludedir)
 
 include $(top_builddir)/include.mk

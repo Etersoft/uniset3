@@ -23,7 +23,7 @@
 
 %define oname uniset3
 
-Name: libuniset2
+Name: libuniset3
 Version: 3.0.0
 Release: alt0.1
 Summary: UniSet - library for building distributed industrial control systems
@@ -375,6 +375,7 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_bindir/%oname-func*
 %_bindir/%oname-codegen
 %_bindir/%oname-log2val
+%_bindir/%oname-urepository
 %dir %_datadir/%oname/
 %dir %_datadir/%oname/xslt/
 %_datadir/%oname/xslt/*.xsl
@@ -387,12 +388,11 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %files devel
 %dir %_includedir/%oname/
 %_includedir/%oname/*.h
-%_includedir/%oname/*.hh
+%_includedir/%oname/*.proto
 %_includedir/%oname/*.tcc
 %_includedir/%oname/modbus/
 
 %_libdir/libUniSet3.so
-%_datadir/idl/%oname/
 %_pkgconfigdir/libUniSet3.pc
 
 %if_enabled mysql
@@ -466,18 +466,15 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_bindir/%oname-mtr-setup
 %_bindir/%oname-mtr-read
 %_bindir/%oname-vtconv
-%_bindir/%oname-rtu188-state
 %_bindir/%oname-rtuexchange
 %_bindir/%oname-smemory
 %_bindir/%oname-smviewer
-%_bindir/%oname-network
 %_bindir/%oname-unet*
 
 %_libdir/libUniSet3Extensions.so.*
 %_libdir/libUniSet3MB*.so.*
 %_libdir/libUniSet3RT*.so.*
 %_libdir/libUniSet3Shared*.so.*
-%_libdir/libUniSet3Network*.so.*
 %_libdir/libUniSet3UNetUDP*.so.*
 
 %if_enabled logicproc
@@ -546,13 +543,11 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_libdir/libUniSet3MB*.so
 %_libdir/libUniSet3RT*.so
 %_libdir/libUniSet3Shared*.so
-%_libdir/libUniSet3Network.so
 %_libdir/libUniSet3UNetUDP.so
 %_pkgconfigdir/libUniSet3Extensions.pc
 %_pkgconfigdir/libUniSet3MB*.pc
 %_pkgconfigdir/libUniSet3RT*.pc
 %_pkgconfigdir/libUniSet3Shared*.pc
-%_pkgconfigdir/libUniSet3Network*.pc
 %_pkgconfigdir/libUniSet3UNet*.pc
 
 #%_pkgconfigdir/libUniSet3*.pc
