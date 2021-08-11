@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package uniset3;
+
+option optimize_for = LITE_RUNTIME;
+// ---------------------------------------------------------------------------
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+service TestService_i {
+    rpc getId(google.protobuf.Empty) returns(google.protobuf.Int64Value) {}
+}
