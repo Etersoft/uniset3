@@ -94,9 +94,7 @@ namespace uniset3
     uniset3::IOType getIOType( const std::string& s ) noexcept;
     std::string iotype2str( const uniset3::IOType& t ) noexcept;
     std::ostream& operator<<( std::ostream& os, const uniset3::IOType t );
-    std::ostream& operator<<( std::ostream& os, const uniset3::ThresholdInfo& ti );
     std::ostream& operator<<( std::ostream& os, const uniset3::ShortIOInfo& s );
-    std::ostream& operator<<( std::ostream& os, const uniset3::ThresholdState& s);
     std::ostream& operator<<( std::ostream& os, const uniset3::ObjectRef& o);
 
     /*! Команды для управления лампочками */

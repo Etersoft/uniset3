@@ -73,8 +73,7 @@ namespace uniset3
     /*!
      * \param id - идентификатор датчика
      * \return текущее значение датчика
-     * \exception IOBadParam - генерируется если указано неправильное имя датчика или секции
-     * \exception IOTimeOut - генерируется если в течение времени timeout не был получен ответ
+     * \exception TimeOut - генерируется если в течение времени timeout не был получен ответ
     */
     long UInterface::getValue( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
     {
@@ -116,26 +115,11 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
-
-                    if( st.error_code() == grpc::StatusCode::UNKNOWN )
-                    {
-                        uniset3::IOController::Undefined ex(st.error_message());
-                        UndefinedDetails d;
-
-                        if( d.ParseFromString(st.error_details()) )
-                            ex.value = d.value();
-
-                        throw ex;
-                    }
-                }
+             }
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
-        }
-        catch( const uniset3::IOController::Undefined& ex )
-        {
-            throw ex;
         }
         catch( const std::exception& ex )
         {
@@ -153,62 +137,6 @@ namespace uniset3
     }
 
 
-    // ------------------------------------------------------------------------------------------------------------
-    void UInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefined, uniset3::ObjectId sup_id )
-    {
-        if( si.id() == uniset3::DefaultObjectId )
-        {
-            uwarn << "UI(setUndefinedState): ID=uniset3::DefaultObjectId" << endl;
-            return;
-        }
-
-        if( sup_id == uniset3::DefaultObjectId )
-            sup_id = myid;
-
-        try
-        {
-            std::shared_ptr<ORefInfo> chan;
-            google::protobuf::Empty reply;
-            SetUndefinedParams request;
-            request.set_id(si.id());
-            request.set_sup_id(sup_id);
-            request.set_undefined(undefined);
-
-            try
-            {
-                chan = rcache.resolve(si.id(), si.node());
-            }
-            catch( const uniset3::NameNotFound&  ) {}
-
-            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                if( !chan )
-                    chan = resolve( si.id(), si.node() );
-
-                if( chan )
-                {
-                    grpc::ClientContext ctx;
-                    chan->addMetaData(ctx);
-                    std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
-                    grpc::Status st = stub->setUndefinedState(&ctx, request, &reply);
-
-                    if( st.ok() )
-                        return;
-                }
-
-                msleep(uconf->getRepeatTimeout());
-                chan = nullptr;
-            }
-        }
-        catch( const std::exception& ex )
-        {
-            rcache.erase(si.id(), si.node());
-            throw uniset3::SystemError("UI(setUndefinedState): " + string(ex.what()));
-        }
-
-        rcache.erase(si.id(), si.node());
-        uwarn << set_err("UI(setUndefinedState): Timeout", si.id(), si.node()) << endl;
-    }
     // ------------------------------------------------------------------------------------------------------------
     void UInterface::freezeValue( const uniset3::SensorInfo& si, bool set, long value, uniset3::ObjectId sup_id )
     {
@@ -1243,150 +1171,6 @@ namespace uniset3
         return s.str();
     }
     // --------------------------------------------------------------------------------------------
-    void UInterface::askThreshold( const uniset3::ObjectId sid, const uniset3::ThresholdId tid,
-                                   uniset3::UIOCommand cmd,
-                                   long low, long hi, bool invert,
-                                   const uniset3::ObjectId backid ) const
-    {
-        askRemoteThreshold(sid, uconf->getLocalNode(), tid, cmd, low, hi, invert, backid);
-    }
-    // --------------------------------------------------------------------------------------------
-    void UInterface::askRemoteThreshold( const uniset3::ObjectId sid, const uniset3::ObjectId node,
-                                         uniset3::ThresholdId tid, uniset3::UIOCommand cmd,
-                                         long lowLimit, long hiLimit, bool invert,
-                                         uniset3::ObjectId backid ) const
-    {
-        if( backid == uniset3::DefaultObjectId )
-            backid = myid;
-
-        if( backid == uniset3::DefaultObjectId )
-            throw uniset3::IOBadParam("UI(askRemoteThreshold): unknown back ID");
-
-        if ( sid == uniset3::DefaultObjectId )
-            throw uniset3::ORepFailed("UI(askRemoteThreshold): error: id=uniset3::DefaultObjectId");
-
-        if( node == uniset3::DefaultObjectId )
-        {
-            ostringstream err;
-            err << "UI(askRemoteThreshold): id='" << sid << "' error: node=uniset3::DefaultObjectId";
-            throw uniset3::ORepFailed(err.str());
-        }
-
-        try
-        {
-            std::shared_ptr<ORefInfo> chan;
-            google::protobuf::Empty reply;
-            AskThresholdParams request;
-            request.set_sid(sid);
-            request.set_tid(tid);
-            request.set_lowlimit(lowLimit);
-            request.set_hilimit(hiLimit);
-            request.set_invert(invert);
-            request.set_cmd(cmd);
-            auto ci = request.mutable_ci();
-            ci->set_id(backid);
-            ci->set_id(uconf->getLocalNode());
-
-            try
-            {
-                chan = rcache.resolve(sid, node);
-            }
-            catch( const uniset3::NameNotFound&  ) {}
-
-            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                if( !chan )
-                    chan = resolve(sid, node);
-
-                grpc::ClientContext ctx;
-                chan->addMetaData(ctx);
-                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan->c));
-                grpc::Status st = stub->askThreshold(&ctx, request, &reply);
-
-                if( st.ok() )
-                    return;
-
-                msleep(uconf->getRepeatTimeout());
-                chan = nullptr;
-            }
-        }
-        catch( const std::exception& ex )
-        {
-            rcache.erase(sid, node);
-            throw uniset3::SystemError("UI(askThreshold): " + string(ex.what()));
-        }
-
-        rcache.erase(sid, node);
-        throw uniset3::TimeOut(set_err("UI(askThreshold): Timeout", sid, node));
-
-    }
-    // --------------------------------------------------------------------------------------------
-    uniset3::ThresholdInfo
-    UInterface::getThresholdInfo( const uniset3::ObjectId sid, const uniset3::ThresholdId tid ) const
-    {
-        uniset3::SensorInfo si;
-        si.set_id(sid);
-        si.set_node(uconf->getLocalNode());
-        return getThresholdInfo(si, tid);
-    }
-    // --------------------------------------------------------------------------------------------------------------
-    uniset3::ThresholdInfo
-    UInterface::getThresholdInfo( const uniset3::SensorInfo& si, const uniset3::ThresholdId tid ) const
-    {
-        if ( si.id() == uniset3::DefaultObjectId )
-            throw uniset3::ORepFailed("UI(getThresholdInfo): error: id=uniset3::DefaultObjectId");
-
-        if( si.node() == uniset3::DefaultObjectId )
-        {
-            ostringstream err;
-            err << "UI(getThresholdInfo): id='" << si.id() << "' error: node=uniset3::DefaultObjectId";
-            throw uniset3::ORepFailed(err.str());
-        }
-
-        ObjectId sid = si.id();
-        ObjectId node = si.node();
-
-        try
-        {
-            std::shared_ptr<ORefInfo> chan;
-            ThresholdInfo reply;
-            GetThresholdInfoParams request;
-            request.set_sid(sid);
-            request.set_tid(tid);
-
-            try
-            {
-                chan = rcache.resolve(sid, node);
-            }
-            catch( const uniset3::NameNotFound&  ) {}
-
-            for( size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                if( !chan )
-                    chan = resolve(sid, node);
-
-                grpc::ClientContext ctx;
-                chan->addMetaData(ctx);
-                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan->c));
-                grpc::Status st = stub->getThresholdInfo(&ctx, request, &reply);
-
-                if( st.ok() )
-                    return reply;
-
-                msleep(uconf->getRepeatTimeout());
-                chan = nullptr;
-            }
-        }
-        catch( const std::exception& ex )
-        {
-            rcache.erase(sid, node);
-            throw uniset3::SystemError("UI(getThresholdInfo): " + string(ex.what()));
-        }
-
-        rcache.erase(sid, node);
-        throw uniset3::TimeOut(set_err("UI(getThresholdInfo): Timeout", sid, node));
-    }
-    // --------------------------------------------------------------------------------------------
     long UInterface::getRawValue( const uniset3::SensorInfo& si )
     {
         if( si.id() == uniset3::DefaultObjectId )
@@ -1884,58 +1668,6 @@ namespace uniset3
 
         rcache.erase(id, node);
         throw uniset3::TimeOut(set_err("UI(getSensorsMap): Timeout", id, node));
-    }
-    // -----------------------------------------------------------------------------
-    uniset3::ThresholdsListSeq UInterface::getThresholdsList( const uniset3::ObjectId id, const uniset3::ObjectId node )
-    {
-        if ( id == uniset3::DefaultObjectId )
-            throw uniset3::ORepFailed("UI(getThresholdsList): error node=uniset3::DefaultObjectId");
-
-        if( node == uniset3::DefaultObjectId )
-        {
-            ostringstream err;
-            err << "UI(getThresholdsList): id='" << id << "' error: node=uniset3::DefaultObjectId";
-            throw uniset3::ORepFailed(err.str());
-        }
-
-        try
-        {
-            std::shared_ptr<ORefInfo> chan;
-            ThresholdsListSeq reply;
-            GetThresholdsListParams request;
-            request.set_id(id);
-
-            try
-            {
-                chan = rcache.resolve(id, node);
-            }
-            catch( const uniset3::NameNotFound&  ) {}
-
-            for( size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                if( !chan )
-                    chan = resolve(id, node);
-
-                grpc::ClientContext ctx;
-                chan->addMetaData(ctx);
-                std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan->c));
-                grpc::Status st = stub->getThresholdsList(&ctx, request, &reply);
-
-                if( st.ok() )
-                    return reply;
-
-                msleep(uconf->getRepeatTimeout());
-                chan = nullptr;
-            }
-        }
-        catch( const std::exception& ex )
-        {
-            rcache.erase(id, node);
-            throw uniset3::SystemError("UI(getThresholdsList): " + string(ex.what()));
-        }
-
-        rcache.erase(id, node);
-        throw uniset3::TimeOut(set_err("UI(getThresholdsList): Timeout", id, node));
     }
     // -----------------------------------------------------------------------------
     bool UInterface::waitReady( const uniset3::ObjectId id, int msec, int pmsec, const uniset3::ObjectId node ) noexcept

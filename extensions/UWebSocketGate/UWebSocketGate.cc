@@ -240,7 +240,6 @@ Poco::JSON::Object::Ptr UWebSocketGate::to_json( const SensorMessage* sm, const 
     json->set("sm_tv_sec", sm->sm_ts().sec());
     json->set("sm_tv_nsec", sm->sm_ts().nsec());
     json->set("iotype", uniset3::iotype2str(sm->sensor_type()));
-    json->set("undefined", sm->undefined() );
     json->set("supplier", sm->header().supplier() );
     json->set("tv_sec", sm->header().ts().sec());
     json->set("tv_nsec", sm->header().ts().nsec());

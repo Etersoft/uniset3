@@ -584,20 +584,6 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::CalibrateInf
     return os;
 }
 // -------------------------------------------------------------------------
-std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdInfo& ti )
-{
-    os << "[ id=" << ti.id()
-       << " hilim=" << ti.hilimit()
-       << " lowlim=" << ti.lowlimit()
-       << " state=" << ti.state()
-       << " ts_sec=" << ti.ts().sec()
-       << " ts_nsec=" << ti.ts().nsec()
-       << " invert=" << ti.invert()
-       << " ]";
-
-    return os;
-}
-// -------------------------------------------------------------------------
 std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ShortIOInfo& s )
 {
     os << setw(10) << dateToString(s.ts().sec())
@@ -605,20 +591,6 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ShortIOInfo&
        << " [ value=" << s.value() << " supplier=" << s.supplier() << " ]";
 
     return os;
-}
-// -------------------------------------------------------------------------
-std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ThresholdState& s )
-{
-    if( s == uniset3::LowThreshold )
-        return os << "low";
-
-    if( s == uniset3::HiThreshold )
-        return os << "hi";
-
-    if( s == uniset3::NormalThreshold )
-        return os << "norm";
-
-    return os << "Unknown";
 }
 // -------------------------------------------------------------------------
 std::string uniset3::replace_all( const std::string& src, const std::string& from, const std::string& to )
@@ -789,7 +761,6 @@ uniset3::umessage::SensorMessage uniset3::makeSensorMessage( ObjectId sid, long 
     sm.set_value(value);
     sm.set_id(sid);
     sm.set_sensor_type(type);
-    sm.set_tid(uniset3::DefaultThresholdId);
     return sm;
 }
 // ---------------------------------------------------------------------------------------------------------------

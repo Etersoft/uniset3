@@ -136,13 +136,6 @@ void IOController::activateInit()
         response->set_value(localGetValue(li, request->id()));
         return grpc::Status::OK;
     }
-    catch( const IOController::Undefined& ex )
-    {
-        UndefinedDetails d;
-        d.set_sid(request->id());
-        d.set_value(ex.value);
-        return grpc::Status(grpc::StatusCode::UNKNOWN, ex.what(), d.SerializeAsString());
-    }
     catch( ... ) {}
 
     ostringstream err;
@@ -175,14 +168,6 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
     if( usi )
     {
         uniset_rwmutex_rlock lock(usi->val_lock);
-
-        if( usi->sinf.undefined() )
-        {
-            auto ex = IOController::Undefined();
-            ex.value = usi->sinf.value();
-            throw ex;
-        }
-
         return usi->sinf.value();
     }
 
@@ -191,100 +176,6 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
     err << myname << "(localGetValue): Unknown sensor";
     uinfo << err.str() << endl;
     throw uniset3::NameNotFound(err.str().c_str());
-}
-// ------------------------------------------------------------------------------------------
-grpc::Status IOController::setUndefinedState(::grpc::ServerContext* context, const ::uniset3::SetUndefinedParams* request, ::google::protobuf::Empty* response)
-{
-    auto li = ioList.end();
-
-    try
-    {
-        localSetUndefinedState( li, request->undefined(), request->id() );
-    }
-    catch( uniset3::NameNotFound& ex )
-    {
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, ex.what());
-    }
-
-    return grpc::Status::OK;
-}
-// -----------------------------------------------------------------------------
-void IOController::localSetUndefinedState( IOStateList::iterator& li,
-        bool undefined, const uniset3::ObjectId sid )
-{
-    // сохранение текущего состояния
-    if( li == ioList.end() )
-        li = ioList.find(sid);
-
-    if( li == ioList.end() )
-    {
-        ostringstream err;
-        err << myname << "(localSetUndefined): Unknown sensor (" << sid << ")"
-            << "name: " << uniset_conf()->oind->getNameById(sid);
-        throw uniset3::NameNotFound(err.str().c_str());
-    }
-
-    bool changed = false;
-    {
-        auto usi = li->second;
-        // lock
-        uniset_rwmutex_wrlock lock(usi->val_lock);
-        changed = (usi->sinf.undefined() != undefined);
-        usi->sinf.set_undefined(undefined);
-
-        if( usi->undef_value != not_specified_value )
-        {
-            if( undefined )
-                usi->sinf.set_value(usi->undef_value);
-            else
-                usi->sinf.set_value(usi->sinf.real_value());
-        }
-
-    }    // unlock
-
-    // сперва локальные события...
-    try
-    {
-        if( changed )
-        {
-            uniset_rwmutex_wrlock l(li->second->undefMutex);
-            li->second->sigUndefChange.emit( li->second, this);
-        }
-    }
-    catch(...) {}
-
-    // потом глобальное, но конкретно для 'undefchange'
-    try
-    {
-        if( changed )
-        {
-            std::lock_guard<std::mutex> l(siganyundefMutex);
-            sigAnyUndefChange.emit(li->second, this);
-        }
-    }
-    catch(...) {}
-
-    // теперь просто событие по изменению состояния
-    try
-    {
-        if( changed )
-        {
-            uniset_rwmutex_wrlock(li->second->changeMutex);
-            li->second->sigChange.emit(li->second, this);
-        }
-    }
-    catch(...) {}
-
-    // глобальное по всем..
-    try
-    {
-        if( changed )
-        {
-            std::lock_guard<std::mutex> l(siganyMutex);
-            sigAnyChange.emit(li->second, this);
-        }
-    }
-    catch(...) {}
 }
 // ------------------------------------------------------------------------------------------
 grpc::Status IOController::freezeValue(::grpc::ServerContext* context, const ::uniset3::FreezeValueParams* request, ::google::protobuf::Empty* response)
@@ -410,12 +301,11 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
 
         usi->sinf.set_supplier(sup_id); // запоминаем того кто изменил
 
-        bool blocked = ( usi->sinf.blocked() || usi->sinf.undefined() );
         changed = ( usi->sinf.real_value() != value );
 
         // Выставление запоненного значения (real_value)
         // если снялась блокировка или заморозка
-        blockChanged = ( blocked != (usi->sinf.value() == usi->d_off_value) );
+        blockChanged = ( usi->sinf.blocked() != (usi->sinf.value() == usi->d_off_value) );
         freezeChanged = ( usi->sinf.frozen() != (usi->sinf.value() == usi->frozen_value) );
 
         if( changed || blockChanged || freezeChanged )
@@ -435,7 +325,7 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
             if( usi->sinf.frozen() )
                 usi->sinf.set_value(usi->frozen_value);
             else
-                usi->sinf.set_value(blocked ? usi->d_off_value : value);
+                usi->sinf.set_value(usi->sinf.blocked() ? usi->d_off_value : value);
 
             retValue = usi->sinf.value();
 
@@ -741,7 +631,6 @@ IOController::USensorInfo::USensorInfo(): d_value(1), d_off_value(0)
     sinf.set_value(sinf.default_val());
     sinf.set_real_value(sinf.default_val());
     sinf.set_dbignore(false);
-    sinf.set_undefined(false);
     sinf.set_blocked(false);
     sinf.set_frozen(false);
     sinf.set_supplier(uniset3::DefaultObjectId);
@@ -830,7 +719,6 @@ grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::
     uniset3::SensorIOInfo unk;
     unk.mutable_si()->set_id(DefaultObjectId);
     unk.mutable_si()->set_node(DefaultObjectId);
-    unk.set_undefined(true);
 
     for( const auto& id : request->seq().ids() )
     {
@@ -932,30 +820,6 @@ IOController::ChangeSignal IOController::signal_change_value( uniset3::ObjectId 
 IOController::ChangeSignal IOController::signal_change_value()
 {
     return sigAnyChange;
-}
-// -----------------------------------------------------------------------------
-IOController::ChangeUndefinedStateSignal IOController::signal_change_undefined_state( uniset3::ObjectId sid )
-{
-    auto it = ioList.find(sid);
-
-    if( it == ioList.end() )
-    {
-        ostringstream err;
-        err << myname << "(signal_change_undefine): вход(выход) с именем "
-            << uniset_conf()->oind->getNameById(sid) << " не найден";
-
-        uinfo << err.str() << endl;
-
-        throw uniset3::NameNotFound(err.str().c_str());
-    }
-
-    //  uniset_rwmutex_rlock lock(it->second->val_lock);
-    return it->second->sigUndefChange;
-}
-// -----------------------------------------------------------------------------
-IOController::ChangeUndefinedStateSignal IOController::signal_change_undefined_state()
-{
-    return sigAnyUndefChange;
 }
 // -----------------------------------------------------------------------------
 void IOController::USensorInfo::checkDepend( std::shared_ptr<USensorInfo>& d_it, IOController* ic )
@@ -1134,7 +998,6 @@ void IOController::getSensorInfo( Poco::JSON::Array::Ptr& jdata, std::shared_ptr
     jsens->set("default_val", s->sinf.default_val());
     jsens->set("dbignore", s->sinf.dbignore());
     jsens->set("nchanges", s->nchanges);
-    jsens->set("undefined", s->sinf.undefined());
     jsens->set("frozen", s->sinf.frozen());
     jsens->set("blocked", s->sinf.blocked());
 

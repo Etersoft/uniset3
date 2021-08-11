@@ -96,10 +96,6 @@ namespace uniset3
             uniset3::IDSeq askSensorsSeq( const uniset3::IDList& lst, uniset3::UIOCommand cmd,
                                           uniset3::ObjectId backid = uniset3::DefaultObjectId );
             // ------------------------------------------------------
-
-            // установка неопределённого состояния
-            void setUndefinedState( const uniset3::SensorInfo& si, bool undefined, uniset3::ObjectId supplier );
-
             // заморозка значения (выставить указанный value и не менять)
             void freezeValue( const uniset3::SensorInfo& si, bool set, long value, uniset3::ObjectId supplier = uniset3::DefaultObjectId );
             // ---------------------------------------------------------------
@@ -111,20 +107,6 @@ namespace uniset3
                            uniset3::ObjectId adminId = uniset3::DefaultObjectId );
 
             uniset3::CalibrateInfo getCalibrateInfo( const uniset3::SensorInfo& si );
-
-            //! Заказ информации об изменении порога
-            void askThreshold( const uniset3::ObjectId sensorId, const uniset3::ThresholdId tid,
-                               uniset3::UIOCommand cmd,
-                               long lowLimit, long hiLimit, bool invert = false,
-                               uniset3::ObjectId backid = uniset3::DefaultObjectId ) const;
-
-            void askRemoteThreshold( const uniset3::ObjectId sensorId, const uniset3::ObjectId node,
-                                     const uniset3::ThresholdId thresholdId, uniset3::UIOCommand cmd,
-                                     long lowLimit, long hiLimit, bool invert = false,
-                                     uniset3::ObjectId backid = uniset3::DefaultObjectId ) const;
-
-            uniset3::ThresholdInfo getThresholdInfo( const uniset3::SensorInfo& si, const uniset3::ThresholdId tid ) const;
-            uniset3::ThresholdInfo getThresholdInfo( const uniset3::ObjectId sid, const uniset3::ThresholdId tid ) const;
 
             // ---------------------------------------------------------------
             // Вспомогательные функции
@@ -153,8 +135,6 @@ namespace uniset3
             uniset3::SensorIOInfoSeq getSensorsMap( const uniset3::ObjectId id,
                                                     const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
 
-            uniset3::ThresholdsListSeq getThresholdsList( const uniset3::ObjectId id,
-                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------
             // Работа с репозиторием
             /*! регистрация объекта в репозитории

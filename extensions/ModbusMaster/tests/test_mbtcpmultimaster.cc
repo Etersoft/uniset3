@@ -228,34 +228,6 @@ TEST_CASE("MBTCPMultiMaster: safe mode (resetIfNotRespond)", "[modbus][safemode]
     mbs2->setReply(0);
 }
 // -----------------------------------------------------------------------------
-TEST_CASE("MBTCPMultiMaster: udefined value", "[modbus][undefined][mbmaster][mbtcpmultimaster]")
-{
-    InitTest();
-
-    mbs1->setReply(120);
-    mbs2->setReply(120);
-    msleep(polltime + 200);
-    REQUIRE( ui->getValue(1070) == 120 );
-
-    mbs1->setReply(10);
-    mbs2->setReply(10);
-    msleep(polltime + 200);
-
-    try
-    {
-        ui->getValue(1070);
-    }
-    catch( uniset3::IOController::Undefined& ex )
-    {
-        REQUIRE( ex.value == 65535 );
-    }
-
-    mbs1->setReply(120);
-    mbs2->setReply(120);
-    msleep(polltime + 200);
-    REQUIRE( ui->getValue(1070) == 120 );
-}
-// -----------------------------------------------------------------------------
 TEST_CASE("MBTCPMultiMaster: reload config", "[modbus][reload][mbmaster][mbtcpmultimaster]")
 {
     InitTest();

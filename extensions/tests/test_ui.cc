@@ -83,16 +83,6 @@ TEST_CASE("UInterface", "[UInterface]")
         REQUIRE_THROWS_AS( ui->getTimeChange(sid, DefaultObjectId), uniset3::ORepFailed& );
         REQUIRE_NOTHROW( ui->getTimeChange(sid, conf->getLocalNode()) );
 
-        si.set_id(aid);
-        si.set_node(conf->getLocalNode());
-        REQUIRE_NOTHROW( ui->setUndefinedState(si, true, testOID) );
-        REQUIRE_NOTHROW( ui->setUndefinedState(si, false, testOID) );
-
-        si.set_id(sid);
-        si.set_node(conf->getLocalNode());
-        REQUIRE_NOTHROW( ui->setUndefinedState(si, true, testOID) );
-        REQUIRE_NOTHROW( ui->setUndefinedState(si, false, testOID) );
-
         REQUIRE( ui->getIOType(sid, conf->getLocalNode()) == uniset3::DI );
         REQUIRE( ui->getIOType(aid, conf->getLocalNode()) == uniset3::AI );
     }
@@ -197,34 +187,6 @@ TEST_CASE("UInterface", "[UInterface]")
 
     SECTION( "Thresholds" )
     {
-        REQUIRE_NOTHROW( ui->askThreshold(aid, 10, uniset3::UIONotify, 90, 100, false, testOID) );
-        REQUIRE_NOTHROW( ui->askThreshold(aid, 11, uniset3::UIONotify, 50, 70, false, testOID) );
-        REQUIRE_NOTHROW( ui->askThreshold(aid, 12, uniset3::UIONotify, 20, 40, false, testOID) );
-        //        REQUIRE_THROWS_AS( ui->askThreshold(aid, 3, uniset3::UIONotify, 50, 20, false, testOID), uniset3::IOController::BadRange& );
-
-        uniset3::ThresholdsListSeq slist = ui->getThresholdsList(aid);
-        REQUIRE( slist.thresholds().size() == 1 ); // количество датчиков с порогами = 1 (это aid)
-
-        // 3 порога мы создали выше(askThreshold) + 1 который в настроечном файле в секции <thresholds>
-        REQUIRE( slist.thresholds(0).tlist().thresholds().size() == 4 );
-
-        uniset3::ThresholdInfo ti1 = ui->getThresholdInfo(aid, 10);
-        REQUIRE( ti1.id() == 10 );
-        REQUIRE( ti1.lowlimit() == 90 );
-        REQUIRE( ti1.hilimit() == 100 );
-
-        uniset3::ThresholdInfo ti2 = ui->getThresholdInfo(aid, 11);
-        REQUIRE( ti2.id() == 11 );
-        REQUIRE( ti2.lowlimit() == 50 );
-        REQUIRE( ti2.hilimit() == 70 );
-
-        uniset3::ThresholdInfo ti3 = ui->getThresholdInfo(aid, 12);
-        REQUIRE( ti3.id() == 12 );
-        REQUIRE( ti3.lowlimit() == 20 );
-        REQUIRE( ti3.hilimit() == 40 );
-
-//        REQUIRE_THROWS_AS( ui->getThresholdInfo(sid, 10), uniset3::NameNotFound& );
-
         // проверяем thresholds который был сформирован из секции <thresholds>
         ui->setValue(10, 378);
         REQUIRE( ui->getValue(13) == 1 );
@@ -306,7 +268,6 @@ TEST_CASE("UInterface::getSensorIOInfo", "[UInterface][getSensorIOInfo]")
     REQUIRE( inf.real_value() == 200 );
     REQUIRE( inf.blocked() == false );
     REQUIRE( inf.frozen() == false );
-    REQUIRE( inf.undefined() == false );
     REQUIRE( inf.ts().sec() > 0 );
     REQUIRE( inf.dbignore() == false );
     REQUIRE( inf.depend_sid() == DefaultObjectId );
@@ -320,17 +281,6 @@ TEST_CASE("UInterface::getSensorIOInfo", "[UInterface][getSensorIOInfo]")
     REQUIRE_NOTHROW( ui->freezeValue(si, false, 10, testOID) );
     inf = ui->getSensorIOInfo(si);
     REQUIRE( inf.frozen() == false );
-    REQUIRE( inf.supplier() == testOID );
-
-    // undef
-    REQUIRE_NOTHROW( ui->setUndefinedState( si, true, testOID ));
-    inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.undefined() == true );
-    REQUIRE( inf.supplier() == testOID );
-
-    REQUIRE_NOTHROW( ui->setUndefinedState( si, false, testOID ));
-    inf = ui->getSensorIOInfo(si);
-    REQUIRE( inf.undefined() == false );
     REQUIRE( inf.supplier() == testOID );
 
     // depend

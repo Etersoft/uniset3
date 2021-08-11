@@ -45,7 +45,6 @@ namespace uniset3
             void getSensorsInfo(uniset3::ObjectId iocontrollerID);
 
             virtual void updateSensors( uniset3::SensorIOInfoSeq& smap, uniset3::ObjectId oid );
-            virtual void updateThresholds( uniset3::ThresholdsListSeq& tlst, uniset3::ObjectId oid );
 
             const std::string csec;
 

@@ -49,7 +49,6 @@ namespace uniset3
         IOBase():
             stype(uniset3::UnknownIOType),
             cdiagram(nullptr),
-            breaklim(0),
             value(0),
             craw(0),
             cprev(0),
@@ -77,7 +76,10 @@ namespace uniset3
             front_type(ftUnknown),
             front_prev_state(false),
             front_state(false),
-            rawdata(false)
+            rawdata(false),
+            t_invert(false),
+            t_hilimit(0),
+            t_lowlimit(0)
         {
             si.set_id(uniset3::DefaultObjectId);
             si.set_node(uniset3::DefaultObjectId);
@@ -86,16 +88,7 @@ namespace uniset3
             cal.set_mincal(0);
             cal.set_maxcal(0);
             cal.set_precision(0);
-            ti.set_invert(false);
-            ti.set_hilimit(0);
-            ti.set_lowlimit(0);
-            ti.set_id(uniset3::DefaultObjectId);
-            ti.set_state(uniset3::NormalThreshold);
-            ti.mutable_ts()->set_sec(0);
-            ti.mutable_ts()->set_nsec(0);
         }
-
-        bool check_channel_break( long val );     /*!< проверка обрыва провода */
 
         bool check_debounce( bool val );    /*!< реализация фильтра против дребезга */
         bool check_on_delay( bool val );    /*!< реализация задержки на включение */
@@ -108,7 +101,6 @@ namespace uniset3
         uniset3::CalibrateInfo cal;   /*!< калибровочные параметры */
         Calibration* cdiagram;               /*!< специальная калибровочная диаграмма */
 
-        long breaklim;  /*!< значение задающее порог определяющий обрыв (задаётся 'сырое' значение) */
         long value;     /*!< текущее значение */
         long craw;      /*!< текущее 'сырое' значение до калибровки */
         long cprev;     /*!< предыдущее значение после калибровки */
@@ -152,7 +144,10 @@ namespace uniset3
                                         и является пороговым, то в данном поле
                                         хранится идентификатор аналогового датчика
                                         с которым он связан */
-        uniset3::ThresholdInfo ti;
+        long t_hilimit;        /*!< верхняя граница срабатывания */
+        long t_lowlimit;       /*!< нижняя граница срабатывания */
+        bool t_invert;         /*!< инвертированная логика */
+
         IOController::IOStateList::iterator t_ait; // итератор для аналогового датчика
 
         // Работа по фронтам сигнала

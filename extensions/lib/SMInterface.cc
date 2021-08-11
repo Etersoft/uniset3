@@ -188,74 +188,6 @@ uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
     END_FUNC(SMInterface::getSensorsMap)
 }
 // --------------------------------------------------------------------------
-uniset3::ThresholdsListSeq SMInterface::getThresholdsList()
-{
-    GetThresholdsListParams request;
-    if( ic )
-    {
-        BEG_FUNC1(SMInterface::getThresholdsList)
-        ThresholdsListSeq seq;
-        request.set_id(ic->getId());
-        auto status = ic->getThresholdsList(&ctx, &request, &seq);
-
-        if( !status.ok() )
-            throw SystemError(status.error_message());
-
-        return seq;
-        END_FUNC(SMInterface::getThresholdsList)
-    }
-
-    BEG_FUNC(SMInterface::getThresholdsList)
-    auto shm = IONotifyController_i::NewStub(oref->c);
-    ThresholdsListSeq seq;
-    request.set_id(shmID);
-    grpc::ClientContext ctx;
-    oref->addMetaData(ctx);
-    auto status = shm->getThresholdsList(&ctx, request, &seq);
-
-    if( !status.ok() )
-        throw SystemError(status.error_message());
-
-    return seq;
-    END_FUNC(SMInterface::getThresholdsList)
-}
-// --------------------------------------------------------------------------
-void SMInterface::setUndefinedState( const uniset3::SensorInfo& si, bool undefined,
-                                     uniset3::ObjectId sup_id )
-{
-    if( ic )
-    {
-        BEG_FUNC1(SMInterface::setUndefinedState)
-        SetUndefinedParams request;
-        request.set_id(si.id());
-        request.set_undefined(undefined);
-        request.set_sup_id(sup_id);
-        auto status = ic->setUndefinedState(&ctx, &request, &empty);
-
-        if( !status.ok() )
-            throw SystemError(status.error_message());
-
-        return;
-        END_FUNC(SMInterface::setUndefinedState)
-    }
-
-    BEG_FUNC(SMInterface::setUndefinedState)
-    auto shm = IOController_i::NewStub(oref->c);
-    SetUndefinedParams request;
-    request.set_id(si.id());
-    request.set_undefined(undefined);
-    request.set_sup_id(sup_id);
-    grpc::ClientContext ctx;
-    oref->addMetaData(ctx);
-    auto status = shm->setUndefinedState(&ctx, request, &empty);
-
-    if( !status.ok() )
-        throw SystemError(status.error_message());
-
-    return;
-    END_FUNC(SMInterface::setUndefinedState)
-}
-// --------------------------------------------------------------------------
 bool SMInterface::exists()
 {
     if( ic )
@@ -291,23 +223,6 @@ long SMInterface::localGetValue( IOController::IOStateList::iterator& it, uniset
 
     //    CHECK_IC_PTR(localGetValue)
     return ic->localGetValue(it, sid);
-}
-// --------------------------------------------------------------------------
-void SMInterface::localSetUndefinedState( IOController::IOStateList::iterator& it,
-        bool undefined,
-        uniset3::ObjectId sid )
-{
-    //    CHECK_IC_PTR(localSetUndefinedState)
-    if( !ic )
-    {
-        uniset3::SensorInfo si;
-        si.set_id(sid);
-        si.set_node(ui->getConf()->getLocalNode());
-        setUndefinedState(si, undefined, myid);
-        return;
-    }
-
-    ic->localSetUndefinedState(it, undefined, sid);
 }
 // --------------------------------------------------------------------------
 void SMInterface::initIterator( IOController::IOStateList::iterator& it )

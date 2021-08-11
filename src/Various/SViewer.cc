@@ -129,9 +129,6 @@ void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
     GetSensorsMapParams request;
     request.set_id(iocontrollerID);
     uniset3::SensorIOInfoSeq smap;
-    uniset3::ThresholdsListSeq tlist;
-    uniset3::GetThresholdsListParams trequest;
-    trequest.set_id(iocontrollerID);
 
     try
     {
@@ -155,21 +152,6 @@ void SViewer::getSensorsInfo( uniset3::ObjectId iocontrollerID )
                 updateSensors(smap, iocontrollerID);
             else
                 cerr << "(getSensorsMap): error: " << status.error_message() << endl;
-        }
-        catch( const uniset3::NameNotFound& ex ) {}
-        catch(...) {}
-
-        try
-        {
-            grpc::ClientContext ctx;
-            chan->addMetaData(ctx);
-            std::unique_ptr<IONotifyController_i::Stub> inc(IONotifyController_i::NewStub(chan->c));
-            auto status = inc->getThresholdsList(&ctx, trequest, &tlist);
-
-            if( status.ok() )
-                updateThresholds(tlist, iocontrollerID);
-            else
-                cerr << "(getThresholdsList): error: " << status.error_message() << endl;
         }
         catch( const uniset3::NameNotFound& ex ) {}
         catch(...) {}
@@ -245,49 +227,6 @@ void SViewer::updateSensors( uniset3::SensorIOInfoSeq& smap, uniset3::ObjectId o
 
 }
 // ---------------------------------------------------------------------------
-void SViewer::updateThresholds( uniset3::ThresholdsListSeq& tlst, uniset3::ObjectId oid )
-{
-    const string owner = ObjectIndex::getShortName(uniset_conf()->oind->getMapName(oid));
-    cout << "\n======================================================\n" << owner;
-    cout << "\t Пороговые датчики";
-    cout << "\n------------------------------------------------------" << endl;
-
-    for(const auto& s : tlst.thresholds())
-    {
-        cout << "(" << setw(5) << s.si().id() << ") | ";
-
-        switch( s.type() )
-        {
-            case uniset3::AI:
-                cout << "AI";
-                break;
-
-            case uniset3::AO:
-                cout << "AO";
-                break;
-
-            default:
-                cout << "??";
-                break;
-        }
-
-        string sname = uniset_conf()->oind->getNameById(s.si().id());
-
-        if( isShortName )
-            sname = ObjectIndex::getShortName(sname);
-
-        cout << " | " << setw(60) << sname << " | " << setw(5) << s.value() << endl;
-
-        for( const auto& t : s.tlist().thresholds() )
-        {
-            cout << "\t(" << setw(3) << t.id() << ")  |  " << setw(5) << t.state() << "  |  hi: " << setw(5) << t.hilimit();
-            cout << " | low: " << setw(5) << t.lowlimit();
-            cout << endl;
-        }
-    }
-}
-// ---------------------------------------------------------------------------
-
 void SViewer::printInfo(uniset3::ObjectId id, const string& sname, long value, const string& supplier,
                         const string& txtname, const string& iotype)
 {

@@ -100,8 +100,6 @@ namespace uniset3
                 continue;
             }
 
-            inf->sinf.set_undefined(false);
-
             ncrslot(uxml, it, node, inf);
             rslot(uxml, it, node);
             //      read_consumers(xml, it, inf);
@@ -212,11 +210,7 @@ namespace uniset3
         inf->sinf.set_default_val(it.getIntProp("default"));
         inf->sinf.set_dbignore(it.getIntProp("dbignore"));
         inf->sinf.set_value(inf->sinf.default_val());
-        inf->sinf.set_undefined(false);
         inf->sinf.set_real_value(inf->sinf.value());
-
-        if( !it.getProp("undefined_value").empty() )
-            inf->undef_value = it.getIntProp("undefined_value");
 
         const string d_txt( it.getProp("depend") );
 
@@ -324,9 +318,9 @@ namespace uniset3
                 }
 
                 ulog3  << "(IOConfig_XML::read_thresholds): \tthreshold low="
-                       << ti->tinf.lowlimit() << " \thi=" << ti->tinf.hilimit()
+                       << ti->lowlimit << " \thi=" << ti->hilimit
                        << " \t sid=" << ti->sid
-                       << " \t invert=" << ti->tinf.invert()
+                       << " \t invert=" << ti->invert
                        << endl << flush;
 
                 // начальная инициализация итератора
@@ -427,11 +421,10 @@ namespace uniset3
             }
         }
 
-        ti->tinf.set_id(uit.getIntProp("id"));
-        ti->tinf.set_lowlimit(uit.getIntProp("lowlimit"));
-        ti->tinf.set_hilimit(uit.getIntProp("hilimit"));
-        ti->tinf.set_invert(uit.getIntProp("invert"));
-        ti->tinf.set_state(uniset3::NormalThreshold);
+        ti->lowlimit = uit.getIntProp("lowlimit");
+        ti->hilimit  =uit.getIntProp("hilimit");
+        ti->invert = uit.getIntProp("invert");
+        ti->state = IOController::NormalThreshold;
         return true;
     }
     // ------------------------------------------------------------------------------------------

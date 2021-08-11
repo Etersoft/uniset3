@@ -33,7 +33,6 @@ namespace uniset3
                << " stype=" << inf.stype
                << " calibration=" << inf.cal
                << " cdiagram=" << ( inf.cdiagram ? inf.cdiagram->getName() : "null" )
-               << " breaklim=" << inf.breaklim
                << " value=" << inf.value
                << " craw=" << inf.craw
                << " cprev" << inf.cprev
@@ -54,7 +53,9 @@ namespace uniset3
                << " d_off_value=" << inf.d_off_value
                << " d_iotype=" << inf.d_iotype
                << " t_ai=" << inf.t_ai
-               << " ti=" << inf.ti
+               << " t_invert" << inf.t_invert
+               << " t_hilimit" << inf.t_hilimit
+               << " t_lowlimit" << inf.t_lowlimit
                << " front=" << inf.front
                << " front_type=" << inf.front_type
                << " front_prev_state=" << inf.front_prev_state
@@ -65,15 +66,6 @@ namespace uniset3
     IOBase::~IOBase()
     {
         delete cdiagram;
-    }
-    // -----------------------------------------------------------------------------
-    bool IOBase::check_channel_break( long val )
-    {
-        // порог не задан... (проверка отключена)
-        if( breaklim <= 0 )
-            return false;
-
-        return ( val < breaklim );
     }
     // -----------------------------------------------------------------------------
     bool IOBase::check_depend( const std::shared_ptr<SMInterface>& shm )
@@ -200,15 +192,6 @@ namespace uniset3
         }
         else
         {
-            // проверка на обрыв
-            if( it->check_channel_break(val) )
-            {
-                uniset_rwmutex_wrlock lock(it->val_lock);
-                it->value = ChannelBreakValue;
-                shm->localSetUndefinedState(it->ioit, true, it->si.id());
-                return;
-            }
-
             // проверка зависимости
             if( !it->check_depend(shm) )
                 val = it->d_off_value;
@@ -257,11 +240,6 @@ namespace uniset3
         {
             uniset_rwmutex_wrlock lock(it->val_lock);
 
-            // если предыдущее значение "обрыв",
-            // то сбрасываем признак
-            if( it->value == ChannelBreakValue )
-                shm->localSetUndefinedState(it->ioit, false, it->si.id());
-
             if( force || it->value != val )
             {
                 shm->localSetValue( it->ioit, it->si.id(), val, shm->ID() );
@@ -285,15 +263,6 @@ namespace uniset3
             }
             else if( it->cal.precision() != 0 && !it->noprecision )
                 val = lroundf( fval * pow(10.0, it->cal.precision()) );
-
-            // проверка на обрыв
-            if( it->check_channel_break(val) )
-            {
-                uniset_rwmutex_wrlock lock(it->val_lock);
-                it->value = ChannelBreakValue;
-                shm->localSetUndefinedState(it->ioit, true, it->si.id());
-                return;
-            }
 
             // проверка зависимости
             if( !it->check_depend(shm) )
@@ -321,11 +290,6 @@ namespace uniset3
 
         {
             uniset_rwmutex_wrlock lock(it->val_lock);
-
-            // если предыдущее значение "обрыв",
-            // то сбрасываем признак
-            if( it->value == ChannelBreakValue )
-                shm->localSetUndefinedState(it->ioit, false, it->si.id());
 
             if( force || it->value != val )
             {
@@ -351,15 +315,6 @@ namespace uniset3
             else if( it->cal.precision() != 0 && !it->noprecision )
                 val = lroundf( fval * pow(10.0, it->cal.precision()) );
 
-            // проверка на обрыв
-            if( it->check_channel_break(val) )
-            {
-                uniset_rwmutex_wrlock lock(it->val_lock);
-                it->value = ChannelBreakValue;
-                shm->localSetUndefinedState(it->ioit, true, it->si.id());
-                return;
-            }
-
             // проверка зависимости
             if( !it->check_depend(shm) )
                 val = it->d_off_value;
@@ -386,11 +341,6 @@ namespace uniset3
 
         {
             uniset_rwmutex_wrlock lock(it->val_lock);
-
-            // если предыдущее значение "обрыв",
-            // то сбрасываем признак
-            if( it->value == ChannelBreakValue )
-                shm->localSetUndefinedState(it->ioit, false, it->si.id());
 
             if( force || it->value != val )
             {
@@ -589,18 +539,18 @@ namespace uniset3
         //    cout  << "val=" << val << " set=" << set << endl;
         // Проверка нижнего предела
         // значение должно быть меньше lowLimit-чуствительность
-        if (it->ti.invert())
+        if (it->t_invert)
         {
-            if( val <= it->ti.lowlimit() )
+            if( val <= it->t_lowlimit )
                 set = true;
-            else if( val >= it->ti.hilimit() )
+            else if( val >= it->t_hilimit )
                 set = false;
         }
         else
         {
-            if( val <= it->ti.lowlimit() )
+            if( val <= it->t_lowlimit )
                 set = false;
-            else if( val >= it->ti.hilimit() )
+            else if( val >= it->t_hilimit )
                 set = true;
         }
 
@@ -691,7 +641,6 @@ namespace uniset3
         b->defval   = initIntProp(it, "default", prefix, init_prefix_only);
         b->noprecision    = initIntProp(it, "noprecision", prefix, init_prefix_only);
         b->value    = b->defval;
-        b->breaklim = initIntProp(it, "breaklim", prefix, init_prefix_only);
         b->rawdata  = initIntProp(it, "rawdata", prefix, init_prefix_only);
 
         timeout_t d_msec = initTimeoutProp(it, "debouncedelay", prefix, init_prefix_only, UniSetTimer::WaitUpTime);
@@ -885,9 +834,9 @@ namespace uniset3
                     return false;
                 }
 
-                b->ti.set_lowlimit(initIntProp(it, "lowlimit", prefix, init_prefix_only));
-                b->ti.set_hilimit(initIntProp(it, "hilimit", prefix, init_prefix_only));
-                b->ti.set_invert(initIntProp(it, "threshold_invert", prefix, init_prefix_only));
+                b->t_lowlimit = initIntProp(it, "lowlimit", prefix, init_prefix_only);
+                b->t_hilimit = initIntProp(it, "hilimit", prefix, init_prefix_only);
+                b->t_invert = initIntProp(it, "threshold_invert", prefix, init_prefix_only);
                 shm->initIterator(b->t_ait);
             }
         }
@@ -924,7 +873,6 @@ namespace uniset3
         b.cal = cal;
         b.stype = stype;
         b.cdiagram = cdiagram;
-        b.breaklim = breaklim;
         b.value = value;
         b.craw = craw;
         b.cprev = cprev;
@@ -945,6 +893,9 @@ namespace uniset3
         b.d_off_value = d_off_value;
         b.d_iotype = d_iotype;
         b.t_ai = t_ai;
+        b.t_invert = t_invert;
+        b.t_hilimit = t_hilimit;
+        b.t_lowlimit = t_lowlimit;
         b.front_type = front_type;
         b.front_prev_state = front_prev_state;
         b.front_state = front_state;
@@ -964,7 +915,6 @@ namespace uniset3
         cal = b.cal;
         stype = b.stype;
         cdiagram = b.cdiagram;
-        breaklim = b.breaklim;
         value = b.value;
         craw = b.craw;
         cprev = b.cprev;
@@ -985,6 +935,9 @@ namespace uniset3
         d_off_value = b.d_off_value;
         d_iotype = b.d_iotype;
         t_ai = b.t_ai;
+        t_invert = b.t_invert;
+        t_hilimit = b.t_hilimit;
+        t_lowlimit = b.t_lowlimit;
         front_type = b.front_type;
         front_prev_state = b.front_prev_state;
         front_state = b.front_state;

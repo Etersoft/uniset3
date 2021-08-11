@@ -45,7 +45,6 @@ namespace uniset3
                             uniset3::ObjectId backid = uniset3::DefaultObjectId );
 
             uniset3::SensorIOInfoSeq getSensorsMap();
-            uniset3::ThresholdsListSeq getThresholdsList();
 
             void localSetValue( IOController::IOStateList::iterator& it,
                                 uniset3::ObjectId sid,
@@ -53,13 +52,6 @@ namespace uniset3
 
             long localGetValue( IOController::IOStateList::iterator& it,
                                 uniset3::ObjectId sid );
-
-            /*! функция выставления признака неопределённого состояния для аналоговых датчиков
-                // для дискретных датчиков необходимости для подобной функции нет.
-                // см. логику выставления в функции localSaveState
-            */
-            void localSetUndefinedState( IOController::IOStateList::iterator& it,
-                                         bool undefined, uniset3::ObjectId sid );
 
             // специальные функции
             IOController::IOStateList::iterator ioEnd();

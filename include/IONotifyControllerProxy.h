@@ -44,10 +44,6 @@ namespace uniset3
             // ------  GRPC интерфейс ------
             virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response) override;
-            virtual ::grpc::Status askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response) override;
-            virtual ::grpc::Status getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response) override;
-            virtual ::grpc::Status getThresholds(::grpc::ServerContext* context, const ::uniset3::GetThresholdsParams* request, ::uniset3::ThresholdList* response) override;
-            virtual ::grpc::Status getThresholdsList(::grpc::ServerContext* context, const ::uniset3::GetThresholdsListParams* request, ::uniset3::ThresholdsListSeq* response) override;
             // --------------------------
             bool add( const std::shared_ptr<IONotifyController>& obj );
             bool remove( const std::shared_ptr<IONotifyController>& obj );

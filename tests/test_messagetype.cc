@@ -24,7 +24,6 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         CHECK( sm.header().consumer() == DefaultObjectId );
         CHECK( sm.id() == DefaultObjectId );
         CHECK( sm.value() == 0 );
-        CHECK( sm.undefined() == false );
 
         CHECK( sm.sensor_type() == uniset3::DI ); // UnknownIOType
         CHECK( sm.ci().precision() == 0 );
@@ -32,9 +31,7 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         CHECK( sm.ci().maxraw() == 0 );
         CHECK( sm.ci().mincal() == 0 );
         CHECK( sm.ci().maxcal() == 0 );
-        CHECK( sm.threshold() == 0 );
-        CHECK( sm.tid() == uniset3::DefaultThresholdId );
-    }
+     }
 
     SECTION("Default SensorMessage")
     {

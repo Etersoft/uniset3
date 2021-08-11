@@ -144,11 +144,6 @@ namespace uniset3
             // ------  GRPC интерфейс ------
             virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response);
             virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response);
-            virtual ::grpc::Status askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response);
-            virtual ::grpc::Status getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response);
-            virtual ::grpc::Status getThresholds(::grpc::ServerContext* context, const ::uniset3::GetThresholdsParams* request, ::uniset3::ThresholdList* response);
-            virtual ::grpc::Status getThresholdsList(::grpc::ServerContext* context, const ::uniset3::GetThresholdsListParams* request, ::uniset3::ThresholdsListSeq* response);
-
             // --------------------------------------------
 
 #ifndef DISABLE_REST_API
@@ -218,8 +213,6 @@ namespace uniset3
 
             std::shared_ptr<IOConfig> restorer;
 
-            void onChangeUndefinedState( std::shared_ptr<USensorInfo>& usi, IOController* ic );
-
             // функция для работы напрямую с указателем (оптимизация)
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi,
                                         long value, uniset3::ObjectId sup_id ) override;
@@ -258,6 +251,7 @@ namespace uniset3
             void ask(AskMap& askLst, const uniset3::ObjectId sid,
                      const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd);
 
+#if 0
             /*! добавить новый порог для датчика */
             std::shared_ptr<UThresholdInfo> addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi, std::shared_ptr<UThresholdInfo>& ti );
             bool addThresholdConsumer( std::shared_ptr<UThresholdInfo>& ti, const uniset3::ConsumerInfo& ci );
@@ -266,17 +260,13 @@ namespace uniset3
             bool removeThresholdConsumer( std::shared_ptr<USensorInfo>& usi,
                                           std::shared_ptr<UThresholdInfo>& ti,
                                           const uniset3::ConsumerInfo& ci);
-
+#endif
             AskMap askIOList; /*!< список потребителей по  датчикам */
-            AskThresholdMap askTMap; /*!< список порогов по датчикам */
 
             /*! замок для блокирования совместного доступа к cписку потребителей датчиков */
             uniset3::uniset_rwmutex askIOMutex;
-            /*! замок для блокирования совместного доступа к cписку потребителей пороговых датчиков */
-            uniset3::uniset_rwmutex trshMutex;
 
             sigc::connection conInit;
-            sigc::connection conUndef;
 
             int maxAttemtps; /*! максимальное количество попыток послать сообщение заказчику, после чего он будет удалён из списка */
             int sendAttemtps; /*! максимальное количество попыток послать сообщение заказчику во время изменения датчика */

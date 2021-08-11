@@ -1200,7 +1200,6 @@ int sinfo(const string& args, UInterface& ui )
             print_help(w, "value", std::to_string(sinf.value()) + "\n", " ", " : ");
             print_help(w, "real_value", std::to_string(sinf.real_value()) + "\n", " ", " : ");
             print_help(w, "frozen", std::to_string(sinf.frozen()) + "\n", " ", " : ");
-            print_help(w, "undefined", std::to_string(sinf.undefined()) + "\n", " ", " : ");
             print_help(w, "blocked", std::to_string(sinf.blocked()) + "\n", " ", " : ");
 
             if( sinf.depend_sid() != DefaultObjectId )

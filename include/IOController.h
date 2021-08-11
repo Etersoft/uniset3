@@ -61,7 +61,6 @@ namespace uniset3
             virtual ::grpc::Status setValue(::grpc::ServerContext* context, const ::uniset3::SetValueParams* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status freezeValue(::grpc::ServerContext* context, const ::uniset3::FreezeValueParams* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status getIOType(::grpc::ServerContext* context, const ::uniset3::GetIOTypeParams* request, ::uniset3::RetIOType* response) override;
-            virtual ::grpc::Status setUndefinedState(::grpc::ServerContext* context, const ::uniset3::SetUndefinedParams* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status getRawValue(::grpc::ServerContext* context, const ::uniset3::GetRawValueParams* request, ::google::protobuf::Int64Value* response) override;
             virtual ::grpc::Status calibrate(::grpc::ServerContext* context, const ::uniset3::CalibrateParams* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status getCalibrateInfo(::grpc::ServerContext* context, const ::uniset3::GetCalibrateInfoParams* request, ::uniset3::CalibrateInfo* response) override;
@@ -71,17 +70,6 @@ namespace uniset3
             virtual ::grpc::Status setOutputSeq(::grpc::ServerContext* context, const ::uniset3::SetOutputParams* request, ::uniset3::IDSeq* response) override;
             virtual ::grpc::Status getTimeChange(::grpc::ServerContext* context, const ::uniset3::GetTimeChangeParams* request, ::uniset3::ShortIOInfo* response) override;
             virtual ::grpc::Status getSensors(::grpc::ServerContext* context, const ::uniset3::GetSensorsParams* request, ::uniset3::ShortMapSeq* response) override;
-
-            class Undefined: public Exception
-            {
-                public:
-                    Undefined() noexcept: Exception("Undefined") {}
-
-                    /*! Конструктор, позволяющий вывести в сообщении об ошибке дополнительную информацию err */
-                    Undefined(const std::string& err) noexcept: Exception(err) {}
-
-                    long value;
-            };
 
             inline uniset3::SensorInfo SensorInfo( const uniset3::ObjectId sid,
                                                    const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode())
@@ -115,7 +103,6 @@ namespace uniset3
             // необходимо в обработчике не забывать использовать uniset_rwmutex_wrlock(val_lock) или uniset_rwmutex_rlock(val_lock)
             */
             typedef sigc::signal<void, std::shared_ptr<USensorInfo>&, IOController*> ChangeSignal;
-            typedef sigc::signal<void, std::shared_ptr<USensorInfo>&, IOController*> ChangeUndefinedStateSignal;
 
             // signal по изменению определённого датчика
             ChangeSignal signal_change_value( uniset3::ObjectId sid );
@@ -123,9 +110,6 @@ namespace uniset3
             // signal по изменению любого датчика
             ChangeSignal signal_change_value();
 
-            // сигналы по изменению флага "неопределённое состояние" (обрыв датчика например)
-            ChangeUndefinedStateSignal signal_change_undefined_state( uniset3::ObjectId sid );
-            ChangeUndefinedStateSignal signal_change_undefined_state();
             // -----------------------------------------------------------------------------------------
             // полнейшее нарушение инкапсуляции
             // но пока, это попытка оптимизировать работу с IOController через указатель.
@@ -157,13 +141,6 @@ namespace uniset3
                                           long value, uniset3::ObjectId sup_id );
 
             virtual long localGetValue( IOStateList::iterator& it, const uniset3::ObjectId sid );
-
-            /*! функция выставления признака неопределённого состояния для аналоговых датчиков
-                // для дискретных датчиков необходимости для подобной функции нет.
-                // см. логику выставления в функции localSaveState
-            */
-            virtual void localSetUndefinedState( IOStateList::iterator& it, bool undefined,
-                                                 const uniset3::ObjectId sid );
 
             virtual void localFreezeValueIt( IOController::IOStateList::iterator& li,
                                              uniset3::ObjectId sid,
@@ -271,8 +248,6 @@ namespace uniset3
             std::mutex siganyMutex;
             ChangeSignal sigAnyChange;
 
-            std::mutex siganyundefMutex;
-            ChangeSignal sigAnyUndefChange;
             InitSignal sigInit;
 
             IOStateList ioList;    /*!< список с текущим состоянием аналоговых входов/выходов */
@@ -284,6 +259,14 @@ namespace uniset3
             std::mutex loggingMutex; /*!< logging info mutex */
 
         public:
+
+            /*! Состояние порогового датчика */
+            enum ThresholdState
+            {
+                LowThreshold,       /*!< сработал нижний порог  (значение меньше нижнего) */
+                NormalThreshold,    /*!< значение в заданных пределах (не достигли порога) */
+                HiThreshold         /*!< сработал верхний порог  (значение больше верхнего) */
+            };
 
             struct UThresholdInfo;
             typedef std::list<std::shared_ptr<UThresholdInfo>> ThresholdExtList;
@@ -324,9 +307,6 @@ namespace uniset3
                 uniset3::uniset_rwmutex changeMutex;
                 ChangeSignal sigChange;
 
-                uniset3::uniset_rwmutex undefMutex;
-                ChangeUndefinedStateSignal sigUndefChange;
-
                 long d_value = { 1 }; /*!< разрешающее работу значение датчика от которого зависит данный */
                 long d_off_value = { 0 }; /*!< блокирующее значение */
                 std::shared_ptr<USensorInfo> d_usi; // shared_ptr на датчик от которого зависит этот.
@@ -337,7 +317,6 @@ namespace uniset3
 
                 size_t nchanges = { 0 }; // количество изменений датчика
 
-                long undef_value = { not_specified_value }; // значение для "неопределённого состояния датчика"
                 long frozen_value = { 0 };
 
                 // функция обработки информации об изменении состояния датчика, от которого зависит данный
@@ -370,14 +349,12 @@ namespace uniset3
                         sm.set_value(sinf.value());
                         *sm.mutable_sm_ts() = sinf.ts();
                         *sm.mutable_ci() = sinf.ci();
-                        sm.set_undefined(sinf.undefined());
                     }
                     else
                     {
                         sm.set_value(sinf.value());
                         *sm.mutable_sm_ts() = sinf.ts();
                         *sm.mutable_ci() = sinf.ci();
-                        sm.set_undefined(sinf.undefined());
                     }
 
                     return sm;
@@ -387,18 +364,21 @@ namespace uniset3
             /*! Информация о пороговом значении */
             struct UThresholdInfo
             {
-                UThresholdInfo( uniset3::ThresholdId tid, long low, long hi, bool inv,
-                                uniset3::ObjectId _sid = uniset3::DefaultObjectId ):
-                    sid(_sid)
+                UThresholdInfo( uniset3::ObjectId _sid, long low, long hi, bool inv ):
+                hilimit(hi),
+                lowlimit(low),
+                state(NormalThreshold),
+                invert(inv),
+                sid(_sid)
                 {
-                    tinf.set_id(tid);
-                    tinf.set_hilimit(hi);
-                    tinf.set_lowlimit(low);
-                    tinf.set_state(uniset3::NormalThreshold);
-                    tinf.set_invert(inv);
                 }
 
-                uniset3::ThresholdInfo tinf;
+                long hilimit;           /*!< верхняя граница срабатывания */
+                long lowlimit;          /*!< нижняя граница срабатывания */
+                ThresholdState state;
+                unsigned long tv_sec;   /*!< время последнего изменения датчика, секунды (clock_gettime(CLOCK_REALTIME) */
+                unsigned long tv_nsec;  /*!< время последнего изменения датчика, nanosec (clock_gettime(CLOCK_REALTIME) */
+                bool invert;         /*!< инвертированная логика */
 
                 /*! идентификатор дискретного датчика связанного с данным порогом */
                 uniset3::ObjectId sid;
@@ -406,12 +386,12 @@ namespace uniset3
                 /*! итератор в списке датчиков (для быстрого доступа) */
                 IOController::IOStateList::iterator sit;
 
-                inline bool operator== ( const ThresholdInfo& r ) const
+                inline bool operator== ( const UThresholdInfo& r ) const
                 {
-                    return ((tinf.id() == r.id()) &&
-                            (tinf.hilimit() == r.hilimit()) &&
-                            (tinf.lowlimit() == r.lowlimit()) &&
-                            (tinf.invert() == r.invert()) );
+                    return ((sid == r.sid) &&
+                            (hilimit == r.hilimit) &&
+                            (lowlimit == r.lowlimit) &&
+                            (invert == r.invert) );
                 }
 
                 UThresholdInfo( const UThresholdInfo& ) = delete;

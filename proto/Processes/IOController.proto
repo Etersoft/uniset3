@@ -58,12 +58,6 @@ message GetIOTypeParams
     int64 id = 1;
 }
 
-message SetUndefinedParams {
-    int64 id = 1;
-    bool undefined = 2;
-    int64 sup_id = 3;
-}
-
 message CalibrateParams
 {
     int64 id = 1;
@@ -87,19 +81,18 @@ message RetIOType
 message SensorIOInfo
 {
     int64 value = 1;                   /*!< значение */
-    bool undefined = 2;                /*!< признак неопределённости значения */
-    bool blocked = 3;                  /*!< данное значение блокировано другим */
-    bool frozen = 4;                   /*!< данное значение "заморожено" */
-    int64 real_value = 5;              /*!< запомненное состояние, до блокировки или заморозки */
-    uniset3.IOType type = 6;     /*!< тиNewStub(oref)п */
-    int32 priority = 7;                /*!< приоритет уведомления */
-    SensorInfo si = 8;
-    int64 default_val = 9;             /*!< значение по умолчанию */
-    CalibrateInfo ci = 10;              /*!< калибровочные параметры */
-    Timespec ts = 11;     /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
-    int64 supplier = 12;    /*!< идентификатор объекта изменившего состояние датчика */
-    bool dbignore = 13;     /*!< не сохранять изменения в БД */
-    int64 depend_sid = 14;  /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
+    bool blocked = 2;                  /*!< данное значение блокировано другим */
+    bool frozen = 3;                   /*!< данное значение "заморожено" */
+    int64 real_value = 4;              /*!< запомненное состояние, до блокировки или заморозки */
+    uniset3.IOType type = 5;     /*!< тиNewStub(oref)п */
+    int32 priority = 6;                /*!< приоритет уведомления */
+    SensorInfo si = 7;
+    int64 default_val = 8;             /*!< значение по умолчанию */
+    CalibrateInfo ci = 9;              /*!< калибровочные параметры */
+    Timespec ts = 10;     /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
+    int64 supplier = 11;    /*!< идентификатор объекта изменившего состояние датчика */
+    bool dbignore = 12;     /*!< не сохранять изменения в БД */
+    int64 depend_sid = 13;  /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
 }
 
 message SensorIOInfoSeq
@@ -183,10 +176,6 @@ service IOController_i {
     rpc freezeValue(FreezeValueParams) returns(google.protobuf.Empty) {}
     rpc getIOType(GetIOTypeParams) returns(RetIOType) {}
     
-    // установка неопределённого состояния
-    // (пока работает только для аналоговых датчиков)
-    rpc setUndefinedState(SetUndefinedParams) returns(google.protobuf.Empty) {}
-    
     /*! Получени неколиброванного значения */
     rpc getRawValue(GetRawValueParams) returns(google.protobuf.Int64Value) {}
     
@@ -229,70 +218,6 @@ message AskSeqParams
 }
 
 
-/*! Состояние порогового датчика */
-enum ThresholdState
-{
-    LowThreshold = 0;       /*!< сработал нижний порог  (значение меньше нижнего) */
-    NormalThreshold = 1;    /*!< значение в заданных пределах (не достигли порога) */
-    HiThreshold = 2;        /*!< сработал верхний порог  (значение больше верхнего) */
-}
-
-message ThresholdInfo
-{
-    int64 id = 1;            
-    int64 hilimit = 2;     /*!< верхняя граница срабатывания */
-    int64 lowlimit = 3;    /*!< нижняя граница срабатывания */
-    ThresholdState state = 4;
-    Timespec ts  = 5;      /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
-    bool invert = 6;       /*!< инвертированная логика */
-}
-
-message ThresholdInfoSeq
-{
-    repeated ThresholdInfo thresholds = 1;
-}
-
-message AskThresholdParams
-{
-    int64 sid = 1;
-    uniset3.ConsumerInfo ci = 2;
-    int64 tid = 3;
-    int64 lowlimit = 4;
-    int64 hilimit = 5;
-    bool invert = 6;
-    uniset3.UIOCommand cmd = 7;
-}
-
-message GetThresholdInfoParams
-{
-    int64 sid = 1;
-    int64 tid = 2;
-}
-
-message GetThresholdsParams
-{
-    int64 id = 1;
-}
-
-message GetThresholdsListParams
-{
-    int64 id = 1; // service Id
-}
-
-message ThresholdList
-{
-    SensorInfo si = 1;
-    uniset3.IOType type = 2;
-    int64 value = 3;
-    ThresholdInfoSeq tlist = 4;
-}
-
-message ThresholdsListSeq 
-{
-   repeated ThresholdList thresholds = 1;
-}
-
-
 /*!
  * \interface IONotifyController_i
  * \brief Базовый интерфейс для создания процессов рассылающих сообщения об изменении состояния
@@ -315,27 +240,4 @@ service IONotifyController_i
             Будет пустым если всё хорошо.
     */
     rpc askSensorsSeq(AskSeqParams) returns(uniset3.IDSeq) {}
-
-        /*! Заказ порогового датчика
-     * \sa UniversalIO::UniversalIOController::askThreshold()
-     * \param tid - идентификатор порога
-     * \param lowLimit - нижний порог срабатывания
-     * \param hiLimit - верхний порог срабатывания
-     * \param invert - инвертировать логику срабатывания
-     * Если invert=false, порог срабатывает при условии >= hilimit и отпускается при <= lowlimit
-     * Если invert=true, порог срабатывает при условии <= lowlimit и отпускается при <= hilimit
-    */
-    rpc askThreshold(AskThresholdParams) returns(google.protobuf.Empty){}
-    
-    
-    /*! Получение информации о пороге
-     *  Т.к. пороги могут иметь одинаковый tid для разных аналоговых датчиков, то передаётся и SensorInfo
-    */
-    rpc getThresholdInfo(GetThresholdInfoParams) returns(ThresholdInfo) {}
-
-    /*! получить список порогов для датчика "si" */
-    rpc getThresholds(GetThresholdsParams) returns(ThresholdList) {}
-
-    /*! получить список ВСЕХ датчиков по которым созданы пороги */
-    rpc getThresholdsList(GetThresholdsListParams) returns(ThresholdsListSeq) {}
 }

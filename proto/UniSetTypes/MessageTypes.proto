@@ -37,14 +37,9 @@ message SensorMessage
     MessageHeader header = 1;
     int64 id = 2;
     int64 value = 3;
-    bool undefined = 4;
-    Timespec sm_ts = 5;
-    IOType sensor_type = 6;
-    CalibrateInfo ci = 7;
-
-    // для пороговых датчиков
-    bool threshold = 8;  /*!< TRUE - сработал порог, FALSE - порог отключился */
-    int64 tid = 9;
+    Timespec sm_ts = 4;
+    IOType sensor_type = 5;
+    CalibrateInfo ci = 6;
 }
 
 message SystemMessage

@@ -747,32 +747,6 @@ TEST_CASE("MBTCPMaster: safe mode (resetIfNotRespond)", "[modbus][safemode][mbma
     REQUIRE( ui->getValue(1054) == 1 );
 }
 // -----------------------------------------------------------------------------
-TEST_CASE("MBTCPMaster: undefined value", "[modbus][undefined][mbmaster][mbtcpmaster]")
-{
-    InitTest();
-
-    mbs->setReply(120);
-    msleep(polltime + 200);
-    REQUIRE( ui->getValue(1070) == 120 );
-
-    mbs->setReply(10);
-    msleep(polltime + 200);
-
-    try
-    {
-        ui->getValue(1070);
-    }
-    catch( const uniset3::IOController::Undefined& ex )
-    {
-        REQUIRE( ex.value == 65535 );
-    }
-
-    mbs->setReply(120);
-    msleep(polltime + 200);
-    REQUIRE_NOTHROW(ui->getValue(1070));
-    REQUIRE( ui->getValue(1070) == 120 );
-}
-// -----------------------------------------------------------------------------
 TEST_CASE("MBTCPMaster: reload config", "[modbus][reload][mbmaster][mbtcpmaster]")
 {
     InitTest();

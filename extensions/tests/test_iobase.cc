@@ -26,7 +26,6 @@ TEST_CASE("[IOBase]: default constructor", "[iobase][extensions]")
     CHECK( ib.cdiagram == nullptr );
     CHECK( ib.calcrop == true );
 
-    CHECK( ib.breaklim == 0 );
     CHECK( ib.value == 0 );
     CHECK( ib.craw == 0 );
     CHECK( ib.cprev == 0 );     /*!< предыдущее значение после калибровки */
@@ -55,6 +54,9 @@ TEST_CASE("[IOBase]: default constructor", "[iobase][extensions]")
 
     // Порог
     REQUIRE( ib.t_ai == DefaultObjectId );
+    REQUIRE( ib.t_invert == false );
+    REQUIRE( ib.t_lowlimit == 0 );
+    REQUIRE( ib.t_hilimit == 0 );
     CHECK_FALSE( ib.front ); // флаг работы по фронту
     REQUIRE( ib.front_type == IOBase::ftUnknown );
     CHECK_FALSE( ib.front_prev_state );
@@ -257,26 +259,5 @@ TEST_CASE("[IOBase]: front function", "[iobase][front][extensions]")
         CHECK( ib.check_front(true) );
         CHECK_FALSE( ib.check_front(false) );
     }
-}
-// -----------------------------------------------------------------------------
-TEST_CASE("[IOBase]: channel break", "[iobase][extensions]")
-{
-    CHECK( uniset_conf() != nullptr );
-
-    IOBase ib;
-    // просто проверка.. при отключённом breaklim.. (всегда FALSE)
-    CHECK_FALSE( ib.check_channel_break(100) );
-    CHECK_FALSE( ib.check_channel_break(-100) );
-    CHECK_FALSE( ib.check_channel_break(0) );
-
-    const int breakValue = 200;
-
-    ib.breaklim = breakValue;
-    CHECK( ib.check_channel_break(breakValue - 10) );
-    CHECK( ib.check_channel_break(-breakValue) );
-    CHECK( ib.check_channel_break(0) );
-
-    CHECK_FALSE( ib.check_channel_break(breakValue + 1) );
-    CHECK_FALSE( ib.check_channel_break(breakValue) );
 }
 // -----------------------------------------------------------------------------

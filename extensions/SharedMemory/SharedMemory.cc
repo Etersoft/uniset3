@@ -768,11 +768,6 @@ namespace uniset3
                 {
                     hit.add( localGetValue( hit.ioit, hit.id ), it.size );
                 }
-                catch( uniset3::IOController::Undefined& ex )
-                {
-                    hit.add( ex.value, it.size );
-                    // hit.add( numeric_limits<long>::max(), it.size );
-                }
                 catch(...) {}
             }
         }

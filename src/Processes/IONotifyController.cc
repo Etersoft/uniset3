@@ -37,7 +37,6 @@ using namespace uniset3::umessage;
 // ------------------------------------------------------------------------------------------
 IONotifyController::IONotifyController():
     askIOMutex("askIOMutex"),
-    trshMutex("trshMutex"),
     maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
     sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
 {
@@ -48,18 +47,15 @@ IONotifyController::IONotifyController( ObjectId id, std::shared_ptr<IOConfig> d
     IOController(id),
     restorer(d),
     askIOMutex(string(uniset_conf()->oind->getMapName(id)) + "_askIOMutex"),
-    trshMutex(string(uniset_conf()->oind->getMapName(id)) + "_trshMutex"),
     maxAttemtps(uniset_conf()->getPIntField("ConsumerMaxAttempts", 10)),
     sendAttemtps(uniset_conf()->getPIntField("ConsumerSendAttempts", 3))
 {
-    conUndef = signal_change_undefined_state().connect(sigc::mem_fun(*this, &IONotifyController::onChangeUndefinedState));
     conInit = signal_init().connect(sigc::mem_fun(*this, &IONotifyController::initItem));
     ui->setCacheMaxSize(uniset_conf()->getPIntField("ConsumerMaxCache", 5000));
 }
 
 IONotifyController::~IONotifyController()
 {
-    conUndef.disconnect();
     conInit.disconnect();
 }
 // ------------------------------------------------------------------------------------------
@@ -120,30 +116,6 @@ void IONotifyController::showStatisticsForConsumer( ostringstream& inf, const st
             }
         }
     } // unlock askIOMutex
-
-    {
-        // выводим информацию по конкретному объекту
-        uniset_rwmutex_rlock lock(trshMutex);
-
-        for( auto&& a : askTMap )
-        {
-            uniset_rwmutex_rlock lock2(a.second.mut);
-
-            for( const auto& c : a.second.clst )
-            {
-                if( c.ci.id() == consumer_id )
-                {
-                    if( a.first->sid != DefaultObjectId )
-                        stat.emplace_back(a.first->sid, c);
-                    else
-                        stat.emplace_back(DefaultObjectId, c);
-
-                    smCount += c.smCount;
-                    break;
-                }
-            }
-        }
-    }
 
     // печатаем отчёт
     inf << "Statisctic for consumer '" << consumer << "'(smCount=" << smCount << "):"
@@ -494,12 +466,8 @@ grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const
 
     auto li = myioEnd();
 
-    try
-    {
-        // если такого аналогового датчика нет, здесь сработает исключение...
-        localGetValue(li, request->sid());
-    }
-    catch( IOController::Undefined& ex ) {}
+    // если такого аналогового датчика нет, здесь сработает исключение...
+    localGetValue(li, request->sid());
 
     {
         uniset_rwmutex_wrlock lock(askIOMutex);
@@ -748,6 +716,7 @@ void IONotifyController::initItem( std::shared_ptr<USensorInfo>& usi, IOControll
         checkThreshold( usi, false );
 }
 // ------------------------------------------------------------------------------------------
+#if 0
 grpc::Status IONotifyController::askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response)
 {
     ulog2 << "(askThreshold): " << ( request->cmd() == UIODontNotify ? "отказ" : "заказ" ) << " от "
@@ -834,16 +803,13 @@ IONotifyController::addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi,
 
     for( auto&& t : usi->thresholds )
     {
-        if( ti->tinf.id() == t->tinf.id() )
+        if( ti->sid == t->sid )
             return t;
     }
 
     struct timespec tm = uniset3::now_to_timespec();
-
-    ti->tinf.mutable_ts()->set_sec(tm.tv_sec);
-
-    ti->tinf.mutable_ts()->set_nsec(tm.tv_nsec);
-
+    ti->tv_sec = tm.tv_sec;
+    ti->tv_nsec= tm.tv_nsec;
     usi->thresholds.push_back(ti);
 
     return ti;
@@ -882,6 +848,7 @@ bool IONotifyController::removeThresholdConsumer( std::shared_ptr<USensorInfo>& 
 
     return false;
 }
+#endif
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::checkThreshold( IOController::IOStateList::iterator& li,
         const uniset3::ObjectId sid,
@@ -898,8 +865,7 @@ void IONotifyController::checkThreshold( IOController::IOStateList::iterator& li
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::checkThreshold( std::shared_ptr<IOController::USensorInfo>& usi, bool send_msg )
 {
-    uniset_rwmutex_rlock lock(trshMutex);
-
+    uniset_rwmutex_rlock lock(usi->tmut);
     auto& ti = usi->thresholds;
 
     if( ti.empty() )
@@ -920,68 +886,58 @@ void IONotifyController::checkThreshold( std::shared_ptr<IOController::USensorIn
         {
             // Используем здесь значение скопированное в sm.value
             // чтобы не делать ещё раз lock на li->second->value
-            uniset3::ThresholdState state = it->tinf.state();
+            ThresholdState state = it->state;
 
-            if( !it->tinf.invert() )
+            if( !it->invert )
             {
                 // Если логика не инвертированная, то срабатывание это - выход за зону >= hilimit
-                if( sm.value() <= it->tinf.lowlimit()  )
-                    state = uniset3::NormalThreshold;
-                else if( sm.value() >= it->tinf.hilimit() )
-                    state = uniset3::HiThreshold;
+                if( sm.value() <= it->lowlimit  )
+                    state = NormalThreshold;
+                else if( sm.value() >= it->hilimit )
+                    state = HiThreshold;
             }
             else
             {
                 // Если логика инвертированная, то срабатывание это - выход за зону <= lowlimit
-                if( sm.value() >= it->tinf.hilimit()  )
-                    state = uniset3::NormalThreshold;
-                else if( sm.value() <= it->tinf.lowlimit() )
-                    state = uniset3::LowThreshold;
+                if( sm.value() >= it->hilimit )
+                    state = NormalThreshold;
+                else if( sm.value() <= it->lowlimit )
+                    state = LowThreshold;
             }
 
             // если ничего не менялось..
-            if( it->tinf.state() == state )
+            if( it->state == state )
                 continue;
 
-            it->tinf.set_state(state);
-            sm.set_tid(it->tinf.id());
+            it->state = state;
 
             // если состояние не normal, значит порог сработал,
             // не важно какой.. нижний или верхний (зависит от inverse)
-            sm.set_threshold( state != uniset3::NormalThreshold );
+            bool isThreshold = ( state != NormalThreshold );
 
             // запоминаем время изменения состояния
-            it->tinf.mutable_ts()->set_sec(tm.tv_sec);
-            it->tinf.mutable_ts()->set_nsec(tm.tv_nsec);
-            *(sm.mutable_sm_ts()) = it->tinf.ts();
+            it->tv_sec = tm.tv_sec;
+            it->tv_nsec = tm.tv_nsec;
+            sm.mutable_sm_ts()->set_sec(tm.tv_sec);
+            sm.mutable_sm_ts()->set_nsec(tm.tv_nsec);
 
             // если порог связан с датчиком, то надо его выставить
             if( it->sid != uniset3::DefaultObjectId )
             {
                 try
                 {
-                    localSetValueIt(it->sit, it->sid, (sm.threshold() ? 1 : 0), usi->sinf.supplier());
+                    localSetValueIt(it->sit, it->sid, (isThreshold ? 1 : 0), usi->sinf.supplier());
                 }
                 catch( uniset3::Exception& ex )
                 {
                     ucrit << myname << "(checkThreshold): " << ex << endl;
                 }
             }
-
-            // отдельно посылаем сообщения заказчикам по данному "порогу"
-            if( send_msg )
-            {
-                uniset_rwmutex_rlock lck(trshMutex);
-                auto i = askTMap.find(it.get());
-
-                if( i != askTMap.end() )
-                    send(i->second, sm);
-            }
         }
     }
 }
 // --------------------------------------------------------------------------------------------------------------
-std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold( const uniset3::ObjectId sid, const uniset3::ThresholdId tid )
+std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold( const uniset3::ObjectId sid, const uniset3::ObjectId t_sid )
 {
     auto it = myiofind(sid);
 
@@ -990,9 +946,9 @@ std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold(
         auto usi = it->second;
         uniset_rwmutex_rlock lck(usi->tmut);
 
-        for( auto&& t : usi->thresholds )
+        for( const auto& t : usi->thresholds )
         {
-            if( t->tinf.id() == tid )
+            if( t->sid == t_sid )
                 return t;
         }
     }
@@ -1000,123 +956,6 @@ std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold(
     return nullptr;
 }
 // --------------------------------------------------------------------------------------------------------------
-
-grpc::Status IONotifyController::getThresholdInfo(::grpc::ServerContext* context, const ::uniset3::GetThresholdInfoParams* request, ::uniset3::ThresholdInfo* response)
-{
-    uniset_rwmutex_rlock lock(trshMutex);
-    auto it = findThreshold(request->sid(), request->tid());
-
-    if( !it )
-    {
-        ostringstream err;
-        err << myname << "(getThresholds): Not found sensor (" << request->sid() << ") "
-            << uniset_conf()->oind->getNameById(request->sid());
-
-        uinfo << err.str() << endl;
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
-    }
-
-    (*response) = it->tinf;
-    return grpc::Status::OK;
-}
-// --------------------------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getThresholds(::grpc::ServerContext* context, const ::uniset3::GetThresholdsParams* request, ::uniset3::ThresholdList* response)
-{
-    auto it = myiofind(request->id());
-
-    if( it == myioEnd() )
-    {
-        ostringstream err;
-        err << myname << "(getThresholds): Not found sensor (" << request->id() << ") "
-            << uniset_conf()->oind->getNameById(request->id());
-
-        uinfo << err.str() << endl;
-        return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
-    }
-
-    auto& usi = it->second;
-
-    try
-    {
-        *(response->mutable_si()) = usi->sinf.si();
-        response->set_value(IOController::localGetValue(usi));
-        response->set_type(usi->sinf.type());
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        uwarn << myname << "(getThresholds): для датчика "
-              << uniset_conf()->oind->getNameById(usi->sinf.si().id())
-              << " " << ex << endl;
-    }
-
-    uniset_rwmutex_rlock lck(usi->tmut);
-
-    for( const auto& it2 : usi->thresholds )
-        *(response->mutable_tlist()->add_thresholds()) = it2->tinf;
-
-    return grpc::Status::OK;
-}
-// --------------------------------------------------------------------------------------------------------------
-grpc::Status IONotifyController::getThresholdsList(::grpc::ServerContext* context, const ::uniset3::GetThresholdsListParams* request, ::uniset3::ThresholdsListSeq* response)
-{
-    std::list< std::shared_ptr<USensorInfo> > slist;
-
-    // ищем все датчики, у которых не пустой список порогов
-    for_iolist([&slist]( std::shared_ptr<USensorInfo>& usi )
-    {
-        if( !usi->thresholds.empty() )
-            slist.push_back(usi);
-    });
-
-    if( !slist.empty() )
-    {
-        for( auto&& it : slist )
-        {
-            auto t = response->add_thresholds();
-
-            try
-            {
-                *(t->mutable_si()) = it->sinf.si();
-                t->set_value(IOController::localGetValue(it));
-                t->set_type(it->sinf.type());
-            }
-            catch( const std::exception& ex )
-            {
-                uwarn << myname << "(getThresholdsList): for sid="
-                      << uniset_conf()->oind->getNameById(it->sinf.si().id())
-                      << " " << ex.what() << endl;
-                continue;
-            }
-
-            uniset_rwmutex_rlock lck(it->tmut);
-
-            for( const auto& it2 : it->thresholds )
-                *(t->mutable_tlist()->add_thresholds()) = it2->tinf;
-        }
-    }
-
-    return grpc::Status::OK;
-}
-// -----------------------------------------------------------------------------
-void IONotifyController::onChangeUndefinedState( std::shared_ptr<USensorInfo>& usi, IOController* ic )
-{
-    uniset_rwmutex_rlock vlock(usi->val_lock);
-    umessage::SensorMessage sm( usi->makeSensorMessage(false) );
-
-    try
-    {
-        if( !usi->sinf.dbignore() )
-            logging(sm);
-    }
-    catch(...) {}
-
-    ConsumerListInfo* lst = static_cast<ConsumerListInfo*>(usi->getUserData(udataConsumerList));
-
-    if( lst )
-        send(*lst, sm);
-}
-
-// -----------------------------------------------------------------------------
 grpc::Status IONotifyController::askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response)
 {
     AskParams p;
