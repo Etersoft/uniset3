@@ -25,7 +25,9 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-
+    container:
+      image: alt:sisyphus
+      
     strategy:
       fail-fast: false
       matrix:
@@ -46,21 +48,21 @@ jobs:
 
       - name: install packages
         run: |
-          sudo apt-get install libcomedi-dev libpoco-dev libmysqlclient-dev libprotobuf-dev protobuf-compiler \
-          libev-dev xsltproc librrd-dev libsigc++-2.0-dev \
-          libsqlite3-dev python-dev libmosquittopp-dev libpoco-dev swig
-          wget https://github.com/catchorg/Catch2/releases/download/v1.11.0/catch.hpp -O include/catch.hpp
-
+            apt-get update && apt-get -y install etersoft-build-utils su sudo \
+            git-core ccache gcc-c++ etersoft-build-utils catch-devel \
+            libcomedi-devel libmariadb-devel libpqxx-devel libsqlite3-devel \
+            libxml2-devel libsigc++2-devel libpoco-devel libev-devel libprotobuf-devel grpc-plugins libgrpc++-devel \
+            libmosquitto-devel libprotobuf-devel \
+            xsltproc python-devel python-module-distribute swig
+          
       - name: build
         run: |
-         export CXXFLAGS='-pipe -O2 -pedantic -Wall'
-         # due broken comedi
-         export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
-         # regenerate proto files
-         cd extensions/UNetUDP/proto && make && cd -;
-         autoreconf -fiv
-         ./configure --disable-python --disable-netdata --disable-pgsql
-         make
+            export CXXFLAGS='-pipe -O2 -pedantic -Wall'
+            # due broken comedi
+            export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
+            autoreconf -fiv
+            ./configure --disable-netdata
+            make
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1

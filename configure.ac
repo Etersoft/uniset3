@@ -171,25 +171,6 @@ fi
 AM_CONDITIONAL(DISABLE_PGSQL, test ${buildpgsql} = false)
 AM_CONDITIONAL(ENABLE_PGSQL, test ${buildpgsql} = true)
 
-
-#check rrd support
-AC_MSG_CHECKING([rrd support])
-buildrrd=true
-AC_ARG_ENABLE(rrd, AC_HELP_STRING([--disable-rrd], [disable RRD support]),
-[ if test $enableval = yes; then buildrrd=true; else buildrrd=false; fi],[ buildrrd=true; ])
-
-if test ${buildrrd} = true; then
-	AC_MSG_RESULT([enabled])
-	PKG_CHECK_MODULES(RRD,librrd)
-	AC_SUBST(RRD_LIBS)
-	AC_SUBST(RRD_CFLAGS)
-else
-	AC_MSG_RESULT([disabled])
-fi
-
-AM_CONDITIONAL(DISABLE_RRD, test ${buildrrd} = false)
-AM_CONDITIONAL(ENABLE_RRD, test ${buildrrd} = true)
-
 #check opentsdb support
 AC_MSG_CHECKING([OpenTSDB backend])
 buildtsdb=true
@@ -599,6 +580,7 @@ AC_CONFIG_FILES([Makefile
 				 extensions/SMViewer/Makefile
 				 extensions/UNetUDP/Makefile
 				 extensions/UNetUDP/libUniSet3UNetUDP.pc
+				 extensions/UNetUDP/proto/Makefile
 				 extensions/UNetUDP/tests/Makefile
 				 extensions/SharedMemory/Makefile
 				 extensions/SharedMemory/tests/Makefile
