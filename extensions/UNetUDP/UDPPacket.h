@@ -21,7 +21,7 @@
 #include <limits>
 #include <ostream>
 #include "UniSetTypes.h"
-#include "proto/unet.pb.h"
+#include "unet.pb.h"
 // --------------------------------------------------------------------------
 namespace uniset3
 {
