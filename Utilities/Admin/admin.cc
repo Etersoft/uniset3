@@ -311,9 +311,6 @@ int main(int argc, char** argv)
                     UInterface ui(conf);
                     ui.initBackId(uniset3::AdminID);
 
-                    cout << "exists: " << ui.isExists(10) << endl;
-                    return 0;
-
                     verb = true;
                     Command cmd = Exist;
                     auto rep = grpc::CreateChannel(conf->repositoryAddr(), grpc::InsecureChannelCredentials());

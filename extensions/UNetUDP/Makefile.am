@@ -11,7 +11,7 @@ libUniSet3UNetUDP_la_LIBADD   = $(top_builddir)/lib/libUniSet3.la \
 				$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 				$(top_builddir)/extensions/lib/libUniSet3Extensions.la \
                                 $(SIGC_LIBS) $(POCO_LIBS) $(PROTOBUF_LIBS)
-libUniSet3UNetUDP_la_CXXFLAGS	= -I$(top_builddir)/extensions/include -I$(top_builddir)/extensions/SharedMemory -I$(srcdir)/proto $(SIGC_CFLAGS) $(POCO_CFLAGS) $(PROTOBUF_CFLAGS)
+libUniSet3UNetUDP_la_CXXFLAGS	= -I$(top_builddir)/extensions/include -I$(top_builddir)/extensions/SharedMemory -I$(top_builddir)/extensions/UNetUDP/proto $(SIGC_CFLAGS) $(POCO_CFLAGS) $(PROTOBUF_CFLAGS)
 libUniSet3UNetUDP_la_SOURCES 	= proto/unet.pb.cc UDPPacket.cc UDPTransport.cc MulticastTransport.cc UNetReceiver.cc UNetSender.cc UNetExchange.cc
 
 @PACKAGE@_unetexchange_SOURCES 		= unetexchange.cc
@@ -19,16 +19,16 @@ libUniSet3UNetUDP_la_SOURCES 	= proto/unet.pb.cc UDPPacket.cc UDPTransport.cc Mu
 									$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la \
 									$(top_builddir)/extensions/lib/libUniSet3Extensions.la \
 									$(SIGC_LIBS) $(POCO_LIBS)
-@PACKAGE@_unetexchange_CXXFLAGS	= -I$(srcdir)/proto -I$(top_builddir)/extensions/include -I$(top_builddir)/extensions/SharedMemory $(SIGC_CFLAGS) $(POCO_CFLAGS)
+@PACKAGE@_unetexchange_CXXFLAGS	= -I$(top_builddir)/extensions/UNetUDP/proto -I$(top_builddir)/extensions/include -I$(top_builddir)/extensions/SharedMemory $(SIGC_CFLAGS) $(POCO_CFLAGS)
 
 
 @PACKAGE@_unet_udp_tester_SOURCES	= proto/unet.pb.cc UDPPacket.cc unet-udp-tester.cc
 @PACKAGE@_unet_udp_tester_LDADD 	= $(top_builddir)/lib/libUniSet3.la $(POCO_LIBS) $(PROTOBUF_LIBS)
-@PACKAGE@_unet_udp_tester_CXXFLAGS	= -I$(srcdir)/proto $(POCO_CFLAGS) $(PROTOBUF_CFLAGS)
+@PACKAGE@_unet_udp_tester_CXXFLAGS	= -I$(top_builddir)/extensions/UNetUDP/proto $(POCO_CFLAGS) $(PROTOBUF_CFLAGS)
 
 @PACKAGE@_unet_multicast_tester_SOURCES	 = proto/unet.pb.cc UDPPacket.cc MulticastTransport.cc unet-multicast-tester.cc
 @PACKAGE@_unet_multicast_tester_LDADD 	 = $(top_builddir)/lib/libUniSet3.la $(POCO_LIBS) $(PROTOBUF_LIBS)
-@PACKAGE@_unet_multicast_tester_CXXFLAGS = -I$(srcdir)/proto $(POCO_CFLAGS) $(PROTOBUF_CFLAGS)
+@PACKAGE@_unet_multicast_tester_CXXFLAGS = -I$(top_builddir)/extensions/UNetUDP/proto $(POCO_CFLAGS) $(PROTOBUF_CFLAGS)
 
 # install
 devel_include_HEADERS = *.h
