@@ -1,4 +1,4 @@
-UniSet ![Gihub testsuite Status](https://github.com/Etersoft/uniset3/actions/workflows/testsuite.yml/badge.svg) [![Build Status](https://travis-ci.org/Etersoft/uniset3.svg?branch=master)](https://travis-ci.org/Etersoft/uniset3)
+UniSet ![Gihub testsuite Status](https://github.com/Etersoft/uniset3/actions/workflows/testsuite.yml/badge.svg)
 ======
 
 UniSet is a library for distributed control systems development.
