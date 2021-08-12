@@ -34,9 +34,6 @@ libUniSet3UNetUDP_la_SOURCES 	= proto/unet.pb.cc UDPPacket.cc UDPTransport.cc Mu
 devel_include_HEADERS = *.h
 devel_includedir = $(pkgincludedir)/extensions
 
-proto_include_HEADERS = proto/unet.pb.h proto/unet.proto
-proto_includedir = $(pkgincludedir)/extensions/proto
-
 pkgconfigdir 	= $(libdir)/pkgconfig
 pkgconfig_DATA 	= libUniSet3UNetUDP.pc
 
