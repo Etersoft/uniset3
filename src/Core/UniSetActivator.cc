@@ -196,7 +196,8 @@ namespace uniset3
         builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
         server = builder.BuildAndStart();
 
-        uinfo << "Server listening on " << grpcHost << ":" << grpcPort << std::endl;
+        uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;
+        cout << "GRPC server listening on " << grpcHost << ":" << grpcPort << std::endl;
 
         // INIT
         {
