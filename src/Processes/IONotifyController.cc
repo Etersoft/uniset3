@@ -330,6 +330,10 @@ std::string IONotifyController::getStrType() const
 // ------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
+    if (context->IsCancelled()) {
+        return grpc::Status(grpc::StatusCode::CANCELLED, "(getInfo): Deadline exceeded or Client cancelled, abandoning.");
+    }
+
     ::google::protobuf::StringValue oinf;
     grpc::Status st = UniSetManager::getInfo(context, request, &oinf);
 
@@ -458,6 +462,10 @@ bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerIn
 // ------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response)
 {
+    if (context->IsCancelled()) {
+        return grpc::Status(grpc::StatusCode::CANCELLED, "(askSensor): Deadline exceeded or Client cancelled, abandoning.");
+    }
+
     ulog2 << "(askSensor): поступил " << ( request->cmd() == UIODontNotify ? "отказ" : "заказ" ) << " от "
           << "(" << request->ci().id() << ")"
           << uniset_conf()->oind->getNameById(request->ci().id()) << "@" << request->ci().node()
@@ -715,140 +723,6 @@ void IONotifyController::initItem( std::shared_ptr<USensorInfo>& usi, IOControll
     if( usi->sinf.type() == uniset3::AI || usi->sinf.type() == uniset3::AO )
         checkThreshold( usi, false );
 }
-// ------------------------------------------------------------------------------------------
-#if 0
-grpc::Status IONotifyController::askThreshold(::grpc::ServerContext* context, const ::uniset3::AskThresholdParams* request, ::google::protobuf::Empty* response)
-{
-    ulog2 << "(askThreshold): " << ( request->cmd() == UIODontNotify ? "отказ" : "заказ" ) << " от "
-          << uniset_conf()->oind->getNameById(request->ci().id()) << "@" << request->ci().node()
-          << " на порог tid=" << request->tid()
-          << " [" << request->lowlimit() << "," << request->hilimit() << ",invert=" << request->invert() << "]"
-          << " для датчика "
-          << uniset_conf()->oind->getNameById(request->sid())
-          << endl;
-
-    if( request->lowlimit() > request->hilimit() )
-        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "");
-
-    auto li = myioEnd();
-
-    long val = 0;
-
-    try
-    {
-        // если такого датчика нет здесь сработает исключение...
-        val = localGetValue(li, request->sid());
-    }
-    catch( const IOController::Undefined& ex ) {}
-
-    {
-        // lock
-        uniset_rwmutex_wrlock lock(trshMutex);
-
-        auto it = findThreshold(request->sid(), request->tid());
-
-        switch( request->cmd() )
-        {
-            case uniset3::UIONotify: // заказ
-            case uniset3::UIONotifyChange:
-            {
-                if( !it )
-                    it = make_shared<IOController::UThresholdInfo>(request->tid(), request->lowlimit(), request->hilimit(), request->invert());
-
-                it = addThresholdIfNotExist(li->second, it);
-                addThresholdConsumer(it, request->ci());
-
-                if( request->cmd() == uniset3::UIONotifyChange )
-                    break;
-
-                // посылка первый раз состояния
-                umessage::SensorMessage sm(li->second->makeSensorMessage());
-                sm.mutable_header()->set_consumer(request->ci().id());
-                sm.set_tid(request->tid());
-
-                // Проверка нижнего предела
-                if( val <= request->lowlimit() )
-                    sm.set_threshold(false);
-                // Проверка верхнего предела
-                else if( val >= request->hilimit() )
-                    sm.set_threshold(true);
-
-                auto clst = askTMap.find(it.get());
-
-                if( clst != askTMap.end() )
-                    send(clst->second, sm, &request->ci());
-            }
-            break;
-
-            case uniset3::UIODontNotify:     // отказ
-            {
-                if( it )
-                    removeThresholdConsumer(li->second, it, request->ci());
-            }
-            break;
-
-            default:
-                break;
-        }
-    } // unlock trshMutex
-
-    return grpc::Status::OK;
-}
-// --------------------------------------------------------------------------------------------------------------
-std::shared_ptr<IOController::UThresholdInfo>
-IONotifyController::addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi,
-        std::shared_ptr<UThresholdInfo>& ti )
-{
-    uniset3::uniset_rwmutex_wrlock lck(usi->tmut);
-
-    for( auto&& t : usi->thresholds )
-    {
-        if( ti->sid == t->sid )
-            return t;
-    }
-
-    struct timespec tm = uniset3::now_to_timespec();
-    ti->tv_sec = tm.tv_sec;
-    ti->tv_nsec= tm.tv_nsec;
-    usi->thresholds.push_back(ti);
-
-    return ti;
-}
-// --------------------------------------------------------------------------------------------------------------
-bool IONotifyController::addThresholdConsumer( std::shared_ptr<IOController::UThresholdInfo>& ti, const ConsumerInfo& ci )
-{
-    auto i = askTMap.find(ti.get());
-
-    if( i != askTMap.end() )
-        return addConsumer(i->second, ci);
-
-    auto ret = askTMap.emplace(ti.get(), ConsumerListInfo());
-
-    return addConsumer( ret.first->second, ci );
-}
-// --------------------------------------------------------------------------------------------------------------
-bool IONotifyController::removeThresholdConsumer( std::shared_ptr<USensorInfo>& usi,
-        std::shared_ptr<UThresholdInfo>& ti,
-        const uniset3::ConsumerInfo& ci )
-{
-    uniset_rwmutex_wrlock lck(usi->tmut);
-
-    for( auto&& t : usi->thresholds )
-    {
-        if( t->tinf.id() == ti->tinf.id() )
-        {
-            auto it = askTMap.find(ti.get());
-
-            if( it == askTMap.end() )
-                return false;
-
-            return removeConsumer(it->second, ci);
-        }
-    }
-
-    return false;
-}
-#endif
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::checkThreshold( IOController::IOStateList::iterator& li,
         const uniset3::ObjectId sid,
@@ -958,6 +832,10 @@ std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold(
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response)
 {
+    if (context->IsCancelled()) {
+        return grpc::Status(grpc::StatusCode::CANCELLED, "(askSensorsSeq): Deadline exceeded or Client cancelled, abandoning.");
+    }
+
     AskParams p;
     p.set_cmd(request->cmd());
     *(p.mutable_ci()) = request->ci();

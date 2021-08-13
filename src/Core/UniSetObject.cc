@@ -844,6 +844,11 @@ namespace uniset3
 
     ::grpc::Status UniSetObject::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
     {
+        if (context->IsCancelled())
+        {
+            return grpc::Status(grpc::StatusCode::CANCELLED, "(getInfo): Deadline exceeded or Client cancelled, abandoning.");
+        }
+
         ostringstream info;
         info.setf(ios::left, ios::adjustfield);
         info << "(" << myid << ")" << setw(40) << myname
@@ -885,6 +890,11 @@ namespace uniset3
     //    SimpleInfo UniSetObject::apiRequest( const char* request )
     ::grpc::Status UniSetObject::request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request, ::google::protobuf::StringValue* response)
     {
+        if (context->IsCancelled())
+        {
+            return grpc::Status(grpc::StatusCode::CANCELLED, "(request): Deadline exceeded or Client cancelled, abandoning.");
+        }
+
 #ifdef DISABLE_REST_API
         return getInfo(context, request, response)
 #else

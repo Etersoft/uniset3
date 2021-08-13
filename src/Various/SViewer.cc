@@ -26,7 +26,6 @@
 #include "URepository.grpc.pb.h"
 #include "IOController.grpc.pb.h"
 #include "UniSetTypes.h"
-#include "ObjectIndex_Array.h"
 
 // --------------------------------------------------------------------------
 using namespace uniset3;

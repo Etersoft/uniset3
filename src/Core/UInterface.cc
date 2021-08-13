@@ -109,13 +109,14 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->getValue(&ctx, request, &reply);
 
                     if( st.ok() )
                         return reply.value();
-             }
+                }
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
@@ -173,6 +174,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->freezeValue(&ctx, request, &reply);
@@ -244,14 +246,24 @@ namespace uniset3
 
                 if( chan )
                 {
+                    std::chrono::time_point<std::chrono::system_clock> start, end;
+                    start = std::chrono::system_clock::now();
+
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->setValue(&ctx, request, &reply);
 
+                    end = std::chrono::system_clock::now();
+                    std::cerr << "elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+                              << " ms [" << st.error_code() << "]\n";
+
                     if( st.ok() )
                         return;
                 }
+
+                cerr << "***** repeat.." << endl;
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
@@ -328,6 +340,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan->c));
                     grpc::Status st = stub->askSensor(&ctx, request, &reply);
@@ -393,6 +406,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->getIOType(&ctx, request, &reply);
@@ -457,6 +471,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
                     grpc::Status st = stub->getType(&ctx, request, &reply);
@@ -503,6 +518,7 @@ namespace uniset3
 
                 chan = grpc::CreateChannel(repIP, grpc::InsecureChannelCredentials());
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(chan));
                 grpc::Status st = stub->exists(&ctx, req, &reply);
 
@@ -533,6 +549,7 @@ namespace uniset3
                 rep = resolveRepository(uconf->getLocalNode());
 
             grpc::ClientContext ctx;
+            ctx.set_deadline(uconf->deadline());
             std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
             grpc::Status st = stub->registration(&ctx, oRef, &reply);
 
@@ -565,6 +582,7 @@ namespace uniset3
                 rep = resolveRepository(uconf->getLocalNode());
 
             grpc::ClientContext ctx;
+            ctx.set_deadline(uconf->deadline());
             std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
             grpc::Status st = stub->unregistration(&ctx, request, &reply);
 
@@ -626,6 +644,7 @@ namespace uniset3
 
                     stub = URepository_i::NewStub(repChan);
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     o->addMetaData(ctx);
                     grpc::Status st = stub->resolve(&ctx, request, &(o->ref));
 
@@ -666,7 +685,7 @@ namespace uniset3
         if( port == 0 )
             return "";
 
-        const std::string host = uconf->getNodeIp(node);
+        const std::string host = uconf->getNodeIP(node);
 
         if( host.empty() )
             return "";
@@ -674,14 +693,26 @@ namespace uniset3
         string ret;
         const string query = "api/v01/resolve/text?" + std::to_string(id);
 
-        for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
+        for( size_t curNet = 0; curNet <= uconf->getCountOfNet(); curNet++)
         {
-            ret = resolver.get(host, port, query);
+            auto repIP = uconf->repositoryAddressByNode(node, curNet);
 
-            if( !ret.empty() )
-                return ret;
+            if( repIP.empty() )
+                continue;
 
-            msleep(uconf->getRepeatTimeout());
+            for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
+            {
+                try
+                {
+                    ret = resolver.get(host, port, query);
+
+                    if( !ret.empty() )
+                        return ret;
+                }
+                catch(...) {}
+
+                msleep(uconf->getRepeatTimeout());
+            }
         }
 
 #endif
@@ -717,6 +748,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
                     grpc::Status st = stub->push(&ctx, msg, &reply);
@@ -804,6 +836,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->getTimeChange(&ctx, request, &reply);
@@ -861,6 +894,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
                     grpc::Status st = stub->getInfo(&ctx, request, &reply);
@@ -917,6 +951,7 @@ namespace uniset3
                 if( chan )
                 {
                     grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
                     grpc::Status st = stub->request(&ctx, request, &reply);
@@ -966,6 +1001,7 @@ namespace uniset3
 
         std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(rep));
         grpc::ClientContext ctx;
+        ctx.set_deadline(uconf->deadline());
         google::protobuf::Int64Value request;
         request.set_value(id);
 
@@ -1096,6 +1132,7 @@ namespace uniset3
                 return false;
 
             grpc::ClientContext ctx;
+            ctx.set_deadline(uconf->deadline());
             chan->addMetaData(ctx);
             ExistsParams req;
             req.set_id(id);
@@ -1143,6 +1180,7 @@ namespace uniset3
                     chan = resolve(id, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
                 grpc::Status st = stub->exists(&ctx, req, &resp);
@@ -1205,6 +1243,7 @@ namespace uniset3
                     chan = resolve(sid, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->getRawValue(&ctx, request, &reply);
@@ -1270,6 +1309,7 @@ namespace uniset3
                     chan = resolve(sid, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->calibrate(&ctx, request, &reply);
@@ -1377,6 +1417,7 @@ namespace uniset3
                     chan = resolve(sid, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->getSensorSeq(&ctx, request, &reply);
@@ -1429,6 +1470,7 @@ namespace uniset3
                     chan = resolve(sid, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->getSensorIOInfo(&ctx, request, &reply);
@@ -1482,6 +1524,7 @@ namespace uniset3
                     chan = resolve(sid, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->setOutputSeq(&ctx, request, &reply);
@@ -1544,6 +1587,7 @@ namespace uniset3
                     chan = resolve(sid, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IONotifyController_i::Stub> stub(IONotifyController_i::NewStub(chan->c));
                 grpc::Status st = stub->askSensorsSeq(&ctx, request, &reply);
@@ -1597,6 +1641,7 @@ namespace uniset3
                     chan = resolve(id, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->getSensors(&ctx, request, &reply);
@@ -1649,6 +1694,7 @@ namespace uniset3
                     chan = resolve(id, node);
 
                 grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
                 chan->addMetaData(ctx);
                 std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                 grpc::Status st = stub->getSensorsMap(&ctx, request, &reply);

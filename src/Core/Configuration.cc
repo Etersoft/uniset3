@@ -32,7 +32,6 @@
 #include "Configuration.h"
 #include "Exceptions.h"
 #include "MessageTypes.pb.h"
-#include "ObjectIndex_Array.h"
 #include "ObjectIndex_XML.h"
 #include "ObjectIndex_idXML.h"
 #include "UniSetActivator.h"
@@ -168,21 +167,6 @@ namespace uniset3
         initConfiguration(argc, argv);
     }
     // ---------------------------------------------------------------------------------
-    Configuration::Configuration( int argc, const char* const* argv, const string& fileConf,
-                                  uniset3::ObjectInfo* omap ):
-        oind(NULL),
-        repeatCount(2), repeatTimeout(100),
-        localDBServer(uniset3::DefaultObjectId),
-        localNode(uniset3::DefaultObjectId),
-        localNodeName(""),
-        fileConfName(fileConf)
-    {
-        shared_ptr<ObjectIndex_Array> _oi = make_shared<ObjectIndex_Array>(omap);
-        oind = static_pointer_cast<ObjectIndex>(_oi);
-
-        initConfiguration(argc, argv);
-    }
-    // ---------------------------------------------------------------------------------
     void Configuration::initConfiguration( int argc, const char* const* argv )
     {
         // т.к. мы не знаем откуда эти argc и argv и может они будут удалены сразу после завершения функции
@@ -313,11 +297,6 @@ namespace uniset3
     }
 
     // -------------------------------------------------------------------------
-    int Configuration::getFirstUnusedPort()
-    {
-        return 0;
-    }
-    // -------------------------------------------------------------------------
     std::string Configuration::getArg2Param( const std::string& name, const std::string& defval, const std::string& defval2 ) const noexcept
     {
         return uniset3::getArg2Param(name, _argc, _argv, defval, defval2);
@@ -366,7 +345,7 @@ namespace uniset3
 
         for( ; it.getCurrent(); it.goNext() )
         {
-            string name( it.getName() );
+            const string name = it.getName();
 
             if( name == "LocalNode" )
             {
@@ -378,9 +357,8 @@ namespace uniset3
             }
             else if( name == "LocalDBServer" )
             {
-                name = it.getProp("name");
                 //DBServer
-                const string secDB( getServicesSection() + "/" + name);
+                const string secDB( getServicesSection() + "/" + it.getProp("name"));
                 localDBServer = oind->getIdByName(secDB);
 
                 if( localDBServer == DefaultObjectId )
@@ -492,6 +470,11 @@ namespace uniset3
                     throw uniset3::SystemError(err.str());
                 }
             }
+            else if( name == "GRPC" )
+            {
+                if( !it.getProp("deadline").empty() )
+                    defaultDeadline_msec = it.getIntProp("deadline");
+            }
         }
 
         // Heartbeat init...
@@ -591,7 +574,6 @@ namespace uniset3
 
         return i;
     }
-
     // -------------------------------------------------------------------------
     xmlNode* Configuration::findNode(xmlNode* node, const std::string& snode, const std::string& sname) const noexcept
     {
@@ -1108,6 +1090,11 @@ namespace uniset3
         return startupIgnoretimeout_msec;
     }
     // -------------------------------------------------------------------------
+    timeout_t Configuration::getDefaultDeadline() const noexcept
+    {
+        return defaultDeadline_msec;
+    }
+    // -------------------------------------------------------------------------
     const string Configuration::getConfDir() const noexcept
     {
         return confDir;
@@ -1146,16 +1133,6 @@ namespace uniset3
     size_t Configuration::getHttpResovlerPort() const noexcept
     {
         return httpResolverPort;
-    }
-
-    std::string Configuration::getNodeIp( uniset3::ObjectId node )
-    {
-        UniXML::iterator nIt = getXMLObjectNode(node);
-
-        if( !nIt )
-            return "";
-
-        return nIt.getProp("ip");
     }
     // -------------------------------------------------------------------------
     xmlNode* Configuration::getXMLSensorsSection() noexcept
@@ -1265,6 +1242,12 @@ namespace uniset3
         return repeatCount;
     }
     // -------------------------------------------------------------------------
+    std::chrono::high_resolution_clock::time_point Configuration::deadline() const noexcept
+    {
+        return std::chrono::system_clock::now() + std::chrono::milliseconds(defaultDeadline_msec);
+    }
+    // -------------------------------------------------------------------------
+
     std::string Configuration::getNodeIP(ObjectId node, size_t netNumber) const noexcept
     {
         if( !oind )

@@ -251,16 +251,6 @@ namespace uniset3
             void ask(AskMap& askLst, const uniset3::ObjectId sid,
                      const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd);
 
-#if 0
-            /*! добавить новый порог для датчика */
-            std::shared_ptr<UThresholdInfo> addThresholdIfNotExist( std::shared_ptr<USensorInfo>& usi, std::shared_ptr<UThresholdInfo>& ti );
-            bool addThresholdConsumer( std::shared_ptr<UThresholdInfo>& ti, const uniset3::ConsumerInfo& ci );
-
-            /*! удалить порог для датчика */
-            bool removeThresholdConsumer( std::shared_ptr<USensorInfo>& usi,
-                                          std::shared_ptr<UThresholdInfo>& ti,
-                                          const uniset3::ConsumerInfo& ci);
-#endif
             AskMap askIOList; /*!< список потребителей по  датчикам */
 
             /*! замок для блокирования совместного доступа к cписку потребителей датчиков */
@@ -287,7 +277,7 @@ namespace uniset3
             std::unordered_map<uniset3::ObjectId, LostConsumerInfo> lostConsumers;
     };
     // -------------------------------------------------------------------------
-} // end of uniset namespace
+} // end of uniset3 namespace
 // --------------------------------------------------------------------------
 #endif
 // --------------------------------------------------------------------------
