@@ -173,6 +173,8 @@ namespace uniset3
     std::string timeToString(time_t tm = time(0), const std::string& brk = ":") noexcept; /*!< Преобразование времени в строку HH:MM:SS */
     std::string dateToString(time_t tm = time(0), const std::string& brk = "/") noexcept; /*!< Преобразование даты в строку DD/MM/YYYY */
 
+    std::chrono::high_resolution_clock::time_point deadline_msec( uint64_t msec ) noexcept;
+
     struct timeval to_timeval( const std::chrono::system_clock::duration& d ); /*!< конвертирование std::chrono в posix timeval */
     struct timespec to_timespec( const std::chrono::system_clock::duration& d ); /*!< конвертирование std::chrono в posix timespec */
     struct timespec now_to_timespec(); /*!< получение текущего времени */

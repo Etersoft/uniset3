@@ -612,6 +612,11 @@ std::string uniset3::replace_all( const std::string& src, const std::string& fro
     return res;
 }
 // -------------------------------------------------------------------------
+std::chrono::high_resolution_clock::time_point uniset3::deadline_msec( uint64_t msec ) noexcept
+{
+    return std::chrono::system_clock::now() + std::chrono::milliseconds(msec);
+}
+// -------------------------------------------------------------------------
 timeval uniset3::to_timeval( const chrono::system_clock::duration& d )
 {
     struct timeval tv;

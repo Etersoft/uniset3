@@ -58,12 +58,6 @@ namespace uniset3
             /*! конфигурирование xml-файлом    */
             Configuration( int argc, const char* const* argv, std::shared_ptr<ObjectIndex> oind, const std::string& xmlfile = "" );
 
-            /*! устаревший вариант, для поддержки старых проектов */
-            Configuration( int argc, const char* const* argv,
-                           const std::string& fileConf, uniset3::ObjectInfo* objectsMap );
-
-            static int getFirstUnusedPort();
-
             /// Получить значение полей с путём path
             std::string getField(const std::string& path) const noexcept;
             /// Получить число из поле с путём path
@@ -124,11 +118,12 @@ namespace uniset3
             uniset3::ObjectId getAnyID( const std::string& name ) const noexcept;
 
             const std::string getConfFileName() const noexcept;
-            std::string getNodeIp( uniset3::ObjectId node );
 
             timeout_t getHeartBeatTime() const noexcept;
             timeout_t getNCReadyTimeout() const noexcept;
             timeout_t getStartupIgnoreTimeout() const noexcept;
+            timeout_t getDefaultDeadline() const noexcept;
+            std::chrono::high_resolution_clock::time_point deadline() const noexcept;
 
             // dirs
             const std::string getConfDir() const noexcept;
@@ -239,6 +234,7 @@ namespace uniset3
             timeout_t heartbeat_msec = { 3000 };
             timeout_t ncreadytimeout_msec = { 180000 };
             timeout_t startupIgnoretimeout_msec = { 5000 };
+            timeout_t defaultDeadline_msec = { 30 };
     };
 
     /*! Глобальный указатель на конфигурацию (singleton) */

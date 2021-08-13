@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <UNISETPLC xmlns:xi="http://www.w3.org/2001/XInclude">
 	<UserData/>
-	
-	<omniORB>
-		<option name="endPoint" arg="giop:tcp:localhost:"/>
-	</omniORB>
 	<!-- Общие(стартовые) параметры по UniSet -->
 	<UniSet>
 		<LocalNode name="localhost"/>
@@ -27,7 +23,7 @@
 		<LockDir name="/tmp/"/>
 		<HttpResolver name="HttpResolver"/>
 		<URepository name="URepository" port="8111"/>
-		<LocalIOR name="1"/>
+		<LocalIOR name="0"/>
 		<Services>
 			<LocalTimeService AskLifeTimeSEC="10" MaxCountTimers="100" name="TimeService"/>
 			<LocalInfoServer dbrepeat="1" name="InfoServer">
