@@ -32,7 +32,6 @@
 #include "Configuration.h"
 #include "Exceptions.h"
 #include "MessageTypes.pb.h"
-#include "ObjectIndex_Array.h"
 #include "ObjectIndex_XML.h"
 #include "ObjectIndex_idXML.h"
 #include "UniSetActivator.h"
