@@ -42,8 +42,8 @@ bool MQAtomic::push( const VoidMessagePtr& vm ) noexcept
     if( wpos < rpos )
     {
         // только надо привести к одному масштабу
-        unsigned long w = wpos % SizeOfMessageQueue;
-        unsigned long r = rpos % SizeOfMessageQueue;
+        uint64_t w = wpos % SizeOfMessageQueue;
+        uint64_t r = rpos % SizeOfMessageQueue;
 
         if( lostStrategy == lostNewData && (r - w) >= SizeOfMessageQueue )
         {
@@ -55,7 +55,7 @@ bool MQAtomic::push( const VoidMessagePtr& vm ) noexcept
     // -----------------------------------------------
 
     // сперва надо сдвинуть счётчик (чтобы следующий поток уже писал в новое место)
-    unsigned long w = wpos.fetch_add(1);
+    uint64_t w = wpos.fetch_add(1);
 
     // а потом уже добавлять новое сообщение в "зарезервированное" место
     mqueue[w % SizeOfMessageQueue] = vm;
@@ -91,7 +91,7 @@ VoidMessagePtr MQAtomic::top() noexcept
     if( rpos < qpos )
     {
         // сперва надо сдвинуть счётчик (чтобы следующий поток уже работал с следующим значением)
-        unsigned long r = rpos.fetch_add(1);
+        uint64_t r = rpos.fetch_add(1);
         return mqueue[r % SizeOfMessageQueue];
     }
 
@@ -100,8 +100,8 @@ VoidMessagePtr MQAtomic::top() noexcept
     if( rpos > qpos ) // делаем if каждый раз, т.к. qpos может уже поменяться в параллельном потоке
     {
         // приводим к одному масштабу
-        unsigned long w = qpos % SizeOfMessageQueue;
-        unsigned long r = rpos % SizeOfMessageQueue;
+        uint64_t w = qpos % SizeOfMessageQueue;
+        uint64_t r = rpos % SizeOfMessageQueue;
 
         if( lostStrategy == lostOldData && (r - w) >= SizeOfMessageQueue )
         {
@@ -167,13 +167,13 @@ void MQAtomic::mqFill( const VoidMessagePtr& v )
         mqueue.push_back(v);
 }
 //---------------------------------------------------------------------------
-void MQAtomic::set_wpos( unsigned long pos ) noexcept
+void MQAtomic::set_wpos( uint64_t pos ) noexcept
 {
     wpos = pos;
     qpos = pos;
 }
 //---------------------------------------------------------------------------
-void MQAtomic::set_rpos( unsigned long pos ) noexcept
+void MQAtomic::set_rpos( uint64_t pos ) noexcept
 {
     rpos = pos;
 }
