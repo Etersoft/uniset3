@@ -9,4 +9,5 @@ import "google/protobuf/empty.proto";
 // ---------------------------------------------------------------------------
 service TestService_i {
     rpc getId(google.protobuf.Empty) returns(google.protobuf.Int64Value) {}
+    rpc streamTest(google.protobuf.Empty) returns(stream google.protobuf.StringValue) {}
 }

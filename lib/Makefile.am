@@ -12,7 +12,7 @@
 lib_LTLIBRARIES 		= libUniSet3.la
 libUniSet3_la_SOURCES	=
 libUniSet3_la_LDFLAGS	= -version-info @LIBVER@
-libUniSet3_la_LIBADD	= -lm \
+libUniSet3_la_LIBADD	= -lm -lpthread -lstdc++ \
  $(top_builddir)/src/Core/libUCore.la \
  $(top_builddir)/src/Communications/libCommunications.la \
  $(top_builddir)/src/Communications/Modbus/libModbus.la \

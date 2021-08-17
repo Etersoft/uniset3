@@ -62,7 +62,7 @@ struct Debug
         ///
         REPOSITORY = (1 << 13),
         ///
-        SYSTEM       = (1 << 14),
+        SYSTEM     = (1 << 14),
         ///
         EXCEPTION  = (1 << 15)
 

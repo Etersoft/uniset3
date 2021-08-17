@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -20,518 +20,664 @@
 #include "LogServer.h"
 #include "UniSetTypes.h"
 #include "Exceptions.h"
-#include "LogSession.h"
 #include "LogAgregator.h"
 #include "Configuration.h"
+#include "UTCPStream.h"
 // -------------------------------------------------------------------------
 namespace uniset3
 {
-	// -------------------------------------------------------------------------
-	using namespace std;
-	// -------------------------------------------------------------------------
-	CommonEventLoop LogServer::loop;
-	// -------------------------------------------------------------------------
-	LogServer::~LogServer() noexcept
-	{
-		try
-		{
-			if( isrunning )
-				loop.evstop(this);
-		}
-		catch(...) {}
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::setCmdTimeout( timeout_t msec ) noexcept
-	{
-		cmdTimeout = msec;
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::setSessionLog( Debug::type t ) noexcept
-	{
-		sessLogLevel = t;
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::setMaxSessionCount( size_t num ) noexcept
-	{
-		sessMaxCount = num;
-	}
-	// -------------------------------------------------------------------------
-	LogServer::LogServer( std::shared_ptr<LogAgregator> log ):
-		LogServer()
-	{
-		elog = dynamic_pointer_cast<DebugStream>(log);
+    // -------------------------------------------------------------------------
+    using namespace std;
+    // -------------------------------------------------------------------------
+    LogServer::~LogServer() noexcept
+    {
+        try
+        {
+            terminate();
+        }catch(...){}
 
-		if( !elog )
-		{
-			ostringstream err;
-			err << myname << "(LogServer): dynamic_pointer_cast FAILED! ";
+        try
+        {
+            conn.disconnect();
+        }
+        catch(...) {}
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::setServerLog( Debug::type t ) noexcept
+    {
+        mylog.level(t);
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::setMaxSessionCount( size_t num ) noexcept
+    {
+        sessMaxCount = num;
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::updateDefaultLogLevel() noexcept
+    {
+        try
+        {
+            saveDefaultLogLevels("ALL");
+        }
+        catch(...) {}
+    }
+    // -------------------------------------------------------------------------
+    LogServer::LogServer( std::shared_ptr<LogAgregator> log ):
+        LogServer()
+    {
+        elog = dynamic_pointer_cast<DebugStream>(log);
 
-			if( mylog.is_info() )
-				mylog.info() << myname << "(evfinish): terminate..." << endl;
+        if( !elog )
+        {
+            ostringstream err;
+            err << myname << "(LogServer): dynamic_pointer_cast FAILED! ";
 
-			if( mylog.is_crit() )
-				mylog.crit() << err.str() << endl;
+            if( mylog.is_info() )
+                mylog.info() << myname << "(init): terminate..." << endl;
 
-			cerr << err.str()  << endl;
+            if( mylog.is_crit() )
+                mylog.crit() << err.str() << endl;
 
-			throw SystemError(err.str());
-		}
-	}
-	// -------------------------------------------------------------------------
-	LogServer::LogServer( std::shared_ptr<DebugStream> log ):
-		LogServer()
-	{
-		elog = log;
-	}
-	// -------------------------------------------------------------------------
-	LogServer::LogServer():
-		cmdTimeout(2000),
-		sessLogLevel(Debug::NONE),
-		sock(nullptr),
-		elog(nullptr)
-	{
-		slist.reserve(sessMaxCount);
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::evfinish( const ev::loop_ref& loop )
-	{
-		if( !isrunning )
-			return;
+            cerr << err.str()  << endl;
 
-		if( mylog.is_info() )
-			mylog.info() << myname << "(evfinish): terminate..." << endl;
+            throw SystemError(err.str());
+        }
 
-		auto lst(slist);
+        alog = log;
+        conn = alog->signal_stream_event().connect( sigc::mem_fun(this, &LogServer::logOnEvent) );
+    }
+    // -------------------------------------------------------------------------
+    LogServer::LogServer( std::shared_ptr<DebugStream> log ):
+        LogServer()
+    {
+        elog = log;
+        conn = elog->signal_stream_event().connect( sigc::mem_fun(this, &LogServer::logOnEvent) );
+    }
+    // -------------------------------------------------------------------------
+    LogServer::LogServer():
+        elog(nullptr),
+        alog(nullptr),
+        cancelled(false)
+    {
+        slist.reserve(sessMaxCount);
+    }
+    // -------------------------------------------------------------------------
+    std::list<LogAgregator::iLog> LogServer::getLogList( const std::string& logname )
+    {
+        std::list<LogAgregator::iLog> loglist;
 
-		// Копируем сперва себе список сессий..
-		// т.к при вызове terminate()
-		// у Session будет вызван сигнал "final"
-		// который приведёт к вызову sessionFinished(), в котором список будет меняться..
-		for( const auto& s : lst )
-		{
-			try
-			{
-				s->terminate();
-			}
-			catch( std::exception& ex ) {}
-		}
+        if( alog ) // если у нас "агрегатор", то работаем с его списком логов
+        {
+            if( logname.empty() || logname == "ALL" || logname == alog->getLogName())
+                loglist = alog->getLogList();
+            else
+                loglist = alog->getLogList(logname);
+        }
+        else
+        {
+            if( logname.empty() || logname == "ALL" || elog->getLogName() == logname )
+                loglist.emplace_back(elog, elog->getLogName());
+        }
 
-		io.stop();
-		isrunning = false;
+        return loglist;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::list(::grpc::ServerContext* context, const ::uniset3::logserver::LogListParams* request, ::uniset3::logserver::LogMessage* response)
+    {
+        if( cancelled )
+            return grpc::Status(grpc::StatusCode::UNAVAILABLE, "(list): Server terminated.");
 
-		sock->close();
-		sock.reset();
+        if( context->IsCancelled() )
+            return grpc::Status(grpc::StatusCode::CANCELLED, "(list): Deadline exceeded or Client cancelled, abandoning.");
 
-		if( mylog.is_info() )
-			mylog.info() << myname << "(LogServer): finished." << endl;
-	}
-	// -------------------------------------------------------------------------
-	std::string LogServer::wname() const noexcept
-	{
-		return myname;
-	}
-	// -------------------------------------------------------------------------
-	bool LogServer::run( const std::string& _addr, Poco::UInt16 _port )
-	{
-		addr = _addr;
-		port = _port;
+        auto loglist = getLogList(request->logname());
 
-		{
-			ostringstream s;
-			s << _addr << ":" << _port;
-			myname = s.str();
-		}
+        ostringstream s;
+        s << "List of managed logs(filter='" << request->logname() << "'):" << endl;
+        s << "=====================" << endl;
+        LogAgregator::printLogList(s, loglist);
+        s << "=====================" << endl << endl;
+        response->set_text(s.str());
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::loglevel(::grpc::ServerContext* context, const ::uniset3::logserver::LogLevelParams* request, ::uniset3::logserver::LogMessage* response)
+    {
+        if( cancelled )
+            return grpc::Status(grpc::StatusCode::UNAVAILABLE, "(loglevel): Server terminated.");
 
-		return loop.evrun(this);
-	}
-	// -------------------------------------------------------------------------
-	bool LogServer::async_run( const std::string& _addr, Poco::UInt16 _port )
-	{
-		addr = _addr;
-		port = _port;
+        if( context->IsCancelled() )
+            return grpc::Status(grpc::StatusCode::CANCELLED, "(loglevel): Deadline exceeded or Client cancelled, abandoning.");
 
-		{
-			ostringstream s;
-			s << _addr << ":" << _port;
-			myname = s.str();
-		}
-		return loop.async_evrun(this);
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::terminate()
-	{
-		loop.evstop(this);
-	}
-	// -------------------------------------------------------------------------
-	bool LogServer::isRunning() const noexcept
-	{
-		return isrunning;
-	}
-	// -------------------------------------------------------------------------
-	bool LogServer::check( bool restart_if_fail )
-	{
-		// смущает пока только, что эта функция будет вызыватся (обычно) из другого потока
-		// и как к этому отнесётся evloop
+        ostringstream s;
+        s << "List of saved default log levels (filter='" << request->logname() << "')[" << defaultLogLevels.size() << "]: " << endl;
+        s << "=================================" << endl;
+        auto alog = dynamic_pointer_cast<LogAgregator>(elog);
 
-		try
-		{
-			// для проверки пробуем открыть соединение..
-			UTCPStream s;
-			s.create(addr, port, 500);
-			s.disconnect();
-			return true;
-		}
-		catch(...) {}
+        if( alog ) // если у нас "агрегатор", то работаем с его списком потоков
+        {
+            std::list<LogAgregator::iLog> lst;
 
-		if( !restart_if_fail )
-			return false;
+            if( request->logname().empty() || request->logname() == "ALL" )
+                lst = alog->getLogList();
+            else
+                lst = alog->getLogList(request->logname());
 
-		io.stop();
+            std::string::size_type max_width = 1;
 
-		if( !sock )
-		{
-			try
-			{
-				evprepare(io.loop);
-			}
-			catch( uniset3::SystemError& ex )
-			{
-				if( mylog.is_crit() )
-					mylog.crit() <<  myname << "(evprepare): " << ex << endl;
+            // ищем максимальное название для выравнивания по правому краю
+            for( const auto& l : lst )
+                max_width = std::max(max_width, l.name.length() );
 
-				return false;
-			}
-		}
+            for( const auto& l : lst )
+            {
+                Debug::type deflevel = Debug::NONE;
+                auto i = defaultLogLevels.find(l.log.get());
 
-		if( !io.is_active() )
-		{
-			io.set<LogServer, &LogServer::ioAccept>(this);
-			io.start(sock->getSocket(), ev::READ);
-			isrunning = true;
-		}
+                if( i != defaultLogLevels.end() )
+                    deflevel = i->second;
 
-		// Проверяем..
-		try
-		{
-			UTCPStream s;
-			s.create(addr, port, 500);
-			s.disconnect();
-			return true;
-		}
-		catch( Poco::Net::NetException& ex )
-		{
-			ostringstream err;
-			err << myname << "(check): socket error:" << ex.message();
+                s << std::left << setw(max_width) << l.name << std::left << " [ " << Debug::str(deflevel) << " ]" << endl;
+            }
+        }
+        else if( elog )
+        {
+            Debug::type deflevel = Debug::NONE;
+            auto i = defaultLogLevels.find(elog.get());
 
-			if( mylog.is_crit() )
-				mylog.crit() << err.str() << endl;
-		}
+            if( i != defaultLogLevels.end() )
+                deflevel = i->second;
 
-		return false;
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::evprepare( const ev::loop_ref& eloop )
-	{
-		if( sock )
-		{
-			ostringstream err;
-			err << myname << "(evprepare): socket ALREADY BINDINNG..";
+            s << elog->getLogName() << " [" << Debug::str(deflevel) << " ]" << endl;
+        }
 
-			if( mylog.is_crit() )
-				mylog.crit() << err.str() << endl;
+        s << "=================================" << endl << endl;
 
-			throw uniset3::SystemError( err.str() );
-		}
+        response->set_text(s.str());
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::command(::grpc::ServerContext* context, const ::uniset3::logserver::LogCommandList* request, ::google::protobuf::Empty* response)
+    {
+        if( cancelled )
+            return grpc::Status(grpc::StatusCode::UNAVAILABLE, "(command): Server terminated.");
 
-		try
-		{
-			sock = make_shared<UTCPSocket>(addr, port);
-		}
-		catch( Poco::Net::NetException& ex )
-		{
-			ostringstream err;
+        if( context->IsCancelled() )
+            return grpc::Status(grpc::StatusCode::CANCELLED, "(command): Deadline exceeded or Client cancelled, abandoning.");
 
-			err << myname << "(evprepare): socket error:" << ex.message();
+        mylog.info() << myname << "(command): call with " << request->cmd_size() << " commands.." << endl;
 
-			if( mylog.is_crit() )
-				mylog.crit() << err.str() << endl;
+        for( const auto& c : request->cmd() )
+        {
+            auto ret = cmdProcessing(c);
 
-			throw uniset3::SystemError( err.str() );
-		}
-		catch( std::exception& ex )
-		{
-			ostringstream err;
+            if( !ret.ok() )
+                return ret;
+        }
 
-			err << myname << "(evprepare): " << ex.what();
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::read(::grpc::ServerContext* context, const google::protobuf::Empty* request, ::grpc::ServerWriter< ::uniset3::logserver::LogMessage>* writer)
+    {
+        if( cancelled )
+            return grpc::Status(grpc::StatusCode::UNAVAILABLE, "(read): Server terminated.");
 
-			if( mylog.is_crit() )
-				mylog.crit() << err.str() << endl;
+        if( context->IsCancelled() )
+            return grpc::Status(grpc::StatusCode::CANCELLED, "(read): Deadline exceeded or Client cancelled, abandoning.");
 
-			throw uniset3::SystemError( err.str() );
-		}
+        mylog.info() << myname << "(read): create new session " << context->peer() << endl;
 
-		sock->setBlocking(false);
+        auto s = std::make_shared<LogSession>();
+        s->writer = writer;
 
-		io.set( eloop );
-		io.set<LogServer, &LogServer::ioAccept>(this);
-		io.start(sock->getSocket(), ev::READ);
-		isrunning = true;
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::ioAccept( ev::io& watcher, int revents )
-	{
-		if( EV_ERROR & revents )
-		{
-			if( mylog.is_crit() )
-				mylog.crit() << myname << "(LogServer::ioAccept): invalid event" << endl;
+        // add to session list
+        {
+            uniset3::uniset_rwmutex_wrlock lock(mutSList);
 
-			return;
-		}
+            if( sessMaxCount <= 0 || slist.size() >= sessMaxCount )
+            {
+                mylog.info() << myname << "(read): max session limit " << sessMaxCount << endl;
+                return grpc::Status(grpc::StatusCode::UNAVAILABLE, "(read): max session limit " + to_string(sessMaxCount));
+            }
 
-		if( !isrunning )
-		{
-			if( mylog.is_crit() )
-				mylog.crit() << myname << "(LogServer::ioAccept): terminate work.." << endl;
+            slist.push_back(s);
+        }
 
-			sock->close();
-			return;
-		}
+        s->wait();
+        mylog.info() << myname << "(read): terminate session: " << context->peer() << endl;
+        return grpc::Status::OK;
+    }
+    // --------------------------------------------------------------------------------
+    grpc::Status LogServer::cmdProcessing( const google::protobuf::Any& any )
+    {
+        if( !any.Is<uniset3::logserver::LogCommand>() )
+        {
+            mylog.warn() << myname << "(cmdProcessing): unsupported command type" << endl;
+            return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "unsupported log server command type");
+        }
 
-		{
-			uniset_rwmutex_rlock l(mutSList);
+        uniset3::logserver::LogCommand msg;
 
-			if( slist.size() >= sessMaxCount )
-			{
-				if( mylog.is_crit() )
-					mylog.crit() << myname << "(LogServer::ioAccept): session limit(" << sessMaxCount << ")" << endl;
+        if( !any.UnpackTo(&msg) )
+        {
+            mylog.crit() << myname << "(cmdProcessing): parse log server command error" << endl;
+            return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "unpack log server command error");
+        }
 
-				sock->close();
-				return;
-			}
-		}
+        auto loglist = getLogList(msg.logname());
 
-		try
-		{
-			Poco::Net::StreamSocket ss = sock->acceptConnection();
+        if( msg.cmd() == logserver::LOG_CMD_FILTER )
+        {
+            // отключаем старый обработчик
+            if( conn )
+                conn.disconnect();
+        }
 
-			auto s = make_shared<LogSession>( ss, elog, cmdTimeout );
-			s->setSessionLogLevel(sessLogLevel);
-			s->connectFinalSession( sigc::mem_fun(this, &LogServer::sessionFinished) );
-			s->signal_logsession_command().connect( sigc::mem_fun(this, &LogServer::onCommand) );
-			{
-				uniset_rwmutex_wrlock l(mutSList);
-				slist.push_back(s);
+        // обрабатываем команды только если нашли подходящие логи
+        for( auto&& l : loglist )
+        {
+            // Обработка команд..
+            // \warning Работа с логом ведётся без mutex-а, хотя он разделяется отдельными потоками
+            switch( msg.cmd() )
+            {
+                case logserver::LOG_CMD_SET:
+                    l.log->level( (Debug::type)msg.data() );
+                    break;
 
-				// на первой сессии запоминаем состояние логов
-				if( slist.size() == 1 )
-					saveDefaultLogLevels("ALL");
-			}
+                case logserver::LOG_CMD_ADD:
+                    l.log->addLevel( (Debug::type)msg.data() );
+                    break;
 
-			s->run(watcher.loop);
-		}
-		catch( const std::exception& ex )
-		{
-			mylog.warn() << "(LogServer::ioAccept): catch exception: " << ex.what() << endl;
-		}
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::sessionFinished( LogSession* s )
-	{
-		uniset_rwmutex_wrlock l(mutSList);
+                case logserver::LOG_CMD_DEL:
+                    l.log->delLevel( (Debug::type)msg.data() );
+                    break;
 
-		for( SessionList::iterator i = slist.begin(); i != slist.end(); ++i )
-		{
-			if( i->get() == s )
-			{
-				slist.erase(i);
-				break;
-			}
-		}
+                case logserver::LOG_CMD_ROTATE:
+                    l.log->onLogFile(true);
+                    break;
 
-		if( slist.empty() )
-		{
-			// восстанавливаем уровни логов по умолчанию
-			restoreDefaultLogLevels("ALL");
-		}
-	}
-	// -------------------------------------------------------------------------
-	void LogServer::init( const std::string& prefix, xmlNode* cnode )
-	{
-		auto conf = uniset_conf();
+                case logserver::LOG_CMD_LOGFILE_DISABLE:
+                    l.log->offLogFile();
+                    break;
 
-		// можем на cnode==0 не проверять, т.е. UniXML::iterator корректно отрабатывает эту ситуацию
-		UniXML::iterator it(cnode);
+                case logserver::LOG_CMD_LOGFILE_ENABLE:
+                    l.log->onLogFile();
+                    break;
 
-		timeout_t cmdTimeout = conf->getArgPInt("--" + prefix + "-cmd-timeout", it.getProp("cmdTimeout"), 2000);
-		setCmdTimeout(cmdTimeout);
-	}
-	// -----------------------------------------------------------------------------
-	std::string LogServer::help_print( const std::string& prefix )
-	{
-		std::ostringstream h;
-		h << "--" << prefix << "-cmd-timeout msec      - Timeout for wait command. Default: 2000 msec." << endl;
-		return h.str();
-	}
-	// -----------------------------------------------------------------------------
-	string LogServer::getShortInfo()
-	{
-		std::ostringstream inf;
+                case logserver::LOG_CMD_FILTER:
+                    l.log->signal_stream_event().connect( sigc::mem_fun(this, &LogServer::logOnEvent) );
+                    break;
 
-		inf << "LogServer: " << myname
-			<< " ["
-			<< " sessMaxCount=" << sessMaxCount
-			<< " ]"
-			<< endl;
+                case logserver::LOG_CMD_SAVE_LOGLEVEL:
+                    saveDefaultLogLevels(msg.logname());
+                    break;
 
-		{
-			uniset_rwmutex_rlock l(mutSList);
+                case logserver::LOG_CMD_RESTORE_LOGLEVEL:
+                    restoreDefaultLogLevels(msg.logname());
+                    break;
 
-			for( const auto& s : slist )
-				inf << " " << s->getShortInfo() << endl;
-		}
+                case logserver::LOG_CMD_NOP:
+                    break;
 
-		return inf.str();
-	}
-	// -----------------------------------------------------------------------------
+                default:
+                    mylog.warn() << "(cmdProcessing): Unknown command '" << msg.cmd() << "'" << endl;
+                    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "unknown log server command " + to_string(msg.cmd()));
+            }
+        } // end of for loglist
+
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::LogSession::wait()
+    {
+        std::unique_lock<std::mutex> lk(mut);
+        cond.wait(lk, [&]()
+        {
+            return (done == true);
+        });
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::LogSession::term()
+    {
+        {
+            std::unique_lock<std::mutex> lk(mut);
+            done = true;
+        }
+        cond.notify_all();
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::logOnEvent( const std::string& s ) noexcept
+    {
+        if( cancelled ) //  || s.empty() )
+            return;
+
+        logserver::LogMessage m;
+        m.set_text(s);
+
+        uniset3::uniset_rwmutex_rlock lock(mutSList);
+        bool beforeEmpty = slist.empty();
+
+        for( auto it = slist.begin(); it != slist.end(); it++ )
+        {
+            try
+            {
+                if( !(*it)->writer->Write(m) )
+                {
+                    (*it)->term();
+                    it = slist.erase(it);
+
+                    if( it == slist.end() )
+                        it--;
+                }
+            }
+            catch(...) {}
+        }
+
+        if( !beforeEmpty && slist.empty() )
+        {
+            // восстанавливаем уровни логов по умолчанию
+            // т.к. все отключились
+            restoreDefaultLogLevels("ALL");
+        }
+    }
+    // -------------------------------------------------------------------------
+    bool LogServer::run( const std::string& _addr, Poco::UInt16 _port )
+    {
+        if( server )
+        {
+            cerr << "LogServer already running.." << endl;
+            return false;
+        }
+
+        addr = _addr;
+        port = _port;
+
+        {
+            ostringstream s;
+            s << _addr << ":" << _port;
+            myname = s.str();
+        }
+
+        cancelled = false;
+        ostringstream saddr;
+        saddr << addr << ":" << port;
+        builder.AddListeningPort(saddr.str(), grpc::InsecureServerCredentials());
+        builder.RegisterService(static_cast<uniset3::logserver::LogServer_i::Service*>(this));
+        server = builder.BuildAndStart();
+        server->Wait();
+        saveDefaultLogLevels("ALL");
+        return  true;
+    }
+    // -------------------------------------------------------------------------
+    bool LogServer::async_run( const std::string& _addr, Poco::UInt16 _port )
+    {
+        if( server )
+        {
+            cerr << "LogServer already running.." << endl;
+            return false;
+        }
+
+        addr = _addr;
+        port = _port;
+
+        {
+            ostringstream s;
+            s << _addr << ":" << _port;
+            myname = s.str();
+        }
+
+        cancelled = false;
+        ostringstream saddr;
+        saddr << addr << ":" << port;
+        builder.AddListeningPort(saddr.str(), grpc::InsecureServerCredentials());
+        builder.RegisterService(static_cast<uniset3::logserver::LogServer_i::Service*>(this));
+//        builder.SetSyncServerOption(grpc::ServerBuilder::CQ_TIMEOUT_MSEC, 5000);
+        server = builder.BuildAndStart();
+        saveDefaultLogLevels("ALL");
+        return true;
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::terminate()
+    {
+        if( cancelled )
+            return;
+
+        cancelled = true;
+
+        {
+            uniset3::uniset_rwmutex_rlock lock(mutSList);
+            for( auto&& r: slist )
+                r->term();
+
+            slist.clear();
+        }
+
+        if( server )
+        {
+            server->Shutdown();
+            server = nullptr;
+        }
+    }
+    // -------------------------------------------------------------------------
+    bool LogServer::isRunning() const noexcept
+    {
+        return server != nullptr;
+    }
+    // -------------------------------------------------------------------------
+    bool LogServer::check( bool restart_if_fail )
+    {
+        // смущает пока только, что эта функция будет вызыватся (обычно) из другого потока
+        try
+        {
+            // для проверки пробуем открыть соединение..
+            UTCPStream s;
+            s.create(addr, port, 500);
+            s.disconnect();
+            return true;
+        }
+        catch(...) {}
+
+        if( !restart_if_fail )
+            return false;
+
+        server->Shutdown();
+
+        if( !async_run(addr, port) )
+            return false;
+
+        // Проверяем..
+        try
+        {
+            UTCPStream s;
+            s.create(addr, port, 500);
+            s.disconnect();
+            return true;
+        }
+        catch( Poco::Net::NetException& ex )
+        {
+            ostringstream err;
+            err << myname << "(check): socket error:" << ex.message();
+
+            if( mylog.is_crit() )
+                mylog.crit() << err.str() << endl;
+        }
+
+        return false;
+    }
+    // -------------------------------------------------------------------------
+    void LogServer::init( const std::string& prefix, xmlNode* cnode )
+    {
+        //        auto conf = uniset_conf();
+
+        // можем на cnode==0 не проверять, т.е. UniXML::iterator корректно отрабатывает эту ситуацию
+        //        UniXML::iterator it(cnode);
+    }
+    // -----------------------------------------------------------------------------
+    std::string LogServer::help_print( const std::string& prefix )
+    {
+        std::ostringstream h;
+        h << "--" << prefix << "-cmd-timeout msec      - Timeout for wait command. Default: 2000 msec." << endl;
+        return h.str();
+    }
+    // -----------------------------------------------------------------------------
+    string LogServer::getShortInfo()
+    {
+        std::ostringstream inf;
+
+        inf << "LogServer: " << myname
+            << " ["
+            << " sessMaxCount=" << sessMaxCount
+            << " ]"
+            << endl;
+#if 0
+        {
+            uniset_rwmutex_rlock l(mutSList);
+
+            for( const auto& s : slist )
+                inf << " " << s->getShortInfo() << endl;
+        }
+#endif
+        return inf.str();
+    }
+    // -----------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
-	Poco::JSON::Object::Ptr LogServer::httpGetShortInfo()
-	{
-		Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
-		jdata->set("name", myname);
-		jdata->set("host", addr);
-		jdata->set("port", port);
-		jdata->set("sessMaxCount", sessMaxCount);
+    Poco::JSON::Object::Ptr LogServer::httpGetShortInfo()
+    {
+        Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
+        jdata->set("name", myname);
+        jdata->set("host", addr);
+        jdata->set("port", port);
+        jdata->set("sessMaxCount", sessMaxCount);
+#if 0
+        {
+            uniset_rwmutex_rlock l(mutSList);
 
-		{
-			uniset_rwmutex_rlock l(mutSList);
+            Poco::JSON::Array::Ptr jsess = new Poco::JSON::Array();
+            jdata->set("sessions", jsess);
 
-			Poco::JSON::Array::Ptr jsess = new Poco::JSON::Array();
-			jdata->set("sessions", jsess);
-
-			for( const auto& s : slist )
-				jsess->add(s->httpGetShortInfo());
-		}
-
-		return jdata;
-	}
+            for( const auto& s : slist )
+                jsess->add(s->httpGetShortInfo());
+        }
+#endif
+        return jdata;
+    }
 #endif // #ifndef DISABLE_REST_API
-	// -----------------------------------------------------------------------------
-	void LogServer::saveDefaultLogLevels( const std::string& logname )
-	{
-		if( mylog.is_info() )
-			mylog.info() << myname << "(saveDefaultLogLevels): SAVE DEFAULT LOG LEVELS.." << endl;
+    // -----------------------------------------------------------------------------
+    void LogServer::saveDefaultLogLevels( const std::string& logname )
+    {
+        if( mylog.is_info() )
+            mylog.info() << myname << "(saveDefaultLogLevels): SAVE DEFAULT LOG LEVELS (logname=" << logname << ")" << endl;
 
-		auto alog = dynamic_pointer_cast<LogAgregator>(elog);
+        if( alog )
+        {
+            std::list<LogAgregator::iLog> lst;
 
-		if( alog )
-		{
-			std::list<LogAgregator::iLog> lst;
+            if( logname.empty() || logname == "ALL" )
+                lst = alog->getLogList();
+            else
+                lst = alog->getLogList(logname);
 
-			if( logname.empty() || logname == "ALL" )
-				lst = alog->getLogList();
-			else
-				lst = alog->getLogList(logname);
+            for( auto&& l : lst )
+                defaultLogLevels[l.log.get()] = l.log->level();
+        }
+        else if( elog )
+            defaultLogLevels[elog.get()] = elog->level();
+    }
+    // -----------------------------------------------------------------------------
+    void LogServer::restoreDefaultLogLevels( const std::string& logname )
+    {
+        if( mylog.is_info() )
+            mylog.info() << myname << "(restoreDefaultLogLevels): RESTORE DEFAULT LOG LEVELS (logname=" << logname << ")" << endl;
 
-			for( auto&& l : lst )
-				defaultLogLevels[l.log.get()] = l.log->level();
-		}
-		else if( elog )
-			defaultLogLevels[elog.get()] = elog->level();
-	}
-	// -----------------------------------------------------------------------------
-	void LogServer::restoreDefaultLogLevels( const std::string& logname )
-	{
-		if( mylog.is_info() )
-			mylog.info() << myname << "(restoreDefaultLogLevels): RESTORE DEFAULT LOG LEVELS.." << endl;
+        if( alog )
+        {
+            std::list<LogAgregator::iLog> lst;
 
-		auto alog = dynamic_pointer_cast<LogAgregator>(elog);
+            if( logname.empty() || logname == "ALL" )
+                lst = alog->getLogList();
+            else
+                lst = alog->getLogList(logname);
 
-		if( alog )
-		{
-			std::list<LogAgregator::iLog> lst;
+            for( auto&& l : lst )
+            {
+                auto d = defaultLogLevels.find(l.log.get());
 
-			if( logname.empty() || logname == "ALL" )
-				lst = alog->getLogList();
-			else
-				lst = alog->getLogList(logname);
+                if( d != defaultLogLevels.end() )
+                    l.log->level(d->second);
+            }
+        }
+        else if( elog )
+        {
+            auto d = defaultLogLevels.find(elog.get());
 
-			for( auto&& l : lst )
-			{
-				auto d = defaultLogLevels.find(l.log.get());
+            if( d != defaultLogLevels.end() )
+                elog->level(d->second);
+        }
+    }
+    // -----------------------------------------------------------------------------
+#if 0
+    std::string LogServer::onCommand( LogSession* s, LogServerTypes::Command cmd, const std::string& logname )
+    {
+        if( cmd == LogServerTypes::cmdSaveLogLevel )
+        {
+            saveDefaultLogLevels(logname);
+        }
+        else if( cmd == LogServerTypes::cmdRestoreLogLevel )
+        {
+            restoreDefaultLogLevels(logname);
+        }
+        else if( cmd == LogServerTypes::cmdViewDefaultLogLevel )
+        {
+            ostringstream s;
+            s << "List of saved default log levels (filter='" << logname << "')[" << defaultLogLevels.size() << "]: " << endl;
+            s << "=================================" << endl;
+            auto alog = dynamic_pointer_cast<LogAgregator>(elog);
 
-				if( d != defaultLogLevels.end() )
-					l.log->level(d->second);
-			}
-		}
-		else if( elog )
-		{
-			auto d = defaultLogLevels.find(elog.get());
+            if( alog ) // если у нас "агрегатор", то работаем с его списком потоков
+            {
+                std::list<LogAgregator::iLog> lst;
 
-			if( d != defaultLogLevels.end() )
-				elog->level(d->second);
-		}
-	}
-	// -----------------------------------------------------------------------------
-	std::string LogServer::onCommand( LogSession* s, LogServerTypes::Command cmd, const std::string& logname )
-	{
-		if( cmd == LogServerTypes::cmdSaveLogLevel )
-		{
-			saveDefaultLogLevels(logname);
-		}
-		else if( cmd == LogServerTypes::cmdRestoreLogLevel )
-		{
-			restoreDefaultLogLevels(logname);
-		}
-		else if( cmd == LogServerTypes::cmdViewDefaultLogLevel )
-		{
-			ostringstream s;
-			s << "List of saved default log levels (filter='" << logname << "')[" << defaultLogLevels.size() << "]: " << endl;
-			s << "=================================" << endl;
-			auto alog = dynamic_pointer_cast<LogAgregator>(elog);
+                if( logname.empty() || logname == "ALL" )
+                    lst = alog->getLogList();
+                else
+                    lst = alog->getLogList(logname);
 
-			if( alog ) // если у нас "агрегатор", то работаем с его списком потоков
-			{
-				std::list<LogAgregator::iLog> lst;
+                std::string::size_type max_width = 1;
 
-				if( logname.empty() || logname == "ALL" )
-					lst = alog->getLogList();
-				else
-					lst = alog->getLogList(logname);
+                // ищем максимальное название для выравнивания по правому краю
+                for( const auto& l : lst )
+                    max_width = std::max(max_width, l.name.length() );
 
-				std::string::size_type max_width = 1;
+                for( const auto& l : lst )
+                {
+                    Debug::type deflevel = Debug::NONE;
+                    auto i = defaultLogLevels.find(l.log.get());
 
-				// ищем максимальное название для выравнивания по правому краю
-				for( const auto& l : lst )
-					max_width = std::max(max_width, l.name.length() );
+                    if( i != defaultLogLevels.end() )
+                        deflevel = i->second;
 
-				for( const auto& l : lst )
-				{
-					Debug::type deflevel = Debug::NONE;
-					auto i = defaultLogLevels.find(l.log.get());
+                    s << std::left << setw(max_width) << l.name << std::left << " [ " << Debug::str(deflevel) << " ]" << endl;
+                }
+            }
+            else if( elog )
+            {
+                Debug::type deflevel = Debug::NONE;
+                auto i = defaultLogLevels.find(elog.get());
 
-					if( i != defaultLogLevels.end() )
-						deflevel = i->second;
+                if( i != defaultLogLevels.end() )
+                    deflevel = i->second;
 
-					s << std::left << setw(max_width) << l.name << std::left << " [ " << Debug::str(deflevel) << " ]" << endl;
-				}
-			}
-			else if( elog )
-			{
-				Debug::type deflevel = Debug::NONE;
-				auto i = defaultLogLevels.find(elog.get());
+                s << elog->getLogName() << " [" << Debug::str(deflevel) << " ]" << endl;
+            }
 
-				if( i != defaultLogLevels.end() )
-					deflevel = i->second;
+            s << "=================================" << endl << endl;
 
-				s << elog->getLogName() << " [" << Debug::str(deflevel) << " ]" << endl;
-			}
+            return s.str();
+        }
 
-			s << "=================================" << endl << endl;
-
-			return s.str();
-		}
-
-		return "";
-	}
-	// -----------------------------------------------------------------------------
+        return "";
+    }
+#endif
+    // -----------------------------------------------------------------------------
 } // end of namespace uniset3

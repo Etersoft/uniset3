@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -107,8 +107,6 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
 
     double checkConnection_sec = atof( uniset3::getArg2Param("--" + prefix + "ls-check-connection-sec", argc, argv, it.getProp("lsCheckConnectionSec"), "5").c_str());
 
-    int bufSize = uniset3::getArgPInt("--" + prefix + "ls-read-buffer-size", argc, argv, it.getProp("lsReadBufferSize"), 10001);
-
     std::string s_overflow = uniset3::getArg2Param("--" + prefix + "db-overflow-factor", argc, argv, it.getProp("dbOverflowFactor"), "1.3");
     float ovf = atof(s_overflow.c_str());
 
@@ -121,6 +119,7 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
 
     flushBufferTimer.set<LogDB, &LogDB::onCheckBuffer>(this);
     wsactivate.set<LogDB, &LogDB::onActivate>(this);
+    logEventSig.set<LogDB, &LogDB::onLogEvent>(this);
     sigTERM.set<LogDB, &LogDB::onTerminate>(this);
     sigQUIT.set<LogDB, &LogDB::onTerminate>(this);
     sigINT.set<LogDB, &LogDB::onTerminate>(this);
@@ -142,15 +141,11 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
 
     for( ; sit.getCurrent(); sit++ )
     {
-        auto l = make_shared<Log>();
+        auto l = make_shared<Log>(sit.getProp("ip"), sit.getIntProp("port"));
 
         l->name = sit.getProp("name");
-        l->ip = sit.getProp("ip");
-        l->port = sit.getIntProp("port");
         l->cmd = sit.getProp("cmd");
         l->description = sit.getProp("description");
-
-        l->setReadBufSize(bufSize);
 
         l->setCheckConnectionTime(checkConnection_sec);
 
@@ -236,6 +231,8 @@ LogDB::LogDB( const string& name, int argc, const char* const* argv, const strin
         }
     }
 
+    tpool = std::make_shared<Poco::ThreadPool>(1, logservers.size());
+
 #ifndef DISABLE_REST_API
     wsHeartbeatTime_sec = (float)uniset3::getArgPInt("--" + prefix + "ws-heartbeat-time", argc, argv, it.getProp("wsPingTime"), wsHeartbeatTime_sec) / 1000.0;
     wsSendTime_sec = (float)uniset3::getArgPInt("--" + prefix + "ws-send-time", argc, argv, it.getProp("wsSendTime"), wsSendTime_sec) / 1000.0;
@@ -289,6 +286,15 @@ LogDB::~LogDB()
 
 #endif
 
+    for( auto&& s : logservers )
+    {
+        try
+        {
+            s->terminate();
+        }
+        catch( ... ) {}
+    }
+
     if( db )
         db->close();
 }
@@ -305,7 +311,9 @@ void LogDB::onTerminate( ev::sig& evsig, int revents )
 
     try
     {
+        dblog1 << myname << "(onTerminate): flush buffer..." << endl;
         flushBuffer();
+        dblog1 << myname << "(onTerminate): flush buffer [OK]" << endl;
     }
     catch( std::exception& ex )
     {
@@ -320,7 +328,9 @@ void LogDB::onTerminate( ev::sig& evsig, int revents )
 
     try
     {
+        dblog1 << myname << "(onTerminate): http server stopping..." << endl;
         httpserv->stop();
+        dblog1 << myname << "(onTerminate): http server stopped [OK]..." << endl;
     }
     catch( std::exception& ex )
     {
@@ -331,13 +341,30 @@ void LogDB::onTerminate( ev::sig& evsig, int revents )
 
     try
     {
+        dblog1 << myname << "(onTerminate): event loop stopping..." << endl;
         evstop();
+        dblog1 << myname << "(onTerminate): event loop stopped [OK]" << endl;
     }
     catch( std::exception& ex )
     {
         dbinfo << myname << "(onTerminate): "  << ex.what() << endl;
-
     }
+
+    dblog1 << myname << "(onTerminate): terminating log readers..." << endl;
+
+    for( auto&& s : logservers )
+    {
+        try
+        {
+            s->terminate();
+        }
+        catch( std::exception& ex )
+        {
+            dbinfo << myname << "(onTerminate): "  << ex.what() << endl;
+        }
+    }
+
+    dblog1 << myname << "(onTerminate): terminated log readers [OK]" << endl;
 }
 //--------------------------------------------------------------------------------------------
 void LogDB::flushBuffer()
@@ -417,7 +444,12 @@ void LogDB::addLog( LogDB::Log* log, const string& txt )
       << log->name << "','"
       << qEscapeString(txt) << "');";
 
-    qbuf.emplace(q.str());
+    {
+        uniset3::uniset_rwmutex_wrlock lck(qbufMut);
+        qbuf.emplace(q.str());
+    }
+
+    logEventSig.send();
 }
 //--------------------------------------------------------------------------------------------
 void LogDB::log2File( LogDB::Log* log, const string& txt )
@@ -495,7 +527,6 @@ void LogDB::help_print()
 
     cout << "logservers: " << endl;
     cout << "--prefix-ls-check-connection-sec sec    - Период проверки соединения с логсервером" << endl;
-    cout << "--prefix-ls-read-buffer-size num        - Размер буфера для чтения сообщений от логсервера. По умолчанию: 10001" << endl;
 
     cout << "http: " << endl;
     cout << "--prefix-httpserver-host ip                 - IP на котором слушает http сервер. По умолчанию: localhost" << endl;
@@ -515,16 +546,37 @@ void LogDB::run( bool async )
 
 #endif
 
+    start_threadpool();
+
     if( async )
         async_evrun();
     else
         evrun();
 }
 // -----------------------------------------------------------------------------
+void LogDB::start_threadpool()
+{
+    tpoolRet = std::async(std::launch::async, [this]()
+    {
+        std::vector<LogRunner> lrunners;
+        lrunners.reserve(logservers.size());
+
+        for( auto&& s : logservers )
+            lrunners.emplace_back(LogRunner(s));
+
+        for( auto&& r : lrunners )
+            tpool->start(r);
+
+        tpool->joinAll();
+        return true;
+    });
+}
+// -----------------------------------------------------------------------------
 void LogDB::evfinish()
 {
     flushBufferTimer.stop();
     wsactivate.stop();
+    logEventSig.stop();
 }
 // -----------------------------------------------------------------------------
 void LogDB::evprepare()
@@ -538,8 +590,8 @@ void LogDB::evprepare()
     wsactivate.set(loop);
     wsactivate.start();
 
-    for( const auto& s : logservers )
-        s->set(loop);
+    logEventSig.set(loop);
+    logEventSig.start();
 
     sigTERM.set(loop);
     sigTERM.start(SIGTERM);
@@ -556,6 +608,22 @@ void LogDB::onCheckBuffer(ev::timer& t, int revents)
         dbcrit << myname << "(LogDB::onCheckBuffer): invalid event" << endl;
         return;
     }
+
+    uniset3::uniset_rwmutex_rlock lock(qbufMut);
+
+    if( qbuf.size() >= qbufSize )
+        flushBuffer();
+}
+// -----------------------------------------------------------------------------
+void LogDB::onLogEvent( ev::async& watcher, int revents )
+{
+    if (EV_ERROR & revents)
+    {
+        dbcrit << myname << "(LogDB::onLogEvent): invalid event" << endl;
+        return;
+    }
+
+    uniset3::uniset_rwmutex_rlock lock(qbufMut);
 
     if( qbuf.size() >= qbufSize )
         flushBuffer();
@@ -581,113 +649,108 @@ void LogDB::onActivate( ev::async& watcher, int revents )
 #endif
 }
 // -----------------------------------------------------------------------------
+LogDB::LogRunner::LogRunner( std::shared_ptr<LogDB::Log> l ):
+    log(l)
+{
+
+}
+// -----------------------------------------------------------------------------
+LogDB::LogRunner::~LogRunner()
+{
+    if( log )
+    {
+        log->terminate();
+        log = nullptr;
+    }
+}
+// -----------------------------------------------------------------------------
+void LogDB::LogRunner::run()
+{
+    if( log )
+        log->run();
+}
+// -----------------------------------------------------------------------------
 bool LogDB::Log::isConnected() const
 {
-    return tcp && tcp->isConnected();
+    return reader && reader->isConnection();
 }
 // -----------------------------------------------------------------------------
-void LogDB::Log::set( ev::dynamic_loop& loop )
+LogDB::Log::Log( const std::string& _ip, int _port ):
+    ip(_ip),
+    port(_port)
 {
-    io.set(loop);
-    iocheck.set(loop);
-    iocheck.set<LogDB::Log, &LogDB::Log::check>(this);
-    iocheck.start(0, checkConnection_sec);
-}
-// -----------------------------------------------------------------------------
-void LogDB::Log::check( ev::timer& t, int revents )
-{
-    if (EV_ERROR & revents)
-        return;
-
-    if( isConnected() )
-        return;
-
-    if( connect() )
-        ioprepare();
-}
-// -----------------------------------------------------------------------------
-bool LogDB::Log::connect() noexcept
-{
-    if( tcp && tcp->isConnected() )
-        return true;
-
-    //  dbinfo << name << "(connect): connect " << ip << ":" << port << "..." << endl;
-
-    if( peername.empty() )
-        peername = ip + ":" + std::to_string(port);
-
-    try
-    {
-        tcp = make_shared<UTCPStream>();
-        tcp->create(ip, port);
-        //      tcp->setReceiveTimeout( UniSetTimer::millisecToPoco(inTimeout) );
-        //      tcp->setSendTimeout( UniSetTimer::millisecToPoco(outTimeout) );
-        tcp->setKeepAlive(true);
-        tcp->setBlocking(false);
-        dbinfo << name << "(connect): connect OK to " << ip << ":" << port << endl;
-        return true;
-    }
-    catch( const Poco::TimeoutException& e )
-    {
-        dbwarn << name << "(connect): connection " << peername << " timeout.." << endl;
-    }
-    catch( const Poco::Net::NetException& e )
-    {
-        dbwarn << name << "(connect): connection " << peername << " error: " << e.what() << endl;
-    }
-    catch( const std::exception& e )
-    {
-        dbwarn << name << "(connect): connection " << peername << " error: " << e.what() << endl;
-    }
-    catch( ... )
-    {
-        std::exception_ptr p = std::current_exception();
-        dbwarn << name << "(connect): connection " << peername << " error: "
-               << (p ? p.__cxa_exception_type()->name() : "null") << endl;
-    }
-
-    tcp->disconnect();
-    tcp = nullptr;
-
-    return false;
-}
-// -----------------------------------------------------------------------------
-void LogDB::Log::ioprepare()
-{
-    if( !tcp || !tcp->isConnected() )
-        return;
-
-    io.set<LogDB::Log, &LogDB::Log::event>(this);
-    io.start(tcp->getSocket(), ev::READ);
+    reader = make_shared<LogReader>();
+    reader->signal_stream_event().connect( sigc::mem_fun(this, &LogDB::Log::onLogEvent) );
     text.reserve(reservsize);
+}
+// -----------------------------------------------------------------------------
+LogDB::Log::~Log()
+{
+    if( reader )
+        reader->terminate();
+}
+// -----------------------------------------------------------------------------
+void LogDB::Log::terminate()
+{
+    if( reader )
+        reader->terminate();
+}
+// -----------------------------------------------------------------------------
+void LogDB::Log::run()
+{
+    logserver::LogCommandList cmdlist = LogReader::getCommands(cmd);
+    reader->readLoop(ip, port, cmdlist);
 
-    // первый раз при подключении надо послать команды
-
-    //! \todo Пока закрываем глаза на не оптимальность, того, что парсим строку каждый раз
-    auto cmdlist = LogServerTypes::getCommands(cmd);
-
-    if( !cmdlist.empty() )
+    if( !text.empty() )
     {
-        for( const auto& msg : cmdlist )
-            wbuf.emplace(new UTCPCore::Buffer((unsigned char*)&msg, sizeof(msg)));
+        sigRead.emit(this, text);
+        text = "";
 
-        io.set(ev::WRITE);
+        if( text.capacity() < reservsize )
+            text.reserve(reservsize);
     }
 }
 // -----------------------------------------------------------------------------
-void LogDB::Log::event( ev::io& watcher, int revents )
+void LogDB::Log::onLogEvent( const std::string& s )
 {
-    if( EV_ERROR & revents )
+    if( text.capacity() < reservsize )
+        text.reserve(reservsize);
+
+    auto pos = s.find_first_of('\n');
+
+    if( pos == string::npos )
     {
-        dbcrit << name << "(event): invalid event" << endl;
+        text += s;
         return;
     }
 
-    if( revents & EV_READ )
-        read(watcher);
+    // Нарезаем на строки (откидывая перевод строки)
+    text += s.substr(0, pos);
+    sigRead.emit(this, text);
 
-    if( revents & EV_WRITE )
-        write(watcher);
+    if( pos + 2 >= s.size() )
+    {
+        text = "";
+        return;
+    }
+
+    text = s.substr(pos + 2);
+    pos = text.find_first_of('\n');
+
+    while( pos != string::npos )
+    {
+        string tmp = text.substr(0, pos);
+        sigRead.emit(this, tmp);
+
+        if( pos + 2 >= tmp.size() )
+        {
+            text = "";
+            return;
+        }
+
+        text = text.substr(pos + 2);
+        pos = text.find_first_of('\n');
+    }
 }
 // -----------------------------------------------------------------------------
 LogDB::Log::ReadSignal LogDB::Log::signal_on_read()
@@ -699,108 +762,6 @@ void LogDB::Log::setCheckConnectionTime( double sec )
 {
     if( sec > 0 )
         checkConnection_sec = sec;
-}
-// -----------------------------------------------------------------------------
-void LogDB::Log::setReadBufSize( size_t sz )
-{
-    buf.resize(sz);
-}
-// -----------------------------------------------------------------------------
-void LogDB::Log::read( ev::io& watcher )
-{
-    if( !tcp )
-        return;
-
-    int n = tcp->available();
-
-    n = std::min(n, (int)buf.size());
-
-    if( n > 0 )
-    {
-        tcp->receiveBytes(buf.data(), n);
-
-        // нарезаем на строки
-        for( int i = 0; i < n; i++ )
-        {
-            if( buf[i] != '\n' )
-                text += buf[i];
-            else
-            {
-                sigRead.emit(this, text);
-                text = "";
-
-                if( text.capacity() < reservsize )
-                    text.reserve(reservsize);
-            }
-        }
-    }
-    else if( n == 0 )
-    {
-        dbinfo << name << ": " << ip << ":" << port << " connection is closed.." << endl;
-
-        if( !text.empty() )
-        {
-            sigRead.emit(this, text);
-            text = "";
-
-            if( text.capacity() < reservsize )
-                text.reserve(reservsize);
-        }
-
-        close();
-    }
-}
-// -----------------------------------------------------------------------------
-void LogDB::Log::write( ev::io& io )
-{
-    UTCPCore::Buffer* buffer = 0;
-
-    if( wbuf.empty() )
-    {
-        io.set(EV_READ);
-        return;
-    }
-
-    buffer = wbuf.front();
-
-    if( !buffer )
-        return;
-
-    ssize_t ret = ::write(io.fd, buffer->dpos(), buffer->nbytes());
-
-    if( ret < 0 )
-    {
-        int errnum = errno;
-        dbwarn << peername << "(write): write to socket error(" << errnum << "): " << strerror(errnum) << endl;
-
-        if( errnum == EPIPE || errnum == EBADF )
-        {
-            dbwarn << peername << "(write): write error.. terminate session.." << endl;
-            io.set(EV_NONE);
-            close();
-        }
-
-        return;
-    }
-
-    buffer->pos += ret;
-
-    if( buffer->nbytes() == 0 )
-    {
-        wbuf.pop();
-        delete buffer;
-    }
-
-    if( wbuf.empty() )
-        io.set(EV_READ);
-    else
-        io.set(EV_WRITE);
-}
-// -----------------------------------------------------------------------------
-void LogDB::Log::close()
-{
-    tcp->disconnect();
-    //tcp = nullptr;
 }
 // -----------------------------------------------------------------------------
 std::string LogDB::qEscapeString( const string& txt )

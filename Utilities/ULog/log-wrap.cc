@@ -3,7 +3,7 @@
 #include "DebugStream.h"
 #include "UniSetTypes.h"
 #include "LogServer.h"
-#include "LogServerTypes.h"
+#include "LogServer.pb.h"
 #include "Exceptions.h"
 #include <sys/wait.h>
 #include <cstdio>

@@ -211,8 +211,7 @@ int main( int argc, char** argv )
         ls.async_run( addr, port );
 
         if( verb )
-            ls.setSessionLog(Debug::ANY);
-
+            ls.setServerLog(Debug::ANY);
 
         if( !ls.isRunning() )
         {
@@ -220,7 +219,7 @@ int main( int argc, char** argv )
             return 1;
         }
 
-        unsigned int i = 0;
+        size_t i = 0;
 
         while( true )
             //        for( int n=0; n<2; n++ )
