@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -15,13 +15,10 @@
  */
 // -------------------------------------------------------------------------
 #include <string.h>
-#include <errno.h>
-#include <Poco/Net/NetException.h>
+#include <grpcpp/grpcpp.h>
 #include <iostream>
-#include <sstream>
 #include <regex>
 #include "PassiveTimer.h"
-#include "Exceptions.h"
 #include "LogReader.h"
 #include "UniSetTypes.h"
 // -------------------------------------------------------------------------
@@ -29,459 +26,373 @@ using namespace std;
 using namespace uniset3;
 // -------------------------------------------------------------------------
 LogReader::LogReader():
-	inTimeout(10000),
-	outTimeout(6000),
-	reconDelay(5000),
-	iaddr(""),
-	cmdonly(false),
-	readcount(0)
+    readTimeout(10000),
+    reconDelay(5000),
+    iaddr(""),
+    readcount(0),
+    active(false)
 {
-	outlog = std::make_shared<DebugStream>();
+    outlog = std::make_shared<DebugStream>();
 
-	outlog->level(Debug::ANY);
-	outlog->signal_stream_event().connect( sigc::mem_fun(this, &LogReader::logOnEvent) );
+    outlog->level(Debug::ANY);
+    outlog->signal_stream_event().connect( sigc::mem_fun(this, &LogReader::logOnEvent) );
 }
 
 // -------------------------------------------------------------------------
 LogReader::~LogReader()
 {
-	if( isConnection() )
-		disconnect();
+    terminate();
+    ctx = nullptr;
+    chan = nullptr;
 }
 // -------------------------------------------------------------------------
 void LogReader::setLogLevel( Debug::type t )
 {
-	outlog->level(t);
+    outlog->level(t);
 }
 // -------------------------------------------------------------------------
 std::shared_ptr<DebugStream> LogReader::log()
 {
-	return outlog;
+    return outlog;
 }
 // -------------------------------------------------------------------------
 DebugStream::StreamEvent_Signal LogReader::signal_stream_event()
 {
-	return m_logsig;
-}
-// -------------------------------------------------------------------------
-void LogReader::connect( const std::string& _addr, int _port, timeout_t msec )
-{
-	if( tcp )
-	{
-		disconnect();
-		tcp = nullptr;
-	}
-
-	iaddr = _addr;
-	port = _port;
-
-	if( rlog.is_info() )
-		rlog.info() << "(LogReader): connect to " << iaddr << ":" << port << endl;
-
-	try
-	{
-		tcp = make_shared<UTCPStream>();
-		tcp->create(iaddr, port, msec );
-		tcp->setReceiveTimeout( UniSetTimer::millisecToPoco(inTimeout) );
-		tcp->setSendTimeout( UniSetTimer::millisecToPoco(outTimeout) );
-		tcp->setKeepAlive(true);
-		tcp->setBlocking(true);
-		return;
-	}
-	catch( const Poco::TimeoutException& e )
-	{
-		if( rlog.debugging(Debug::CRIT) )
-		{
-			ostringstream s;
-			s << "(LogReader): connection " << s.str() << " timeout..";
-			rlog.crit() << s.str() << std::endl;
-		}
-	}
-	catch( const Poco::Net::NetException& e )
-	{
-		if( rlog.debugging(Debug::CRIT) )
-		{
-			ostringstream s;
-			s << "(LogReader): connection " << iaddr << ":" << port << " error: " << e.what();
-			rlog.crit() << s.str() << std::endl;
-		}
-	}
-	catch( const std::exception& e )
-	{
-		if( rlog.debugging(Debug::CRIT) )
-		{
-			ostringstream s;
-			s << "(LogReader): connection " << iaddr << ":" << port << " error: " << e.what();
-			rlog.crit() << s.str() << std::endl;
-		}
-	}
-	catch( ... )
-	{
-		if( rlog.debugging(Debug::CRIT) )
-		{
-			ostringstream s;
-			s << "(LogReader): connection " << iaddr << ":" << port << " error: catch ...";
-			rlog.crit() << s.str() << std::endl;
-		}
-	}
-
-	tcp = nullptr;
-}
-// -------------------------------------------------------------------------
-void LogReader::disconnect()
-{
-	if( !tcp )
-		return;
-
-	if( rlog.is_info() )
-		rlog.info() << iaddr << "(LogReader): disconnect." << endl;
-
-	try
-	{
-		tcp->disconnect();
-	}
-	catch( const Poco::Net::NetException& e )
-	{
-		cerr << "(LogReader): disconnect error:  " << e.displayText() << endl;
-	}
-
-	tcp = nullptr;
+    return m_logsig;
 }
 // -------------------------------------------------------------------------
 bool LogReader::isConnection() const
 {
-	return (tcp && tcp->isConnected() );
+    return chan != nullptr;
 }
 // -------------------------------------------------------------------------
 void LogReader::setReadCount( size_t n )
 {
-	readcount = n;
+    readcount = n;
 }
 // -------------------------------------------------------------------------
-void LogReader::setCommandOnlyMode(bool s)
+void LogReader::setTimeout(timeout_t msec)
 {
-	cmdonly = s;
-}
-// -------------------------------------------------------------------------
-void LogReader::setinTimeout(timeout_t msec)
-{
-	inTimeout = msec;
-}
-// -------------------------------------------------------------------------
-void LogReader::setoutTimeout(timeout_t msec)
-{
-	outTimeout = msec;
+    if( msec == UniSetTimer::WaitUpTime )
+        readTimeout = 24 * 60 * 60 * 1000; // 24 hours
+    else
+        readTimeout = msec;
 }
 // -------------------------------------------------------------------------
 void LogReader::setReconnectDelay(timeout_t msec)
 {
-	reconDelay = msec;
+    reconDelay = msec;
 }
 // -------------------------------------------------------------------------
 void LogReader::setTextFilter(const string& f)
 {
-	textfilter  = f;
+    textfilter  = f;
 }
 // -------------------------------------------------------------------------
-void LogReader::sendCommand(const std::string& _addr, int _port, std::vector<Command>& vcmd, bool cmd_only, bool verbose )
+bool LogReader::list( const std::string& _addr, int _port, const std::string& logname, bool verbose )
 {
-	if( vcmd.empty() )
-		return;
+    if( verbose )
+        rlog.addLevel(Debug::ANY);
 
-	char buf[100001];
+    ostringstream saddr;
+    saddr << _addr << ":" << _port;
+    chan = grpc::CreateChannel(saddr.str(), grpc::InsecureChannelCredentials());
 
-	if( verbose )
-		rlog.addLevel(Debug::ANY);
+    if( !chan )
+    {
+        rlog.crit() << "(list): failed to connect " << saddr.str() << endl;
+        return false;
+    }
 
-	if( outTimeout == 0 )
-		outTimeout = UniSetTimer::WaitUpTime;
+    std::unique_ptr<logserver::LogServer_i::Stub> stub(logserver::LogServer_i::NewStub(chan));
 
-	std::string listfilter("");
+    ctx = make_shared<grpc::ClientContext>();
+    ctx->set_deadline(uniset3::deadline_msec(readTimeout));
+//    ctx.set_wait_for_ready(true);
+    logserver::LogListParams req;
+    req.set_logname(logname);
+    logserver::LogMessage msg;
+    auto status = stub->list(ctx.get(), req, &msg);
 
-	for( const auto& c : vcmd )
-	{
-		if( c.cmd == LogServerTypes::cmdNOP )
-			continue;
+    if( !status.ok() )
+    {
+        rlog.crit() << "(LogReader::list): error: " << status.error_message() << endl;
+        return false;
+    }
 
-		if( c.cmd == LogServerTypes::cmdFilterMode )
-		{
-			if( verbose )
-				cerr << "WARNING: sendCommand() ignore '" << c.cmd << "'..." << endl;
-
-			continue;
-		}
-
-		LogServerTypes::lsMessage msg;
-		msg.cmd = c.cmd;
-		msg.data = c.data;
-		msg.setLogName(c.logfilter);
-
-		size_t n = 2; // две попытки на посылку
-
-		while( n > 0 )
-		{
-			try
-			{
-				if( !isConnection() )
-					connect(_addr, _port, reconDelay);
-
-				if( !isConnection() )
-				{
-					rlog.warn() << "(LogReader): **** connection timeout.." << endl;
-
-					if( cmdonly )
-						return;
-
-					n--;
-
-					if( n == 0 )
-						break;
-
-					msleep(reconDelay);
-					continue;
-				}
-
-				if( c.cmd == LogServerTypes::cmdList )
-				{
-					listfilter = c.logfilter;
-					n = 0;
-					continue;
-				}
-
-				sendCommand(msg, verbose);
-				break;
-			}
-			catch( const Poco::Net::NetException& e )
-			{
-				cerr << "(LogReader): send error: " << e.displayText() << " (" << _addr << ")" << endl;
-			}
-			catch( const std::exception& ex )
-			{
-				cerr << "(LogReader): send error: " << ex.what() << endl;
-			}
-
-			n--;
-		}
-	} // end for send all command
-
-	if( !isConnection() )
-		return;
-
-	// после команд.. выводим список текущий..
-
-	timeout_t reply_timeout = 2000; // TIMEOUT_INF;
-
-	LogServerTypes::lsMessage msg;
-	msg.cmd = LogServerTypes::cmdList;
-	msg.data = 0;
-	msg.setLogName( (listfilter.empty() ? "ALL" : listfilter) );
-	sendCommand(msg, verbose);
-
-	// теперь ждём ответ..
-	try
-	{
-		size_t a = 2;
-
-		while( a > 0 && tcp->poll(UniSetTimer::millisecToPoco(reply_timeout), Poco::Net::Socket::SELECT_READ) )
-		{
-			int n = tcp->available();
-
-			if( n > 0 )
-			{
-				tcp->receiveBytes(buf, n);
-				buf[n] = '\0';
-
-				outlog->any(false) << buf;
-			}
-
-			a--;
-		}
-
-		// rlog.warn() << "(LogReader): ...wait reply timeout..." << endl;
-	}
-	catch( const Poco::Net::NetException& e )
-	{
-		cerr << "(LogReader): read error: " << e.displayText() << " (" << _addr << ")" << endl;
-	}
-	catch( const std::exception& ex )
-	{
-		cerr << "(LogReader): read error: " << ex.what() << endl;
-	}
-
-	if( cmdonly && isConnection() )
-		disconnect();
+    outlog->any(false) << msg.text() << endl;
+    return true;
 }
 // -------------------------------------------------------------------------
-void LogReader::readlogs( const std::string& _addr, int _port, LogServerTypes::Command cmd, const std::string logfilter, bool verbose )
+bool LogReader::loglevel( const std::string& _addr, int _port, const std::string& logname, bool verbose )
 {
-	char buf[100001];
+    if( verbose )
+        rlog.addLevel(Debug::ANY);
 
-	if( verbose )
-		rlog.addLevel(Debug::ANY);
+    ostringstream saddr;
+    saddr << _addr << ":" << _port;
+    chan = grpc::CreateChannel(saddr.str(), grpc::InsecureChannelCredentials());
 
-	if( inTimeout == 0 )
-		inTimeout = UniSetTimer::WaitUpTime;
+    if( !chan )
+    {
+        rlog.crit() << "(loglevel): failed to connect " << saddr.str() << endl;
+        return false;
+    }
 
-	if( outTimeout == 0 )
-		outTimeout = UniSetTimer::WaitUpTime;
+    std::unique_ptr<logserver::LogServer_i::Stub> stub(logserver::LogServer_i::NewStub(chan));
 
-	unsigned int rcount = 1;
+    rlog.info() << saddr.str() << ": call 'loglevel'" << endl;
 
-	if( readcount > 0 )
-		rcount = readcount;
+    ctx = make_shared<grpc::ClientContext>();
+    ctx->set_deadline(uniset3::deadline_msec(readTimeout));
+//    ctx.set_wait_for_ready(true);
+    logserver::LogLevelParams req;
+    req.set_logname(logname);
+    logserver::LogMessage msg;
+    auto status = stub->loglevel(ctx.get(), req, &msg);
 
-	LogServerTypes::lsMessage msg;
-	msg.cmd = cmd;
-	msg.data = 0;
-	msg.setLogName(logfilter);
+    if( !status.ok() )
+    {
+        rlog.crit() << "(LogReader::loglevel): error: " << status.error_message() << endl;
+        return false;
+    }
 
-	bool send_ok = cmd == LogServerTypes::cmdNOP ? true : false;
+    outlog->any(false) << msg.text() << endl;
+    return true;
+}
+// -------------------------------------------------------------------------
+bool LogReader::command(const std::string& _addr, int _port, const logserver::LogCommandList& lst, bool verbose)
+{
+    if( verbose )
+        rlog.addLevel(Debug::ANY);
 
-	std::regex rule(textfilter);
+    ostringstream saddr;
+    saddr << _addr << ":" << _port;
+    chan = grpc::CreateChannel(saddr.str(), grpc::InsecureChannelCredentials());
 
-	while( rcount > 0 )
-	{
-		try
-		{
-			if( !isConnection() )
-				connect(_addr, _port, reconDelay);
+    if( !chan )
+    {
+        rlog.crit() << "(command): failed to connect " << saddr.str() << endl;
+        return false;
+    }
 
-			if( !isConnection() )
-			{
-				rlog.warn() << "(LogReader): **** connection timeout.." << endl;
+    std::unique_ptr<logserver::LogServer_i::Stub> stub(logserver::LogServer_i::NewStub(chan));
 
-				if( readcount > 0 )
-					rcount--;
+    rlog.info() << saddr.str() << ": call 'command'" << endl;
 
-				if( rcount == 0 )
-					break;
+    ctx = make_shared<grpc::ClientContext>();
+    ctx->set_deadline(uniset3::deadline_msec(readTimeout));
+    google::protobuf::Empty response;
+    auto status = stub->command(ctx.get(), lst, &response);
 
-				msleep(reconDelay);
-				continue;
-			}
+    if( !status.ok() )
+    {
+        rlog.crit() << "(LogReader::command): error: " << status.error_message() << endl;
+        return false;
+    }
 
-			if( !send_ok )
-			{
-				sendCommand(msg, verbose);
-				send_ok = true;
-			}
+    return true;
+}
+// -------------------------------------------------------------------------
+void LogReader::readLoop(const std::string& addr, int port, const logserver::LogCommandList& lst, bool verbose)
+{
+    size_t rcount = 1;
 
-			// Если мы работаем с текстовым фильтром
-			// то надо читать построчно..
-			ostringstream line;
+    if( readcount > 0 )
+        rcount = readcount;
 
-			while( tcp->poll(UniSetTimer::millisecToPoco(inTimeout), Poco::Net::Socket::SELECT_READ) )
-			{
-				ssize_t n = tcp->available();
+    active = true;
+    while(active)
+    {
+        if( lst.cmd_size() > 0 )
+        {
+            if( !command(addr, port, lst, verbose) )
+            {
+                if( !active )
+                    return;
 
-				if( n > 0 )
-				{
-					tcp->receiveBytes(buf, n);
-					buf[n] = '\0';
+                msleep(reconDelay);
+                continue;
+            }
+        }
 
-					if( textfilter.empty() )
-					{
-						outlog->any(false) << buf;
-					}
-					else
-					{
-						// Всё это пока не оптимально,
-						// но мы ведь и не спешим..
-						for( ssize_t i = 0; i < n; i++ )
-						{
-							// пока не встретили конец строки
-							// наполняем line..
-							if( buf[i] != '\n' )
-							{
-								line << buf[i];
-								continue;
-							}
+        read(addr, port, verbose);
 
-							line << endl;
+        if( !active )
+            return;
 
-							const std::string s(line.str());
+        if( readcount > 0 )
+        {
+            rcount--;
 
-							if( std::regex_search(s, rule) )
-								outlog->any(false) << s;
+            if( rcount <= 0 )
+                return;
+        }
 
-							line.str("");
-						}
-					}
-				}
-				else if( n == 0 && readcount <= 0 )
-					break;
+        msleep(reconDelay);
+    }
+}
+// -------------------------------------------------------------------------
+void LogReader::terminate()
+{
+    if( !active )
+        return;
 
-				if( rcount > 0 && readcount > 0 )
-					rcount--;
+    active = false;
+    if( ctx )
+        ctx->TryCancel();
+}
+// -------------------------------------------------------------------------
+bool LogReader::isActive() const
+{
+    return active;
+}
+// -------------------------------------------------------------------------
+bool LogReader::read( const std::string& _addr, int _port,  bool verbose )
+{
+    if( verbose )
+        rlog.addLevel(Debug::ANY);
 
-				if( readcount > 0 && rcount == 0 )
-					break;
-			}
+    ostringstream saddr;
+    saddr << _addr << ":" << _port;
+    chan = grpc::CreateChannel(saddr.str(), grpc::InsecureChannelCredentials());
 
-			if( rcount > 0 && readcount > 0 )
-				rcount--;
+    if( !chan )
+    {
+        rlog.crit() << "(read): failed to connect " << saddr.str() << endl;
+        return false;
+    }
 
-			if( rcount != 0 )
-				rlog.warn() << "(LogReader): ...read timeout..." << endl;
+    std::unique_ptr<logserver::LogServer_i::Stub> stub(logserver::LogServer_i::NewStub(chan));
 
-			disconnect();
-		}
-		catch( const Poco::Net::NetException& e )
-		{
-			cerr << "(LogReader): " << e.displayText() << " (" << _addr << ")" << endl;
-		}
-		catch( Poco::IOException& e )
-		{
-			cerr << "(LogReader): " << e.displayText() << " (" << _addr << ")" << endl;
-			disconnect();
-		}
-		catch( const std::exception& ex )
-		{
-			cerr << "(LogReader): " << ex.what() << endl;
-		}
+    rlog.info() << saddr.str() << ": read logs" << endl;
 
-		if( rcount == 0 && readcount > 0 )
-			break;
-	}
+    ctx = make_shared<grpc::ClientContext>();
+    ctx->set_deadline(uniset3::deadline_msec(readTimeout));
+//    ctx->set_wait_for_ready(true);
+    google::protobuf::Empty req;
+    auto reader = stub->read(ctx.get(), req);
 
-	if( isConnection() )
-		disconnect();
+    if( !reader )
+    {
+        rlog.warn() << "(LogReader::read): can't connect to " << saddr.str() << endl;
+        return false;
+    }
+
+    active = true;
+    logserver::LogMessage msg;
+    std::regex rule(textfilter);
+
+    size_t rcount = 1;
+
+    if( readcount > 0 )
+        rcount = readcount;
+
+    // Если мы работаем с текстовым фильтром
+    // то надо читать построчно..
+    ostringstream line;
+
+    while( active && reader->Read(&msg) )
+    {
+        if( textfilter.empty() )
+            outlog->any(false) << msg.text();
+        else
+        {
+            //
+            auto pos = msg.text().find_first_of('\n');
+            if( pos == string::npos )
+                line << msg.text();
+            else
+            {
+                line << msg.text().substr(0, pos+1);
+                const std::string s(line.str());
+                if( std::regex_search(s, rule) )
+                    outlog->any(false) << s;
+
+                line.str("");
+                if( pos+2 < msg.text().size() )
+                    line << msg.text().substr(pos+2);
+            }
+        }
+
+        if( readcount > 0 )
+        {
+            rcount--;
+
+            if( rcount <= 0 )
+                return true;
+        }
+    }
+
+    auto st = reader->Finish();
+    return true;
 }
 // -------------------------------------------------------------------------
 void LogReader::logOnEvent( const std::string& s )
 {
-	m_logsig.emit(s);
+    m_logsig.emit(s);
 }
 // -------------------------------------------------------------------------
-void LogReader::sendCommand(LogServerTypes::lsMessage& msg, bool verbose )
+static const std::string checkArg( size_t i, const std::vector<std::string>& v )
 {
-	if( !tcp || !tcp->isConnected() )
-	{
-		cerr << "(LogReader::sendCommand): tcp=NULL! no connection?!" << endl;
-		return;
-	}
+    if( i < v.size() && (v[i])[0] != '-' )
+        return v[i];
 
-	try
-	{
-		if( tcp->poll(UniSetTimer::millisecToPoco(outTimeout), Poco::Net::Socket::SELECT_WRITE) )
-		{
-			rlog.info() << "(LogReader): ** send command: cmd='" << msg.cmd << "' logname='" << msg.logname << "' data='" << msg.data << "'" << endl;
-			tcp->sendBytes((unsigned char*)(&msg), sizeof(msg));
-		}
-		else
-			rlog.warn() << "(LogReader): **** SEND COMMAND ('" << msg.cmd << "' FAILED!" << endl;
-	}
-	catch( const Poco::Net::NetException& e )
-	{
-		cerr << "(LogReader): send error:  " << e.displayText() << endl; // " (" << _addr << ")" << endl;
-	}
-	catch( Poco::IOException& ex )
-	{
-		cerr << "(LogReader): send error:  " << ex.displayText() << endl;
-	}
-	catch( const std::exception& ex )
-	{
-		cerr << "(LogReader): send error: " << ex.what() << endl;
-	}
+    return "";
+}
+// -------------------------------------------------------------------------
+logserver::LogCommandList LogReader::getCommands( const std::string& cmd )
+{
+    logserver::LogCommandList cmdlist;
+
+    auto v = uniset3::explode_str(cmd, ' ');
+
+    if( v.empty() )
+        return cmdlist;
+
+    for( size_t i = 0; i < v.size(); i++ )
+    {
+        auto c = v[i];
+
+        const string arg1 = checkArg(i + 1, v);
+
+        if( arg1.empty() )
+            continue;
+
+        i++;
+
+        const std::string filter = checkArg(i + 2, v);
+
+        if( !filter.empty() )
+            i++;
+
+        if( c == "-s" || c == "--set" )
+        {
+            logserver::LogCommand cmd;
+            cmd.set_cmd(logserver::LOG_CMD_SET);
+            cmd.set_logname(filter);
+            cmd.set_data((uint64_t)Debug::value(arg1));
+            cmdlist.add_cmd()->PackFrom(cmd);
+        }
+        else if( c == "-a" || c == "--add" )
+        {
+            logserver::LogCommand cmd;
+            cmd.set_cmd(logserver::LOG_CMD_ADD);
+            cmd.set_logname(filter);
+            cmd.set_data((uint64_t)Debug::value(arg1));
+            cmdlist.add_cmd()->PackFrom(cmd);
+
+        }
+        else if( c == "-d" || c == "--del" )
+        {
+            logserver::LogCommand cmd;
+            cmd.set_cmd(logserver::LOG_CMD_DEL);
+            cmd.set_logname(filter);
+            cmd.set_data((uint64_t)Debug::value(arg1));
+            cmdlist.add_cmd()->PackFrom(cmd);
+        }
+    }
+
+    return cmdlist;
 }
 // -------------------------------------------------------------------------

@@ -24,7 +24,6 @@
 #include <vector>
 #include <unordered_map>
 #include "DebugStream.h"
-#include "LogServerTypes.h"
 // -------------------------------------------------------------------------
 namespace uniset3
 {
