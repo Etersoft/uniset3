@@ -25,6 +25,10 @@ int main(int argc, char** argv)
         db->run(false);
         return 0;
     }
+    catch( const Poco::Exception& ex )
+    {
+        cerr << "(LogDB::main): " << ex.displayText() << endl;
+    }
     catch( const std::exception& ex )
     {
         cerr << "(LogDB::main): " << ex.what() << endl;

@@ -30,6 +30,11 @@
 #include <sigc++/sigc++.h>
 #include <Poco/JSON/Object.h>
 #include <Poco/Net/WebSocket.h>
+#include <Poco/Runnable.h>
+#include <Poco/Thread.h>
+#include <Poco/ThreadPool.h>
+#include <Poco/ThreadTarget.h>
+#include <Poco/RunnableAdapter.h>
 #include "UniSetTypes.h"
 #include "LogAgregator.h"
 #include "DebugStream.h"
@@ -40,6 +45,7 @@
 #include "UHttpRequestHandler.h"
 #include "UHttpServer.h"
 #include "UTCPCore.h"
+#include "Mutex.h"
 // -------------------------------------------------------------------------
 namespace uniset3
 {
@@ -59,7 +65,7 @@ namespace uniset3
 
     \section sec_LogDB_Comm Общее описание работы LogDB
     LogDB это сервис, работа которого заключается
-    в подключении к указанным лог-серверам, получении от них логов
+    в подключении к указанным лог-серверам, получении логов
     и сохранении их в БД (sqlite). Помимо этого LogDB выступает в качестве
     REST сервиса, позволяющего получать логи за указанный период в виде json.
 
@@ -139,10 +145,9 @@ namespace uniset3
 
 
     \section sec_LogDB_DETAIL LogDB: Технические детали
-       Вся реализация построена на "однопоточном" eventloop. В нём происходит,
-     чтение данных от логсерверов, посылка сообщений в websockets, запись в БД.
-     При этом обработка запросов REST API реализуется отдельными потоками контролируемыми libpoco.
-
+       Реализация работы с  websocket и запись  в БД построены на "однопоточном" eventloop.
+     При этом для каждого лог-сервера запускается свой поток для получения логов (grpc-вызовы).
+     Обработка запросов REST API так же реализуется отдельными потоками контролируемыми libpoco.
 
     \section sec_LogDB_ADMIN LogDB Вспомогательная утилита (uniset3-logdb-adm).
 
@@ -160,7 +165,7 @@ namespace uniset3
 
     Более детальное описание параметров см. \b uniset3-logdb-adm \b help
 
-
+    \todo Асинхронная работа с protobuf
     \todo conf: может быть даже добавить поддержку конфигурирования в формате yaml.
     \todo db: Сделать настройку, для формата даты и времени при выгрузке из БД (при формировании json).
     \todo rest: Возможно в /logs стоит в ответе сразу возвращать и общее количество в БД (это один лишний запрос, каждый раз).
@@ -206,10 +211,12 @@ namespace uniset3
             class Log;
             class LogWebSocket;
 
+            void start_threadpool();
             virtual void evfinish() override;
             virtual void evprepare() override;
             void onCheckBuffer( ev::timer& t, int revents );
             void onActivate( ev::async& watcher, int revents ) ;
+            void onLogEvent( ev::async& watcher, int revents );
             void addLog( Log* log, const std::string& txt );
             void log2File( Log* log, const std::string& txt );
 
@@ -248,6 +255,7 @@ namespace uniset3
             typedef std::queue<std::string> QueryBuffer;
             QueryBuffer qbuf;
             size_t qbufSize = { 1000 }; // размер буфера сообщений.
+            uniset3::uniset_rwmutex qbufMut;
 
             ev::timer flushBufferTimer;
             double tmFlushBuffer_sec = { 1.0 };
@@ -263,10 +271,16 @@ namespace uniset3
             void onTerminate( ev::sig& evsig, int revents );
 
             ev::async wsactivate; // активация LogWebSocket-ов
+            ev::async logEventSig; // появление нового лога
+
+            std::future<bool> tpoolRet;
 
             class Log
             {
                 public:
+                    Log( const std::string& ip, int port );
+                    ~Log();
+
                     std::string name;
                     std::string ip;
                     int port = { 0 };
@@ -279,43 +293,43 @@ namespace uniset3
 
                     bool isConnected() const;
 
-                    void set( ev::dynamic_loop& loop );
-                    void check( ev::timer& t, int revents );
-                    void event( ev::io& watcher, int revents );
-                    void read( ev::io& watcher );
-                    void write( ev::io& io );
-                    void close();
-
                     typedef sigc::signal<void, Log*, const std::string&> ReadSignal;
                     ReadSignal signal_on_read();
 
-
                     void setCheckConnectionTime( double sec );
-                    void setReadBufSize( size_t sz );
+                    void run();
+                    void terminate();
 
                 protected:
-                    void ioprepare();
-                    bool connect() noexcept;
+                    void onLogEvent( const std::string& s );
 
                 private:
                     ReadSignal sigRead;
-                    ev::io io;
-                    ev::timer iocheck;
 
                     double checkConnection_sec = { 5.0 };
 
-                    std::shared_ptr<UTCPStream> tcp;
-                    std::vector<char> buf; // буфер для чтения сообщений
-
                     static const size_t reservsize = { 1000 };
                     std::string text;
-
-                    // буфер для посылаемых данных (write buffer)
-                    std::queue<UTCPCore::Buffer*> wbuf;
+                    std::shared_ptr<LogReader> reader;
             };
+
+            class LogRunner:
+                public Poco::Runnable
+            {
+                public:
+                    LogRunner( std::shared_ptr<Log> l);
+                    virtual ~LogRunner();
+
+                    virtual void run() override;
+
+                protected:
+                    std::shared_ptr<Log> log;
+            };
+
 
             std::vector< std::shared_ptr<Log> > logservers;
             std::shared_ptr<DebugStream> dblog;
+            std::shared_ptr<Poco::ThreadPool> tpool;
 
 #ifndef DISABLE_REST_API
             std::shared_ptr<Poco::Net::HTTPServer> httpserv;
