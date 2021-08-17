@@ -100,7 +100,7 @@ function logdb_test_logfile()
 function logdb_run_all_tests()
 {
    rm -f $LOGFILE
-   
+
    logdb_run_logserver || return 1
    sleep 3
    logdb_run || return 1
@@ -111,7 +111,7 @@ function logdb_run_all_tests()
    logdb_test_http_count || RET=1
    logdb_test_http_list || RET=1
    logdb_test_logfile || RET 1
-   
+
    # ==== finished ===
    rm -f $LOGFILE
 }
