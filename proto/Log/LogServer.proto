@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package uniset3.logserver;
+
+option optimize_for = LITE_RUNTIME;
+// ---------------------------------------------------------------------------
+import "UniSetTypes.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+enum LogCommandID
+{
+    LOG_CMD_NOP = 0;
+    LOG_CMD_SET = 1;
+    LOG_CMD_ADD = 2;
+    LOG_CMD_DEL = 3;
+    LOG_CMD_FILTER = 4;
+    LOG_CMD_LOGFILE_ENABLE = 5;
+    LOG_CMD_LOGFILE_DISABLE = 6;
+    LOG_CMD_ROTATE = 7;
+    LOG_CMD_SAVE_LOGLEVEL = 8;
+    LOG_CMD_RESTORE_LOGLEVEL = 9;
+}
+
+message LogCommand
+{
+    LogCommandID cmd = 1;
+    string logname = 2;
+    uint64 data = 3;
+}
+
+message LogListParams
+{
+    string logname = 1;
+}
+
+message LogLevelParams
+{
+    string logname = 1;
+}
+
+message LogMessage 
+{
+    string text = 1;
+}
+
+message LogCommandList
+{
+    repeated google.protobuf.Any cmd = 1;
+}
+
+// ---------------------------------------------------------------------------
+/*! 
+ * \interface LogServer_i 
+ * \brief Базовый интерфейс для лог-сервера
+ */ 
+service LogServer_i 
+{
+    /*! подключиться к логам, при этом можно указать настройки для лого в рамках данной сессии */
+    rpc read(google.protobuf.Empty) returns(stream LogMessage) {}
+    
+    /*! просто выполнить команды */
+    rpc command(LogCommandList) returns(google.protobuf.Empty) {}
+    
+    /*! вывести список контролируемых логов */
+    rpc list(LogListParams) returns(LogMessage) {}
+     
+    /*! вывести уровни логов сохранённых как умолчательный (LOG_CMD_SAVE_LOGLEVEL) */
+    rpc loglevel(LogLevelParams) returns(LogMessage) {}
+}
+// ---------------------------------------------------------------------------

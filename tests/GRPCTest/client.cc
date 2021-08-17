@@ -27,12 +27,21 @@ int main(int argc, const char** argv)
             ctx.AddMetadata(m.first, m.second);
 
         std::unique_ptr<TestService_i::Stub> stub(TestService_i::NewStub(chan));
-        grpc::Status st = stub->getId(&ctx, empty, &reply);
+        auto reader = stub->streamTest(&ctx, empty);
+        google::protobuf::StringValue msg;
 
-        if( st.ok() )
-            cout << "id=" << reply.value() << endl;
-        else
-            cerr << "error: " << st.error_message() << endl;
+        while( reader->Read(&msg) )
+        {
+            cout << "read: " << msg.value() << endl;
+        }
+
+        reader->Finish();
+//        while( reader->recv)
+
+//        if( st.ok() )
+//            cout << "id=" << reply.value() << endl;
+//        else
+//            cerr << "error: " << st.error_message() << endl;
         return 0;
     }
     catch( const std::exception& e )

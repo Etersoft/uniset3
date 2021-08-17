@@ -7,8 +7,8 @@
 #include "PassiveTimer.h"
 #include "Exceptions.h"
 #include "LogReader.h"
-#include "LogServerTypes.h"
 #include "LogAgregator.h"
+#include "LogServer.pb.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
@@ -104,18 +104,19 @@ int main( int argc, char** argv )
     int optindex = 0;
     int opt = 0;
     int verb = 0;
-    string addr("localhost");
+    string addr = "localhost";
     int port = 3333;
     DebugStream dlog;
-    vector<LogReader::Command> vcmd;
-    string logfilter("");
-    LogServerTypes::Command cmd = LogServerTypes::cmdNOP;
-    int cmdonly = 0;
+    logserver::LogCommandList cmdlist;
+    string logfilter = "";
+    bool cmdGetList = false;
+    bool cmdDefaultLogLevel = false;
+    bool cmdOnly = false;
+    std::string textfilter = "";
     timeout_t tout = UniSetTimer::WaitUpTime;
     timeout_t rdelay = 8000;
-    string logfile("");
+    string logfile = "";
     bool logtruncate = false;
-    std::string textfilter("");
 
     try
     {
@@ -134,157 +135,152 @@ int main( int argc, char** argv )
 
                 case 'a':
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdAddLevel;
-                    std::string filter("");
-                    std::string d = string(optarg);
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(logserver::LOG_CMD_ADD);
+                    cmd.set_data((int)Debug::value(string(optarg)));
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, (int)Debug::value(d), filter);
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'd':
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdDelLevel;
-                    std::string filter("");
-                    std::string d = string(optarg);
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(logserver::LOG_CMD_DEL);
+                    cmd.set_data((int)Debug::value(string(optarg)));
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, (int)Debug::value(d), filter );
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 's':
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdSetLevel;
-                    std::string filter("");
-                    std::string d = string(optarg);
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_SET);
+                    cmd.set_data((int)Debug::value(string(optarg)));
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, (int)Debug::value(d), filter );
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'l':
                 {
-                    cmdonly = 1;
+                    cmdGetList = true;
                     std::string filter("");
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
-
-                    vcmd.emplace_back(LogServerTypes::cmdList, 0, filter);
+                        logfilter = string(arg2);
                 }
                 break;
 
                 case 'o':
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdOffLogFile;
-                    std::string filter("");
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_LOGFILE_DISABLE);
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, 0, filter);
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'u':  // --save-loglevels
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdSaveLogLevel;
-                    std::string filter("");
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_SAVE_LOGLEVEL);
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, 0, filter);
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'y':  // --restore-loglevels
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdRestoreLogLevel;
-                    std::string filter("");
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_RESTORE_LOGLEVEL);
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, 0, filter);
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'b':  // --view-default-loglevels
                 {
-                    cmdonly = 1;
-                    LogServerTypes::Command cmd = LogServerTypes::cmdViewDefaultLogLevel;
+                    cmdDefaultLogLevel = true;
                     std::string filter("");
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
-
-                    vcmd.emplace_back(cmd, 0, filter);
+                        logfilter = string(arg2);
                 }
                 break;
 
                 case 'e':
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdOnLogFile;
-                    std::string filter("");
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_LOGFILE_ENABLE);
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, 0, filter);
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'f':
                 {
-                    cmd = LogServerTypes::cmdFilterMode;
-                    std::string filter("");
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_FILTER);
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    logfilter = filter;
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
                 case 'r':
                 {
-                    LogServerTypes::Command cmd = LogServerTypes::cmdRotate;
-                    std::string filter("");
+                    logserver::LogCommand cmd;
+                    cmd.set_cmd(uniset3::logserver::LOG_CMD_ROTATE);
                     char* arg2 = checkArg(optind, argc, argv);
 
                     if( arg2 )
-                        filter = string(arg2);
+                        cmd.set_logname(arg2);
 
-                    vcmd.emplace_back(cmd, 0, filter);
+                    cmdlist.add_cmd()->PackFrom(cmd);
                 }
                 break;
 
-                case 'i':
-                    addr = string(optarg);
+                case 'c':
+                    cmdOnly = true;
                     break;
 
-                case 'c':
-                    cmdonly = 1;
+                case 'i':
+                    addr = string(optarg);
                     break;
 
                 case 'p':
@@ -325,39 +321,39 @@ int main( int argc, char** argv )
         if( verb )
         {
             cout << "(init): read from " << addr << ":" << port << endl;
-
             dlog.addLevel( Debug::type(Debug::CRIT | Debug::WARN | Debug::INFO) );
         }
 
         LogReader lr;
-        lr.setCommandOnlyMode(cmdonly);
-        lr.setinTimeout(tout);
+        lr.setTimeout(tout);
         lr.setReconnectDelay(rdelay);
         lr.setTextFilter(textfilter);
 
         if( !logfile.empty() )
             lr.log()->logFile(logfile, logtruncate);
 
-        if( !vcmd.empty() )
-            lr.sendCommand(addr, port, vcmd, cmdonly, verb);
+        if( cmdGetList )
+            return lr.list(addr, port, logfilter, verb) ? 0 : 1;
 
-        if( !cmdonly )
-            lr.readlogs( addr, port, cmd, logfilter, verb );
+        if( cmdDefaultLogLevel )
+            return lr.loglevel(addr, port, logfilter, verb) ? 0 : 1;
+
+        if( !cmdlist.cmd().empty() && cmdOnly )
+            return lr.command( addr, port, cmdlist, verb ) ? 0 : 1;
+
+        lr.readLoop( addr, port, cmdlist, verb );
+        return 0;
     }
-    catch( const SystemError& err )
+    catch( const std::exception& ex )
     {
-        cerr << "(log): " << err << endl;
-    }
-    catch( const uniset3::Exception& ex )
-    {
-        cerr << "(log): " << ex << endl;
+        cerr << "(log): " << ex.what() << endl;
     }
     catch(...)
     {
         cerr << "(log): catch(...)" << endl;
     }
 
-    return 0;
+    return 1;
 }
 // --------------------------------------------------------------------------
 char* checkArg( int i, int argc, char* argv[] )

@@ -3,6 +3,8 @@
 #include "server.grpc.pb.h"
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <thread>
 // --------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -28,6 +30,25 @@ public:
             cout << "serviceId=" <<  atoi(srvIt->second.data());
 
         response->set_value(7);
+        return grpc::Status::OK;
+    }
+
+    virtual ::grpc::Status streamTest(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter< ::google::protobuf::StringValue>* writer) override
+    {
+        int i = 0;
+        while(true)
+        {
+            ::google::protobuf::StringValue s;
+            s.set_value(to_string(i));
+            if( !writer->Write(s) )
+            {
+                cerr << "client closed.." << endl;
+                return grpc::Status::OK;
+            }
+            i++;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+
         return grpc::Status::OK;
     }
 

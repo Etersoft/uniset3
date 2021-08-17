@@ -664,14 +664,11 @@ void LogDB::Log::ioprepare()
     // первый раз при подключении надо послать команды
 
     //! \todo Пока закрываем глаза на не оптимальность, того, что парсим строку каждый раз
-    auto cmdlist = LogServerTypes::getCommands(cmd);
-
-    if( !cmdlist.empty() )
+    auto cmdlist = LogReader::getCommands(cmd);
+    if( cmdlist.cmd_size() > 0 )
     {
-        for( const auto& msg : cmdlist )
-            wbuf.emplace(new UTCPCore::Buffer((unsigned char*)&msg, sizeof(msg)));
-
-        io.set(ev::WRITE);
+        LogReader lr;
+        lr.command(ip, port, cmdlist);
     }
 }
 // -----------------------------------------------------------------------------

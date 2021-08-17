@@ -517,6 +517,7 @@ AC_CONFIG_FILES([Makefile
 				 proto/Makefile
 				 proto/UniSetTypes/Makefile
 				 proto/Processes/Makefile
+				 proto/Log/Makefile
 				 src/Core/Makefile
 				 src/Communications/Makefile
 				 src/Communications/Modbus/Makefile

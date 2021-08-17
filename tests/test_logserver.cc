@@ -5,7 +5,6 @@
 #include <thread>
 #include <future>
 
-#include "Mutex.h"
 #include "UniSetTypes.h"
 #include "LogServer.h"
 #include "LogAgregator.h"
@@ -26,9 +25,25 @@ static ostringstream la_msg;
 static std::mutex r1_mutex;
 static std::mutex r2_mutex;
 
-static std::atomic_bool g_read_cancel = ATOMIC_VAR_INIT(0);
+static int readTimeout = 5000;
+static int readPause = 2000;
 
-static int readTimeout = 4000;
+struct LogThreadGuard
+{
+    LogThreadGuard(std::shared_ptr<LogReader>& l, std::future<bool>& f):
+      lreader(l),ret(f){}
+
+    ~LogThreadGuard()
+    {
+        if( lreader )
+            lreader->terminate();
+        if( ret.valid() )
+            ret.get();
+    }
+
+    std::shared_ptr<LogReader>& lreader;
+    std::future<bool>& ret;
+};
 
 // --------------------------------------------------------------------------
 void rlog1OnEvent( const std::string& s )
@@ -48,19 +63,26 @@ void la_logOnEvent( const std::string& s )
     la_msg << s;
 }
 // --------------------------------------------------------------------------
+static std::shared_ptr<LogReader> lr1;
 bool readlog_thread1()
 {
     try
     {
-        LogReader lr;
-        lr.setinTimeout(readTimeout);
-        lr.signal_stream_event().connect( sigc::ptr_fun(rlog1OnEvent) );
-        lr.setReadCount(1);
-        lr.setLogLevel(Debug::ANY);
+        if( !lr1 )
+        {
+            lr1 = make_shared<LogReader>();
+            lr1->setTimeout(readTimeout);
+            lr1->signal_stream_event().connect( sigc::ptr_fun(rlog1OnEvent) );
+            // lr1->setReadCount(1);
+            // lr1->setLogLevel(Debug::ANY);
+        }
+        logserver::LogCommandList cmd;
 
-        while( !g_read_cancel )
-            lr.readlogs(ip, port); // ,LogServerTypes::cmdNOP,0,"",true);
-
+        do
+        {
+            lr1->readLoop(ip, port, cmd, false);
+        }
+        while( lr1->isActive() );
         return true;
     }
     catch( std::exception& ex )
@@ -70,18 +92,26 @@ bool readlog_thread1()
     return false;
 }
 // --------------------------------------------------------------------------
+static std::shared_ptr<LogReader> lr2;
 bool readlog_thread2()
 {
     try
     {
-        LogReader lr;
-        lr.setinTimeout(readTimeout);
-        lr.signal_stream_event().connect( sigc::ptr_fun(rlog2OnEvent) );
-        lr.setReadCount(1);
-        lr.setLogLevel(Debug::ANY);
+        if( !lr2 )
+        {
+            lr2 = make_shared<LogReader>();
+            lr2->setTimeout(readTimeout);
+            lr2->signal_stream_event().connect( sigc::ptr_fun(rlog2OnEvent) );
+            // lr2->setReadCount(1);
+            // lr2->setLogLevel(Debug::ANY);
+        }
+        logserver::LogCommandList cmd;
 
-        while( !g_read_cancel )
-            lr.readlogs(ip, port); // ,LogServerTypes::cmdNOP,0,"",true);
+        do
+        {
+            lr2->readLoop(ip, port, cmd, false);
+        }
+        while( lr2->isActive() );
 
         return true;
     }
@@ -129,7 +159,6 @@ TEST_CASE("LogAgregator", "[LogServer][LogAgregator]" )
 // --------------------------------------------------------------------------
 TEST_CASE("LogServer", "[LogServer]" )
 {
-    g_read_cancel = false;
     auto la = make_shared<LogAgregator>();
     auto log1 = la->create("log1");
     auto log2 = la->create("log2");
@@ -154,23 +183,25 @@ TEST_CASE("LogServer", "[LogServer]" )
     REQUIRE( ls.isRunning() );
 
     msg.str("");
-    auto ret = std::async(std::launch::async, readlog_thread1); // make_shared<std::thread>(readlog_thread1);
+    std::future<bool> ret = std::async(std::launch::async, readlog_thread1); // make_shared<std::thread>(readlog_thread1);
+
+    LogThreadGuard g(lr1, ret);
 
     msleep(100); // небольшая пауза на создание потока и т.п.
 
     ostringstream m;
     m << test_msg1 << endl;
 
-    // по сети строка информации передаваться не будет пока не будет записан endl!
-    // это сделано для "оптимизации передачи" (чтобы не передавать каждый байт)
     log1->any() << m.str();
 
     REQUIRE( la_msg.str() == m.str() );
 
-    msleep(readTimeout); // пауза на переподключение reader-а к серверу..
+    msleep(readPause); // пауза на подключение reader-а к серверу..
+
     {
         std::lock_guard<std::mutex> l(r1_mutex);
-        REQUIRE( msg.str() == m.str() );
+        // message contains text
+        REQUIRE( msg.str().find(m.str()) != string::npos );
     }
 
     msg.str("");
@@ -181,20 +212,17 @@ TEST_CASE("LogServer", "[LogServer]" )
     log2->any() << m2.str();
     REQUIRE( la_msg.str() == m2.str() );
 
-    msleep(readTimeout); // пауза на переподключение reader-а к серверу..
+    msleep(readPause);
 
     {
         std::lock_guard<std::mutex> l(r1_mutex);
-        REQUIRE( msg.str() == m2.str() );
+        // message contains text
+        REQUIRE( msg.str().find(m2.str()) != string::npos );
     }
-
-    g_read_cancel = true;
-    ret.get();
 }
 // --------------------------------------------------------------------------
 TEST_CASE("MaxSessions", "[LogServer]" )
 {
-    g_read_cancel = false;
     auto la = make_shared<LogAgregator>();
     auto log1 = la->create("log1");
     auto log2 = la->create("log2");
@@ -210,7 +238,6 @@ TEST_CASE("MaxSessions", "[LogServer]" )
     la->signal_stream_event().connect( sigc::ptr_fun(la_logOnEvent) );
 
     LogServer ls(la);
-    ls.setCmdTimeout(100);
     //ls.setSessionLog(Debug::ANY);
     ls.setMaxSessionCount(1);
     ls.async_run( ip, port );
@@ -224,26 +251,27 @@ TEST_CASE("MaxSessions", "[LogServer]" )
     msg2.str("");
 
     auto ret1 = std::async(std::launch::async, readlog_thread1); // make_shared<std::thread>(readlog_thread1);
+    LogThreadGuard g1(lr1, ret1);
 
     msleep(500); // пауза чтобы первый заведомо успел подключиться раньше второго..
 
-    auto ret2 = std::async(std::launch::async, readlog_thread1); // make_shared<std::thread>(readlog_thread2);
+    auto ret2 = std::async(std::launch::async, readlog_thread2); // make_shared<std::thread>(readlog_thread2);
+    LogThreadGuard g2(lr2, ret2);
 
     msleep(100); // небольшая пауза на создание потока и т.п.
 
     ostringstream m;
     m << test_msg1 << endl;
 
-    // по сети строка информации передаваться не будет пока не будет записан endl!
-    // это сделано для "оптимизации передачи" (чтобы не передавать каждый байт)
     log1->any() << m.str();
 
     REQUIRE( la_msg.str() == m.str() );
 
-    msleep(readTimeout); // пауза на переподключение reader-а к серверу..
+    msleep(readPause); // пауза на переподключение reader-а к серверу..
     {
         std::lock_guard<std::mutex> l(r1_mutex);
-        REQUIRE( msg.str() == m.str() );
+        // message contains text
+        REQUIRE( msg.str().find(m.str()) != string::npos );
     }
 
     {
@@ -256,10 +284,6 @@ TEST_CASE("MaxSessions", "[LogServer]" )
         // ничего не получили..
         REQUIRE( msg2.str() == "" );
     }
-
-    g_read_cancel = true;
-    ret1.get();
-    ret2.get();
 }
 // --------------------------------------------------------------------------
 TEST_CASE("LogAgregator regexp", "[LogAgregator][regexp]" )
