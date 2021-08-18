@@ -98,7 +98,7 @@ int main( int argc, char** argv )
             }
         }
 
-        auto avec = uniset3::explode_str(myaddr, ',');
+        auto avec = uniset3::split(myaddr, ',');
         std::unordered_set<ModbusRTU::ModbusAddr> vaddr;
 
         for( const auto& a : avec )

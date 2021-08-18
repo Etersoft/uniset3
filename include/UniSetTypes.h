@@ -195,8 +195,8 @@ namespace uniset3
     }
 
     /*! Разбивка строки по указанному символу */
-    IDList explode( const std::string& str, char sep = ',' );
-    std::vector<std::string> explode_str( const std::string& str, char sep = ',' );
+    IDList split_id(const std::string& str, char sep = ',');
+    std::vector<std::string> split(const std::string& str, char sep = ',');
 
     struct ParamSInfo
     {

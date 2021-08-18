@@ -601,6 +601,9 @@ AC_CONFIG_FILES([Makefile
 				 extensions/UWebSocketGate/Makefile
 				 extensions/UWebSocketGate/tests/Makefile
 				 extensions/UWebSocketGate/libUniSet3UWebSocketGate.pc
+				 extensions/HttpAPIGateway/Makefile
+				 extensions/HttpAPIGateway/tests/Makefile
+				 extensions/HttpAPIGateway/libUniSet3HttpAPIGateway.pc
 				 testsuite/Makefile
 				 wrappers/Makefile
 				 wrappers/python/lib/Makefile

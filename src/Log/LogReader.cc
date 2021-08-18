@@ -345,7 +345,7 @@ logserver::LogCommandList LogReader::getCommands( const std::string& cmd )
 {
     logserver::LogCommandList cmdlist;
 
-    auto v = uniset3::explode_str(cmd, ' ');
+    auto v = uniset3::split(cmd, ' ');
 
     if( v.empty() )
         return cmdlist;
