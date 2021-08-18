@@ -14,7 +14,8 @@ There are set of base components to construct this kind of systems:
 * utilities for system's configuration based on XML.
 * python interface
 * go interface (experimental)
-* REST API
+* API Gateway
+* Websockets
 
 UniSet have been written in C++ and IDL languages but you can use another languages in your
 add-on components. The main principle of the UniSet library's design is a maximum integration
