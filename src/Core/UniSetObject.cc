@@ -472,7 +472,7 @@ namespace uniset3
             throw uniset3::SystemError(err.str());
         }
 
-        auto idlist = uniset3::explode_str(params[0].first, ',');
+        auto idlist = uniset3::split(params[0].first, ',');
 
         if( idlist.empty() )
         {
@@ -537,7 +537,7 @@ namespace uniset3
 
         if( !props.empty() )
         {
-            auto lst = uniset3::explode_str(props, ',');
+            auto lst = uniset3::split(props, ',');
 
             for( const auto& p : lst )
                 jdata->set(p, it.getProp(p));

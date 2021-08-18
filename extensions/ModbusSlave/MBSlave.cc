@@ -2131,9 +2131,9 @@ namespace uniset3
             for( const auto& p : params )
             {
                 if( p.first == "regs" )
-                    q_regs = uniset3::explode_str(p.second, ',');
+                    q_regs = uniset3::split(p.second, ',');
                 else if( p.first == "addr" )
-                    q_addr = uniset3::explode_str(p.second, ',');
+                    q_addr = uniset3::split(p.second, ',');
             }
         }
 

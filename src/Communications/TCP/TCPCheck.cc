@@ -29,7 +29,7 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     bool TCPCheck::check( const std::string& _iaddr, timeout_t tout ) noexcept
     {
-        auto v = uniset3::explode_str(_iaddr, ':');
+        auto v = uniset3::split(_iaddr, ':');
 
         if( v.size() < 2 )
             return false;

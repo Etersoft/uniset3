@@ -368,7 +368,7 @@ grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const :
     }
     else if( !param.empty() )
     {
-        auto query = uniset3::explode_str(param, ':');
+        auto query = uniset3::split(param, ':');
 
         if( query.empty() || query.size() == 1 )
             showStatisticsForConsumer(inf, param);

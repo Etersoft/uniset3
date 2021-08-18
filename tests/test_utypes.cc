@@ -77,33 +77,33 @@ TEST_CASE("UniSetTypes: uni_strdup", "[utypes][uni_strdup]" )
     }
 }
 // -----------------------------------------------------------------------------
-TEST_CASE("UniSetTypes: explode", "[utypes][explode]" )
+TEST_CASE("UniSetTypes: split_id", "[utypes][split_id]" )
 {
     const std::string str1("id1/wed/wedwed/");
 
-    auto t1 = uniset3::explode_str(str1, '/');
+    auto t1 = uniset3::split(str1, '/');
     CHECK( t1.size() == 3 );
 
-    auto t2 = uniset3::explode_str(str1, '.');
+    auto t2 = uniset3::split(str1, '.');
     CHECK( t2.size() == 1 );
 
     const std::string str2("id1/wed/wedwed/f");
 
-    auto t3 = uniset3::explode_str(str2, '/');
+    auto t3 = uniset3::split(str2, '/');
     CHECK( t3.size() == 4 );
 
     const std::string str3("/id1/wed/wedwed/");
 
-    auto t4 = uniset3::explode_str(str3, '/');
+    auto t4 = uniset3::split(str3, '/');
     CHECK( t4.size() == 3 );
 
 
     const std::string str4("");
-    auto t5 = uniset3::explode_str(str4, '/');
+    auto t5 = uniset3::split(str4, '/');
     CHECK( t5.size() == 0 );
 
     const std::string str5("/");
-    auto t6 = uniset3::explode_str(str5, '/');
+    auto t6 = uniset3::split(str5, '/');
     CHECK( t6.size() == 0 );
 }
 // -----------------------------------------------------------------------------

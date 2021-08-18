@@ -253,13 +253,13 @@ bool uniset3::file_exists( const std::string& filename )
     return result;
 }
 // -------------------------------------------------------------------------
-uniset3::IDList uniset3::explode( const std::string& str, char sep )
+uniset3::IDList uniset3::split_id(const std::string& str, char sep )
 {
-    uniset3::IDList l( explode_str(str, sep) );
+    uniset3::IDList l(split(str, sep) );
     return l;
 }
 // -------------------------------------------------------------------------
-std::vector<std::string> uniset3::explode_str( const std::string& str, char sep )
+std::vector<std::string> uniset3::split(const std::string& str, char sep )
 {
     std::vector<std::string> v;
 
@@ -322,13 +322,13 @@ std::list<uniset3::ParamSInfo> uniset3::getSInfoList( const string& str, std::sh
 {
     std::list<uniset3::ParamSInfo> res;
 
-    auto lst = uniset3::explode_str(str, ',');
+    auto lst = uniset3::split(str, ',');
 
     for( const auto& it : lst )
     {
         uniset3::ParamSInfo item;
 
-        auto p = uniset3::explode_str(it, '=');
+        auto p = uniset3::split(it, '=');
         std::string s = "";
 
         if( p.size() == 1 )
@@ -348,7 +348,7 @@ std::list<uniset3::ParamSInfo> uniset3::getSInfoList( const string& str, std::sh
         }
 
         item.fname = s;
-        auto t = uniset3::explode_str(s, '@');
+        auto t = uniset3::split(s, '@');
 
         if( t.size() == 1 )
         {
@@ -395,13 +395,13 @@ std::list<uniset3::ConsumerInfo> uniset3::getObjectsList( const string& str, std
 
     std::list<uniset3::ConsumerInfo> res;
 
-    auto lst = uniset3::explode_str(str, ',');
+    auto lst = uniset3::split(str, ',');
 
     for( const auto& it : lst )
     {
         uniset3::ConsumerInfo item;
 
-        auto t = uniset3::explode_str(it, '@');
+        auto t = uniset3::split(it, '@');
 
         if( t.size() == 1 )
         {
