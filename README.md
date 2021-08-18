@@ -10,7 +10,6 @@ There are set of base components to construct this kind of systems:
 * logging to TSDB (influxdb, opentsdb)
 * supported MQTT (libmosquittopp)
 * fast network protocol based on udp (UNet)
-* Web interface to display logging and statistic information.
 * utilities for system's configuration based on XML.
 * python interface
 * go interface (experimental)
