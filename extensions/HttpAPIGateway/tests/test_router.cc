@@ -1,9 +1,90 @@
 #include <catch.hpp>
 // -----------------------------------------------------------------------------
+#include <iostream>
+#include "Poco/Net/HTTPServerRequest.h"
+#include "Poco/Net/HTTPServerResponse.h"
+#include "Poco/Net/HTTPServerParams.h"
 #include "UHttpRouter.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
+// -----------------------------------------------------------------------------
+class TestParams:
+    public Poco::Net::HTTPServerParams
+{
+    public:
+        TestParams() {}
+        virtual ~TestParams() {}
+};
+// -----------------------------------------------------------------------------
+class TestResponse:
+    public Poco::Net::HTTPServerResponse
+{
+    public:
+        virtual void sendContinue() {};
+        virtual std::ostream& send()
+        {
+            return cout;
+        }
+        virtual void sendFile(const std::string& path, const std::string& mediaType) {}
+        virtual void sendBuffer(const void* pBuffer, std::size_t length) {}
+        virtual void redirect(const std::string& uri, HTTPStatus status = HTTP_FOUND) {}
+        virtual void requireAuthentication(const std::string& realm) {}
+        virtual bool sent() const
+        {
+            return true;
+        }
+};
+
+class TestRequest:
+    public Poco::Net::HTTPServerRequest
+{
+    public:
+
+        TestRequest( TestResponse& _resp, const std::string& method, const std::string& request ):
+            resp(_resp)
+        {
+            setMethod(method);
+            setURI(request);
+        }
+        virtual ~TestRequest() {}
+
+        virtual std::istream& stream() override
+        {
+            return cin;
+        }
+        virtual const Poco::Net::SocketAddress& clientAddress() const override
+        {
+            return sa;
+        }
+
+        virtual const Poco::Net::SocketAddress& serverAddress() const override
+        {
+            return sa;
+        }
+
+        virtual const Poco::Net::HTTPServerParams& serverParams() const override
+        {
+            return params;
+        };
+
+        virtual Poco::Net::HTTPServerResponse& response() const override
+        {
+            return resp;
+        }
+
+        virtual bool secure() const
+        {
+            return false;
+        };
+
+    protected:
+        Poco::Net::SocketAddress sa;
+        TestResponse& resp;
+        TestParams params;
+};
+
+
 // -----------------------------------------------------------------------------
 TEST_CASE("UHttpRouter: build", "[router][path][build]")
 {
@@ -64,6 +145,16 @@ TEST_CASE("UHttpRouter: path", "[router][path]")
     REQUIRE_FALSE( p.compare("", keys) );
     REQUIRE_FALSE( p.compare("/", keys) );
 
+    UPath p2("/root/:key1");
+
+    UHttpContext::Keys k2 =
+    {
+        {"key1", "k1"},
+    };
+    UHttpContext::Keys keys2;
+
+    REQUIRE( p2.compare("/root/k1?opt1", keys2) );
+    REQUIRE( keys2 == k2 );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UHttpRouter: router", "[router][base]")
@@ -71,15 +162,31 @@ TEST_CASE("UHttpRouter: router", "[router][base]")
     bool r1call = false;
     bool r2call = false;
 
+    TestResponse res;
+    TestRequest req1(res, "GET", "/info/25");
+    TestRequest req2(res, "GET", "/test/42/call");
+
+    REQUIRE( req1.getMethod() == Poco::Net::HTTPRequest::HTTP_GET );
+
     UHttpRouter r;
-    r.get().add("/info/:id", [&](Poco::Net::HTTPServerRequest&, Poco::Net::HTTPServerResponse&, const UHttpContext&)
+    r.get().add("/info/:id", [&](Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const UHttpContext& ctx)
     {
         r1call = true;
+        REQUIRE( ctx.key_exists("id") );
+        REQUIRE( ctx.key("id") == "25" );
     });
 
-    r.get().add("/test/:id/call?option1=1", [&](Poco::Net::HTTPServerRequest&, Poco::Net::HTTPServerResponse&, const UHttpContext&)
+    r.get().add("/test/:id/call", [&](Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const UHttpContext& ctx)
     {
         r2call = true;
+        REQUIRE( ctx.key_exists("id") );
+        REQUIRE( ctx.key("id") == "42" );
     });
+
+    REQUIRE( r.call(req1, res) );
+    REQUIRE( r1call );
+
+    REQUIRE( r.call(req2, res) );
+    REQUIRE( r2call );
 }
 // -----------------------------------------------------------------------------
