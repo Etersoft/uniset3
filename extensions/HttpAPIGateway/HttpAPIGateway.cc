@@ -20,6 +20,7 @@
 
 #include "unisetstd.h"
 #include <Poco/Net/NetException.h>
+#include <google/protobuf/util/json_util.h>
 #include "ujson.h"
 #include "HttpAPIGateway.h"
 #include "Configuration.h"
@@ -27,7 +28,7 @@
 #include "Debug.h"
 #include "UniXML.h"
 #include "HttpAPIGatewaySugar.h"
-#include "UniSetObject.grpc.pb.h"
+#include "MetricsExporter.grpc.pb.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
@@ -95,6 +96,8 @@ HttpAPIGateway::HttpAPIGateway( const string& name, int argc, const char* const*
         err << myname << "(init): " << httpHost << ":" << httpPort << " ERROR: " << ex.what();
         throw uniset3::SystemError(err.str());
     }
+
+    initRouter();
 }
 //--------------------------------------------------------------------------------------------
 HttpAPIGateway::~HttpAPIGateway()
@@ -160,81 +163,37 @@ void HttpAPIGateway::handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net
 {
     using Poco::Net::HTTPResponse;
 
-    std::ostream& out = resp.send();
-
     resp.setContentType("text/json");
-    resp.set("Access-Control-Allow-Methods", "GET");
+    resp.set("Access-Control-Allow-Methods", req.getMethod());
     resp.set("Access-Control-Allow-Request-Method", "*");
     resp.set("Access-Control-Allow-Origin", httpCORS_allow /* req.get("Origin") */);
 
     try
     {
-        // В этой версии API поддерживается только GET
-        if( req.getMethod() != "GET" )
+        if( !router.call(req, resp) )
         {
-            auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, "method must be 'GET'");
+            std::ostream& out = resp.send();
+            auto jdata = respError(resp, HTTPResponse::HTTP_BAD_GATEWAY, "Unknown route: " + req.getURI());
             jdata->stringify(out);
             out.flush();
-            return;
         }
-
-        Poco::URI uri(req.getURI());
-
-        rlog3 << req.getHost() << ": query: " << uri.getQuery() << endl;
-
-        std::vector<std::string> seg;
-        uri.getPathSegments(seg);
-
-        // example: http://host:port/api/version/resolve/[json|text]
-        if( seg.size() < 4
-                || seg[0] != "api"
-                || seg[1] != HTTP_API_GATEWAY_VERSION
-                || seg[2].empty())
-        {
-            ostringstream err;
-            err << "Bad request structure. Must be /api/" << HTTP_API_GATEWAY_VERSION << "/xxxx";
-            auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, err.str());
-            jdata->stringify(out);
-            out.flush();
-            return;
-        }
-
-        auto qp = uri.getQueryParameters();
-        resp.setStatus(HTTPResponse::HTTP_OK);
-        string cmd = seg[3];
-
-        if( cmd == "help" )
-        {
-            using uniset3::json::help::item;
-            uniset3::json::help::object myhelp("help");
-            myhelp.emplace(item("help", "this help"));
-            myhelp.emplace(item("resolve?name", "resolve name"));
-            //          myhelp.emplace(item("apidocs", "https://github.com/Etersoft/uniset3"));
-
-            item l("resolve?name", "resolve name");
-            l.param("format=json|text", "response format");
-            myhelp.add(l);
-            myhelp.get()->stringify(out);
-        }
-        else if( cmd == "json" )
-        {
-            auto json = httpJsonResolve(uri.getQuery(), qp);
-            json->stringify(out);
-        }
-        else if( cmd == "text" )
-        {
-            resp.setContentType("text/plain");
-            auto txt = httpTextResolve(uri.getQuery(), qp);
-            out << txt;
-        }
+    }
+    catch( const Poco::Exception& ex )
+    {
+        std::ostream& out = resp.send();
+        rwarn << myname << "(handleRequest): " << ex.displayText() << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_INTERNAL_SERVER_ERROR, ex.what());
+        jdata->stringify(out);
+        out.flush();
     }
     catch( std::exception& ex )
     {
+        std::ostream& out = resp.send();
         auto jdata = respError(resp, HTTPResponse::HTTP_INTERNAL_SERVER_ERROR, ex.what());
         jdata->stringify(out);
+        out.flush();
     }
 
-    out.flush();
 }
 // -----------------------------------------------------------------------------
 Poco::JSON::Object::Ptr HttpAPIGateway::respError( Poco::Net::HTTPServerResponse& resp,
@@ -250,23 +209,78 @@ Poco::JSON::Object::Ptr HttpAPIGateway::respError( Poco::Net::HTTPServerResponse
     return jdata;
 }
 // -----------------------------------------------------------------------------
-Poco::JSON::Object::Ptr HttpAPIGateway::httpJsonResolve( const std::string& query, const Poco::URI::QueryParameters& p )
+void HttpAPIGateway::initRouter()
 {
-    auto iorstr = httpTextResolve(query, p);
-    Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
-    jdata->set("ior", iorstr);
-    return jdata;
+    using namespace std::placeholders;
+    router.setPrefix("/api/" + HTTP_API_GATEWAY_VERSION);
+    router.get().add("/metrics/:oname", std::bind(&HttpAPIGateway::requestMetrics, this, _1, _2, _3) );
 }
 // -----------------------------------------------------------------------------
-std::string HttpAPIGateway::httpTextResolve(  const std::string& query, const Poco::URI::QueryParameters& p )
+void HttpAPIGateway::requestMetrics(Poco::Net::HTTPServerRequest& req,
+                                    Poco::Net::HTTPServerResponse& resp,
+                                    const UHttpContext& ctx)
 {
-    if( query.empty() )
+    rlog1 << myname << "(requestInfo): " << req.getURI() << endl;
+
+    using Poco::Net::HTTPResponse;
+    std::ostream& out = resp.send();
+
+    const auto name = ctx.key("oname");
+
+    if( name.empty() )
     {
-        rwarn << myname << "undefined parameters for resolve" << endl;
-        return "";
+        rlog2 << myname << "(requestInfo): Unknown object name" << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, "Unknown name object: " + req.getURI());
+        jdata->stringify(out);
+        return;
     }
 
-    rwarn << myname << "unknown parameter type '" << query << "'" << endl;
-    return "";
+    auto conf = uniset_conf();
+    ObjectId id = DefaultObjectId;
+
+    if( uniset3::is_digit(name) )
+        id = uni_atoi(name);
+    else
+        id = uniset_conf()->getAnyID(name);
+
+    if( id == DefaultObjectId )
+    {
+        rlog2 << myname << "(requestInfo): not found id for " << name << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_NOT_FOUND, "Unknown ID for object: " + name);
+        jdata->stringify(out);
+        return;
+    }
+
+    uniset3::metrics::Metrics ret;
+    try
+    {
+        ret = ui.metrics(id);
+    }
+    catch( std::exception& ex )
+    {
+        rlog2 << myname << "(requestInfo): call " << name << " error: " << ex.what() << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_INTERNAL_SERVER_ERROR, "call to " + name + " error");
+        jdata->stringify(out);
+        return;
+    }
+
+    std::string json_string;
+    google::protobuf::util::JsonPrintOptions options;
+    options.add_whitespace = true;
+    options.always_print_primitive_fields = true;
+    options.preserve_proto_field_names = true;
+    auto st  = google::protobuf::util::MessageToJsonString(ret, &json_string, options);
+
+    if( !st.ok() )
+    {
+        auto jdata = respError(resp, HTTPResponse::HTTP_INTERNAL_SERVER_ERROR, "convert to json error: " + st.ToString());
+        jdata->stringify(out);
+        return;
+    }
+
+//    rlog2 << myname << "(requestInfo): " << json_string << endl;
+
+    out << json_string;
+    out.flush();
 }
 // -----------------------------------------------------------------------------

@@ -69,6 +69,9 @@ namespace uniset3
 
             friend std::string to_string( const uniset3::UPath::PathMeta& m );
 
+            /*! /path1, /path2 -> "/path1/path2" */
+            static std::string make_path( const std::string& path1, const std::string path2 );
+
             /*! path: /root/:key1/path/:key2/query?options -> [root,"",path,"", query] (exclude options) */
             static std::vector<PathMeta> build( const std::string& path, const char key_prefix = ':' );
 
@@ -79,28 +82,47 @@ namespace uniset3
 
 
     //-------------------------------------------------------------------------
-
     class UHandlerList
     {
         public:
             UHandlerList();
             ~UHandlerList();
 
+            void setPrefix( const std::string& prefix );
+            std::string getPrefix() const;
             UHandlerList& add( const std::string& path, URequestHandler h );
             bool call( const std::string& path, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res ) const;
 
         private:
             struct Handler;
             std::vector<Handler> handlers;
+            std::string prefix;
     };
     //-------------------------------------------------------------------------
-    /*! Работа с роутами */
+    /*! Работа с роутами
+     * \code
+        UHttpRouter r;
+        r.get().add("/info/:id", [&](Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const UHttpContext& ctx)
+        {
+            ...
+        });
+
+        r.post().add("/test/:id/call", [&](Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const UHttpContext& ctx)
+        {
+           ...
+        });
+
+        r.get().add("/info/:oname", std::bind(&MyClass::requestInfo, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3) );
+
+     * \endcode
+     */
     class UHttpRouter
     {
         public:
             UHttpRouter();
             virtual ~UHttpRouter();
 
+            void setPrefix( const std::string& prefix );
             UHandlerList& get();
             UHandlerList& post();
 

@@ -24,7 +24,6 @@ static void InitTest()
         CHECK( ui->getConf() == conf );
     }
 
-    REQUIRE( conf->getHttpResovlerPort() == 8008 );
     REQUIRE( conf->isLocalIOR() );
     REQUIRE( ui->isExists(TestProc) );
 
@@ -36,7 +35,7 @@ TEST_CASE("HttpApiGateway: cli resolve", "[apigateway][cli]")
 
     UHttp::UHttpClient cli;
 
-    auto ret = cli.get("localhost", 8008, "api/v01/info/TestProc");
+    auto ret = cli.get("localhost", 8009, "api/v01/metrics/TestProc");
     REQUIRE_FALSE( ret.empty() );
 }
 // -----------------------------------------------------------------------------

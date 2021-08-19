@@ -394,6 +394,11 @@ namespace uniset3
         return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
+    ::grpc::Status UniSetObject::metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response)
+    {
+        return ::grpc::Status::OK;
+    }
+    // ------------------------------------------------------------------------------------------
 #ifndef DISABLE_REST_API
     Poco::JSON::Object::Ptr UniSetObject::httpGet( const Poco::URI::QueryParameters& p )
     {
@@ -841,7 +846,6 @@ namespace uniset3
         return tsleep;
     }
     // ------------------------------------------------------------------------------------------
-
     ::grpc::Status UniSetObject::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
     {
         if (context->IsCancelled())

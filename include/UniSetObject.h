@@ -37,6 +37,7 @@
 #include "Exceptions.h"
 #include "UInterface.h"
 #include "UniSetObject.grpc.pb.h"
+#include "MetricsExporter.grpc.pb.h"
 #include "MessageTypes.pb.h"
 #include "ThreadCreator.h"
 #include "LT_Object.h"
@@ -74,6 +75,7 @@ namespace uniset3
     class UniSetObject:
         public std::enable_shared_from_this<UniSetObject>,
         public UniSetObject_i::Service,
+        public uniset3::metrics::MetricsExporter_i::Service,
         public LT_Object
 #ifndef DISABLE_REST_API
         , public uniset3::UHttp::IHttpRequest
@@ -90,6 +92,8 @@ namespace uniset3
             virtual ::grpc::Status request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response) override;
             virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
+            // metrics exporter
+            virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
 
             virtual bool isExists();
             uniset3::ObjectId getId() const;

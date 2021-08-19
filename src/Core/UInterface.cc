@@ -1716,6 +1716,59 @@ namespace uniset3
         throw uniset3::TimeOut(set_err("UI(getSensorsMap): Timeout", id, node));
     }
     // -----------------------------------------------------------------------------
+    uniset3::metrics::Metrics UInterface::metrics( const uniset3::ObjectId id, const uniset3::ObjectId node )
+    {
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(metrics): error node=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(metrics): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        try
+        {
+            std::shared_ptr<ORefInfo> chan;
+            metrics::Metrics reply;
+            metrics::MetricsParams request;
+            request.set_id(id);
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for( size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve(id, node);
+
+                grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
+                chan->addMetaData(ctx);
+                std::unique_ptr<metrics::MetricsExporter_i::Stub> stub(metrics::MetricsExporter_i::NewStub(chan->c));
+                grpc::Status st = stub->metrics(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
+
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(metrics): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(metrics): Timeout", id, node));
+    }
+    // -----------------------------------------------------------------------------
     bool UInterface::waitReady( const uniset3::ObjectId id, int msec, int pmsec, const uniset3::ObjectId node ) noexcept
     {
         std::atomic_bool cancelFlag = { false };

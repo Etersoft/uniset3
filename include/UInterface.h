@@ -35,6 +35,7 @@
 #include "URepository.grpc.pb.h"
 #include "IOController.pb.h"
 #include "MessageTypes.pb.h"
+#include "MetricsExporter.grpc.pb.h"
 #include "Configuration.h"
 #ifndef DISABLE_REST_API
 #include "UHttpClient.h"
@@ -45,11 +46,9 @@ namespace uniset3
     /*!
      * \class UInterface
      * Универсальный интерфейс для взаимодействия между объектами (процессами).
-     * По сути является "фасадом" к реализации механизма взаимодействия
-     * в libuniset (основанном на CORBA) Хотя до конца скрыть CORBA-у пока не удалось.
+     * По сути является "фасадом" к внутреннием механизмам взаимодействия
+     * (в текущей версии это protobuf, grpc)
      * Для увеличения производительности в функции встроен cache обращений...
-     *
-     * См. также \ref UniversalIOControllerPage
     */
     class UInterface
     {
@@ -135,6 +134,8 @@ namespace uniset3
             uniset3::SensorIOInfoSeq getSensorsMap( const uniset3::ObjectId id,
                                                     const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
 
+            uniset3::metrics::Metrics metrics(const uniset3::ObjectId id,
+                                             const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------
             // Работа с репозиторием
             /*! регистрация объекта в репозитории

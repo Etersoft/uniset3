@@ -72,13 +72,18 @@ UHandlerList::~UHandlerList()
 
 }
 //-----------------------------------------------------------------------------
+void UHandlerList::setPrefix(const std::string& _prefix)
+{
+    prefix = _prefix;
+}
+//-----------------------------------------------------------------------------
 UHandlerList& UHandlerList::add( const std::string& path, URequestHandler h )
 {
-    handlers.emplace_back(path, h);
+    handlers.emplace_back(UPath::make_path(prefix, path), h);
     return *this;
 }
 //-----------------------------------------------------------------------------
-bool UHandlerList::call( const std::string& path, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res) const
+bool UHandlerList::call( const std::string& path, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res ) const
 {
     UHttpContext ctx;
     UHttpContext::Keys keys;
@@ -94,6 +99,11 @@ bool UHandlerList::call( const std::string& path, Poco::Net::HTTPServerRequest& 
     }
 
     return false;
+}
+//-----------------------------------------------------------------------------
+std::string UHandlerList::getPrefix() const
+{
+    return prefix;
 }
 //-----------------------------------------------------------------------------
 UHandlerList& UHttpRouter::get()
@@ -120,6 +130,12 @@ bool UHttpRouter::call( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServer
     return false;
 }
 //-----------------------------------------------------------------------------
+void UHttpRouter::setPrefix( const std::string& prefix )
+{
+    hget.setPrefix(prefix);
+    hpost.setPrefix(prefix);
+}
+//-----------------------------------------------------------------------------
 UPath::UPath( const std::string& path )
 {
     segments = build(path);
@@ -138,6 +154,26 @@ std::string to_string( const UPath::PathMeta& m )
 bool UPath::PathMeta::operator==(const UPath::PathMeta& r) const
 {
     return (path == r.path && key == r.key);
+}
+//-----------------------------------------------------------------------------
+std::string UPath::make_path( const std::string& path1, const std::string path2 )
+{
+    if( path1.empty() )
+        return path2;
+
+    if( path2.empty() )
+        return path1;
+
+    bool path1_ok = ( path1[path1.size() - 1] == '/' );
+    bool path2_ok = ( path2[0] == '/' );
+
+    if( path1_ok && path2_ok )
+        return path1 +  path2.substr(1);
+
+    if( path1_ok || path2_ok )
+        return path1 + path2;
+
+    return  path1 + "/" + path2;
 }
 //-----------------------------------------------------------------------------
 std::vector<UPath::PathMeta> UPath::build( const std::string& path, const char key_prefix )

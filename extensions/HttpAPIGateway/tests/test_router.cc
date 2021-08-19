@@ -84,7 +84,17 @@ class TestRequest:
         TestParams params;
 };
 
-
+// -----------------------------------------------------------------------------
+TEST_CASE("UHttpRouter: makePath", "[router][path][nakePath]")
+{
+    REQUIRE( UPath::make_path("/root/", "path") == "/root/path" );
+    REQUIRE( UPath::make_path("/root/", "/path") == "/root/path" );
+    REQUIRE( UPath::make_path("/root", "/path") == "/root/path" );
+    REQUIRE( UPath::make_path("/root", "path") == "/root/path" );
+    REQUIRE( UPath::make_path("/root", "") == "/root" );
+    REQUIRE( UPath::make_path("/root/", "") == "/root/" );
+    REQUIRE( UPath::make_path("", "path/") == "path/" );
+}
 // -----------------------------------------------------------------------------
 TEST_CASE("UHttpRouter: build", "[router][path][build]")
 {
@@ -169,14 +179,14 @@ TEST_CASE("UHttpRouter: router", "[router][base]")
     REQUIRE( req1.getMethod() == Poco::Net::HTTPRequest::HTTP_GET );
 
     UHttpRouter r;
-    r.get().add("/info/:id", [&](Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const UHttpContext& ctx)
+    r.get().add("/info/:id", [&](Poco::Net::HTTPServerRequest & req, Poco::Net::HTTPServerResponse & resp, const UHttpContext & ctx)
     {
         r1call = true;
         REQUIRE( ctx.key_exists("id") );
         REQUIRE( ctx.key("id") == "25" );
     });
 
-    r.get().add("/test/:id/call", [&](Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const UHttpContext& ctx)
+    r.get().add("/test/:id/call", [&](Poco::Net::HTTPServerRequest & req, Poco::Net::HTTPServerResponse & resp, const UHttpContext & ctx)
     {
         r2call = true;
         REQUIRE( ctx.key_exists("id") );
@@ -190,3 +200,32 @@ TEST_CASE("UHttpRouter: router", "[router][base]")
     REQUIRE( r2call );
 }
 // -----------------------------------------------------------------------------
+TEST_CASE("UHttpRouter: router with prefix", "[router][prefix]")
+{
+    bool r1call = false;
+    bool r2call = false;
+
+    UHttpRouter r;
+    r.setPrefix("/api/v01");
+    r.get().add("/info/:id", [&](Poco::Net::HTTPServerRequest & req, Poco::Net::HTTPServerResponse & resp, const UHttpContext & ctx)
+    {
+        r1call = true;
+    });
+
+    r.get().add("/test/:id/call", [&](Poco::Net::HTTPServerRequest & req, Poco::Net::HTTPServerResponse & resp, const UHttpContext & ctx)
+    {
+        r2call = true;
+    });
+    {}
+
+    TestResponse res;
+    TestRequest req1(res, "GET", "/api/v01/info/25");
+    TestRequest req2(res, "GET", "/api/v02/test/42/call");
+
+    REQUIRE( req1.getMethod() == Poco::Net::HTTPRequest::HTTP_GET );
+    REQUIRE( r.call(req1, res) );
+    REQUIRE( r1call );
+
+    REQUIRE_FALSE( r.call(req2, res) );
+    REQUIRE_FALSE( r2call );
+}

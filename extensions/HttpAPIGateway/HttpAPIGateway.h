@@ -23,6 +23,7 @@
 #include "UHttpRequestHandler.h"
 #include "UHttpServer.h"
 #include "UInterface.h"
+#include "UHttpRouter.h"
 // -------------------------------------------------------------------------
 const std::string HTTP_API_GATEWAY_VERSION = "v01";
 // -------------------------------------------------------------------------
@@ -88,11 +89,10 @@ namespace uniset3
             void run();
 
         protected:
-
+            virtual void initRouter();
+            // REQUEST HANDLERS
+            void requestMetrics( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const uniset3::UHttpContext& ctx );
             Poco::JSON::Object::Ptr respError( Poco::Net::HTTPServerResponse& resp, Poco::Net::HTTPResponse::HTTPStatus s, const std::string& message );
-            Poco::JSON::Object::Ptr httpGetRequest( const std::string& cmd, const Poco::URI::QueryParameters& p );
-            Poco::JSON::Object::Ptr httpJsonResolve( const std::string& query, const Poco::URI::QueryParameters& p );
-            std::string httpTextResolve( const std::string& query, const Poco::URI::QueryParameters& p );
 
             std::shared_ptr<Poco::Net::HTTPServer> httpserv;
             std::string httpHost = { "" };
@@ -103,13 +103,14 @@ namespace uniset3
             std::shared_ptr<DebugStream> rlog;
             std::string myname;
             uniset3::UInterface ui;
+            uniset3::UHttpRouter router;
 
             class HttpAPIGatewayRequestHandlerFactory:
                 public Poco::Net::HTTPRequestHandlerFactory
             {
                 public:
-                    HttpAPIGatewayRequestHandlerFactory( HttpAPIGateway* r ): api(r) {}
-                    virtual ~HttpAPIGatewayRequestHandlerFactory() {}
+                    explicit HttpAPIGatewayRequestHandlerFactory( HttpAPIGateway* r ): api(r) {}
+                    virtual ~HttpAPIGatewayRequestHandlerFactory() = default;
 
                     virtual Poco::Net::HTTPRequestHandler* createRequestHandler( const Poco::Net::HTTPServerRequest& req ) override;
 
