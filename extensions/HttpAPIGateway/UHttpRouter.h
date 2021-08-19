@@ -41,6 +41,9 @@ namespace uniset3
             std::string key( const std::string& name ) const;
             bool key_exists( const std::string& name ) const;
 
+            void set_keys(const Keys& k);
+            void set_keys(Keys&& k);
+
         private:
             Keys keys;
     };
@@ -84,7 +87,7 @@ namespace uniset3
             ~UHandlerList();
 
             UHandlerList& add( const std::string& path, URequestHandler h );
-            bool call( const std::string& path, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res) const;
+            bool call( const std::string& path, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res ) const;
 
         private:
             struct Handler;
@@ -101,7 +104,7 @@ namespace uniset3
             UHandlerList& get();
             UHandlerList& post();
 
-            bool call( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res) const;
+            bool call( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res ) const;
 
         protected:
             UHandlerList hget;

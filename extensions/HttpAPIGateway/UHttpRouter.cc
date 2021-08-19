@@ -29,6 +29,15 @@ UHttpRouter::~UHttpRouter()
 
 }
 //-----------------------------------------------------------------------------
+void UHttpContext::set_keys( const Keys& k )
+{
+    keys = k;
+}
+void UHttpContext::set_keys(Keys&& k)
+{
+    std::swap(keys, k);
+}
+//-----------------------------------------------------------------------------
 std::string UHttpContext::key( const std::string& name ) const
 {
     auto i = keys.find(name);
@@ -49,7 +58,7 @@ struct UHandlerList::Handler
     Handler( const std::string& s, URequestHandler h ):
         path(s), handler(h) {}
 
-    const std::string path;
+    const UPath path;
     URequestHandler handler;
 };
 
@@ -65,22 +74,24 @@ UHandlerList::~UHandlerList()
 //-----------------------------------------------------------------------------
 UHandlerList& UHandlerList::add( const std::string& path, URequestHandler h )
 {
+    handlers.emplace_back(path, h);
     return *this;
 }
 //-----------------------------------------------------------------------------
 bool UHandlerList::call( const std::string& path, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& res) const
 {
+    UHttpContext ctx;
+    UHttpContext::Keys keys;
+
     for( auto&& h : handlers )
     {
-        //        req.getURI()
+        if( h.path.compare(path, keys) )
+        {
+            ctx.set_keys(std::move(keys));
+            h.handler(req, res, ctx);
+            return true;
+        }
     }
-
-    Poco::URI uri(req.getURI());
-    //    std::vector<std::string> seg;
-    //    uri.getPathSegments(seg);
-    //    for( const auto& s: seg )
-    //    {
-    //    }
 
     return false;
 }
@@ -100,10 +111,10 @@ bool UHttpRouter::call( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServer
     Poco::URI uri(req.getURI());
 
     if( req.getMethod() == Poco::Net::HTTPRequest::HTTP_GET )
-        return hget.call(req.getURI(), req, res);
+        return hget.call(uri.getPath(), req, res);
 
     if( req.getMethod() == Poco::Net::HTTPRequest::HTTP_POST )
-        return hpost.call(req.getURI(), req, res);
+        return hpost.call(uri.getPath(), req, res);
 
     // throw?
     return false;
