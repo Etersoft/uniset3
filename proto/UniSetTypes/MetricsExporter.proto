@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package uniset3.metrics;
+
+// ---------------------------------------------------------------------------
+import "google/protobuf/any.proto";
+// ---------------------------------------------------------------------------
+message Metric
+{
+    string name = 1;
+    double value = 2;
+    google.protobuf.Any data = 3;
+    map<string, string> labels = 4;
+    string description = 5;
+}
+
+message Metrics
+{
+    int64 id = 1; // objectId
+    repeated Metric metrics = 2;
+}
+
+message MetricsParams
+{
+    int64 id = 1;
+    map<string, string> params = 2;
+}
+
+/*!
+ * \interface MetricsExporter_i
+ * Интерфейс для мониторинга состояния
+*/
+service MetricsExporter_i {
+    rpc metrics(MetricsParams) returns (Metrics) {}
+}
