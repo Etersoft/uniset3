@@ -97,11 +97,7 @@ namespace uniset3
             virtual void initIterators();
             virtual void initValues();
             virtual bool reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& mbconf );
-#ifndef DISABLE_REST_API
-            // http API
-            virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpRequest( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-#endif
+
             void firstInitRegisters();
             bool preInitRead( MBConfig::InitList::iterator& p );
             bool initSMValue( ModbusRTU::ModbusData* data, int count, MBConfig::RSProperty* p );

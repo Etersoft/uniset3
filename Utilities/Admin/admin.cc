@@ -50,7 +50,6 @@ static struct option longopts[] =
     { "getTimeChange", required_argument, 0, 't' },
     { "oinfo", required_argument, 0, 'p' },
     { "sinfo", required_argument, 0, 'j' },
-    { "apiRequest", required_argument, 0, 'a' },
     { "verbose", no_argument, 0, 'v' },
     { "quiet", no_argument, 0, 'q' },
     { "csv", required_argument, 0, 'k' },
@@ -78,7 +77,6 @@ int getState( const string& args, UInterface& ui );
 int getCalibrate( const string& args, UInterface& ui );
 int oinfo(const string& args, UInterface& ui, const string&  userparam );
 int sinfo(const string& args, UInterface& ui);
-int apiRequest( const string& args, UInterface& ui, const string& query );
 void sendText( const string& args, UInterface& ui, const string& txt, int mtype );
 int freezeValue( const string& args, bool set, UInterface& ui );
 // --------------------------------------------------------------------------
@@ -115,9 +113,6 @@ static void usage()
     print_help(36, "-p|--oinfo id1@node1,id2@node2,id3,... [userparam]", "Получить информацию об объектах (SimpleInfo). \n");
     print_help(36, "", "userparam - необязательный параметр передаваемый в getInfo() каждому объекту\n");
     print_help(36, "-j|--sinfo id1@node1,id2@node2,id3,...", "Получить информацию о датчиках.\n");
-    cout << endl;
-    print_help(36, "-a|--apiRequest id1@node1,id2@node2,id3,... query", "Вызов REST API для каждого объекта\n");
-    print_help(36, "", "query - Запрос вида: /api/VERSION/query[?param1&param2...]\n");
     cout << endl;
     print_help(48, "-x|--setValue id1@node1=val,id2@node2=val2,id3=val3,.. ", "Выставить значения датчиков\n");
     print_help(36, "-g|--getValue id1@node1,id2@node2,id3,id4 ", "Получить значения датчиков.\n");
@@ -280,27 +275,6 @@ int main(int argc, char** argv)
                     UInterface ui(conf);
                     ui.initBackId(uniset3::AdminID);
                     return sinfo(optarg, ui);
-                }
-                break;
-
-                case 'a':    //--apiRequest
-                {
-                    // смотрим второй параметр
-                    if( checkArg(optind, argc, argv) == 0 )
-                    {
-                        if( !quiet )
-                            cerr << "admin(apiRequest): Unknown 'query'. Use: id,name,name2@nodeX /api/vesion/query.." << endl;
-
-                        return 1;
-                    }
-
-                    auto conf = uniset_init(argc, argv, conffile);
-                    UInterface ui(conf);
-                    ui.initBackId(uniset3::AdminID);
-
-                    const std::string query = string(argv[optind]);
-
-                    return apiRequest(optarg, ui, query);
                 }
                 break;
 
@@ -1222,65 +1196,6 @@ int sinfo(const string& args, UInterface& ui )
 
     return err;
 }
-// --------------------------------------------------------------------------------------
-int apiRequest( const string& args, UInterface& ui, const string& query )
-{
-    auto conf = uniset_conf();
-    auto sl = uniset3::getObjectsList( args, conf );
-
-    //  if( verb )
-    //      cout << "apiRequest: query: " << query << endl;
-
-    if( query.size() < 1 )
-    {
-        if( !quiet )
-            cerr << "query is too small '" << query << "'" << endl;
-
-        return 1;
-    }
-
-    string q = query;
-
-    if( q.rfind("/api/", 0) != 0 )
-    {
-#ifndef DISABLE_REST_API
-        q = "/api/" + uniset3::UHttp::UHTTP_API_VERSION;
-#else
-        q = "/api/v01";
-#endif
-
-        if( query[0] != '/' )
-            q += "/";
-
-        q += query;
-    }
-
-    for( auto&& it : sl )
-    {
-        if( it.node() == DefaultObjectId )
-            it.set_node(conf->getLocalNode());
-
-        try
-        {
-            cout << ui.apiRequest(it.id(), q, it.node()) << endl;
-        }
-        catch( const std::exception& ex )
-        {
-            if( !quiet )
-                cerr << "std::exception: " << ex.what() << endl;
-        }
-        catch(...)
-        {
-            if( !quiet )
-                cerr << "Unknown exception.." << endl;
-        }
-
-        cout << endl << endl;
-    }
-
-    return 0;
-}
-
 // --------------------------------------------------------------------------------------
 void sendText( const string& args, UInterface& ui, const string& txt, int mtype )
 {

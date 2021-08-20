@@ -125,7 +125,6 @@ namespace uniset3
 
             //! Информация об объекте
             std::string getObjectInfo( const uniset3::ObjectId id, const std::string& params, const uniset3::ObjectId node ) const;
-            std::string apiRequest( const uniset3::ObjectId id, const std::string& query, const uniset3::ObjectId node ) const;
 
             //! Получить список датчиков
             uniset3::ShortMapSeq getSensors( const uniset3::ObjectId id,
@@ -133,7 +132,7 @@ namespace uniset3
 
             uniset3::SensorIOInfoSeq getSensorsMap( const uniset3::ObjectId id,
                                                     const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
-
+            // метрики
             uniset3::metrics::Metrics metrics(const uniset3::ObjectId id,
                                              const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------

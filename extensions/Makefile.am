@@ -2,10 +2,11 @@
 # This file is part of the UniSet library                                  #
 ############################################################################
 
-#UNetUDP UNetUDP/tests
+#
 
 if HAVE_EXTENTIONS
 SUBDIRS = lib include SharedMemory SharedMemory/tests IOControl IOControl/tests LogicProcessor LogicProcessor/tests \
+	UNetUDP UNetUDP/tests \
 	ModbusMaster  ModbusSlave  SMViewer  \
 	DBServer-MySQL DBServer-SQLite DBServer-PostgreSQL MQTTPublisher \
 	tests ModbusMaster/tests ModbusSlave/tests LogDB LogDB/tests \

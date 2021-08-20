@@ -44,9 +44,6 @@ service UniSetObject_i {
     rpc getType(GetTypeParams) returns(google.protobuf.StringValue) {}   /*!< получение типа uniset-объекта */
     rpc getInfo(GetInfoParams) returns (google.protobuf.StringValue) {}
     
-    /*! REST API. query: /api/version/query_for_object[?param1&param2...] */
-    rpc request(RequestParams) returns (google.protobuf.StringValue) {}
-
     rpc exists(ExistsParams) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
 
     /*!  Функция посылки сообщения объекту */

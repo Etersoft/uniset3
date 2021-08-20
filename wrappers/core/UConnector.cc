@@ -207,6 +207,7 @@ throw(UException)
     }
 }
 //---------------------------------------------------------------------------
+#if 0
 string UConnector::apiRequest( long id, const string& query, long node ) throw(UException)
 {
     if( !conf || !ui )
@@ -227,6 +228,7 @@ string UConnector::apiRequest( long id, const string& query, long node ) throw(U
         throw UException("(apiRequest): error: " + std::string(ex.what()) );
     }
 }
+#endif
 //---------------------------------------------------------------------------
 void UConnector::activate_objects() throw(UException)
 {

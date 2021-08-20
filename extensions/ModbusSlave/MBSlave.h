@@ -60,7 +60,7 @@ namespace uniset3
       - \ref sec_MBSlave_MEIRDI
       - \ref sec_MBSlave_DIAG
       - \ref sec_MBSlave_TCP
-      - \ref sec_MBSlave_REST_API
+      - \ref sec_MBSlave_CONFIG_API
 
       \section sec_MBSlave_Comm Общее описание Modbus slave
       Класс реализует базовые функции для протокола Modbus в slave режиме. Реализацию Modbus RTU - см. RTUExchange.
@@ -298,7 +298,8 @@ namespace uniset3
      - --prefix-repeat-create-socket msec.
 
 
-    \section sec_MBSlave_REST_API MBSlave HTTP API
+    \section sec_MBSlave_CONFIG_API MBSlave Config API
+     ...DEPRECATED... (config interface soon)
 
     - \b/help- Получение списка доступных команд
     - \b/- получение стандартной информации
@@ -391,12 +392,6 @@ namespace uniset3
             }
 
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
-
-#ifndef DISABLE_REST_API
-            // http API
-            virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpRequest( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-#endif
 
         protected:
 

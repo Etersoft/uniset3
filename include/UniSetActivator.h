@@ -24,8 +24,6 @@
 // --------------------------------------------------------------------------
 #include <memory>
 #include "UniSetTypes.h"
-#include "UHttpRequestHandler.h"
-#include "UHttpServer.h"
 #include "UniSetObject.h"
 #include "UniSetObjectProxy.h"
 #include "UniSetManagerProxy.h"
@@ -39,19 +37,6 @@ namespace uniset3
      *
      * Активатор объектов предназначен для запуска, после которого объекты становятся доступны для удалённого
      * вызова.
-     *
-     * \section sec_act_HttpAPI Activator HTTP API
-     * UniSetActivator выступает в роли http-сервера и реализует первичную обработку запросов
-     * и перенаправление их указанным объектам. Помимо этого UniSetActivator реализует обработку команд
-     * \code
-     * /api/VERSION/configure/get?[ID|NAME]&props=testname,name]
-     * \endcode
-     * Для запуска http-сервера необходимо в аргументах командной строки указать --activator-run-httpserver
-     * Помимо этого можно задать параметры --activator-httpserver-host и --activator-httpserver-port.
-     * --activator-httpserver-cors-allow addr - (CORS): Access-Control-Allow-Origin. Default: *.
-     *
-     * \sa \ref pg_UHttpServer
-     *
      **/
     //----------------------------------------------------------------------------------------
     class UniSetActivator;
@@ -68,9 +53,6 @@ namespace uniset3
     */
     class UniSetActivator:
         public std::enable_shared_from_this<UniSetActivator>
-#ifndef DISABLE_REST_API
-        , public uniset3::UHttp::IHttpRequestRegistry
-#endif
     {
         public:
 
@@ -95,14 +77,6 @@ namespace uniset3
 
             // прерывание работы
             void terminate();
-
-#ifndef DISABLE_REST_API
-            // Поддержка REST API (IHttpRequestRegistry)
-            virtual Poco::JSON::Object::Ptr httpGetByName( const std::string& name, const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Array::Ptr httpGetObjectsList( const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpHelpByName( const std::string& name, const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpRequestByName( const std::string& name, const std::string& req, const Poco::URI::QueryParameters& p ) override;
-#endif
 
         protected:
 
@@ -131,13 +105,6 @@ namespace uniset3
             uniset3::IOControllerProxy ioproxy;
             uniset3::IONotifyControllerProxy ionproxy;
             uniset3::MetricsExporterProxy metricsproxy;
-
-#ifndef DISABLE_REST_API
-            std::shared_ptr<uniset3::UHttp::UHttpServer> httpserv;
-            std::string httpHost = { "" };
-            int httpPort = { 0 };
-            std::string httpCORS_allow = { "*" };
-#endif
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace

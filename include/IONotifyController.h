@@ -146,13 +146,6 @@ namespace uniset3
             virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response);
             // --------------------------------------------
 
-#ifndef DISABLE_REST_API
-            // http API
-            virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpRequest( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-#endif
-
-            // --------------------------------------------
             /*! Информация о заказчике */
             struct ConsumerInfoExt
             {
@@ -216,13 +209,6 @@ namespace uniset3
             // функция для работы напрямую с указателем (оптимизация)
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi,
                                         long value, uniset3::ObjectId sup_id ) override;
-
-#ifndef DISABLE_REST_API
-            // http api
-            Poco::JSON::Object::Ptr request_consumers( const std::string& req, const Poco::URI::QueryParameters& p );
-            Poco::JSON::Object::Ptr request_lost( const std::string& req, const Poco::URI::QueryParameters& p );
-            Poco::JSON::Object::Ptr getConsumers(uniset3::ObjectId sid, ConsumerListInfo& clist, bool ifNotEmpty = true );
-#endif
 
             // статистика
             void showStatisticsForConsumer( std::ostringstream& inf, const std::string& consumer );

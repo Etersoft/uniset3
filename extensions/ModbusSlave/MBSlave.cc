@@ -2091,7 +2091,7 @@ namespace uniset3
         smPingOK = false;
         return ModbusRTU::erTimeOut;
     }
-#ifndef DISABLE_REST_API
+#if 0
     // -------------------------------------------------------------------------
     Poco::JSON::Object::Ptr MBSlave::httpHelp( const Poco::URI::QueryParameters& p )
     {

@@ -858,7 +858,7 @@ grpc::Status IONotifyController::askSensorsSeq(::grpc::ServerContext* context, c
     return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
+#if 0
 Poco::JSON::Object::Ptr IONotifyController::httpHelp(const Poco::URI::QueryParameters& p)
 {
     uniset3::json::help::object myhelp(myname, IOController::httpHelp(p));
