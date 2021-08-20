@@ -17,7 +17,9 @@ message Metric
 message Metrics
 {
     int64 id = 1; // objectId
-    repeated Metric metrics = 2;
+    string name = 2; // object name
+    repeated Metric metrics = 3;
+    map<string, string> labels = 4;
 }
 
 message MetricsParams

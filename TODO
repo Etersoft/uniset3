@@ -1,2 +1,2 @@
-AskSensor - return SensorMessage
-APIGate
+Config_i
+UniSetObject_I: set_params, get_params

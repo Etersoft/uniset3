@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -31,6 +31,7 @@
 #include "UniSetManagerProxy.h"
 #include "IOControllerProxy.h"
 #include "IONotifyControllerProxy.h"
+#include "MetricsExporterProxy.h"
 //----------------------------------------------------------------------------------------
 namespace uniset3
 {
@@ -129,6 +130,7 @@ namespace uniset3
             uniset3::UniSetManagerProxy mproxy;
             uniset3::IOControllerProxy ioproxy;
             uniset3::IONotifyControllerProxy ionproxy;
+            uniset3::MetricsExporterProxy metricsproxy;
 
 #ifndef DISABLE_REST_API
             std::shared_ptr<uniset3::UHttp::UHttpServer> httpserv;

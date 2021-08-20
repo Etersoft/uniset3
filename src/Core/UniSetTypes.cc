@@ -820,6 +820,15 @@ uniset3::umessage::TextMessage uniset3::makeTextMessage()
     return tm;
 }
 // ---------------------------------------------------------------------------------------------------------------
+uniset3::metrics::Metric uniset3::createMetric( const std::string& name, double val, const std::string& description )
+{
+    metrics::Metric m;
+    m.set_name(name);
+    m.set_value(val);
+    m.set_description(description);
+    return m;
+}
+// ---------------------------------------------------------------------------------------------------------------
 std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ObjectRef& o)
 {
     os

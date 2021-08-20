@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -147,6 +147,7 @@ namespace uniset3
             mproxy.add(m);
 
         oproxy.add(obj);
+        metricsproxy.add(obj);
         return true;
     }
     // ------------------------------------------------------------------------------------------
@@ -180,6 +181,7 @@ namespace uniset3
         mproxy.lock();
         ioproxy.lock();
         ionproxy.lock();
+        metricsproxy.lock();
 
         termControl = terminate_control;
         auto conf = uniset_conf();
@@ -194,6 +196,7 @@ namespace uniset3
         builder.RegisterService(static_cast<UniSetManager_i::Service*>(&mproxy));
         builder.RegisterService(static_cast<IOController_i::Service*>(&ioproxy));
         builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
+        builder.RegisterService(static_cast<metrics::MetricsExporter_i::Service*>(&metricsproxy));
         server = builder.BuildAndStart();
 
         uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;

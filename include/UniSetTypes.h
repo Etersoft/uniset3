@@ -36,6 +36,7 @@
 #include "UniSetTypes.pb.h"
 #include "IOController.pb.h"
 #include "MessageTypes.pb.h"
+#include "MetricsExporter.pb.h"
 #include "Mutex.h"
 #include "UniXML.h"
 #include "PassiveTimer.h" // for typedef timeout_t
@@ -345,6 +346,9 @@ namespace uniset3
                 ObjectId cons = uniset3::DefaultObjectId );
     umessage::TextMessage makeTextMessage();
     // ---------------------------------------------------------------
+    uniset3::metrics::Metric createMetric( const std::string& name, double val, const std::string& description="");
+    // ---------------------------------------------------------------
+
 
     bool file_exists( const std::string& filename );
     bool directory_exists( const std::string& path );
