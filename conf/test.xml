@@ -24,7 +24,7 @@
 		<HttpResolver name="HttpResolver"/>
 		<HttpAPIGateway name="HttpAPIGateway"/>
 		<URepository name="URepository" port="8111"/>
-		<LocalIOR name="0"/>
+		<LocalIOR name="1"/>
 		<Services>
 			<LocalTimeService AskLifeTimeSEC="10" MaxCountTimers="100" name="TimeService"/>
 			<LocalInfoServer dbrepeat="1" name="InfoServer">

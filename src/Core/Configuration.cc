@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -1057,7 +1057,7 @@ namespace uniset3
 
         // ищем в <controllers>
         if( id == DefaultObjectId )
-            id = getObjectID(name);
+            id = getControllerID(name);
 
         // ищем в <nodes>
         if( id == DefaultObjectId )

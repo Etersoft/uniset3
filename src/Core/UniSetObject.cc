@@ -396,6 +396,15 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     ::grpc::Status UniSetObject::metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response)
     {
+        response->set_id(getId());
+        response->set_name(myname);
+        (*response->mutable_labels())["objectType"] = getStrType();
+        *response->add_metrics() = createMetric("msgCount", countMessages());
+        *response->add_metrics() = createMetric("lostMessages", getCountOfLostMessages());
+        *response->add_metrics() = createMetric("lostMessages", getCountOfLostMessages());
+        *response->add_metrics() = createMetric("maxSizeOfMessageQueue", getMaxSizeOfMessageQueue());
+        *response->add_metrics() = createMetric("isActive", isActive());
+
         return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------

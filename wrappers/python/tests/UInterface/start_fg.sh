@@ -1,5 +1,3 @@
 #!/bin/sh
 
-START=./uniset3-start.sh
-
-${START} -f ./testUI.py --unideb-add-levels info,warn,crit
+./uniset3-start.sh -f ./testUI.py --unideb-add-levels info,warn,crit
