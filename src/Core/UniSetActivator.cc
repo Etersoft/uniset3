@@ -91,21 +91,7 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::init()
     {
-        auto conf = uniset_conf();
-
-#ifndef DISABLE_REST_API
-
-        if( findArgParam("--activator-run-httpserver", conf->getArgc(), conf->getArgv()) != -1 )
-        {
-            httpHost = conf->getArgParam("--activator-httpserver-host", "localhost");
-            httpPort = conf->getArgInt("--activator-httpserver-port", "8080");
-            ulog1 << myname << "(init): http server parameters " << httpHost << ":" << httpPort << endl;
-            httpCORS_allow = conf->getArgParam("--activator-httpserver-cors-allow", "*");
-        }
-
-#endif
     }
-
     // ------------------------------------------------------------------------------------------
     UniSetActivator::~UniSetActivator()
     {
@@ -215,24 +201,6 @@ namespace uniset3
         if( termControl )
             set_signals(true);
 
-#ifndef DISABLE_REST_API
-
-        if( !httpHost.empty() )
-        {
-            try
-            {
-                auto reg = dynamic_pointer_cast<UHttp::IHttpRequestRegistry>(shared_from_this());
-                httpserv = make_shared<UHttp::UHttpServer>(reg, httpHost, httpPort);
-                httpserv->setCORS_allow(httpCORS_allow);
-                httpserv->start();
-            }
-            catch( std::exception& ex )
-            {
-                uwarn << myname << "(run): init http server error: " << ex.what() << endl;
-            }
-        }
-
-#endif
         // ACTIVATE
         uinfo << myname << "(run): activate objects.." << endl;
         active = true;
@@ -283,13 +251,6 @@ namespace uniset3
             o.second->deactivate();
 
         ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
-
-#ifndef DISABLE_REST_API
-
-        if( httpserv )
-            httpserv->stop();
-
-#endif
 
 #if 0
 
@@ -414,89 +375,6 @@ namespace uniset3
 
         //  sigaction(SIGSEGV, &act, &oact);
     }
-    // ------------------------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
-    Poco::JSON::Object::Ptr UniSetActivator::httpGetByName( const string& name, const Poco::URI::QueryParameters& p )
-    {
-#if 0
-
-        if( name == myname )
-            return httpGet(p);
-
-        auto obj = deepFind            msleep(10000);
-        Object(name);
-
-        if( obj )
-            return obj->httpGet(p);
-
-#endif
-        ostringstream err;
-        err << "Object '" << name << "' not found";
-
-        throw uniset3::NameNotFound(err.str());
-    }
-    // ------------------------------------------------------------------------------------------
-    Poco::JSON::Array::Ptr UniSetActivator::httpGetObjectsList( const Poco::URI::QueryParameters& p )
-    {
-        Poco::JSON::Array::Ptr jdata = new Poco::JSON::Array();
-
-#if 0
-        std::vector<std::shared_ptr<UniSetObject>> vec;
-        vec.reserve(objectsCount());
-
-        //! \todo Доделать обработку параметров beg,lim на случай большого количества объектов (и частичных запросов)
-        size_t lim = 1000;
-        getAllObjectsList(vec, lim);
-
-        for( const auto& o : vec )
-            jdata->add(o->getName());
-
-#endif
-        return jdata;
-    }
-    // ------------------------------------------------------------------------------------------
-    Poco::JSON::Object::Ptr UniSetActivator::httpHelpByName( const string& name, const Poco::URI::QueryParameters& p )
-    {
-#if 0
-
-        if( name == myname )
-            return httpHelp(p);
-
-        auto obj = deepFindObject(name);
-
-        if( obj )
-            return obj->httpHelp(p);
-
-#endif
-        ostringstream err;
-        err << "Object '" << name << "' not found";
-        throw uniset3::NameNotFound(err.str());
-    }
-    // ------------------------------------------------------------------------------------------
-    Poco::JSON::Object::Ptr UniSetActivator::httpRequestByName( const string& name, const std::string& req, const Poco::URI::QueryParameters& p)
-    {
-#if 0
-
-        if( name == myname )
-            return httpRequest(req, p);
-
-        // а вдруг встретится объект с именем "conf" а мы перекрываем имя?!
-        // (пока считаем что такого не будет)
-        if( name == "configure" )
-            return request_configure(req, p);
-
-        auto obj = deepFindObject(name);
-
-        if( obj )
-            return obj->httpRequest(req, p);
-
-#endif
-        ostringstream err;
-        err << "Object '" << name << "' not found";
-        throw uniset3::NameNotFound(err.str());
-    }
-    // ------------------------------------------------------------------------------------------
-#endif // #ifndef DISABLE_REST_API
-    // ------------------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------
 } // end of namespace uniset3
 // ------------------------------------------------------------------------------------------

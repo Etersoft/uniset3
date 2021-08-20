@@ -8,7 +8,7 @@
  ВСЕ ВАШИ ИЗМЕНЕНИЯ БУДУТ ПОТЕРЯНЫ.
 */ 
 // --------------------------------------------------------------------------
-// generate timestamp: 2021-08-12+03:00
+// generate timestamp: 2021-08-21+03:00
 // -----------------------------------------------------------------------------
 #ifndef UObject_SK_H_
 #define UObject_SK_H_
@@ -39,6 +39,7 @@ class UObject_SK:
         void askSensor( uniset3::ObjectId sid, uniset3::UIOCommand, uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
         void updateValues();
 
+        virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
         virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
 
         virtual bool setMsg( uniset3::ObjectId code, bool state = true ) noexcept;
@@ -128,14 +129,6 @@ class UObject_SK:
         std::string help() const noexcept;
 
 
-#ifndef DISABLE_REST_API
-        // HTTP API
-        virtual Poco::JSON::Object::Ptr httpGet( const Poco::URI::QueryParameters& p ) override;
-        virtual Poco::JSON::Object::Ptr httpRequest( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-        virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
-#endif
-
-
         // Используемые идентификаторы
         
 
@@ -167,20 +160,12 @@ class UObject_SK:
         virtual bool deactivateObject() override;
         virtual std::string getMonitInfo() const { return ""; } /*!< пользовательская информация выводимая в getInfo() */
 
-#ifndef DISABLE_REST_API
-        virtual void httpGetUserData( Poco::JSON::Object::Ptr& jdata ){} /*!<  для пользовательских данных в httpGet() */
-        virtual Poco::JSON::Object::Ptr httpDumpIO();
-        virtual Poco::JSON::Object::Ptr httpRequestLog( const Poco::URI::QueryParameters& p );
-        virtual Poco::JSON::Object::Ptr request_params_set( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-        virtual Poco::JSON::Object::Ptr request_params_get( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-#endif
-
         // Выполнение очередного шага программы
         virtual void step(){}
 
         void preAskSensors( uniset3::UIOCommand cmd );
         void preSysCommand( const uniset3::umessage::SystemMessage* sm );
-        
+
         virtual void testMode( bool state );
         void updateOutputs( bool force );
 

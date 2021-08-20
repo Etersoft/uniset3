@@ -2378,7 +2378,7 @@ namespace uniset3
         return grpc::Status::OK;
     }
     // ----------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
+#if 0
     Poco::JSON::Object::Ptr MBExchange::httpHelp( const Poco::URI::QueryParameters& p )
     {
         uniset3::json::help::object myhelp(myname, UniSetObject::httpHelp(p));

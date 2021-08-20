@@ -79,10 +79,6 @@ namespace uniset3
                 return shmID;
             }
 
-#ifndef DISABLE_REST_API
-            std::string apiRequest( const std::string& query );
-#endif
-
         protected:
             const std::shared_ptr<IONotifyController> ic;
             const std::shared_ptr<UInterface> ui;

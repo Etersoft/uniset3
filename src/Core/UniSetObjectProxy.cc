@@ -67,24 +67,6 @@ namespace uniset3
 
         return i->second->getInfo(context, request, response);
     }
-
-    // -------------------------------------------------------------------------
-    ::grpc::Status UniSetObjectProxy::request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request,
-            ::google::protobuf::StringValue* response)
-    {
-        auto id = request->id();
-        auto srvIt = context->client_metadata().find(uniset3::MetaDataServiceId);
-
-        if (srvIt != context->client_metadata().end())
-            id = uniset3::uni_atoi(srvIt->second.data());
-
-        auto i = olist.find(id);
-
-        if (i == olist.end())
-            return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
-
-        return i->second->request(context, request, response);
-    }
     // -------------------------------------------------------------------------
     ::grpc::Status UniSetObjectProxy::exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request,
             ::google::protobuf::BoolValue* response)

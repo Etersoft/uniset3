@@ -917,63 +917,6 @@ namespace uniset3
         throw uniset3::TimeOut(set_err("UI(getInfo): Timeout", id, node));
     }
     // ------------------------------------------------------------------------------------------------------------
-    string UInterface::apiRequest(const ObjectId id, const string& query, const ObjectId node) const
-    {
-        if( id == uniset3::DefaultObjectId )
-            throw uniset3::ORepFailed("UI(apiRequest): Unknown id=uniset3::DefaultObjectId");
-
-        if( node == uniset3::DefaultObjectId )
-        {
-            ostringstream err;
-            err << "UI(apiRequest): id='" << id << "' error: node=uniset3::DefaultObjectId";
-            throw uniset3::ORepFailed(err.str());
-        }
-
-        try
-        {
-            std::shared_ptr<ORefInfo> chan;
-            google::protobuf::StringValue reply;
-            RequestParams request;
-            request.set_id(id);
-            request.set_query(query);
-
-            try
-            {
-                chan = rcache.resolve(id, node);
-            }
-            catch( const uniset3::NameNotFound&  ) {}
-
-            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                if( !chan )
-                    chan = resolve(id, node);
-
-                if( chan )
-                {
-                    grpc::ClientContext ctx;
-                    ctx.set_deadline(uconf->deadline());
-                    chan->addMetaData(ctx);
-                    std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
-                    grpc::Status st = stub->request(&ctx, request, &reply);
-
-                    if( st.ok() )
-                        return reply.value();
-                }
-
-                msleep(uconf->getRepeatTimeout());
-                chan = nullptr;
-            }
-        }
-        catch( const std::exception& ex )
-        {
-            rcache.erase(id, node);
-            throw uniset3::SystemError("UI(apiRequest): " + string(ex.what()));
-        }
-
-        rcache.erase(id, node);
-        throw uniset3::TimeOut(set_err("UI(apiRequest): Timeout", id, node));
-    }
-    // ------------------------------------------------------------------------------------------------------------
     void UInterface::ORefInfo::addMetaData( grpc::ClientContext& ctx )
     {
         for( const  auto& m : ref.metadata() )

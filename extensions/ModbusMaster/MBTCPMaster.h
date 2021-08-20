@@ -36,7 +36,7 @@ namespace uniset3
     - \ref sec_MBTCP_ConfList
     - \ref sec_MBTCP_ExchangeMode
     - \ref sec_MBTCP_ReloadConfig
-    - \ref sec_MBTCP_REST_API
+    - \ref sec_MBTCP_CONFIG_API
 
     \section sec_MBTCP_Comm Общее описание ModbusTCP master
     Класс реализует процесс обмена (опрос/запись) с RTU-устройствами,
@@ -230,7 +230,8 @@ namespace uniset3
      и другие базовые настройки должны совпадать с исходным файлом. Т.е. возможно только переопределение параметров
      касающихся обмена, а не всего конфига в целом.
 
-     \section sec_MBTCP_REST_API ModbusMaster HTTP API
+     \section sec_MBTCP_CONFIG_API ModbusMaster Config API
+      ...DEPRECATED... (config interface soon)
      \code
         /help                                  - Получение списка доступных команд
         /                                      - получение стандартной информации

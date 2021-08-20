@@ -920,7 +920,7 @@ grpc::Status IOController::getInfo(::grpc::ServerContext* context, const ::unise
     return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
+#if 0
 Poco::JSON::Object::Ptr IOController::httpHelp( const Poco::URI::QueryParameters& p )
 {
     uniset3::json::help::object myhelp( myname, UniSetManager::httpHelp(p) );
