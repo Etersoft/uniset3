@@ -1,2 +1,2 @@
-LogServer - stream grpc interface
-AskSensor - return SensorMessage
+Config_i
+UniSetObject_I: set_params, get_params

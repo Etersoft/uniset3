@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -134,7 +134,6 @@ namespace uniset3
             const std::string getDocDir() const noexcept;
 
             bool isLocalIOR() const noexcept;
-            size_t getHttpResovlerPort() const noexcept;
 
             /*! получить значение указанного параметра, или значение по умолчанию */
             std::string getArgParam(const std::string& name, const std::string& defval = "") const noexcept;
@@ -196,8 +195,6 @@ namespace uniset3
                                             прежде чем будет выработано исключение TimeOut.        */
 
             timeout_t repeatTimeout = { 50 };    /*!< пауза между попытками [мс] */
-
-            size_t httpResolverPort = { 8008 };
 
             uniset3::ListOfNode lnodes;
 

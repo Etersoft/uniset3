@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -35,6 +35,16 @@ namespace uniset3
 {
     // -----------------------------------------------------------------------------
     using namespace std;
+    // -----------------------------------------------------------------------------
+    static void continue_or_throw(const grpc::Status& st, const std::string& fname = "")
+    {
+        if( st.error_code() != grpc::StatusCode::UNAVAILABLE && st.error_code() != grpc::StatusCode::DEADLINE_EXCEEDED )
+        {
+            ostringstream err;
+            err << fname << " error(" << st.error_code() << "): " << st.error_message();
+            throw uniset3::SystemError(err.str());
+        }
+    }
     // -----------------------------------------------------------------------------
     UInterface::UInterface( const std::shared_ptr<uniset3::Configuration>& _uconf ):
         myid(uniset3::DefaultObjectId),
@@ -116,6 +126,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -182,6 +194,7 @@ namespace uniset3
                     if( st.ok() )
                         return;
 
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -246,24 +259,16 @@ namespace uniset3
 
                 if( chan )
                 {
-                    std::chrono::time_point<std::chrono::system_clock> start, end;
-                    start = std::chrono::system_clock::now();
-
                     grpc::ClientContext ctx;
                     ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->setValue(&ctx, request, &reply);
-
-                    end = std::chrono::system_clock::now();
-                    std::cerr << "elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-                              << " ms [" << st.error_code() << "]\n";
-
                     if( st.ok() )
                         return;
-                }
 
-                cerr << "***** repeat.." << endl;
+                    continue_or_throw(st, __FUNCTION__);
+                }
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
@@ -347,6 +352,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return;
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -413,6 +420,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.type();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -478,6 +487,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -524,6 +535,8 @@ namespace uniset3
 
                 if( st.ok() )
                     return chan;
+
+                continue_or_throw(st, __FUNCTION__);
             }
             catch( const std::exception& ex ) {}
         }
@@ -555,6 +568,8 @@ namespace uniset3
 
             if( st.ok() )
                 return;
+
+            continue_or_throw(st, __FUNCTION__);
 
             msleep(uconf->getRepeatTimeout());
             rep = nullptr;
@@ -588,6 +603,8 @@ namespace uniset3
 
             if( st.ok() )
                 return;
+
+            continue_or_throw(st, __FUNCTION__);
 
             msleep(uconf->getRepeatTimeout());
             rep = nullptr;
@@ -658,6 +675,8 @@ namespace uniset3
                     {
                         throw uniset3::ResolveNameError();
                     }
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
                 catch( const std::exception& ex ) {}
 
@@ -677,46 +696,73 @@ namespace uniset3
     }
 
     // -------------------------------------------------------------------------------------------
-    std::string UInterface::httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
+    uniset3::ObjectRef UInterface::resolveORefOnly( const uniset3::ObjectId rid, const uniset3::ObjectId node  ) const
     {
-#ifndef DISABLE_REST_API
-        size_t port = uconf->getHttpResovlerPort();
+        if( rid == uniset3::DefaultObjectId )
+            throw uniset3::ResolveNameError("UI(resolveORefOnly): ID=uniset3::DefaultObjectId");
 
-        if( port == 0 )
-            return "";
-
-        const std::string host = uconf->getNodeIP(node);
-
-        if( host.empty() )
-            return "";
-
-        string ret;
-        const string query = "api/v01/resolve/text?" + std::to_string(id);
-
-        for( size_t curNet = 0; curNet <= uconf->getCountOfNet(); curNet++)
+        if( node == uniset3::DefaultObjectId )
         {
-            auto repIP = uconf->repositoryAddressByNode(node, curNet);
+            ostringstream err;
+            err << "UI(resolveORefOnly): id='" << rid << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ResolveNameError(err.str());
+        }
 
-            if( repIP.empty() )
-                continue;
+        try
+        {
+            if( uconf->isLocalIOR() && node == uconf->getLocalNode() )
+                return uconf->iorfile->getRef(rid);
 
-            for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
+            google::protobuf::Int64Value request;
+            request.set_value(rid);
+
+            auto o = make_shared<ORefInfo>();
+            std::shared_ptr<grpc::Channel> repChan;
+            std::unique_ptr<URepository_i::Stub> stub;
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
             {
                 try
                 {
-                    ret = resolver.get(host, port, query);
+                    if( !repChan )
+                        repChan = resolveRepository(node);
 
-                    if( !ret.empty() )
-                        return ret;
+                    if( !repChan )
+                    {
+                        msleep(uconf->getRepeatTimeout());
+                        continue;
+                    }
+
+                    stub = URepository_i::NewStub(repChan);
+                    grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
+                    o->addMetaData(ctx);
+                    uniset3::ObjectRef oref;
+                    grpc::Status st = stub->resolve(&ctx, request, &oref);
+
+                    if( st.ok() )
+                        return oref;
+
+                    if( st.error_code() == grpc::StatusCode::NOT_FOUND )
+                        throw uniset3::ResolveNameError();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
-                catch(...) {}
+                catch( const std::exception& ex ) {}
 
                 msleep(uconf->getRepeatTimeout());
+                repChan = nullptr;
             }
+
+            throw uniset3::TimeOut();
+        }
+        catch( std::exception& ex )
+        {
+            ucrit << "UI(resolveORefOnly): myID=" << myid <<  ": resolve id=" << rid << "@" << node
+            << " catch " << ex.what() << endl;
         }
 
-#endif
-        return "";
+        throw uniset3::ResolveNameError();
     }
     // -------------------------------------------------------------------------------------------
     void UInterface::send(const uniset3::umessage::TransportMessage& msg, uniset3::ObjectId node)
@@ -756,7 +802,7 @@ namespace uniset3
                     if( st.ok() )
                         return;
 
-                    uwarn << "UI(send): (" << st.error_code() << ")" << st.error_message() << endl;
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -843,6 +889,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply;
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -901,6 +949,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -917,67 +967,10 @@ namespace uniset3
         throw uniset3::TimeOut(set_err("UI(getInfo): Timeout", id, node));
     }
     // ------------------------------------------------------------------------------------------------------------
-    string UInterface::apiRequest(const ObjectId id, const string& query, const ObjectId node) const
-    {
-        if( id == uniset3::DefaultObjectId )
-            throw uniset3::ORepFailed("UI(apiRequest): Unknown id=uniset3::DefaultObjectId");
-
-        if( node == uniset3::DefaultObjectId )
-        {
-            ostringstream err;
-            err << "UI(apiRequest): id='" << id << "' error: node=uniset3::DefaultObjectId";
-            throw uniset3::ORepFailed(err.str());
-        }
-
-        try
-        {
-            std::shared_ptr<ORefInfo> chan;
-            google::protobuf::StringValue reply;
-            RequestParams request;
-            request.set_id(id);
-            request.set_query(query);
-
-            try
-            {
-                chan = rcache.resolve(id, node);
-            }
-            catch( const uniset3::NameNotFound&  ) {}
-
-            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
-            {
-                if( !chan )
-                    chan = resolve(id, node);
-
-                if( chan )
-                {
-                    grpc::ClientContext ctx;
-                    ctx.set_deadline(uconf->deadline());
-                    chan->addMetaData(ctx);
-                    std::unique_ptr<UniSetObject_i::Stub> stub(UniSetObject_i::NewStub(chan->c));
-                    grpc::Status st = stub->request(&ctx, request, &reply);
-
-                    if( st.ok() )
-                        return reply.value();
-                }
-
-                msleep(uconf->getRepeatTimeout());
-                chan = nullptr;
-            }
-        }
-        catch( const std::exception& ex )
-        {
-            rcache.erase(id, node);
-            throw uniset3::SystemError("UI(apiRequest): " + string(ex.what()));
-        }
-
-        rcache.erase(id, node);
-        throw uniset3::TimeOut(set_err("UI(apiRequest): Timeout", id, node));
-    }
-    // ------------------------------------------------------------------------------------------------------------
     void UInterface::ORefInfo::addMetaData( grpc::ClientContext& ctx )
     {
         for( const  auto& m : ref.metadata() )
-            ctx.AddMetadata(m.key(), m.val());
+            ctx.AddMetadata(m.first, m.second);
     }
     // ------------------------------------------------------------------------------------------------------------
     std::shared_ptr<UInterface::ORefInfo> UInterface::resolve( const uniset3::ObjectId id ) const
@@ -1089,7 +1082,12 @@ namespace uniset3
         return false;
     }
     // ------------------------------------------------------------------------------------------------------------
-
+    size_t UInterface::CacheOfResolve::getCount() const noexcept
+    {
+        uniset3::uniset_rwmutex_wrlock l(cmutex);
+        return mcache.size();
+    }
+    // ------------------------------------------------------------------------------------------------------------
     void UInterface::CacheOfResolve::erase( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept
     {
         try
@@ -1188,6 +1186,8 @@ namespace uniset3
                 if( st.ok() )
                     return resp.value();
 
+                continue_or_throw(st, __FUNCTION__);
+
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1250,6 +1250,8 @@ namespace uniset3
 
                 if( st.ok() )
                     return reply.value();
+
+                continue_or_throw(st, __FUNCTION__);
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
@@ -1317,6 +1319,8 @@ namespace uniset3
                 if( st.ok() )
                     return;
 
+                continue_or_throw(st, __FUNCTION__);
+
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1373,6 +1377,8 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
+
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1425,6 +1431,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1478,6 +1485,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1532,6 +1540,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1595,6 +1604,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1649,6 +1659,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1702,6 +1713,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1714,6 +1726,60 @@ namespace uniset3
 
         rcache.erase(id, node);
         throw uniset3::TimeOut(set_err("UI(getSensorsMap): Timeout", id, node));
+    }
+    // -----------------------------------------------------------------------------
+    uniset3::metrics::Metrics UInterface::metrics( const uniset3::ObjectId id, const uniset3::ObjectId node )
+    {
+        if ( id == uniset3::DefaultObjectId )
+            throw uniset3::ORepFailed("UI(metrics): error node=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(metrics): id='" << id << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ORepFailed(err.str());
+        }
+
+        try
+        {
+            std::shared_ptr<ORefInfo> chan;
+            metrics::Metrics reply;
+            metrics::MetricsParams request;
+            request.set_id(id);
+
+            try
+            {
+                chan = rcache.resolve(id, node);
+            }
+            catch( const uniset3::NameNotFound&  ) {}
+
+            for( size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                if( !chan )
+                    chan = resolve(id, node);
+
+                grpc::ClientContext ctx;
+                ctx.set_deadline(uconf->deadline());
+                chan->addMetaData(ctx);
+                std::unique_ptr<metrics::MetricsExporter_i::Stub> stub(metrics::MetricsExporter_i::NewStub(chan->c));
+                grpc::Status st = stub->metrics(&ctx, request, &reply);
+
+                if( st.ok() )
+                    return reply;
+
+                continue_or_throw(st, __FUNCTION__);
+                msleep(uconf->getRepeatTimeout());
+                chan = nullptr;
+            }
+        }
+        catch( const std::exception& ex )
+        {
+            rcache.erase(id, node);
+            throw uniset3::SystemError("UI(metrics): " + string(ex.what()));
+        }
+
+        rcache.erase(id, node);
+        throw uniset3::TimeOut(set_err("UI(metrics): Timeout", id, node));
     }
     // -----------------------------------------------------------------------------
     bool UInterface::waitReady( const uniset3::ObjectId id, int msec, int pmsec, const uniset3::ObjectId node ) noexcept

@@ -108,7 +108,7 @@ bool LogReader::list( const std::string& _addr, int _port, const std::string& lo
 
     ctx = make_shared<grpc::ClientContext>();
     ctx->set_deadline(uniset3::deadline_msec(readTimeout));
-//    ctx.set_wait_for_ready(true);
+    //    ctx.set_wait_for_ready(true);
     logserver::LogListParams req;
     req.set_logname(logname);
     logserver::LogMessage msg;
@@ -145,7 +145,7 @@ bool LogReader::loglevel( const std::string& _addr, int _port, const std::string
 
     ctx = make_shared<grpc::ClientContext>();
     ctx->set_deadline(uniset3::deadline_msec(readTimeout));
-//    ctx.set_wait_for_ready(true);
+    //    ctx.set_wait_for_ready(true);
     logserver::LogLevelParams req;
     req.set_logname(logname);
     logserver::LogMessage msg;
@@ -202,6 +202,7 @@ void LogReader::readLoop(const std::string& addr, int port, const logserver::Log
         rcount = readcount;
 
     active = true;
+
     while(active)
     {
         if( lst.cmd_size() > 0 )
@@ -239,6 +240,7 @@ void LogReader::terminate()
         return;
 
     active = false;
+
     if( ctx )
         ctx->TryCancel();
 }
@@ -269,7 +271,7 @@ bool LogReader::read( const std::string& _addr, int _port,  bool verbose )
 
     ctx = make_shared<grpc::ClientContext>();
     ctx->set_deadline(uniset3::deadline_msec(readTimeout));
-//    ctx->set_wait_for_ready(true);
+    //    ctx->set_wait_for_ready(true);
     google::protobuf::Empty req;
     auto reader = stub->read(ctx.get(), req);
 
@@ -300,18 +302,21 @@ bool LogReader::read( const std::string& _addr, int _port,  bool verbose )
         {
             //
             auto pos = msg.text().find_first_of('\n');
+
             if( pos == string::npos )
                 line << msg.text();
             else
             {
-                line << msg.text().substr(0, pos+1);
+                line << msg.text().substr(0, pos + 1);
                 const std::string s(line.str());
+
                 if( std::regex_search(s, rule) )
                     outlog->any(false) << s;
 
                 line.str("");
-                if( pos+2 < msg.text().size() )
-                    line << msg.text().substr(pos+2);
+
+                if( pos + 2 < msg.text().size() )
+                    line << msg.text().substr(pos + 2);
             }
         }
 
@@ -345,7 +350,7 @@ logserver::LogCommandList LogReader::getCommands( const std::string& cmd )
 {
     logserver::LogCommandList cmdlist;
 
-    auto v = uniset3::explode_str(cmd, ' ');
+    auto v = uniset3::split(cmd, ' ');
 
     if( v.empty() )
         return cmdlist;

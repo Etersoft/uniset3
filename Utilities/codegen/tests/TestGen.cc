@@ -79,17 +79,6 @@ void TestGen::timerInfo( const uniset3::umessage::TimerMessage* tm )
     }
 }
 // -----------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
-void TestGen::httpGetUserData( Poco::JSON::Object::Ptr& jdata )
-{
-    jdata->set("myMode", "RUNNING");
-    jdata->set("myVar", 42);
-    jdata->set("myFloatVar", 42.42);
-    jdata->set("myMessage", "This is text fot test httpGetUserData");
-}
-// -----------------------------------------------------------------------------
-#endif
-// -----------------------------------------------------------------------------
 void TestGen::sysCommand( const uniset3::umessage::SystemMessage* sm )
 {
     if( sm->cmd() == SystemMessage::StartUp )

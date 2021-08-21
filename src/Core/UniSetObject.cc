@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -394,182 +394,52 @@ namespace uniset3
         return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
-    Poco::JSON::Object::Ptr UniSetObject::httpGet( const Poco::URI::QueryParameters& p )
+    ::grpc::Status UniSetObject::metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response)
     {
-        Poco::JSON::Object::Ptr jret = new Poco::JSON::Object();
-        httpGetMyInfo(jret);
-        return jret;
+        response->set_id(getId());
+        response->set_name(myname);
+        (*response->mutable_labels())["objectType"] = getStrType();
+        *response->add_metrics() = createMetric("msgCount", countMessages());
+        *response->add_metrics() = createMetric("lostMessages", getCountOfLostMessages());
+        *response->add_metrics() = createMetric("lostMessages", getCountOfLostMessages());
+        *response->add_metrics() = createMetric("maxSizeOfMessageQueue", getMaxSizeOfMessageQueue());
+        *response->add_metrics() = createMetric("isActive", isActive());
+        *response->add_metrics() = createMetric("cacheCount",ui->getCacheCount());
+
+        return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
-    Poco::JSON::Object::Ptr UniSetObject::httpHelp( const Poco::URI::QueryParameters& p )
+    ::grpc::Status UniSetObject::setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
     {
-        uniset3::json::help::object myhelp(myname);
+        auto i = request->params().find("MaxSizeOfMessageQueue");
+        if( i != request->params().end() && i->second.has_dvalue() )
+            setMaxSizeOfMessageQueue((size_t)i->second.dvalue());
 
-        {
-            uniset3::json::help::item cmd("params/get", "get value for parameter");
-            cmd.param("param1,param2,...", "paremeter names. Default: all");
-            myhelp.add(cmd);
-        }
-        {
-            uniset3::json::help::item cmd("params/set", "set value for parameter");
-            cmd.param("param1=val1,param2=val2,...", "paremeters");
-            myhelp.add(cmd);
-        }
+        i = request->params().find("CacheSize");
+        if( i != request->params().end() && i->second.has_dvalue() )
+            ui->setCacheMaxSize((size_t)i->second.dvalue());
 
-        return myhelp;
+        return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
-    Poco::JSON::Object::Ptr UniSetObject::httpGetMyInfo( Poco::JSON::Object::Ptr root )
+    ::grpc::Status UniSetObject::getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
     {
-        Poco::JSON::Object::Ptr my = uniset3::json::make_child(root, "object");
-        my->set("name", myname);
-        my->set("id", getId());
-        my->set("msgCount", countMessages());
-        my->set("lostMessages", getCountOfLostMessages());
-        my->set("maxSizeOfMessageQueue", getMaxSizeOfMessageQueue());
-        my->set("isActive", isActive());
-        my->set("objectType", getStrType());
-        return my;
+        auto m = response->mutable_params();
+        (*m)["MaxSizeOfMessageQueue"] = createParamValue(getMaxSizeOfMessageQueue());
+        (*m)["CacheSize"] = createParamValue(ui->getCacheMaxSize());
+
+        return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
-    // обработка запроса вида: /configure/xxxx
-    Poco::JSON::Object::Ptr UniSetObject::request_configure( const std::string& req, const Poco::URI::QueryParameters& params )
+    ::grpc::Status UniSetObject::loadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::grpc::ServerWriter< ::uniset3::configurator::Config>* writer)
     {
-        if( req == "get" )
-            return request_configure_get(req, params);
-
-        ostringstream err;
-        err << "(request_conf):  BAD REQUEST: Unknown command..";
-        throw uniset3::SystemError(err.str());
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "(loadConfig): unimplemented");
     }
     // ------------------------------------------------------------------------------------------
-    // обработка запроса вида: /params/xxxx
-    Poco::JSON::Object::Ptr UniSetObject::request_params( const std::string& req, const Poco::URI::QueryParameters& params )
+    ::grpc::Status UniSetObject::reloadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::google::protobuf::Empty* response)
     {
-        if( req == "get" )
-            return request_params_get(req, params);
-
-        if( req == "set" )
-            return request_params_set(req, params);
-
-        ostringstream err;
-        err << "(request_conf):  BAD REQUEST: Unknown command..";
-        throw uniset3::SystemError(err.str());
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "(loadConfig): unimplemented");
     }
-    // ------------------------------------------------------------------------------------------
-    // обработка запроса вида: /configure/get?[ID|NAME]&props=testname,name] from configure.xml
-    Poco::JSON::Object::Ptr UniSetObject::request_configure_get( const std::string& req, const Poco::URI::QueryParameters& params )
-    {
-        Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
-        Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "conf");
-        auto my = httpGetMyInfo(json);
-
-        if( params.empty() )
-        {
-            ostringstream err;
-            err << "(request_conf):  BAD REQUEST: Unknown id or name...";
-            throw uniset3::SystemError(err.str());
-        }
-
-        auto idlist = uniset3::explode_str(params[0].first, ',');
-
-        if( idlist.empty() )
-        {
-            ostringstream err;
-            err << "(request_conf):  BAD REQUEST: Unknown id or name in '" << params[0].first << "'";
-            throw uniset3::SystemError(err.str());
-        }
-
-        string props = {""};
-
-        for( const auto& p : params )
-        {
-            if( p.first == "props" )
-            {
-                props = p.second;
-                break;
-            }
-        }
-
-        for( const auto& id : idlist )
-        {
-            Poco::JSON::Object::Ptr j = request_configure_by_name(id, props);
-
-            if( j )
-                jdata->add(j);
-        }
-
-        return json;
-    }
-    // ------------------------------------------------------------------------------------------
-    Poco::JSON::Object::Ptr UniSetObject::request_configure_by_name( const string& name, const std::string& props )
-    {
-        Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
-        auto conf = uniset_conf();
-
-        ObjectId id = conf->getAnyID(name);
-
-        if( id == DefaultObjectId )
-        {
-            ostringstream err;
-            err << name << " not found..";
-            jdata->set(name, "");
-            jdata->set("error", err.str());
-            return jdata;
-        }
-
-        xmlNode* xmlnode = conf->getXMLObjectNode(id);
-
-        if( !xmlnode )
-        {
-            ostringstream err;
-            err << name << " not found confnode..";
-            jdata->set(name, "");
-            jdata->set("error", err.str());
-            return jdata;
-        }
-
-        UniXML::iterator it(xmlnode);
-
-        jdata->set("name", it.getProp("name"));
-        jdata->set("id", it.getProp("id"));
-
-        if( !props.empty() )
-        {
-            auto lst = uniset3::explode_str(props, ',');
-
-            for( const auto& p : lst )
-                jdata->set(p, it.getProp(p));
-        }
-        else
-        {
-            auto lst = it.getPropList();
-
-            for( const auto& p : lst )
-                jdata->set(p.first, p.second);
-        }
-
-        return jdata;
-    }
-    // ------------------------------------------------------------------------------------------
-    // обработка запроса вида: /conf/set?prop1=val1&prop2=val2
-    Poco::JSON::Object::Ptr UniSetObject::request_params_set( const std::string& req, const Poco::URI::QueryParameters& p )
-    {
-        ostringstream err;
-        err << "(request_params): 'set' not realized yet";
-        throw uniset3::SystemError(err.str());
-    }
-    // ------------------------------------------------------------------------------------------
-    // обработка запроса вида: /conf/get?prop1&prop2&prop3
-    Poco::JSON::Object::Ptr UniSetObject::request_params_get( const std::string& req, const Poco::URI::QueryParameters& p )
-    {
-        ostringstream err;
-        err << "(request_params): 'get' not realized yet";
-        throw uniset3::SystemError(err.str());
-    }
-    // ------------------------------------------------------------------------------------------
-#endif
     // ------------------------------------------------------------------------------------------
     uniset3::ObjectRef UniSetObject::getRef() const
     {
@@ -841,7 +711,6 @@ namespace uniset3
         return tsleep;
     }
     // ------------------------------------------------------------------------------------------
-
     ::grpc::Status UniSetObject::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
     {
         if (context->IsCancelled())
@@ -884,121 +753,6 @@ namespace uniset3
 
         response->set_value(info.str());
         return grpc::Status::OK;
-    }
-    // ------------------------------------------------------------------------------------------
-
-    //    SimpleInfo UniSetObject::apiRequest( const char* request )
-    ::grpc::Status UniSetObject::request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request, ::google::protobuf::StringValue* response)
-    {
-        if (context->IsCancelled())
-        {
-            return grpc::Status(grpc::StatusCode::CANCELLED, "(request): Deadline exceeded or Client cancelled, abandoning.");
-        }
-
-#ifdef DISABLE_REST_API
-        return getInfo(context, request, response)
-#else
-        ostringstream err;
-
-        try
-        {
-            Poco::URI uri(request->query());
-
-            if( ulog()->is_level9() )
-                ulog()->level9() << myname << "(apiRequest): request: " << request->query() << endl;
-
-            ostringstream out;
-            std::string query = "";
-
-            // Пока не будем требовать обязательно использовать формат /api/vesion/query..
-            // но если указан, то проверяем..
-            std::vector<std::string> seg;
-            uri.getPathSegments(seg);
-
-            size_t qind = 0;
-
-            if( seg.size() > 0 && seg[0] == "api" )
-            {
-                // проверка: /api/version/query[?params]..
-                if( seg.size() < 2 || seg[1] != UHttp::UHTTP_API_VERSION )
-                {
-                    Poco::JSON::Object jdata;
-                    jdata.set("error", Poco::Net::HTTPServerResponse::getReasonForStatus(Poco::Net::HTTPResponse::HTTP_BAD_REQUEST));
-                    jdata.set("ecode", (int)Poco::Net::HTTPResponse::HTTP_BAD_REQUEST);
-                    jdata.set("message", "BAD REQUEST STRUCTURE");
-                    jdata.stringify(out);
-                    response->set_value(out.str());
-                    return ::grpc::Status::OK;
-                }
-
-                if( seg.size() > 2 )
-                    qind = 2;
-            }
-            else if( seg.size() == 1 )
-                qind = 0;
-
-            query = seg.empty() ? "" : seg[qind];
-
-            // обработка запроса..
-            if( query == "help" )
-            {
-                // запрос вида: /help?params
-                auto reply = httpHelp(uri.getQueryParameters());
-                reply->stringify(out);
-            }
-            else if( query == "configure" )
-            {
-                // запрос вида: /configure/query?params
-                string qconf = ( seg.size() > (qind + 1) ) ? seg[qind + 1] : "";
-                auto reply = request_configure(qconf, uri.getQueryParameters());
-                reply->stringify(out);
-            }
-            else if( query == "params" )
-            {
-                // запрос вида: /params/query?params
-                string qconf = ( seg.size() > (qind + 1) ) ? seg[qind + 1] : "";
-                auto reply = request_params(qconf, uri.getQueryParameters());
-                reply->stringify(out);
-            }
-            else if( !query.empty() )
-            {
-                // запрос вида: /cmd?params
-                auto reply = httpRequest(query, uri.getQueryParameters());
-                reply->stringify(out);
-            }
-            else
-            {
-                // запрос без команды /?params
-                auto reply = httpGet(uri.getQueryParameters());
-                reply->stringify(out);
-            }
-
-            response->set_value(out.str());
-            return ::grpc::Status::OK;
-        }
-        catch( Poco::SyntaxException& ex )
-        {
-            err << ex.displayText();
-        }
-        catch( uniset3::SystemError& ex )
-        {
-            err << ex;
-        }
-        catch( std::exception& ex )
-        {
-            err << ex.what();
-        }
-
-        Poco::JSON::Object jdata;
-        jdata.set("error", err.str());
-        jdata.set("ecode", (int)Poco::Net::HTTPResponse::HTTP_INTERNAL_SERVER_ERROR);
-        //      jdata.set("ename", Poco::Net::HTTPResponse::getReasonForStatus(Poco::Net::HTTPResponse::HTTP_INTERNAL_SERVER_ERROR));
-
-        ostringstream out;
-        jdata.stringify(out);
-        response->set_value(out.str());
-        return ::grpc::Status::OK;
-#endif
     }
     // ------------------------------------------------------------------------------------------
     ostream& operator<<(ostream& os, UniSetObject& obj )

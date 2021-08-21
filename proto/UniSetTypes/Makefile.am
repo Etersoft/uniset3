@@ -6,7 +6,8 @@
 CCDIR=$(top_builddir)/src/Core
 HHDIR=$(top_builddir)/include
 PROTOFLAGS=-I$(INCPROTODIR)/UniSetTypes
-PROTOFILES=UniSetTypes.proto MessageTypes.proto URepository.proto UniSetObject.proto UniSetManager.proto
+PROTOFILES=UniSetTypes.proto MessageTypes.proto URepository.proto UniSetObject.proto UniSetManager.proto \
+	MetricsExporter.proto Configurator.proto
 
 include $(top_builddir)/proto/proto.mk
 

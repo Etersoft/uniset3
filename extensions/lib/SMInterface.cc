@@ -280,28 +280,3 @@ bool SMInterface::waitSMreadyWithCancellation(int ready_timeout, std::atomic_boo
     return sm_ready;
 }
 // --------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
-std::string SMInterface::apiRequest( const std::string& query )
-{
-    if( ic )
-    {
-        BEG_FUNC1(SMInterface::apiRequest)
-        RequestParams req;
-        req.set_query(query);
-        req.set_id(ic->getId());
-        google::protobuf::StringValue resp;
-        auto status = ic->request(&ctx, &req, &resp);
-
-        if( !status.ok() )
-            throw SystemError(status.error_message());
-
-        return resp.value();
-        END_FUNC(SMInterface::apiRequest)
-    }
-
-    BEG_FUNC(SMInterface::apiRequest)
-    return ui->apiRequest(shmID, query, ui->getConf()->getLocalNode());
-    END_FUNC(SMInterface::apiRequest)
-}
-#endif
-// --------------------------------------------------------------------------

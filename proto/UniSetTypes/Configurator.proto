@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package uniset3.configurator;
+
+// ---------------------------------------------------------------------------
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+message ParamValue
+{
+    oneof param_value {
+       double dvalue = 1; // double value
+       string svalue = 2; // string value
+    }
+}
+
+message Params
+{
+    int64 id = 1; // obectId
+    map<string,ParamValue> params = 2;
+}
+
+message ConfigCmdParams
+{
+    int64 id = 1; // objectId
+    map<string,string> params = 2;
+}
+
+message ConfigMetadata
+{
+    string name = 1;
+}
+
+message Config
+{
+    oneof config {
+        ConfigMetadata metadata = 1;
+        bytes data = 2;
+    }
+}
+
+
+/*!
+ * \interface Configurator_i
+ * Интерфейс для конфигурирования (процессов)
+*/
+service Configurator_i {
+    rpc setParams(Params) returns (Params) {}
+    rpc getParams(Params) returns (Params) {}
+
+    rpc loadConfig(ConfigCmdParams) returns (stream Config) {}
+    rpc reloadConfig(ConfigCmdParams) returns (google.protobuf.Empty) {}
+}

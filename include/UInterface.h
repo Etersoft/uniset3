@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -35,6 +35,7 @@
 #include "URepository.grpc.pb.h"
 #include "IOController.pb.h"
 #include "MessageTypes.pb.h"
+#include "MetricsExporter.grpc.pb.h"
 #include "Configuration.h"
 #ifndef DISABLE_REST_API
 #include "UHttpClient.h"
@@ -45,11 +46,9 @@ namespace uniset3
     /*!
      * \class UInterface
      * Универсальный интерфейс для взаимодействия между объектами (процессами).
-     * По сути является "фасадом" к реализации механизма взаимодействия
-     * в libuniset (основанном на CORBA) Хотя до конца скрыть CORBA-у пока не удалось.
+     * По сути является "фасадом" к внутреннием механизмам взаимодействия
+     * (в текущей версии это protobuf, grpc)
      * Для увеличения производительности в функции встроен cache обращений...
-     *
-     * См. также \ref UniversalIOControllerPage
     */
     class UInterface
     {
@@ -126,7 +125,6 @@ namespace uniset3
 
             //! Информация об объекте
             std::string getObjectInfo( const uniset3::ObjectId id, const std::string& params, const uniset3::ObjectId node ) const;
-            std::string apiRequest( const uniset3::ObjectId id, const std::string& query, const uniset3::ObjectId node ) const;
 
             //! Получить список датчиков
             uniset3::ShortMapSeq getSensors( const uniset3::ObjectId id,
@@ -134,7 +132,9 @@ namespace uniset3
 
             uniset3::SensorIOInfoSeq getSensorsMap( const uniset3::ObjectId id,
                                                     const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
-
+            // метрики
+            uniset3::metrics::Metrics metrics(const uniset3::ObjectId id,
+                                             const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------
             // Работа с репозиторием
             /*! регистрация объекта в репозитории
@@ -160,6 +160,7 @@ namespace uniset3
 
             // throw(uniset3::ResolveNameError, uniset3::TimeOut);
             std::shared_ptr<ORefInfo> resolve(const uniset3::ObjectId id, const uniset3::ObjectId node) const;
+            uniset3::ObjectRef resolveORefOnly( const uniset3::ObjectId id, const uniset3::ObjectId node  ) const;
 
             // Проверка доступности объекта или датчика
             bool isExists( const uniset3::ObjectId id ) const noexcept;
@@ -227,6 +228,16 @@ namespace uniset3
                 rcache.setMaxSize(newsize);
             }
 
+            size_t getCacheMaxSize() const noexcept
+            {
+                return rcache.getMaxSize();
+            }
+
+            size_t getCacheCount() const noexcept
+            {
+                return rcache.getCount();
+            }
+
             /*! Кэш ссылок на объекты */
             class CacheOfResolve
             {
@@ -240,10 +251,16 @@ namespace uniset3
 
                     void cache(const uniset3::ObjectId id, const uniset3::ObjectId node, std::shared_ptr<ORefInfo>& chan ) const;
                     void erase( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
+                    size_t getCount() const noexcept;
 
                     inline void setMaxSize( size_t ms ) noexcept
                     {
                         MaxSize = ms;
+                    };
+
+                    inline size_t getMaxSize() const noexcept
+                    {
+                        return MaxSize;
                     };
 
                 protected:
@@ -283,7 +300,6 @@ namespace uniset3
 
         protected:
             std::string set_err(const std::string& pre, const uniset3::ObjectId id, const uniset3::ObjectId node) const;
-            std::string httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const;
             std::shared_ptr<grpc::Channel> resolveRepository( uniset3::ObjectId node ) const;
 
         private:

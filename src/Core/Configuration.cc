@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -341,8 +341,6 @@ namespace uniset3
             throw uniset3::SystemError("Configuration: INIT PARAM`s FAILED!!!!");
         }
 
-        httpResolverPort = 8008;
-
         for( ; it.getCurrent(); it.goNext() )
         {
             const string name = it.getName();
@@ -380,10 +378,6 @@ namespace uniset3
             else if( name == "RepeatCount" )
             {
                 repeatCount = it.getPIntProp("name", 1);
-            }
-            else if( name == "HttpResolver" )
-            {
-                httpResolverPort = it.getPIntProp("port", httpResolverPort);
             }
             else if ( name == "URepository" )
             {
@@ -718,26 +712,25 @@ namespace uniset3
             ninf.set_host(it.getProp("ip"));
             ninf.set_port(it.getProp2("port", defPort));
 
+            auto dbID = DefaultObjectId;
             string tmp(it.getProp("dbserver"));
 
-            if( tmp.empty() )
-                ninf.set_dbserver(uniset3::DefaultObjectId);
-            else
+            if( !tmp.empty() )
             {
                 string dname(getServicesSection() + "/" + tmp);
-                ninf.set_dbserver(oind->getIdByName(dname));
-
-                if( ninf.dbserver() == DefaultObjectId )
+                dbID = oind->getIdByName(dname);
+                if( dbID == DefaultObjectId )
                 {
                     ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << dname << "'" << endl;
                     throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
                 }
+                auto s = ninf.add_services();
+                s->set_name(dname);
+                s->set_id(dbID);
             }
 
             if( ninf.id() == getLocalNode() )
-                localDBServer = ninf.dbserver();
-
-            ninf.set_connected(false);
+                localDBServer = dbID;
 
             initNode(ninf, it);
             uinfo << "Configuration(createNodesList): add to list of nodes: node=" << nodename << " id=" << ninf.id() << endl;
@@ -749,10 +742,6 @@ namespace uniset3
     // -------------------------------------------------------------------------
     void Configuration::initNode( uniset3::NodeInfo& ninfo, UniXML::iterator& it ) noexcept
     {
-        if( ninfo.id() == getLocalNode() )
-            ninfo.set_connected(true);
-        else
-            ninfo.set_connected(false);
     }
     // -------------------------------------------------------------------------
     string Configuration::getPropByNodeName(const string& nodename, const string& prop) const noexcept
@@ -1057,7 +1046,7 @@ namespace uniset3
 
         // ищем в <controllers>
         if( id == DefaultObjectId )
-            id = getObjectID(name);
+            id = getControllerID(name);
 
         // ищем в <nodes>
         if( id == DefaultObjectId )
@@ -1128,11 +1117,6 @@ namespace uniset3
     bool Configuration::isLocalIOR() const noexcept
     {
         return localIOR;
-    }
-
-    size_t Configuration::getHttpResovlerPort() const noexcept
-    {
-        return httpResolverPort;
     }
     // -------------------------------------------------------------------------
     xmlNode* Configuration::getXMLSensorsSection() noexcept

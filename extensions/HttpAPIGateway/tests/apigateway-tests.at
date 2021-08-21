@@ -1,0 +1,7 @@
+AT_SETUP([HttpAPIGateway tests])
+AT_CHECK([$abs_top_builddir/testsuite/at-test-launch.sh $abs_top_builddir/extensions/HttpAPIGateway/tests simple_tests],[0],[ignore],[ignore])
+AT_CLEANUP
+
+AT_SETUP([HttpAPIGateway tests (with server)])
+AT_CHECK([$abs_top_builddir/testsuite/at-test-launch.sh $abs_top_builddir/extensions/HttpAPIGateway/tests run_test_apigateway.sh],[0],[ignore],[ignore])
+AT_CLEANUP

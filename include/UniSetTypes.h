@@ -36,6 +36,8 @@
 #include "UniSetTypes.pb.h"
 #include "IOController.pb.h"
 #include "MessageTypes.pb.h"
+#include "MetricsExporter.pb.h"
+#include "Configurator.pb.h"
 #include "Mutex.h"
 #include "UniXML.h"
 #include "PassiveTimer.h" // for typedef timeout_t
@@ -195,8 +197,8 @@ namespace uniset3
     }
 
     /*! Разбивка строки по указанному символу */
-    IDList explode( const std::string& str, char sep = ',' );
-    std::vector<std::string> explode_str( const std::string& str, char sep = ',' );
+    IDList split_id(const std::string& str, char sep = ',');
+    std::vector<std::string> split(const std::string& str, char sep = ',');
 
     struct ParamSInfo
     {
@@ -345,6 +347,12 @@ namespace uniset3
                 ObjectId cons = uniset3::DefaultObjectId );
     umessage::TextMessage makeTextMessage();
     // ---------------------------------------------------------------
+    uniset3::metrics::Metric createMetric( const std::string& name, const double val, const std::string& description="");
+    uniset3::metrics::Metric createMetric( const std::string& name, const std::string& val, const std::string& description="");
+    uniset3::configurator::ParamValue createParamValue( const double val );
+    uniset3::configurator::ParamValue createParamValue( const std::string& val );
+    // ---------------------------------------------------------------
+
 
     bool file_exists( const std::string& filename );
     bool directory_exists( const std::string& path );

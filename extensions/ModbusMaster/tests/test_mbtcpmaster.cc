@@ -763,6 +763,7 @@ TEST_CASE("MBTCPMaster: reload config", "[modbus][reload][mbmaster][mbtcpmaster]
     REQUIRE( ui->getValue(1080) == 160 );
 }
 // -----------------------------------------------------------------------------
+#if 0
 TEST_CASE("MBTCPMaster: reload config (HTTP API)", "[modbus][reload-api][mbmaster][mbtcpmaster]")
 {
     InitTest();
@@ -798,6 +799,7 @@ TEST_CASE("MBTCPMaster: reload config (HTTP API)", "[modbus][reload-api][mbmaste
     REQUIRE_FALSE( resp.value().empty() );
     REQUIRE( resp.value().find("OK") == std::string::npos );
 }
+#endif
 // -----------------------------------------------------------------------------
 
 #if 0

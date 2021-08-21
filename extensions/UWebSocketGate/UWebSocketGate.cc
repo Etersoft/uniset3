@@ -597,7 +597,7 @@ std::shared_ptr<UWebSocketGate::UWebSocket> UWebSocketGate::newWebSocket( Poco::
     if( qp.size() == 1 && qp[0].first.empty() )
         slist = qp[0].first;
 
-    auto idlist = uniset3::explode(slist);
+    auto idlist = uniset3::split_id(slist);
 
     {
         ws = make_shared<UWebSocket>(req, resp);
@@ -1071,7 +1071,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(ask): " << params << endl;
 
-        auto idlist = uniset3::explode(params);
+        auto idlist = uniset3::split_id(params);
 
         for( const auto& id : idlist.getList() )
             ask(id);
@@ -1084,7 +1084,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(del): " << params << endl;
 
-        auto idlist = uniset3::explode(params);
+        auto idlist = uniset3::split_id(params);
 
         for( const auto& id : idlist.getList() )
             del(id);
@@ -1097,7 +1097,7 @@ void UWebSocketGate::UWebSocket::onCommand( const string& cmdtxt )
         myinfoV(3) << "(websocket): " << req->clientAddress().toString()
                    << "(get): " << params << endl;
 
-        auto idlist = uniset3::explode(params);
+        auto idlist = uniset3::split_id(params);
 
         for( const auto& id : idlist.getList() )
             get(id);

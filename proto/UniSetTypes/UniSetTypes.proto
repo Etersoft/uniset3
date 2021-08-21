@@ -5,12 +5,6 @@ package uniset3;
 option optimize_for = LITE_RUNTIME;
 // option cc_enable_arenas = true;
 // ---------------------------------------------------------------------------
-message MetaData
-{
-    string key = 1;
-    string val = 2;
-}
-
 /*! Информация об объекте */
 message ObjectRef
 {
@@ -18,7 +12,7 @@ message ObjectRef
     string addr = 2; // ip:port
     string path = 3;
     string type = 4;
-    repeated MetaData metadata = 5;
+    map<string,string> metadata = 5;
 }
 
 /*! Типы входов/выходов */
@@ -47,16 +41,21 @@ message CalibrateInfo
     int32 precision = 5;  /*!< точность */
 }
 
+message ServiceInfo
+{
+    string name = 1;
+    int64 id = 2;
+}
+
 /*!
  * Информация об узле
  */
 message NodeInfo
 {
     int64 id = 1;
-    bool connected = 2;
-    uint64 dbserver = 3;
-    string host = 4;
-    string port = 5;
+    string host = 2;
+    string port = 3;
+    repeated ServiceInfo services = 4; // available services
 }
 
 /*! информация об объекте */

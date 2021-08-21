@@ -173,7 +173,11 @@
         void askSensor( uniset3::ObjectId sid, uniset3::UIOCommand, uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
         void updateValues();
 
+        virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
         virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
+        virtual ::grpc::Status setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+        virtual ::grpc::Status getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+
 
         virtual bool setMsg( uniset3::ObjectId code, bool state = true ) noexcept;
 
@@ -260,15 +264,6 @@
         inline std::string dumpVars(){ return vmon.pretty_str(); }
         // ------------------------------------------------------------
         std::string help() const noexcept;
-
-<xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
-#ifndef DISABLE_REST_API
-        // HTTP API
-        virtual Poco::JSON::Object::Ptr httpGet( const Poco::URI::QueryParameters&amp; p ) override;
-        virtual Poco::JSON::Object::Ptr httpRequest( const std::string&amp; req, const Poco::URI::QueryParameters&amp; p ) override;
-        virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters&amp; p ) override;
-#endif
-</xsl:if>       
 </xsl:template>
 
 <xsl:template name="COMMON-HEAD-PROTECTED">
@@ -281,21 +276,13 @@
         virtual bool activateObject() override;
         virtual bool deactivateObject() override;
         virtual std::string getMonitInfo() const { return ""; } /*!&lt; пользовательская информация выводимая в getInfo() */
-<xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
-#ifndef DISABLE_REST_API
-        virtual void httpGetUserData( Poco::JSON::Object::Ptr&amp; jdata ){} /*!&lt;  для пользовательских данных в httpGet() */
-        virtual Poco::JSON::Object::Ptr httpDumpIO();
-        virtual Poco::JSON::Object::Ptr httpRequestLog( const Poco::URI::QueryParameters&amp; p );
-        virtual Poco::JSON::Object::Ptr request_params_set( const std::string&amp; req, const Poco::URI::QueryParameters&amp; p ) override;
-        virtual Poco::JSON::Object::Ptr request_params_get( const std::string&amp; req, const Poco::URI::QueryParameters&amp; p ) override;
-#endif
-</xsl:if>
+
         // Выполнение очередного шага программы
         virtual void step(){}
 
         void preAskSensors( uniset3::UIOCommand cmd );
         void preSysCommand( const uniset3::umessage::SystemMessage* sm );
-        
+
         virtual void testMode( bool state );
         void updateOutputs( bool force );
 <xsl:if test="normalize-space($TESTMODE)!=''">
@@ -444,11 +431,11 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::u
 {
     try
     {
-        <xsl:if test="normalize-space($STAT)='1'">
-        msgTypeStat[_msg->data().value()] += 1;
-        </xsl:if>
         if( _msg->data().Is&lt;umessage::SensorMessage&gt;() )
         {
+             <xsl:if test="normalize-space($STAT)='1'">
+             msgTypeStat["SensorMessage"] += 1;
+             </xsl:if>
              uniset3::umessage::SensorMessage sm;
              if( !_msg->data().UnpackTo(&amp;sm) )
              {
@@ -465,6 +452,9 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::u
 
         if( _msg->data().Is&lt;umessage::TimerMessage&gt;() )
         {
+             <xsl:if test="normalize-space($STAT)='1'">
+             msgTypeStat["TimerMessage"] += 1;
+             </xsl:if>
              uniset3::umessage::TimerMessage tm;
              if( !_msg->data().UnpackTo(&amp;tm) )
              {
@@ -478,7 +468,9 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::processingMessage( const uniset3::u
 
         if( _msg->data().Is&lt;umessage::SystemMessage&gt;() )
         {
-
+            <xsl:if test="normalize-space($STAT)='1'">
+            msgTypeStat["SystemMessage"] += 1;
+            </xsl:if>
             uniset3::umessage::SystemMessage m;
             if( !_msg->data().UnpackTo(&amp;m) )
             {
@@ -615,7 +607,47 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::preSysCommand( const uniset3::umess
     sysCommand(_sm);
 }
 // -----------------------------------------------------------------------------
+::grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response)
+{
+    <xsl:if test="not(normalize-space($BASECLASS)='')">auto status = <xsl:value-of select="$BASECLASS"/>::metrics(context, request, response);</xsl:if>
+    <xsl:if test="normalize-space($BASECLASS)=''">auto status = UniSetObject::metrics(context, request, response);</xsl:if>
+    if( !status.ok() )
+        return status;
 
+    *response->add_metrics() = createMetric("processState", ostate);
+    if( logserv )
+        *response->add_metrics() = createMetric("logServerState", ( logserv->isRunning() ? string("RUNNIG") : string("STOPPED") ));
+    else
+        *response->add_metrics() = createMetric("logServerState", "NONE");
+
+    *response->add_metrics() = createMetric("processingMessageCatchCount", processingMessageCatchCount);
+    for( const auto&amp; s: msgTypeStat )
+        *response->add_metrics() = createMetric(s.first, s.second);
+
+    auto timers = getTimersList();
+    *response->add_metrics() = createMetric("timerCount", timers.size());
+    for( const auto&amp; t: timers )
+    {
+        auto m = response->add_metrics();
+        *m = createMetric("timerTick", ( t.curTick>=0 ? t.curTick : -1 ));
+        (*m->mutable_labels())["timerName"] = getTimerName(t.id);
+        (*m->mutable_labels())["timerId"] = to_string(t.id);
+        (*m->mutable_labels())["timerInterval_msec"] = to_string(t.tmr.getInterval());
+
+        m = response->add_metrics();
+        *m = createMetric("timerLeft_msec", t.curTimeMS);
+        (*m->mutable_labels())["timerName"] = getTimerName(t.id);
+        (*m->mutable_labels())["timerId"] = to_string(t.id);
+        (*m->mutable_labels())["timerInterval_msec"] = to_string(t.tmr.getInterval());
+    }
+
+    auto vlist = vmon.getList();
+    for( const auto&amp; v: vlist )
+        *response->add_metrics() = createMetric(v.first, v.second);
+    
+    return status;
+}
+// -----------------------------------------------------------------------------
 grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
     google::protobuf::StringValue binfo;
@@ -671,8 +703,124 @@ grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getInfo(::grpc::ServerConte
     return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
-<xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
-#ifndef DISABLE_REST_API
+::grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
+{
+   <xsl:if test="not(normalize-space($BASECLASS)='')">auto status = <xsl:value-of select="$BASECLASS"/>::setParams(context, request, response);</xsl:if>
+    <xsl:if test="normalize-space($BASECLASS)=''">auto status = setParams(context, request, response);</xsl:if>
+    if( !status.ok() )
+        return status;
+
+    auto m = response->mutable_params();
+    for( const auto&amp; p: request->params() )
+    {
+        if( p.first == "sleep_msec" )
+        {
+            (*m)[p.first] = p.second;
+            sleep_msec = p.second.dvalue();
+            continue;
+        }
+
+        if( p.first == "resetMsgTime" )
+        {
+            (*m)[p.first] = p.second;
+            resetMsgTime = p.second.dvalue();
+            continue;
+        }
+
+        if( p.first == "forceOut" )
+        {
+            (*m)[p.first] = p.second;
+            forceOut = p.second.dvalue();
+            continue;
+        }
+        
+        <xsl:for-each select="//variables/item">
+        <xsl:if test="normalize-space(@const)=''">
+        if( p.first == "<xsl:value-of select="@name"/>" )
+        {
+             <xsl:if test="normalize-space(@type)='int'"><xsl:value-of select="@name"/> = (int)p.second.dvalue();</xsl:if>
+             <xsl:if test="normalize-space(@type)='long'"><xsl:value-of select="@name"/> = (long)p.second.dvalue();</xsl:if>
+             <xsl:if test="normalize-space(@type)='float'"><xsl:value-of select="@name"/> = p.second.dvalue();</xsl:if>
+             <xsl:if test="normalize-space(@type)='double'"><xsl:value-of select="@name"/> = p.second.dvalue();</xsl:if>
+             <xsl:if test="normalize-space(@type)='bool'"><xsl:value-of select="@name"/> = (bool)p.second.dvalue();</xsl:if>
+             <xsl:if test="normalize-space(@type)='str'"><xsl:value-of select="@name"/> = p.second.svalue();</xsl:if>
+             (*m)[p.first] = p.second;
+             continue;
+        }
+        </xsl:if>
+        </xsl:for-each>
+    }
+    
+    return grpc::Status::OK;
+}
+// -----------------------------------------------------------------------------
+::grpc::Status <xsl:value-of select="$CLASSNAME"/>_SK::getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
+{
+   <xsl:if test="not(normalize-space($BASECLASS)='')">auto status = <xsl:value-of select="$BASECLASS"/>::getParams(context, request, response);</xsl:if>
+    <xsl:if test="normalize-space($BASECLASS)=''">auto status = getParams(context, request, response);</xsl:if>
+    if( !status.ok() )
+        return status;
+
+    auto m = response->mutable_params();
+
+    if( request->params().empty() )
+    {
+        (*m)["sleep_msec"] = uniset3::createParamValue(sleep_msec);
+        (*m)["resetMsgTime"] = uniset3::createParamValue(resetMsgTime);
+        (*m)["forceOut"] = uniset3::createParamValue(forceOut);
+        if( logserv )
+        {
+            (*m)["logServerHost"] = uniset3::createParamValue(logserv_host);
+            (*m)["logServerPort"] = uniset3::createParamValue(logserv_port);
+        }
+        else
+        {
+            (*m)["logServerHost"] = uniset3::createParamValue("");
+            (*m)["logServerPort"] = uniset3::createParamValue(0);
+        }
+        <xsl:for-each select="//variables/item">
+        <xsl:if test="normalize-space(@const)=''">
+        (*m)["<xsl:value-of select="@name"/>"] = uniset3::createParamValue(<xsl:value-of select="@name"/>);
+        </xsl:if>
+        </xsl:for-each>
+        return status;
+    }
+
+    for( const auto&amp; p: request->params() )
+    {
+        if( p.first == "sleep_msec" )
+        {
+            (*m)["sleep_msec"] = uniset3::createParamValue(sleep_msec);
+            continue;
+        }
+
+        if( p.first == "resetMsgTime" )
+        {
+            (*m)["resetMsgTime"] = uniset3::createParamValue(resetMsgTime);
+            continue;
+        }
+
+        if( p.first == "forceOut" )
+        {
+            (*m)["forceOut"] = uniset3::createParamValue(forceOut);
+            continue;
+        }
+
+        <xsl:for-each select="//variables/item">
+        <xsl:if test="normalize-space(@const)=''">
+        if( p.first == "<xsl:value-of select="@name"/>" )
+        {
+            (*m)["<xsl:value-of select="@name"/>"] = uniset3::createParamValue(<xsl:value-of select="@name"/>);
+            continue;
+        }
+        </xsl:if>
+        </xsl:for-each>
+    }
+    
+    return status;
+}
+// -----------------------------------------------------------------------------
+#if 0
 Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpGet( const Poco::URI::QueryParameters&amp; params )
 {
     <xsl:if test="not(normalize-space($BASECLASS)='')">Poco::JSON::Object::Ptr json = <xsl:value-of select="$BASECLASS"/>::httpGet(params);</xsl:if>
@@ -872,7 +1020,6 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::request_params_g
     return jret;
 }
 #endif
-</xsl:if>
 // -----------------------------------------------------------------------------
 <xsl:if test="normalize-space($TESTMODE)!=''">
 bool <xsl:value-of select="$CLASSNAME"/>_SK::checkTestMode() const noexcept
@@ -1631,8 +1778,7 @@ void <xsl:value-of select="$CLASSNAME"/>_SK::testMode( bool _state )
     </xsl:for-each>
 }
 // -----------------------------------------------------------------------------
-<xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
-#ifndef DISABLE_REST_API
+#if 0
 Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 {
     Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
@@ -1673,7 +1819,6 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 }
 // ----------------------------------------------------------------------------
 #endif
-</xsl:if>
 
 std::string  <xsl:value-of select="$CLASSNAME"/>_SK::dumpIO()
 {
@@ -2062,8 +2207,7 @@ bool <xsl:value-of select="$CLASSNAME"/>_SK::setMsg( uniset3::ObjectId _code, bo
     return false;
 }
 // -----------------------------------------------------------------------------
-<xsl:if test="normalize-space($DISABLE_REST_API)!='1'">
-#ifndef DISABLE_REST_API
+#if 0
 Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 {
     Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
@@ -2102,7 +2246,6 @@ Poco::JSON::Object::Ptr <xsl:value-of select="$CLASSNAME"/>_SK::httpDumpIO()
 }
 // -----------------------------------------------------------------------------
 #endif
-</xsl:if>
 
 std::string  <xsl:value-of select="$CLASSNAME"/>_SK::dumpIO()
 {

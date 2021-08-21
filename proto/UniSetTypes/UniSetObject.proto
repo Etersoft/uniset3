@@ -7,6 +7,7 @@ option optimize_for = LITE_RUNTIME;
 import "UniSetTypes.proto";
 import "MessageTypes.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 // ---------------------------------------------------------------------------
 message GetTypeParams
@@ -43,9 +44,6 @@ service UniSetObject_i {
     rpc getType(GetTypeParams) returns(google.protobuf.StringValue) {}   /*!< получение типа uniset-объекта */
     rpc getInfo(GetInfoParams) returns (google.protobuf.StringValue) {}
     
-    /*! REST API. query: /api/version/query_for_object[?param1&param2...] */
-    rpc request(RequestParams) returns (google.protobuf.StringValue) {}
-
     rpc exists(ExistsParams) returns(google.protobuf.BoolValue) {}   /*!< проверка существования объекта */
 
     /*!  Функция посылки сообщения объекту */

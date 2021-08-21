@@ -1,5 +1,5 @@
 #include "Configuration.h"
-#include "HttpResolver.h"
+#include "HttpAPIGateway.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
@@ -13,29 +13,30 @@ int main(int argc, char** argv)
         if( argc > 1 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) )
         {
             cout << endl;
-            cout << "Usage: uniset3-httpresolver args1 args2" << endl;
+            cout << "Usage: uniset3-api-gateway args1 args2" << endl;
             cout << endl;
             cout << "--confile filename - configuration file. Default: configure.xml" << endl;
             cout << endl;
-            HttpResolver::help_print();
+            HttpAPIGateway::help_print();
             return 0;
         }
 
-        auto resolver = HttpResolver::init_resolver(argc, argv);
+        auto conf = uniset_init(argc, argv);
+        auto api = HttpAPIGateway::init_apigateway(argc, argv);
 
-        if( !resolver )
+        if( !api )
             return 1;
 
-        resolver->run();
+        api->run();
         return 0;
     }
     catch( const std::exception& ex )
     {
-        cerr << "(HttpResolver::main): " << ex.what() << endl;
+        cerr << "(HttpAPIGateway::main): " << ex.what() << endl;
     }
     catch(...)
     {
-        cerr << "(HttpResolver::main): catch ..." << endl;
+        cerr << "(HttpAPIGateway::main): catch ..." << endl;
     }
 
     return 1;

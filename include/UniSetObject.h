@@ -37,11 +37,12 @@
 #include "Exceptions.h"
 #include "UInterface.h"
 #include "UniSetObject.grpc.pb.h"
+#include "MetricsExporter.grpc.pb.h"
+#include "Configurator.grpc.pb.h"
 #include "MessageTypes.pb.h"
 #include "ThreadCreator.h"
 #include "LT_Object.h"
 #include "MQMutex.h"
-#include "UHttpRequestHandler.h"
 
 //---------------------------------------------------------------------------
 namespace uniset3
@@ -50,7 +51,6 @@ namespace uniset3
     class UniSetActivator;
     class UniSetManager;
     class UniSetObjectProxy;
-
     //---------------------------------------------------------------------------
     class UniSetObject;
     typedef std::list< std::shared_ptr<UniSetObject> > ObjectsList;     /*!< Список подчиненных объектов */
@@ -74,37 +74,31 @@ namespace uniset3
     class UniSetObject:
         public std::enable_shared_from_this<UniSetObject>,
         public UniSetObject_i::Service,
+        public uniset3::metrics::MetricsExporter_i::Service,
+        public uniset3::configurator::Configurator_i::Service,
         public LT_Object
-#ifndef DISABLE_REST_API
-        , public uniset3::UHttp::IHttpRequest
-#endif
     {
         public:
             UniSetObject( uniset3::ObjectId id );
             UniSetObject();
             virtual ~UniSetObject();
 
-            // Функции объявленые в IDL
+            // public grpc interface
             virtual ::grpc::Status getType(::grpc::ServerContext* context, const ::uniset3::GetTypeParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
-            virtual ::grpc::Status request(::grpc::ServerContext* context, const ::uniset3::RequestParams* request, ::google::protobuf::StringValue* response) override;
             virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response) override;
             virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
+            virtual ::grpc::Status setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+            virtual ::grpc::Status getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+            virtual ::grpc::Status loadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::grpc::ServerWriter< ::uniset3::configurator::Config>* writer) override;
+            virtual ::grpc::Status reloadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::google::protobuf::Empty* response) override;
 
             virtual bool isExists();
             uniset3::ObjectId getId() const;
             std::string getName() const;
             virtual std::string getStrType() const;
 
-            //            virtual uniset3::SimpleInfo getInfo( const std::string& userparam = "" );
-            //            // обёртка для вызова HTTP API через RPC
-            //            virtual uniset3::SimpleInfo apiRequest( const char* query );
-
-#ifndef DISABLE_REST_API
-            // HTTP API
-            virtual Poco::JSON::Object::Ptr httpGet( const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
-#endif
             // -------------- вспомогательные --------------
             /*! получить ссылку (на себя) */
             uniset3::ObjectRef getRef() const;
@@ -189,17 +183,6 @@ namespace uniset3
 
             /*! false - завершить работу потока обработки сообщений */
             void setActive( bool set );
-
-#ifndef DISABLE_REST_API
-            // вспомогательные функции
-            virtual Poco::JSON::Object::Ptr httpGetMyInfo( Poco::JSON::Object::Ptr root );
-            Poco::JSON::Object::Ptr request_configure( const std::string& req, const Poco::URI::QueryParameters& p );
-            Poco::JSON::Object::Ptr request_configure_get( const std::string& req, const Poco::URI::QueryParameters& p );
-            Poco::JSON::Object::Ptr request_configure_by_name( const std::string& name, const std::string& props );
-            Poco::JSON::Object::Ptr request_params( const std::string& req, const Poco::URI::QueryParameters& p );
-            virtual Poco::JSON::Object::Ptr request_params_get( const std::string& req, const Poco::URI::QueryParameters& p );
-            virtual Poco::JSON::Object::Ptr request_params_set( const std::string& req, const Poco::URI::QueryParameters& p );
-#endif
 
         private:
 

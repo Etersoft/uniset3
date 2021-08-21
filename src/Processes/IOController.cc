@@ -415,9 +415,8 @@ void IOController::ioRegistration( std::shared_ptr<USensorInfo>& usi )
     sref.set_id(usi->sinf.si().id());
     sref.set_path(conf->getSensorsSection());
     sref.set_type("sensor");
-    auto md = sref.add_metadata();
-    md->set_key(uniset3::MetaDataServiceId);
-    md->set_val(to_string(getId()));
+    auto md = sref.mutable_metadata();
+    (*md)[uniset3::MetaDataServiceId] = to_string(getId());
 
     try
     {
@@ -920,7 +919,7 @@ grpc::Status IOController::getInfo(::grpc::ServerContext* context, const ::unise
     return grpc::Status::OK;
 }
 // -----------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
+#if 0
 Poco::JSON::Object::Ptr IOController::httpHelp( const Poco::URI::QueryParameters& p )
 {
     uniset3::json::help::object myhelp( myname, UniSetManager::httpHelp(p) );

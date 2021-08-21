@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Pavel Vainerman.
+ * Copyright (c) 2021 Pavel Vainerman.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -82,12 +82,6 @@ namespace uniset3
 
             uniset3::umessage::Priority getPriority( const uniset3::ObjectId id );
 
-#ifndef DISABLE_REST_API
-            // http API
-            virtual Poco::JSON::Object::Ptr httpHelp( const Poco::URI::QueryParameters& p ) override;
-            virtual Poco::JSON::Object::Ptr httpRequest( const std::string& req, const Poco::URI::QueryParameters& p ) override;
-#endif
-
         public:
 
             // предварительное объявление..
@@ -114,7 +108,6 @@ namespace uniset3
             // полнейшее нарушение инкапсуляции
             // но пока, это попытка оптимизировать работу с IOController через указатель.
             // Т.е. работая с датчиками через итераторы..
-#if 1
             inline IOStateList::iterator ioBegin()
             {
                 return ioList.begin();
@@ -127,7 +120,7 @@ namespace uniset3
             {
                 return ioList.find(k);
             }
-#endif
+
             inline int ioCount() const noexcept
             {
                 return ioList.size();
@@ -157,13 +150,6 @@ namespace uniset3
             // -- работа через указатель ---
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi, long value, uniset3::ObjectId sup_id );
             long localGetValue( std::shared_ptr<USensorInfo>& usi) ;
-
-#ifndef DISABLE_REST_API
-            // http API
-            virtual Poco::JSON::Object::Ptr request_get( const std::string& req, const Poco::URI::QueryParameters& p );
-            virtual Poco::JSON::Object::Ptr request_sensors( const std::string& req, const Poco::URI::QueryParameters& p );
-            void getSensorInfo( Poco::JSON::Array::Ptr& jdata, std::shared_ptr<USensorInfo>& s, bool shortInfo = false );
-#endif
 
             // переопределяем для добавления вызова регистрации датчиков
             virtual bool deactivateObject() override;
