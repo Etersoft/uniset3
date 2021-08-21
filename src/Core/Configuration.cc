@@ -341,8 +341,6 @@ namespace uniset3
             throw uniset3::SystemError("Configuration: INIT PARAM`s FAILED!!!!");
         }
 
-        httpResolverPort = 8008;
-
         for( ; it.getCurrent(); it.goNext() )
         {
             const string name = it.getName();
@@ -380,10 +378,6 @@ namespace uniset3
             else if( name == "RepeatCount" )
             {
                 repeatCount = it.getPIntProp("name", 1);
-            }
-            else if( name == "HttpResolver" )
-            {
-                httpResolverPort = it.getPIntProp("port", httpResolverPort);
             }
             else if ( name == "URepository" )
             {
@@ -1128,11 +1122,6 @@ namespace uniset3
     bool Configuration::isLocalIOR() const noexcept
     {
         return localIOR;
-    }
-
-    size_t Configuration::getHttpResovlerPort() const noexcept
-    {
-        return httpResolverPort;
     }
     // -------------------------------------------------------------------------
     xmlNode* Configuration::getXMLSensorsSection() noexcept

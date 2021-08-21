@@ -10,7 +10,7 @@ SUBDIRS = lib include SharedMemory SharedMemory/tests IOControl IOControl/tests 
 	ModbusMaster  ModbusSlave  SMViewer  \
 	DBServer-MySQL DBServer-SQLite DBServer-PostgreSQL MQTTPublisher \
 	tests ModbusMaster/tests ModbusSlave/tests LogDB LogDB/tests \
-	Backend-OpenTSDB HttpResolver HttpResolver/tests URepository URepository/tests UWebSocketGate UWebSocketGate/tests \
+	Backend-OpenTSDB URepository URepository/tests UWebSocketGate UWebSocketGate/tests \
 	HttpAPIGateway HttpAPIGateway/tests
 
 
