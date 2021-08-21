@@ -21,7 +21,7 @@ message Params
 
 message ConfigCmdParams
 {
-    int64 id = 1; // obectId
+    int64 id = 1; // objectId
     map<string,string> params = 2;
 }
 

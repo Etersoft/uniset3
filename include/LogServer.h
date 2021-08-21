@@ -30,10 +30,8 @@
 #include "LogAgregator.h"
 #include "UniSetTypes.h"
 #include "LogServer.grpc.pb.h"
-
-#ifndef DISABLE_REST_API
-#include <Poco/JSON/Object.h>
-#endif
+#include "MetricsExporter.grpc.pb.h"
+#include "Configurator.grpc.pb.h"
 // -------------------------------------------------------------------------
 namespace uniset3
 {
@@ -84,7 +82,9 @@ namespace uniset3
     */
     // -------------------------------------------------------------------------
     class LogServer final:
-          public uniset3::logserver::LogServer_i::Service
+          public uniset3::logserver::LogServer_i::Service,
+          public uniset3::metrics::MetricsExporter_i::Service,
+          public uniset3::configurator::Configurator_i::Service
     {
         public:
 
@@ -96,6 +96,12 @@ namespace uniset3
             virtual ::grpc::Status list(::grpc::ServerContext* context, const ::uniset3::logserver::LogListParams* request, ::uniset3::logserver::LogMessage* response) override;
             virtual ::grpc::Status loglevel(::grpc::ServerContext* context, const ::uniset3::logserver::LogLevelParams* request, ::uniset3::logserver::LogMessage* response) override;
             virtual ::grpc::Status command(::grpc::ServerContext* context, const ::uniset3::logserver::LogCommandList* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
+            virtual ::grpc::Status setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+            virtual ::grpc::Status getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+            virtual ::grpc::Status loadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::grpc::ServerWriter< ::uniset3::configurator::Config>* writer) override;
+            virtual ::grpc::Status reloadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::google::protobuf::Empty* response) override;
+
 
             void setServerLog( Debug::type t ) noexcept;
             void setMaxSessionCount( size_t num ) noexcept;
@@ -115,10 +121,6 @@ namespace uniset3
             static std::string help_print( const std::string& prefix );
 
             std::string getShortInfo();
-
-#ifndef DISABLE_REST_API
-            Poco::JSON::Object::Ptr httpGetShortInfo();
-#endif
 
         protected:
             LogServer();

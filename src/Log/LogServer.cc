@@ -34,7 +34,8 @@ namespace uniset3
         try
         {
             terminate();
-        }catch(...){}
+        }
+        catch(...) {}
 
         try
         {
@@ -329,6 +330,51 @@ namespace uniset3
         return grpc::Status::OK;
     }
     // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response)
+    {
+        response->set_id(DefaultObjectId);
+        response->set_name(myname);
+        {
+            uniset3::uniset_rwmutex_rlock lock(mutSList);
+            *response->add_metrics() = uniset3::createMetric("sessionCount", slist.size());
+        }
+
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
+    {
+        response->set_id(DefaultObjectId);
+        auto i = request->params().find("sessMaxCount");
+
+        if( i != request->params().end() && i->second.has_dvalue() )
+        {
+            uniset3::uniset_rwmutex_rlock lock(mutSList);
+            setMaxSessionCount((size_t)i->second.dvalue());
+        }
+
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
+    {
+        auto m = response->mutable_params();
+        (*m)["host"] = uniset3::createParamValue(addr);
+        (*m)["port"] = uniset3::createParamValue(port);
+        (*m)["sessMaxCount"] = uniset3::createParamValue(sessMaxCount);
+        return grpc::Status::OK;
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::loadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::grpc::ServerWriter< ::uniset3::configurator::Config>* writer)
+    {
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "loadConfig unimplemented");
+    }
+    // -------------------------------------------------------------------------
+    ::grpc::Status LogServer::reloadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::google::protobuf::Empty* response)
+    {
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "reloadConfig unimplemented");
+    }
+    // -------------------------------------------------------------------------
     void LogServer::LogSession::wait()
     {
         std::unique_lock<std::mutex> lk(mut);
@@ -432,7 +478,7 @@ namespace uniset3
         saddr << addr << ":" << port;
         builder.AddListeningPort(saddr.str(), grpc::InsecureServerCredentials());
         builder.RegisterService(static_cast<uniset3::logserver::LogServer_i::Service*>(this));
-//        builder.SetSyncServerOption(grpc::ServerBuilder::CQ_TIMEOUT_MSEC, 5000);
+        //        builder.SetSyncServerOption(grpc::ServerBuilder::CQ_TIMEOUT_MSEC, 5000);
         server = builder.BuildAndStart();
         saveDefaultLogLevels("ALL");
         return true;
@@ -447,7 +493,8 @@ namespace uniset3
 
         {
             uniset3::uniset_rwmutex_rlock lock(mutSList);
-            for( auto&& r: slist )
+
+            for( auto&& r : slist )
                 r->term();
 
             slist.clear();
@@ -530,39 +577,8 @@ namespace uniset3
             << " sessMaxCount=" << sessMaxCount
             << " ]"
             << endl;
-#if 0
-        {
-            uniset_rwmutex_rlock l(mutSList);
-
-            for( const auto& s : slist )
-                inf << " " << s->getShortInfo() << endl;
-        }
-#endif
         return inf.str();
     }
-    // -----------------------------------------------------------------------------
-#ifndef DISABLE_REST_API
-    Poco::JSON::Object::Ptr LogServer::httpGetShortInfo()
-    {
-        Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
-        jdata->set("name", myname);
-        jdata->set("host", addr);
-        jdata->set("port", port);
-        jdata->set("sessMaxCount", sessMaxCount);
-#if 0
-        {
-            uniset_rwmutex_rlock l(mutSList);
-
-            Poco::JSON::Array::Ptr jsess = new Poco::JSON::Array();
-            jdata->set("sessions", jsess);
-
-            for( const auto& s : slist )
-                jsess->add(s->httpGetShortInfo());
-        }
-#endif
-        return jdata;
-    }
-#endif // #ifndef DISABLE_REST_API
     // -----------------------------------------------------------------------------
     void LogServer::saveDefaultLogLevels( const std::string& logname )
     {
@@ -615,69 +631,5 @@ namespace uniset3
                 elog->level(d->second);
         }
     }
-    // -----------------------------------------------------------------------------
-#if 0
-    std::string LogServer::onCommand( LogSession* s, LogServerTypes::Command cmd, const std::string& logname )
-    {
-        if( cmd == LogServerTypes::cmdSaveLogLevel )
-        {
-            saveDefaultLogLevels(logname);
-        }
-        else if( cmd == LogServerTypes::cmdRestoreLogLevel )
-        {
-            restoreDefaultLogLevels(logname);
-        }
-        else if( cmd == LogServerTypes::cmdViewDefaultLogLevel )
-        {
-            ostringstream s;
-            s << "List of saved default log levels (filter='" << logname << "')[" << defaultLogLevels.size() << "]: " << endl;
-            s << "=================================" << endl;
-            auto alog = dynamic_pointer_cast<LogAgregator>(elog);
-
-            if( alog ) // если у нас "агрегатор", то работаем с его списком потоков
-            {
-                std::list<LogAgregator::iLog> lst;
-
-                if( logname.empty() || logname == "ALL" )
-                    lst = alog->getLogList();
-                else
-                    lst = alog->getLogList(logname);
-
-                std::string::size_type max_width = 1;
-
-                // ищем максимальное название для выравнивания по правому краю
-                for( const auto& l : lst )
-                    max_width = std::max(max_width, l.name.length() );
-
-                for( const auto& l : lst )
-                {
-                    Debug::type deflevel = Debug::NONE;
-                    auto i = defaultLogLevels.find(l.log.get());
-
-                    if( i != defaultLogLevels.end() )
-                        deflevel = i->second;
-
-                    s << std::left << setw(max_width) << l.name << std::left << " [ " << Debug::str(deflevel) << " ]" << endl;
-                }
-            }
-            else if( elog )
-            {
-                Debug::type deflevel = Debug::NONE;
-                auto i = defaultLogLevels.find(elog.get());
-
-                if( i != defaultLogLevels.end() )
-                    deflevel = i->second;
-
-                s << elog->getLogName() << " [" << Debug::str(deflevel) << " ]" << endl;
-            }
-
-            s << "=================================" << endl << endl;
-
-            return s.str();
-        }
-
-        return "";
-    }
-#endif
     // -----------------------------------------------------------------------------
 } // end of namespace uniset3
