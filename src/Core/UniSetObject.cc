@@ -404,6 +404,7 @@ namespace uniset3
         *response->add_metrics() = createMetric("lostMessages", getCountOfLostMessages());
         *response->add_metrics() = createMetric("maxSizeOfMessageQueue", getMaxSizeOfMessageQueue());
         *response->add_metrics() = createMetric("isActive", isActive());
+        *response->add_metrics() = createMetric("cacheCount",ui->getCacheCount());
 
         return ::grpc::Status::OK;
     }

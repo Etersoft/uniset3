@@ -233,6 +233,11 @@ namespace uniset3
                 return rcache.getMaxSize();
             }
 
+            size_t getCacheCount() const noexcept
+            {
+                return rcache.getCount();
+            }
+
             /*! Кэш ссылок на объекты */
             class CacheOfResolve
             {
@@ -246,6 +251,7 @@ namespace uniset3
 
                     void cache(const uniset3::ObjectId id, const uniset3::ObjectId node, std::shared_ptr<ORefInfo>& chan ) const;
                     void erase( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept;
+                    size_t getCount() const noexcept;
 
                     inline void setMaxSize( size_t ms ) noexcept
                     {

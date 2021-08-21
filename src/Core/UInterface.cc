@@ -1082,7 +1082,12 @@ namespace uniset3
         return false;
     }
     // ------------------------------------------------------------------------------------------------------------
-
+    size_t UInterface::CacheOfResolve::getCount() const noexcept
+    {
+        uniset3::uniset_rwmutex_wrlock l(cmutex);
+        return mcache.size();
+    }
+    // ------------------------------------------------------------------------------------------------------------
     void UInterface::CacheOfResolve::erase( const uniset3::ObjectId id, const uniset3::ObjectId node ) const noexcept
     {
         try
