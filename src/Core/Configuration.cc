@@ -712,26 +712,25 @@ namespace uniset3
             ninf.set_host(it.getProp("ip"));
             ninf.set_port(it.getProp2("port", defPort));
 
+            auto dbID = DefaultObjectId;
             string tmp(it.getProp("dbserver"));
 
-            if( tmp.empty() )
-                ninf.set_dbserver(uniset3::DefaultObjectId);
-            else
+            if( !tmp.empty() )
             {
                 string dname(getServicesSection() + "/" + tmp);
-                ninf.set_dbserver(oind->getIdByName(dname));
-
-                if( ninf.dbserver() == DefaultObjectId )
+                dbID = oind->getIdByName(dname);
+                if( dbID == DefaultObjectId )
                 {
                     ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << dname << "'" << endl;
                     throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
                 }
+                auto s = ninf.add_services();
+                s->set_name(dname);
+                s->set_id(dbID);
             }
 
             if( ninf.id() == getLocalNode() )
-                localDBServer = ninf.dbserver();
-
-            ninf.set_connected(false);
+                localDBServer = dbID;
 
             initNode(ninf, it);
             uinfo << "Configuration(createNodesList): add to list of nodes: node=" << nodename << " id=" << ninf.id() << endl;
@@ -743,10 +742,6 @@ namespace uniset3
     // -------------------------------------------------------------------------
     void Configuration::initNode( uniset3::NodeInfo& ninfo, UniXML::iterator& it ) noexcept
     {
-        if( ninfo.id() == getLocalNode() )
-            ninfo.set_connected(true);
-        else
-            ninfo.set_connected(false);
     }
     // -------------------------------------------------------------------------
     string Configuration::getPropByNodeName(const string& nodename, const string& prop) const noexcept
