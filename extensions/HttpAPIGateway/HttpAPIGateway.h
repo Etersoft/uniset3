@@ -92,6 +92,7 @@ namespace uniset3
             virtual void initRouter();
             // REQUEST HANDLERS
             void requestMetrics( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const uniset3::UHttpContext& ctx );
+            void requestResolve( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const uniset3::UHttpContext& ctx );
             Poco::JSON::Object::Ptr respError( Poco::Net::HTTPServerResponse& resp, Poco::Net::HTTPResponse::HTTPStatus s, const std::string& message );
 
             std::shared_ptr<Poco::Net::HTTPServer> httpserv;

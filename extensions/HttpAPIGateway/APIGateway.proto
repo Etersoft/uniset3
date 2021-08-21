@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package uniset3.apigateway;
+
+// option cc_enable_arenas = true;
+// ---------------------------------------------------------------------------
+message MetaData
+{
+    string key = 1;
+    string val = 2;
+}
+// ---------------------------------------------------------------------------
+/*! same as uniset3.ObjectRef (see UniSetTypes.proto) 
+ * but not LITE version (support json)
+*/
+message ObjectRef
+{
+    int64 id = 1;
+    string addr = 2; // ip:port
+    string path = 3;
+    string type = 4;
+    map<string,string> metadata = 5;
+}

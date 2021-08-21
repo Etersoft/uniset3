@@ -160,6 +160,7 @@ namespace uniset3
 
             // throw(uniset3::ResolveNameError, uniset3::TimeOut);
             std::shared_ptr<ORefInfo> resolve(const uniset3::ObjectId id, const uniset3::ObjectId node) const;
+            uniset3::ObjectRef resolveORefOnly( const uniset3::ObjectId id, const uniset3::ObjectId node  ) const;
 
             // Проверка доступности объекта или датчика
             bool isExists( const uniset3::ObjectId id ) const noexcept;

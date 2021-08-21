@@ -29,6 +29,7 @@
 #include "UniXML.h"
 #include "HttpAPIGatewaySugar.h"
 #include "MetricsExporter.grpc.pb.h"
+#include "APIGateway.pb.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
@@ -214,6 +215,7 @@ void HttpAPIGateway::initRouter()
     using namespace std::placeholders;
     router.setPrefix("/api/" + HTTP_API_GATEWAY_VERSION);
     router.get().add("/metrics/:oname", std::bind(&HttpAPIGateway::requestMetrics, this, _1, _2, _3) );
+    router.get().add("/resolve/:oname", std::bind(&HttpAPIGateway::requestResolve, this, _1, _2, _3) );
 }
 // -----------------------------------------------------------------------------
 void HttpAPIGateway::requestMetrics(Poco::Net::HTTPServerRequest& req,
@@ -284,3 +286,76 @@ void HttpAPIGateway::requestMetrics(Poco::Net::HTTPServerRequest& req,
     out.flush();
 }
 // -----------------------------------------------------------------------------
+void HttpAPIGateway::requestResolve( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp, const uniset3::UHttpContext& ctx )
+{
+    rlog1 << myname << "(requestResolve): " << req.getURI() << endl;
+
+    using Poco::Net::HTTPResponse;
+    std::ostream& out = resp.send();
+
+    const auto name = ctx.key("oname");
+
+    if( name.empty() )
+    {
+        rlog2 << myname << "(requestResolve): Unknown object name" << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, "Unknown name object: " + req.getURI());
+        jdata->stringify(out);
+        return;
+    }
+
+    auto conf = uniset_conf();
+    ObjectId id = DefaultObjectId;
+
+    if( uniset3::is_digit(name) )
+        id = uni_atoi(name);
+    else
+        id = uniset_conf()->getAnyID(name);
+
+    if( id == DefaultObjectId )
+    {
+        rlog2 << myname << "(requestResolve): not found id for " << name << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_NOT_FOUND, "Unknown ID for object: " + name);
+        jdata->stringify(out);
+        return;
+    }
+
+    uniset3::ObjectRef oref;
+    try
+    {
+        oref = ui.resolveORefOnly(id, uniset_conf()->getLocalNode());
+    }
+    catch( std::exception& ex )
+    {
+        rlog2 << myname << "(requestResolve): call " << name << " error: " << ex.what() << endl;
+        auto jdata = respError(resp, HTTPResponse::HTTP_INTERNAL_SERVER_ERROR, "call to " + name + " error");
+        jdata->stringify(out);
+        return;
+    }
+
+    // convert LITE format -> FULL format (with support json)
+    uniset3::apigateway::ObjectRef ret;
+    ret.set_id(oref.id());
+    ret.set_addr(oref.addr());
+    ret.set_path(oref.path());
+    ret.set_type(oref.type());
+    *ret.mutable_metadata() = oref.metadata();
+
+    std::string json_string;
+    google::protobuf::util::JsonPrintOptions options;
+    options.add_whitespace = true;
+    options.always_print_primitive_fields = true;
+    options.preserve_proto_field_names = true;
+    auto st  = google::protobuf::util::MessageToJsonString(ret, &json_string, options);
+
+    if( !st.ok() )
+    {
+        auto jdata = respError(resp, HTTPResponse::HTTP_INTERNAL_SERVER_ERROR, "convert to json error: " + st.ToString());
+        jdata->stringify(out);
+        return;
+    }
+
+    //    rlog2 << myname << "(requestInfo): " << json_string << endl;
+
+    out << json_string;
+    out.flush();
+}

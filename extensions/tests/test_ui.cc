@@ -92,6 +92,9 @@ TEST_CASE("UInterface", "[UInterface]")
         REQUIRE_NOTHROW( ui->resolve(sid) );
         REQUIRE_THROWS_AS( ui->resolve(sid, 10), uniset3::ResolveNameError& );
         REQUIRE_THROWS_AS( ui->resolve(sid, DefaultObjectId), uniset3::ResolveNameError& );
+        REQUIRE_NOTHROW( ui->resolveORefOnly(sid, conf->getLocalNode()) );
+        REQUIRE_THROWS_AS( ui->resolveORefOnly(sid, 10), uniset3::ResolveNameError& );
+        REQUIRE_THROWS_AS( ui->resolveORefOnly(sid, DefaultObjectId), uniset3::ResolveNameError& );
     }
 
     SECTION( "send" )
