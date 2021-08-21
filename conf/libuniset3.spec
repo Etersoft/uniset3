@@ -331,6 +331,24 @@ Requires: %name-extension-common-devel = %version-%release
 Libraries needed to develop for uniset MQTT extension
 %endif
 
+%if_enabled api
+%package extension-api-gateway
+Group: Development/C++
+Summary: HTTP API Gateway for %name
+Requires: %name-extension-common = %version-%release
+
+%description extension-api-gateway
+HTTP API Gateway for %name
+
+%package extension-api-gateway-devel
+Group: Development/C++
+Summary: Libraries needed to develop for uniset HTTP API Gateway extension
+Requires: %name-extension-common-devel = %version-%release
+
+%description extension-api-gateway-devel
+Libraries needed to develop for uniset HTTP API Gateway extension
+%endif
+
 %prep
 %setup
 
@@ -533,6 +551,18 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 
 #%_pkgconfigdir/libUniSet3*.pc
 %exclude %_pkgconfigdir/libUniSet3.pc
+
+%if_enabled api
+%files extension-api-gateway
+%_bindir/%oname-api-gateway*
+%_libdir/libUniSet3HttpAPIGateway*.so.*
+
+%files extension-api-gateway-devel
+%_pkgconfigdir/libUniSet3HttpAPIGateway*.pc
+%_libdir/libUniSet3HttpAPIGateway*.so
+%_includedir/%oname/extensions/apigateway/
+%endif
+
 
 # history of current unpublished changes
 
