@@ -765,48 +765,6 @@ namespace uniset3
         throw uniset3::ResolveNameError();
     }
     // -------------------------------------------------------------------------------------------
-    std::string UInterface::httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
-    {
-#ifndef DISABLE_REST_API
-        size_t port = uconf->getHttpResovlerPort();
-
-        if( port == 0 )
-            return "";
-
-        const std::string host = uconf->getNodeIP(node);
-
-        if( host.empty() )
-            return "";
-
-        string ret;
-        const string query = "api/v01/resolve/text?" + std::to_string(id);
-
-        for( size_t curNet = 0; curNet <= uconf->getCountOfNet(); curNet++)
-        {
-            auto repIP = uconf->repositoryAddressByNode(node, curNet);
-
-            if( repIP.empty() )
-                continue;
-
-            for( size_t i = 0; i < uconf->getRepeatCount(); i++ )
-            {
-                try
-                {
-                    ret = resolver.get(host, port, query);
-
-                    if( !ret.empty() )
-                        return ret;
-                }
-                catch(...) {}
-
-                msleep(uconf->getRepeatTimeout());
-            }
-        }
-
-#endif
-        return "";
-    }
-    // -------------------------------------------------------------------------------------------
     void UInterface::send(const uniset3::umessage::TransportMessage& msg, uniset3::ObjectId node)
     {
         ObjectId id = msg.consumer();

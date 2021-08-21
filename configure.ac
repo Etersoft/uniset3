@@ -431,8 +431,8 @@ if test ${buildtests} = true; then
 	AC_CONFIG_TESTDIR(extensions/SharedMemory/tests)
 	AC_CONFIG_TESTDIR(extensions/IOControl/tests)
 	AC_CONFIG_TESTDIR(extensions/LogDB/tests)
-	AC_CONFIG_TESTDIR(extensions/HttpResolver/tests)
 	AC_CONFIG_TESTDIR(extensions/URepository/tests)
+	AC_CONFIG_TESTDIR(extensions/HttpAPIGateway/tests)
 
 	TESTSUITE_DIR="\$(top_builddir)/testsuite"
 	AC_SUBST(TESTSUITE_DIR)
@@ -594,8 +594,6 @@ AC_CONFIG_FILES([Makefile
 				 extensions/tests/MQPerfTest/Makefile
 				 extensions/LogDB/Makefile
 				 extensions/LogDB/tests/Makefile
-				 extensions/HttpResolver/Makefile
-				 extensions/HttpResolver/tests/Makefile
 				 extensions/URepository/Makefile
 				 extensions/URepository/tests/Makefile
 				 extensions/UWebSocketGate/Makefile
