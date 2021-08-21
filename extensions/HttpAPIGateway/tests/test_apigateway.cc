@@ -29,13 +29,23 @@ static void InitTest()
 
 }
 // -----------------------------------------------------------------------------
-TEST_CASE("HttpApiGateway: cli resolve", "[apigateway][cli]")
+TEST_CASE("HttpApiGateway: metrics", "[apigateway][metrics]")
 {
     InitTest();
 
     UHttp::UHttpClient cli;
 
     auto ret = cli.get("localhost", 8009, "api/v01/metrics/TestProc");
+    REQUIRE_FALSE( ret.empty() );
+}
+// -----------------------------------------------------------------------------
+TEST_CASE("HttpApiGateway: resolve", "[apigateway][resolve]")
+{
+    InitTest();
+
+    UHttp::UHttpClient cli;
+
+    auto ret = cli.get("localhost", 8009, "api/v01/resolve/TestProc");
     REQUIRE_FALSE( ret.empty() );
 }
 // -----------------------------------------------------------------------------

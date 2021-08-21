@@ -862,7 +862,7 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ObjectRef& o
     os << "[";
 
     for( const auto& m : o.metadata() )
-        os << " " << m.key() << "=" << m.val();
+        os << " " << m.first << "=" << m.second;
 
     os << " ]";
 

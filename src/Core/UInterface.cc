@@ -696,6 +696,75 @@ namespace uniset3
     }
 
     // -------------------------------------------------------------------------------------------
+    uniset3::ObjectRef UInterface::resolveORefOnly( const uniset3::ObjectId rid, const uniset3::ObjectId node  ) const
+    {
+        if( rid == uniset3::DefaultObjectId )
+            throw uniset3::ResolveNameError("UI(resolveORefOnly): ID=uniset3::DefaultObjectId");
+
+        if( node == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << "UI(resolveORefOnly): id='" << rid << "' error: node=uniset3::DefaultObjectId";
+            throw uniset3::ResolveNameError(err.str());
+        }
+
+        try
+        {
+            if( uconf->isLocalIOR() && node == uconf->getLocalNode() )
+                return uconf->iorfile->getRef(rid);
+
+            google::protobuf::Int64Value request;
+            request.set_value(rid);
+
+            auto o = make_shared<ORefInfo>();
+            std::shared_ptr<grpc::Channel> repChan;
+            std::unique_ptr<URepository_i::Stub> stub;
+
+            for (size_t i = 0; i < uconf->getRepeatCount(); i++)
+            {
+                try
+                {
+                    if( !repChan )
+                        repChan = resolveRepository(node);
+
+                    if( !repChan )
+                    {
+                        msleep(uconf->getRepeatTimeout());
+                        continue;
+                    }
+
+                    stub = URepository_i::NewStub(repChan);
+                    grpc::ClientContext ctx;
+                    ctx.set_deadline(uconf->deadline());
+                    o->addMetaData(ctx);
+                    uniset3::ObjectRef oref;
+                    grpc::Status st = stub->resolve(&ctx, request, &oref);
+
+                    if( st.ok() )
+                        return oref;
+
+                    if( st.error_code() == grpc::StatusCode::NOT_FOUND )
+                        throw uniset3::ResolveNameError();
+
+                    continue_or_throw(st, __FUNCTION__);
+                }
+                catch( const std::exception& ex ) {}
+
+                msleep(uconf->getRepeatTimeout());
+                repChan = nullptr;
+            }
+
+            throw uniset3::TimeOut();
+        }
+        catch( std::exception& ex )
+        {
+            ucrit << "UI(resolveORefOnly): myID=" << myid <<  ": resolve id=" << rid << "@" << node
+            << " catch " << ex.what() << endl;
+        }
+
+        throw uniset3::ResolveNameError();
+    }
+    // -------------------------------------------------------------------------------------------
     std::string UInterface::httpResolve( const uniset3::ObjectId id, const uniset3::ObjectId node ) const
     {
 #ifndef DISABLE_REST_API
@@ -943,7 +1012,7 @@ namespace uniset3
     void UInterface::ORefInfo::addMetaData( grpc::ClientContext& ctx )
     {
         for( const  auto& m : ref.metadata() )
-            ctx.AddMetadata(m.key(), m.val());
+            ctx.AddMetadata(m.first, m.second);
     }
     // ------------------------------------------------------------------------------------------------------------
     std::shared_ptr<UInterface::ORefInfo> UInterface::resolve( const uniset3::ObjectId id ) const
