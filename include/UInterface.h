@@ -227,6 +227,11 @@ namespace uniset3
                 rcache.setMaxSize(newsize);
             }
 
+            size_t getCacheMaxSize() const noexcept
+            {
+                return rcache.getMaxSize();
+            }
+
             /*! Кэш ссылок на объекты */
             class CacheOfResolve
             {
@@ -244,6 +249,11 @@ namespace uniset3
                     inline void setMaxSize( size_t ms ) noexcept
                     {
                         MaxSize = ms;
+                    };
+
+                    inline size_t getMaxSize() const noexcept
+                    {
+                        return MaxSize;
                     };
 
                 protected:

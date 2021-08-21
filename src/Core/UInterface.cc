@@ -36,6 +36,16 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     using namespace std;
     // -----------------------------------------------------------------------------
+    static void continue_or_throw(const grpc::Status& st, const std::string& fname = "")
+    {
+        if( st.error_code() != grpc::StatusCode::UNAVAILABLE && st.error_code() != grpc::StatusCode::DEADLINE_EXCEEDED )
+        {
+            ostringstream err;
+            err << fname << " error(" << st.error_code() << "): " << st.error_message();
+            throw uniset3::SystemError(err.str());
+        }
+    }
+    // -----------------------------------------------------------------------------
     UInterface::UInterface( const std::shared_ptr<uniset3::Configuration>& _uconf ):
         myid(uniset3::DefaultObjectId),
         rcache(100, 20),
@@ -116,6 +126,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -182,6 +194,7 @@ namespace uniset3
                     if( st.ok() )
                         return;
 
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -246,24 +259,16 @@ namespace uniset3
 
                 if( chan )
                 {
-                    std::chrono::time_point<std::chrono::system_clock> start, end;
-                    start = std::chrono::system_clock::now();
-
                     grpc::ClientContext ctx;
                     ctx.set_deadline(uconf->deadline());
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->setValue(&ctx, request, &reply);
-
-                    end = std::chrono::system_clock::now();
-                    std::cerr << "elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-                              << " ms [" << st.error_code() << "]\n";
-
                     if( st.ok() )
                         return;
-                }
 
-                cerr << "***** repeat.." << endl;
+                    continue_or_throw(st, __FUNCTION__);
+                }
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
@@ -347,6 +352,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return;
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -413,6 +420,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.type();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -478,6 +487,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -524,6 +535,8 @@ namespace uniset3
 
                 if( st.ok() )
                     return chan;
+
+                continue_or_throw(st, __FUNCTION__);
             }
             catch( const std::exception& ex ) {}
         }
@@ -555,6 +568,8 @@ namespace uniset3
 
             if( st.ok() )
                 return;
+
+            continue_or_throw(st, __FUNCTION__);
 
             msleep(uconf->getRepeatTimeout());
             rep = nullptr;
@@ -588,6 +603,8 @@ namespace uniset3
 
             if( st.ok() )
                 return;
+
+            continue_or_throw(st, __FUNCTION__);
 
             msleep(uconf->getRepeatTimeout());
             rep = nullptr;
@@ -658,6 +675,8 @@ namespace uniset3
                     {
                         throw uniset3::ResolveNameError();
                     }
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
                 catch( const std::exception& ex ) {}
 
@@ -756,7 +775,7 @@ namespace uniset3
                     if( st.ok() )
                         return;
 
-                    uwarn << "UI(send): (" << st.error_code() << ")" << st.error_message() << endl;
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -843,6 +862,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply;
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -901,6 +922,8 @@ namespace uniset3
 
                     if( st.ok() )
                         return reply.value();
+
+                    continue_or_throw(st, __FUNCTION__);
                 }
 
                 msleep(uconf->getRepeatTimeout());
@@ -1131,6 +1154,8 @@ namespace uniset3
                 if( st.ok() )
                     return resp.value();
 
+                continue_or_throw(st, __FUNCTION__);
+
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1193,6 +1218,8 @@ namespace uniset3
 
                 if( st.ok() )
                     return reply.value();
+
+                continue_or_throw(st, __FUNCTION__);
 
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
@@ -1260,6 +1287,8 @@ namespace uniset3
                 if( st.ok() )
                     return;
 
+                continue_or_throw(st, __FUNCTION__);
+
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1316,6 +1345,8 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
+
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1368,6 +1399,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1421,6 +1453,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1475,6 +1508,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1538,6 +1572,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1592,6 +1627,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1645,6 +1681,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
@@ -1698,6 +1735,7 @@ namespace uniset3
                 if( st.ok() )
                     return reply;
 
+                continue_or_throw(st, __FUNCTION__);
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }

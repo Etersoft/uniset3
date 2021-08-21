@@ -820,13 +820,36 @@ uniset3::umessage::TextMessage uniset3::makeTextMessage()
     return tm;
 }
 // ---------------------------------------------------------------------------------------------------------------
-uniset3::metrics::Metric uniset3::createMetric( const std::string& name, double val, const std::string& description )
+uniset3::metrics::Metric uniset3::createMetric( const std::string& name, const double val, const std::string& description )
 {
     metrics::Metric m;
     m.set_name(name);
-    m.set_value(val);
+    m.set_dvalue(val);
     m.set_description(description);
     return m;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::metrics::Metric uniset3::createMetric( const std::string& name, const std::string& val, const std::string& description )
+{
+    metrics::Metric m;
+    m.set_name(name);
+    m.set_svalue(val);
+    m.set_description(description);
+    return m;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::configurator::ParamValue uniset3::createParamValue( const double val )
+{
+    configurator::ParamValue p;
+    p.set_dvalue(val);
+    return p;
+}
+// ---------------------------------------------------------------------------------------------------------------
+uniset3::configurator::ParamValue uniset3::createParamValue( const std::string& val )
+{
+    configurator::ParamValue p;
+    p.set_svalue(val);
+    return p;
 }
 // ---------------------------------------------------------------------------------------------------------------
 std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ObjectRef& o)

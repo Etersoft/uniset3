@@ -41,6 +41,9 @@ class UObject_SK:
 
         virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
         virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
+        virtual ::grpc::Status setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+        virtual ::grpc::Status getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+
 
         virtual bool setMsg( uniset3::ObjectId code, bool state = true ) noexcept;
 

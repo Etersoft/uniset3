@@ -30,6 +30,7 @@
 #include "IOControllerProxy.h"
 #include "IONotifyControllerProxy.h"
 #include "MetricsExporterProxy.h"
+#include "ConfiguratorProxy.h"
 //----------------------------------------------------------------------------------------
 namespace uniset3
 {
@@ -105,6 +106,7 @@ namespace uniset3
             uniset3::IOControllerProxy ioproxy;
             uniset3::IONotifyControllerProxy ionproxy;
             uniset3::MetricsExporterProxy metricsproxy;
+            ConfiguratorProxy cproxy;
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace

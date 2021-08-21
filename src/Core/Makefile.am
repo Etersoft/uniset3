@@ -1,6 +1,7 @@
 noinst_LTLIBRARIES = libUCore.la
 libUCore_la_SOURCES = UniSetTypes.pb.cc UniSetTypes.grpc.pb.cc UniSetTypes.cc \
 	MetricsExporter.pb.cc MetricsExporter.grpc.pb.cc MetricsExporterProxy.cc \
+	Configurator.pb.cc Configurator.grpc.pb.cc ConfiguratorProxy.cc \
 	UniSetObject.pb.cc UniSetObject.grpc.pb.cc UniSetObject.cc \
 	UniSetManager.pb.cc UniSetManager.grpc.pb.cc UniSetManager.cc UniSetActivator.cc \
 	Configuration.cc MessageTypes.pb.cc MessageTypes.grpc.pb.cc \

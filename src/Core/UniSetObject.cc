@@ -408,6 +408,38 @@ namespace uniset3
         return ::grpc::Status::OK;
     }
     // ------------------------------------------------------------------------------------------
+    ::grpc::Status UniSetObject::setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
+    {
+        auto i = request->params().find("MaxSizeOfMessageQueue");
+        if( i != request->params().end() && i->second.has_dvalue() )
+            setMaxSizeOfMessageQueue((size_t)i->second.dvalue());
+
+        i = request->params().find("CacheSize");
+        if( i != request->params().end() && i->second.has_dvalue() )
+            ui->setCacheMaxSize((size_t)i->second.dvalue());
+
+        return ::grpc::Status::OK;
+    }
+    // ------------------------------------------------------------------------------------------
+    ::grpc::Status UniSetObject::getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
+    {
+        auto m = response->mutable_params();
+        (*m)["MaxSizeOfMessageQueue"] = createParamValue(getMaxSizeOfMessageQueue());
+        (*m)["CacheSize"] = createParamValue(ui->getCacheMaxSize());
+
+        return ::grpc::Status::OK;
+    }
+    // ------------------------------------------------------------------------------------------
+    ::grpc::Status UniSetObject::loadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::grpc::ServerWriter< ::uniset3::configurator::Config>* writer)
+    {
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "(loadConfig): unimplemented");
+    }
+    // ------------------------------------------------------------------------------------------
+    ::grpc::Status UniSetObject::reloadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::google::protobuf::Empty* response)
+    {
+        return grpc::Status(grpc::StatusCode::UNIMPLEMENTED, "(loadConfig): unimplemented");
+    }
+    // ------------------------------------------------------------------------------------------
     uniset3::ObjectRef UniSetObject::getRef() const
     {
         uniset3::uniset_rwmutex_rlock lock(refmutex);
