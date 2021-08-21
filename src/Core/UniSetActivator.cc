@@ -134,6 +134,7 @@ namespace uniset3
 
         oproxy.add(obj);
         metricsproxy.add(obj);
+        cproxy.add(obj);
         return true;
     }
     // ------------------------------------------------------------------------------------------
@@ -168,6 +169,7 @@ namespace uniset3
         ioproxy.lock();
         ionproxy.lock();
         metricsproxy.lock();
+        cproxy.lock();
 
         termControl = terminate_control;
         auto conf = uniset_conf();
@@ -183,6 +185,7 @@ namespace uniset3
         builder.RegisterService(static_cast<IOController_i::Service*>(&ioproxy));
         builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
         builder.RegisterService(static_cast<metrics::MetricsExporter_i::Service*>(&metricsproxy));
+        builder.RegisterService(static_cast<configurator::Configurator_i::Service*>(&cproxy));
         server = builder.BuildAndStart();
 
         uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;

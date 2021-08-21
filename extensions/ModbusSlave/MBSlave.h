@@ -520,7 +520,7 @@ namespace uniset3
             ModbusRTU::mbErrCode real_bitreg_write_it( std::shared_ptr<BitRegProperty>& bp, const ModbusRTU::ModbusData val );
             ModbusRTU::mbErrCode real_write_prop(IOProperty* p, ModbusRTU::ModbusData* dat, size_t& i, size_t count );
 
-#ifndef DISABLE_REST_API
+#if 0
             // http api
             Poco::JSON::Object::Ptr request_regs( const std::string& req, const Poco::URI::QueryParameters& p );
             Poco::JSON::Object::Ptr get_regs(ModbusRTU::ModbusAddr addr, const RegMap& rmap, const std::vector<std::string>& q_regs );

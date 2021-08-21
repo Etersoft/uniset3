@@ -38,11 +38,11 @@
 #include "UInterface.h"
 #include "UniSetObject.grpc.pb.h"
 #include "MetricsExporter.grpc.pb.h"
+#include "Configurator.grpc.pb.h"
 #include "MessageTypes.pb.h"
 #include "ThreadCreator.h"
 #include "LT_Object.h"
 #include "MQMutex.h"
-#include "UHttpRequestHandler.h"
 
 //---------------------------------------------------------------------------
 namespace uniset3
@@ -51,7 +51,6 @@ namespace uniset3
     class UniSetActivator;
     class UniSetManager;
     class UniSetObjectProxy;
-
     //---------------------------------------------------------------------------
     class UniSetObject;
     typedef std::list< std::shared_ptr<UniSetObject> > ObjectsList;     /*!< Список подчиненных объектов */
@@ -76,6 +75,7 @@ namespace uniset3
         public std::enable_shared_from_this<UniSetObject>,
         public UniSetObject_i::Service,
         public uniset3::metrics::MetricsExporter_i::Service,
+        public uniset3::configurator::Configurator_i::Service,
         public LT_Object
     {
         public:
@@ -89,6 +89,10 @@ namespace uniset3
             virtual ::grpc::Status exists(::grpc::ServerContext* context, const ::uniset3::ExistsParams* request, ::google::protobuf::BoolValue* response) override;
             virtual ::grpc::Status push(::grpc::ServerContext* context, const ::uniset3::umessage::TransportMessage* request, ::google::protobuf::Empty* response) override;
             virtual ::grpc::Status metrics(::grpc::ServerContext* context, const ::uniset3::metrics::MetricsParams* request, ::uniset3::metrics::Metrics* response) override;
+            virtual ::grpc::Status setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+            virtual ::grpc::Status getParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response) override;
+            virtual ::grpc::Status loadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::grpc::ServerWriter< ::uniset3::configurator::Config>* writer) override;
+            virtual ::grpc::Status reloadConfig(::grpc::ServerContext* context, const ::uniset3::configurator::ConfigCmdParams* request, ::google::protobuf::Empty* response) override;
 
             virtual bool isExists();
             uniset3::ObjectId getId() const;

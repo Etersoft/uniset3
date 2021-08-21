@@ -8,10 +8,13 @@ import "google/protobuf/any.proto";
 message Metric
 {
     string name = 1;
-    double value = 2;
-    google.protobuf.Any data = 3;
-    map<string, string> labels = 4;
-    string description = 5;
+    oneof metric_value {
+       double dvalue = 2; // double value
+       string svalue = 3; // string value
+    }
+    google.protobuf.Any data = 4;
+    map<string, string> labels = 5;
+    string description = 6;
 }
 
 message Metrics
