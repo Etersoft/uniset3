@@ -11,15 +11,31 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: alt:sisyphus
+
+    env:
+      CC: ccache gcc
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CXX: ccache g++
+      USE_CCACHE: 1
+
     steps:
       - name: install packages
         run: |
             apt-get update && apt-get -y install etersoft-build-utils su sudo \
-            git-core ccache gcc-c++ etersoft-build-utils catch-devel \
+            ccache git-core ccache gcc-c++ etersoft-build-utils catch-devel \
             libcomedi-devel libmariadb-devel libpqxx-devel libsqlite3-devel \
             libxml2-devel libsigc++2-devel libpoco-devel libev-devel libprotobuf-devel grpc-plugins libgrpc++-devel \
             libmosquitto-devel libprotobuf-devel \
             xsltproc python3-dev python-module-distribute swig
+
+      - name: cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-ccache
+          restore-keys: |
+            ${{ runner.os }}-ccache
+
       - uses: actions/checkout@v2
       - name: configure
         run: |
@@ -28,8 +44,13 @@ jobs:
             export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
             autoreconf -fiv
             ./configure --disable-netdata --disable-python
+
       - name: make
         run: make
+
+      - name: Show summary of ccache configuration and statistics counters
+        run: ccache --show-stats
+
       - name: testsuite
         run: |
             cd testsuite;
