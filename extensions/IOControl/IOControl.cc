@@ -79,7 +79,7 @@ namespace uniset3
         confnode = conf->getNode(cname);
 
         if( confnode == NULL )
-            throw SystemError("Not found conf-node " + cname + " for " + myname);
+            throw SystemError("Not found conf-node <" + cname + "> for " + myname);
 
         iolog = make_shared<DebugStream>();
         iolog->setLogName(myname);
