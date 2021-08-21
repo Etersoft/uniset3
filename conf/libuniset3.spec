@@ -12,7 +12,6 @@
 %def_enable api
 %def_enable logdb
 %def_enable opentsdb
-%def_enable uresolver
 %def_enable uwebsocket
 
 %ifarch %ix86
@@ -178,17 +177,6 @@ Obsoletes: %name-extentions-devel
 
 %description extension-common-devel
 Libraries needed to develop for uniset extensions
-
-%if_enabled api
-%if_enabled uresolver
-%package extension-uresolver
-Group: Development/Tools
-Summary: CORBA object reference resolver based on http
-
-%description extension-uresolver
-CORBA object reference resolver based on http
-%endif
-%endif
 
 %if_enabled api
 %package extension-wsgate
@@ -511,13 +499,6 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_pkgconfigdir/libUniSet3MQTTPublisher*.pc
 %_libdir/libUniSet3MQTTPublisher*.so
 %_includedir/%oname/extensions/mqtt/
-%endif
-
-%if_enabled api
-%if_enabled uresolver
-%files extension-uresolver
-%_bindir/%oname-httpresolver*
-%endif
 %endif
 
 %if_enabled api
