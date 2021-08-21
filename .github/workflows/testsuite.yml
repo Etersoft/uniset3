@@ -19,7 +19,7 @@ jobs:
             libcomedi-devel libmariadb-devel libpqxx-devel libsqlite3-devel \
             libxml2-devel libsigc++2-devel libpoco-devel libev-devel libprotobuf-devel grpc-plugins libgrpc++-devel \
             libmosquitto-devel libprotobuf-devel \
-            xsltproc python-devel python-module-distribute swig
+            xsltproc python3-dev python-module-distribute swig
       - uses: actions/checkout@v2
       - name: configure
         run: |

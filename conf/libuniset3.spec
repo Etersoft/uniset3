@@ -74,8 +74,8 @@ BuildRequires: netdata
 %endif
 
 %if_enabled python
-BuildRequires: python-devel python-module-distribute
-BuildRequires(pre): rpm-build-python
+BuildRequires: python3-dev
+BuildRequires(pre): rpm-build-python3
 
 # swig
 # add_findprov_lib_path %python_sitelibdir/%oname
@@ -118,14 +118,14 @@ Libraries needed to develop for UniSet.
 
 
 %if_enabled python
-%package -n python-module-%oname
+%package -n python3-module-%oname
 Group: Development/Python
 Summary: python interface for libuniset
 Requires: %name = %version-%release
 
 # py_provides UGlobal UInterface UniXML uniset
 
-%description -n python-module-%oname
+%description -n python3-module-%oname
 Python interface for %name
 %endif
 
@@ -444,10 +444,10 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %endif
 
 %if_enabled python
-%files -n python-module-%oname
-%python_sitelibdir/*
-%python_sitelibdir_noarch/%oname/*
-%dir %python_sitelibdir_noarch/%oname
+%files -n python3-module-%oname
+%python3_sitelibdir/*
+%python3_sitelibdir_noarch/%oname/*
+%dir %python3_sitelibdir_noarch/%oname
 %endif
 
 %if_enabled netdata
