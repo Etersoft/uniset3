@@ -20,6 +20,7 @@
 
 #include "unisetstd.h"
 #include <Poco/Net/NetException.h>
+#include <Poco/URI.h>
 #include <google/protobuf/util/json_util.h>
 #include "ujson.h"
 #include "HttpAPIGateway.h"
@@ -216,6 +217,7 @@ void HttpAPIGateway::initRouter()
     router.setPrefix("/api/" + HTTP_API_GATEWAY_VERSION);
     router.get().add("/metrics/:oname", std::bind(&HttpAPIGateway::requestMetrics, this, _1, _2, _3) );
     router.get().add("/resolve/:oname", std::bind(&HttpAPIGateway::requestResolve, this, _1, _2, _3) );
+    router.get().add("/configure/get", std::bind(&HttpAPIGateway::requestConfigureGet, this, _1, _2, _3) );
 }
 // -----------------------------------------------------------------------------
 void HttpAPIGateway::requestMetrics(Poco::Net::HTTPServerRequest& req,
@@ -358,4 +360,107 @@ void HttpAPIGateway::requestResolve( Poco::Net::HTTPServerRequest& req, Poco::Ne
 
     out << json_string;
     out.flush();
+}
+// -----------------------------------------------------------------------------
+// обработка запроса вида: /configure/get?[ID|NAME]&props=testname,name] from configure.xml
+void HttpAPIGateway::requestConfigureGet(Poco::Net::HTTPServerRequest& req,
+                                    Poco::Net::HTTPServerResponse& resp,
+                                    const UHttpContext& ctx)
+{
+    using Poco::Net::HTTPResponse;
+
+    rlog1 << myname << "(requestConfigureGet): " << req.getURI() << endl;
+    std::ostream& out = resp.send();
+
+    Poco::URI uri(req.getURI());
+    auto params = uri.getQueryParameters();
+    if( params.empty() )
+    {
+        auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, "Unknown id or name");
+        jdata->stringify(out);
+        return;
+    }
+
+    auto idlist = uniset3::split(params[0].first, ',');
+
+    if( idlist.empty() )
+    {
+        auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, "Unknown id or name in '" + params[0].first + "'");
+        jdata->stringify(out);
+        return;
+    }
+
+    Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
+    Poco::JSON::Array::Ptr jdata = uniset3::json::make_child_array(json, "conf");
+
+    string props = {""};
+
+    for( const auto& p : params )
+    {
+        if( p.first == "props" )
+        {
+            props = p.second;
+            break;
+        }
+    }
+
+    for( const auto& id : idlist )
+    {
+        Poco::JSON::Object::Ptr j = configure_params_by_name(id, props);
+        if( j )
+            jdata->add(j);
+    }
+
+    json->stringify(out);
+    out.flush();
+}
+// -----------------------------------------------------------------------------
+Poco::JSON::Object::Ptr HttpAPIGateway::configure_params_by_name( const std::string& name, const std::string& props )
+{
+    Poco::JSON::Object::Ptr jdata = new Poco::JSON::Object();
+    auto conf = uniset_conf();
+
+    ObjectId id = conf->getAnyID(name);
+
+    if( id == DefaultObjectId )
+    {
+        ostringstream err;
+        err << name << " not found..";
+        jdata->set(name, "");
+        jdata->set("error", err.str());
+        return jdata;
+    }
+
+    xmlNode* xmlnode = conf->getXMLObjectNode(id);
+
+    if( !xmlnode )
+    {
+        ostringstream err;
+        err << name << " not found confnode..";
+        jdata->set(name, "");
+        jdata->set("error", err.str());
+        return jdata;
+    }
+
+    UniXML::iterator it(xmlnode);
+
+    jdata->set("name", it.getProp("name"));
+    jdata->set("id", it.getProp("id"));
+
+    if( !props.empty() )
+    {
+        auto lst = uniset3::split(props, ',');
+
+        for( const auto& p : lst )
+            jdata->set(p, it.getProp(p));
+    }
+    else
+    {
+        auto lst = it.getPropList();
+
+        for( const auto& p : lst )
+            jdata->set(p.first, p.second);
+    }
+
+    return jdata;
 }
