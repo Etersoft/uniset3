@@ -268,9 +268,9 @@ AC_ARG_ENABLE(python, AC_HELP_STRING([--disable-python], [disable Python support
 
 if test ${buildpython} = true; then
 	AC_MSG_RESULT([enabled])
+	AM_PATH_PYTHON(3.0)
 	dnl Python
-	AM_PATH_PYTHON(,,)
-	PKG_CHECK_MODULES(PYTHON,python-2.7,,exit)
+	PKG_CHECK_MODULES(PYTHON,python3,,exit)
 #	AC_CHECK_PROG(SWIG, swig, yes, exit)
 
 	AC_MSG_CHECKING([netdata python plugin])

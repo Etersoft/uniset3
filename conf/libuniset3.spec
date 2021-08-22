@@ -12,7 +12,6 @@
 %def_enable api
 %def_enable logdb
 %def_enable opentsdb
-%def_enable uresolver
 %def_enable uwebsocket
 
 %ifarch %ix86
@@ -74,8 +73,8 @@ BuildRequires: netdata
 %endif
 
 %if_enabled python
-BuildRequires: python-devel python-module-distribute
-BuildRequires(pre): rpm-build-python
+BuildRequires: python3-dev
+BuildRequires(pre): rpm-build-python3
 
 # swig
 # add_findprov_lib_path %python_sitelibdir/%oname
@@ -118,14 +117,14 @@ Libraries needed to develop for UniSet.
 
 
 %if_enabled python
-%package -n python-module-%oname
+%package -n python3-module-%oname
 Group: Development/Python
 Summary: python interface for libuniset
 Requires: %name = %version-%release
 
 # py_provides UGlobal UInterface UniXML uniset
 
-%description -n python-module-%oname
+%description -n python3-module-%oname
 Python interface for %name
 %endif
 
@@ -178,17 +177,6 @@ Obsoletes: %name-extentions-devel
 
 %description extension-common-devel
 Libraries needed to develop for uniset extensions
-
-%if_enabled api
-%if_enabled uresolver
-%package extension-uresolver
-Group: Development/Tools
-Summary: CORBA object reference resolver based on http
-
-%description extension-uresolver
-CORBA object reference resolver based on http
-%endif
-%endif
 
 %if_enabled api
 %package extension-wsgate
@@ -343,6 +331,24 @@ Requires: %name-extension-common-devel = %version-%release
 Libraries needed to develop for uniset MQTT extension
 %endif
 
+%if_enabled api
+%package extension-api-gateway
+Group: Development/C++
+Summary: HTTP API Gateway for %name
+Requires: %name-extension-common = %version-%release
+
+%description extension-api-gateway
+HTTP API Gateway for %name
+
+%package extension-api-gateway-devel
+Group: Development/C++
+Summary: Libraries needed to develop for uniset HTTP API Gateway extension
+Requires: %name-extension-common-devel = %version-%release
+
+%description extension-api-gateway-devel
+Libraries needed to develop for uniset HTTP API Gateway extension
+%endif
+
 %prep
 %setup
 
@@ -444,10 +450,10 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %endif
 
 %if_enabled python
-%files -n python-module-%oname
-%python_sitelibdir/*
-%python_sitelibdir_noarch/%oname/*
-%dir %python_sitelibdir_noarch/%oname
+%files -n python3-module-%oname
+%python3_sitelibdir/*
+%python3_sitelibdir_noarch/%oname/*
+%dir %python3_sitelibdir_noarch/%oname
 %endif
 
 %if_enabled netdata
@@ -514,13 +520,6 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %endif
 
 %if_enabled api
-%if_enabled uresolver
-%files extension-uresolver
-%_bindir/%oname-httpresolver*
-%endif
-%endif
-
-%if_enabled api
 %if_enabled uwebsocket
 %files extension-wsgate
 %_bindir/%oname-wsgate*
@@ -552,6 +551,18 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 
 #%_pkgconfigdir/libUniSet3*.pc
 %exclude %_pkgconfigdir/libUniSet3.pc
+
+%if_enabled api
+%files extension-api-gateway
+%_bindir/%oname-api-gateway*
+%_libdir/libUniSet3HttpAPIGateway*.so.*
+
+%files extension-api-gateway-devel
+%_pkgconfigdir/libUniSet3HttpAPIGateway*.pc
+%_libdir/libUniSet3HttpAPIGateway*.so
+%_includedir/%oname/extensions/apigateway/
+%endif
+
 
 # history of current unpublished changes
 

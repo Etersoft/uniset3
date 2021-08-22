@@ -28,6 +28,12 @@ jobs:
     container:
       image: alt:sisyphus
       
+    env:
+      CC: ccache gcc
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CXX: ccache g++
+      USE_CCACHE: 1
+
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +43,14 @@ jobs:
         # https://docs.github.com/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
 
     steps:
+      - name: cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-ccache
+          restore-keys: |
+            ${{ runner.os }}-ccache
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -49,20 +63,23 @@ jobs:
       - name: install packages
         run: |
             apt-get update && apt-get -y install etersoft-build-utils su sudo \
-            git-core ccache gcc-c++ etersoft-build-utils catch-devel \
+            ccache git-core ccache gcc-c++ etersoft-build-utils catch-devel \
             libcomedi-devel libmariadb-devel libpqxx-devel libsqlite3-devel \
             libxml2-devel libsigc++2-devel libpoco-devel libev-devel libprotobuf-devel grpc-plugins libgrpc++-devel \
             libmosquitto-devel libprotobuf-devel \
-            xsltproc python-devel python-module-distribute swig
-          
+            xsltproc python3-dev python-module-distribute swig
+
       - name: build
         run: |
             export CXXFLAGS='-pipe -O2 -pedantic -Wall'
             # due broken comedi
             export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
             autoreconf -fiv
-            ./configure --disable-netdata
+            ./configure --disable-netdata --disable-python
             make
+
+      - name: Show summary of ccache configuration and statistics counters
+        run: ccache --show-stats
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1

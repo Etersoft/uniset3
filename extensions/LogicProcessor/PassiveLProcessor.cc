@@ -38,7 +38,7 @@ PassiveLProcessor::PassiveLProcessor( uniset3::ObjectId objId,
     xmlNode* confnode = conf->getNode(conf_name);
 
     if( confnode == NULL )
-        throw SystemError("Not found conf-node for " + conf_name );
+        throw SystemError("Not found conf-node for <" + conf_name + ">");
 
     UniXML::iterator it(confnode);
     string lfile = conf->getArgParam("--" + prefix + "-schema", it.getProp("schema"));

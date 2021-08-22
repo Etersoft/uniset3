@@ -69,7 +69,7 @@ namespace uniset3
         cnode = conf->getNode(conf_name);
 
         if( cnode == NULL )
-            throw uniset3::SystemError("(MBSlave): Not found conf-node for " + myname );
+            throw uniset3::SystemError("(MBSlave): Not found conf-node <" + conf_name + "> for " + myname );
 
         shm = make_shared<SMInterface>(shmId, ui, objId, ic);
 

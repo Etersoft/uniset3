@@ -87,7 +87,7 @@ namespace uniset3
         confnode = conf->getNode(cname);
 
         if( confnode == NULL )
-            throw SystemError("Not found conf-node for " + cname );
+            throw SystemError("Not found conf-node <" + cname + ">" );
 
         string prefix = "sm";
 
@@ -541,11 +541,14 @@ namespace uniset3
             ioconf = make_shared<IOConfig_XML>(conf->getConfXML(), conf, conf->getXMLSensorsSection());
         }
 
-        uniset3::ObjectId ID = conf->getControllerID(conf->getArgParam("--smemory-id", "SharedMemory"));
+        const std::string sname = conf->getArgParam("--smemory-id", "SharedMemory");
+        uniset3::ObjectId ID = conf->getControllerID(sname);
 
         if( ID == uniset3::DefaultObjectId )
         {
-            cerr << "(smemory): Not found ID for SharedMemory in section "
+            cerr << "(smemory): Not found ID for "
+                 << sname
+                 << " in section "
                  << conf->getControllersSection()
                  << endl;
             return nullptr;

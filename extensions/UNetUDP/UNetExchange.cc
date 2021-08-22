@@ -43,7 +43,7 @@ UNetExchange::UNetExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, con
     cnode = conf->getNode(myname);
 
     if( cnode == NULL )
-        throw uniset3::SystemError("(UNetExchange): Not found conf-node for " + myname );
+        throw uniset3::SystemError("(UNetExchange): Not found conf-node <" + myname + ">");
 
     unetlog = make_shared<DebugStream>();
     unetlog->setLogName(myname);
