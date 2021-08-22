@@ -38,7 +38,8 @@
 // -------------------------------------------------------------------------
 using namespace std;
 // -------------------------------------------------------------------------
-static const string UniSetDefaultPort = "2809";
+static const int UniSetDefaultPort = 0; // dynamic port
+static const std::string UniSetDefaultHost = "0.0.0.0"; // any interface
 // -------------------------------------------------------------------------
 static ostream& print_help( ostream& os, int width, const string& cmd,
                             const string& help, const string& tab = "" )
@@ -55,7 +56,8 @@ std::string uniset3::Configuration::help()
 {
     ostringstream os;
     print_help(os, 25, "--confile", "Файл конфигурации. По умолчанию: configure.xml\n");
-    print_help(os, 25, "--uniset-port num", "использовать заданный порт (переопределяет 'port заданный в конф. файле в разделе <nodes><node.. port=''>)\n");
+    print_help(os, 25, "--grpc-host xxx", "адрес на котором запускается GRPC-сервер\n");
+    print_help(os, 25, "--grpc-port zzz", "порт на котором запускается GRPC-сервер\n");
     print_help(os, 25, "--localIOR {1,0}", "использовать локальные файлы для получения IOR (т.е. не использовать omniNames). Переопределяет параметр в конфигурационном файле.\n");
     os << "\ndebug logs:\n";
     print_help(os, 25, "--ulog-add-levels", "добавить уровень вывода логов\n");
@@ -324,6 +326,8 @@ namespace uniset3
     // -------------------------------------------------------------------------
     void Configuration::initParameters()
     {
+        defGRPCPort = initGRPCPort(UniSetDefaultPort);
+        defGRPCHost = initGRPCHost("0.0.0.0");
         xmlNode* root = unixml->findNode( unixml->getFirstNode(), "UniSet" );
 
         if( !root )
@@ -467,6 +471,12 @@ namespace uniset3
             {
                 if( !it.getProp("deadline").empty() )
                     defaultDeadline_msec = it.getIntProp("deadline");
+
+                if( !it.getProp("port").empty() )
+                    defGRPCPort = initGRPCPort(it.getIntProp("port"));
+
+                if( !it.getProp("host").empty() )
+                    defGRPCHost = initGRPCHost(it.getProp("host"));
             }
         }
 
@@ -652,6 +662,16 @@ namespace uniset3
         return repAddr;
     }
     // -------------------------------------------------------------------------
+    int Configuration::getGRPCPort() const noexcept
+    {
+        return defGRPCPort;
+    }
+    // -------------------------------------------------------------------------
+    std::string Configuration::getGRPCHost() const noexcept
+    {
+        return defGRPCHost;
+    }
+    // -------------------------------------------------------------------------
     int Configuration::repositoryPort() const noexcept
     {
         return repPort;
@@ -678,9 +698,6 @@ namespace uniset3
 
         UniXML::iterator it(node);
         (void)it.goChildren();
-
-        // определяем порт
-        string defPort(getPort(unixml->getProp(node, "port")));
 
         lnodes.clear();
 
@@ -709,7 +726,7 @@ namespace uniset3
             }
 
             ninf.set_host(it.getProp("ip"));
-            ninf.set_port(it.getProp2("port", defPort));
+            ninf.set_port(it.getPIntProp("port", getGRPCPort()));
 
             auto dbID = DefaultObjectId;
             string tmp(it.getProp("dbserver"));
@@ -966,24 +983,45 @@ namespace uniset3
         }
     }
     // -------------------------------------------------------------------------
-    string Configuration::getPort( const string& port ) const noexcept
+    std::string Configuration::initGRPCHost( const std::string& defIP ) const noexcept
     {
-        // Порт задан в параметрах программы
-        string defport(getArgParam("--uniset-port"));
+        // command line в приоритете
+        string defhost_str = getArgParam("--grpc-host");
+        if( !defhost_str.empty() )
+            return defhost_str;
 
-        if( !defport.empty() )
-            return defport;
+        // либо тот кто вызвал, сам указал параметр
+        if( !defIP.empty() )
+            return defIP;
 
         // Порт задан в переменной окружения
-        if( getenv("UNISET_PORT") != NULL )
+        if( getenv("UNISET_GRPC_HOST") != NULL && defIP.empty() )
         {
-            defport = getenv("UNISET_PORT");
-            return defport;
+            defhost_str = getenv("UNISET_GRPC_HOST");
+            return defhost_str;
         }
 
-        // Порт задан в параметрах
-        if( !port.empty() )
-            return port;
+        return UniSetDefaultHost;
+    }
+    // -------------------------------------------------------------------------
+    int Configuration::initGRPCPort( int defPort ) const noexcept
+    {
+        // command line в приоритете
+        string defport_str = getArgParam("--grpc-port");
+
+        if( !defport_str.empty() )
+            return uni_atoi(defport_str);
+
+        // либо тот кто вызвал, сам указал порт
+        if( defPort != 0 )
+            return defPort;
+
+        // Порт задан в переменной окружения
+         if( getenv("UNISET_GRPC_PORT") != NULL )
+        {
+            defport_str = getenv("UNISET_GRPC_PORT");
+            return uni_atoi(defport_str);
+        }
 
         // Порт по умолчанию
         return UniSetDefaultPort;
