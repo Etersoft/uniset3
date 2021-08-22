@@ -174,8 +174,8 @@ namespace uniset3
         termControl = terminate_control;
         auto conf = uniset_conf();
 
-        grpcHost = conf->getArgParam("--activator-grpc-host", "0.0.0.0");
-        grpcPort = conf->getArgInt("--activator-grpc-port", "0");
+        grpcHost = conf->getGRPCHost();
+        grpcPort = conf->getGRPCPort();
 
         ostringstream addr;
         addr << grpcHost << ":" << grpcPort;

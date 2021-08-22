@@ -155,6 +155,9 @@ namespace uniset3
             uniset3::ListOfNode::const_iterator listNodesBegin() const noexcept;
             uniset3::ListOfNode::const_iterator listNodesEnd() const noexcept;
 
+            int getGRPCPort() const noexcept;
+            std::string getGRPCHost() const noexcept;
+
             int repositoryPort() const noexcept;
             std::string repositoryAddr() const noexcept;
             std::string repositoryAddressByNode(  uniset3::ObjectId node, size_t netNumber = 0 ) const noexcept;
@@ -182,7 +185,8 @@ namespace uniset3
             void initParameters();
             void setLocalNode( const std::string& nodename );
 
-            std::string getPort( const std::string& port = "" ) const noexcept;
+            int initGRPCPort(int defPort = 0 ) const noexcept;
+            std::string initGRPCHost( const std::string& defIP = "0.0.0.0" ) const noexcept;
 
             std::string rootDir = { "" };
             std::shared_ptr<UniXML> unixml;
@@ -227,6 +231,8 @@ namespace uniset3
             bool localIOR = { false };
             std::string repAddr = { "" };
             int repPort = { 0 };
+            int defGRPCPort = { 0 };
+            std::string defGRPCHost = { "0.0.0.0" };
 
             timeout_t heartbeat_msec = { 3000 };
             timeout_t ncreadytimeout_msec = { 180000 };

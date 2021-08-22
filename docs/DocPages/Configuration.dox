@@ -1,8 +1,8 @@
 /*! \page ConfigurationPage Конфигурирование системы
 
 - \ref ConfigurationPage_secCommon
-- \ref ConfigurationPage_secOmniORB
-- \ref ConfigurationPage_secOmniNames
+- \ref ConfigurationPage_secGRPC
+- \ref ConfigurationPage_secRepository
 - \ref ConfigurationPage_secLocalIOR
 
 \section ConfigurationPage_secCommon Общее описание
@@ -16,62 +16,59 @@
 \code
 ...
 #include <Configuration.h>
-using namespace UniSetTypes;
 
 int main(int argc, char **argv)
 {
     try
     {
-        uniset_init(argc, argv, "configure.xml");
-    ...
-    ...
+        uniset3::uniset_init(argc, argv, "configure.xml");
+        ...
+        ...
     }
-    catch(Exception& ex )
+    catch( std::exception& ex )
     {
-        cerr << "(main): Поймали исключение " << ex <<  endl;
+        cerr << "(main): catch " << ex.what() <<  endl;
     }
     catch(...)
     {
-        cerr << "Неизвестное исключение!!!!"<< endl;
+        cerr << "Unknown exception"<< endl;
     }
-...
+    ...
 }
 \endcode
 
-\section ConfigurationPage_secOmniORB Конфигурирование OmniORB
-Для возможности задать напрямую параметры для omniORB заложена специальная секция <omniORB>.
-
-В данную секцию можно записывать любые параметры поддерживаемые библиотекой omniORB.
-Формат и название параметров см. документацию по omniORB.
-
-Пример:
+\section ConfigurationPage_secGRPC Конфигурирование GRPC
+При запуске uniset-сервисов, необходимо указывать на каком IP и порту сервис будет принимать запросы.
+Это можно сделать аргументами командной строки \b --grpc-host и \b --grpc-port
+или задать в конфигурационном файле
 \code
-<omniORB>
-    <option name="endPoint" arg="giop:tcp:host1:"/>
-    <option name="endPoint" arg="giop:tcp:host2:" error_if_not_available="1"/>
-</omniORB>
+<UniSet>
+ ...
+ <GRPC host="ip or hostname" port="xxx" deadline="msec"/>
+</UniSet>
 \endcode
 
-Для параметра 'endPoint' встроена дополнительная проверка доступности указанного адреса.
-\warning По умолчанию \b недоступность \b игнорируется, если не указан параметр \a error_if_not_available="1"
+По умолчанию сервис слушает на всех интерфейсах (0.0.0.0) и порт назначается автоматически (свободный).
+В настроечной секции так же можно указать умолчательный timeout (deadline) для удалённых вызовов через GRPC, 
+в миллисекундах.
 
-Помимо этого можно задать параметр \a ignore_checking="1", чтобы не происходило проверки доступности endPoint.
-
-\section ConfigurationPage_secOmniNames Сервис имён
+\section ConfigurationPage_secRepository Репозиторий (сервис имён)
 Сервис имён предназначен для получения ссылок на объекты (для возможности удалённого вызова)
-по имени объекта. В данном проекте используется реализация службы имён входящая в состав
-библиотеки omniORB. Сервис поставляется отдельной утилитой под названием omniNames, которая запускается отдельно.
-В файле настроек проекта необходимо указать адрес сервиса
+по идентификатору или имени объекта. Этот сервис входит в состав uniset3, поставляется отдельной утилитой.
+
+см. также \ref page_URepository
+
 \code
 <UniSet>
   ...
-  <NameService host="localhost" port="2809"/>
+  <URepository name="URepository" port="8111"/>
 </UniSet>
 \endcode
 
 Для большей надёжности рекомендуется запускать сервис имён на каждом узле отдельно, чтобы локальные объекты регистрировались в нём.
 Но в общем случае сервис имён может быть запущен один на всю систему. Режим работы с использованием сервиса имён, позволяет
 прозрачно обращаться к объектам где бы они не находились, на других узлах или локально.
+
 
 \section ConfigurationPage_secLocalIOR Режим работы без сервиса имён
   Режим работы без сервиса имён включается в настройках
@@ -85,12 +82,10 @@ int main(int argc, char **argv)
   \endcode
     или при запуске, при помощи аргумента командной строки `--localIOR 1`
 
-    Данный режим предназначен для работы без использования сервиса имён (omniNames). При этом IOR-ссылки на объекты и датчики
+    Данный режим предназначен для работы без использования сервиса имён (URepository). При этом ссылки на объекты и датчики
  публикуются локально в файлах, в каталоге `LockDir`. Такой режим значительно ускоряет запуск приложений, т.к. регистрация большого
  количества датчиков в сервисе имён занимает много времени. Но по умолчанию в данном режиме работы недоступны удалённые вызовы на другие узлы. Т.е. например такой вызов работать не будет
  \code
     uniset3-admin --confile xxx  --getValue sensor1@node2
  \endcode
- Для того чтобы удалённые вызовы были доступны, необходимо на каждом узле запустить специальный сервис HttpResolver
- (см. \ref page_HttpResolver).
 */
