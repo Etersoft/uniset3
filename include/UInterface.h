@@ -134,7 +134,7 @@ namespace uniset3
                                                     const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // метрики
             uniset3::metrics::Metrics metrics(const uniset3::ObjectId id,
-                                             const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
+                                              const uniset3::ObjectId node = uniset3::uniset_conf()->getLocalNode() );
             // ---------------------------------------------------------------
             // Работа с репозиторием
             /*! регистрация объекта в репозитории
@@ -147,9 +147,9 @@ namespace uniset3
 
             struct ORefInfo
             {
-                ORefInfo(){}
+                ORefInfo() {}
                 ORefInfo(std::shared_ptr<grpc::Channel>& chan, const uniset3::ObjectRef& oref ):
-                    c(chan), ref(oref){}
+                    c(chan), ref(oref) {}
 
                 std::shared_ptr<grpc::Channel> c;
                 uniset3::ObjectRef ref;

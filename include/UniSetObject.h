@@ -195,7 +195,7 @@ namespace uniset3
             /*! функция потока */
             void work();
             //! Инициализация параметров объекта
-            virtual bool init( const std::string& svcAddr );
+            virtual bool init( const std::string& svcAddr, grpc::ServerBuilder& builder );
             //! Прямая деактивизация объекта
             bool deactivate();
             //! Непосредственная активизация объекта

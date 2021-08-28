@@ -122,7 +122,7 @@ namespace uniset3
 
     // ---------------------------------------------------------------
     template<class TMessage>
-            uniset3::umessage::TransportMessage to_transport( const TMessage& m )
+    uniset3::umessage::TransportMessage to_transport( const TMessage& m )
     {
         uniset3::umessage::TransportMessage tm;
         tm.set_priority(m.header().priority());

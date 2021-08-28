@@ -82,9 +82,9 @@ namespace uniset3
     */
     // -------------------------------------------------------------------------
     class LogServer final:
-          public uniset3::logserver::LogServer_i::Service,
-          public uniset3::metrics::MetricsExporter_i::Service,
-          public uniset3::configurator::Configurator_i::Service
+        public uniset3::logserver::LogServer_i::Service,
+        public uniset3::metrics::MetricsExporter_i::Service,
+        public uniset3::configurator::Configurator_i::Service
     {
         public:
 

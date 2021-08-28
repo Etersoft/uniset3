@@ -35,7 +35,7 @@ namespace uniset3
     * (не оптимально, но список IOController-ов обычно будет состоять из одного элемента (SharedMemory)
     */
     class IONotifyControllerProxy final:
-            public IONotifyController_i::Service
+        public IONotifyController_i::Service
     {
         public:
             IONotifyControllerProxy();

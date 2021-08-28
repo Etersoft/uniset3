@@ -106,7 +106,7 @@ namespace uniset3
             size_t getCountOfNet() const noexcept;
             timeout_t getRepeatTimeout() const noexcept;
             size_t getRepeatCount() const noexcept;
-            std::string getNodeIP( uniset3::ObjectId node, size_t netNumber=0 ) const noexcept;
+            std::string getNodeIP( uniset3::ObjectId node, size_t netNumber = 0 ) const noexcept;
 
             uniset3::ObjectId getSensorID( const std::string& name ) const noexcept;
             uniset3::ObjectId getControllerID( const std::string& name ) const noexcept;
