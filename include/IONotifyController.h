@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <list>
 #include <string>
+#include <mutex>
 
 #include "UniSetTypes.h"
 #include "IOController.h"
@@ -125,7 +126,7 @@ namespace uniset3
     (т.к. используются из разных потоков).
     */
     //---------------------------------------------------------------------------
-    /*! Реализация IONotifyController.
+    /*! Реализация IONotifyController_i.
      * см. page_IONotifyController
      */
     class IONotifyController:
@@ -142,17 +143,39 @@ namespace uniset3
             virtual std::string getStrType() const override;
 
             // ------  GRPC интерфейс ------
-            virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response);
-            virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response);
+            virtual ::grpc::Status askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response) override;
+            virtual ::grpc::Status askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response) override;
             // --------------------------------------------
+            typedef ::grpc::ServerAsyncReaderWriter<uniset3::umessage::SensorMessage, uniset3::SensorsStreamCmd> RWResponder;
+            class AsyncClientSession;
+            struct SyncClient:
+               public std::enable_shared_from_this<SyncClient>
+            {
+                SyncClient(IONotifyController* i, AsyncClientSession* s);
+                ~SyncClient();
 
+                void readEvent( const uniset3::SensorsStreamCmd& request );
+                void pushData( const uniset3::umessage::SensorMessage& r );
+                void close();
+                bool isClosed() const;
+
+                IONotifyController* nc = { nullptr };
+                AsyncClientSession* session = { nullptr };
+                std::atomic_bool closed = { false };
+            };
+            // --------------------------------------------
             /*! Информация о заказчике */
             struct ConsumerInfoExt
             {
+                ConsumerInfoExt(const std::shared_ptr<SyncClient>& cli, size_t maxAttemtps = 10 ):
+                        client(cli),
+                        attempt(maxAttemtps) {}
+
                 ConsumerInfoExt( const uniset3::ConsumerInfo& _ci, size_t maxAttemtps = 10 ):
                     ci(_ci),
                     attempt(maxAttemtps) {}
 
+                std::shared_ptr<SyncClient> client = {nullptr };
                 uniset3::ConsumerInfo ci;
                 size_t attempt = { 10 };
                 size_t lostEvents = { 0 }; // количество потерянных сообщений (не смогли послать)
@@ -206,6 +229,14 @@ namespace uniset3
 
             std::shared_ptr<IOConfig> restorer;
 
+            void askSyncClient( uniset3::ObjectId sid, uniset3::UIOCommand cmd,
+                                const std::shared_ptr<SyncClient>& cli,
+                                uniset3::ConsumerInfo _ci );
+
+            virtual void setSyncClient( uniset3::ObjectId sid, int64_t value,
+                                   const std::shared_ptr<SyncClient>& cli,
+                                   uniset3::ConsumerInfo _ci );
+
             // функция для работы напрямую с указателем (оптимизация)
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi,
                                         long value, uniset3::ObjectId sup_id ) override;
@@ -229,13 +260,19 @@ namespace uniset3
             friend class NCRestorer;
             friend class IONotifyControllerProxy;
 
+            virtual bool initBeforeRunServer( grpc::ServerBuilder &builder ) override;
+            virtual bool deactivateAfterStopServer() override;
             //----------------------
-            bool addConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );     //!< добавить потребителя сообщения
-            bool removeConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );  //!< удалить потребителя сообщения
+            bool addSyncConsumer( ConsumerListInfo& lst, std::shared_ptr<SyncClient> cli );
+            bool removeSyncConsumer( ConsumerListInfo& lst, const std::shared_ptr<SyncClient>& cli );
+            bool addConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );
+            bool removeConsumer( ConsumerListInfo& lst, const uniset3::ConsumerInfo& cons );
 
             //! обработка заказа
             void ask(AskMap& askLst, const uniset3::ObjectId sid,
-                     const uniset3::ConsumerInfo& ci, uniset3::UIOCommand cmd);
+                     const uniset3::ConsumerInfo& ci,
+                     uniset3::UIOCommand cmd,
+                     std::shared_ptr<SyncClient> cli = nullptr );
 
             AskMap askIOList; /*!< список потребителей по  датчикам */
 
@@ -261,8 +298,22 @@ namespace uniset3
              * и которые были удалены из списка заказчиков
              */
             std::unordered_map<uniset3::ObjectId, LostConsumerInfo> lostConsumers;
+
+            // ----- Async processing -----
+            friend class AsyncClient;
+            friend class AsyncClientSession;
+            std::unique_ptr<grpc::ServerCompletionQueue> asyncCQ;
+            uniset3::IONotifyStreamController_i::AsyncService asyncService;
+            std::unique_ptr<grpc::Server> server_;
+
+            std::unordered_map<AsyncClientSession*, std::shared_ptr<SyncClient>> clients;
+            std::mutex mutClients;
+            std::thread asyncThread;
+            void asyncMainLoop();
+            std::shared_ptr<SyncClient> newClient(AsyncClientSession* sess);
+            void releaseClient(AsyncClientSession* sess);
     };
-    // -------------------------------------------------------------------------
+    // ----------------------------------------------------------------------
 } // end of uniset3 namespace
 // --------------------------------------------------------------------------
 #endif

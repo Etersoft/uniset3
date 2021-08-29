@@ -5,6 +5,7 @@ package uniset3;
 option optimize_for = LITE_RUNTIME;
 // ---------------------------------------------------------------------------
 import "UniSetTypes.proto";
+import "MessageTypes.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 // ---------------------------------------------------------------------------
@@ -221,16 +222,9 @@ message AskSeqParams
 /*!
  * \interface IONotifyController_i
  * \brief Базовый интерфейс для создания процессов рассылающих сообщения об изменении состояния
- * \author Pavel Vainerman
- * \version
- * \date   September 2001-
- *
- * ... а здесь идет кратенькое описание...
 */
 service IONotifyController_i
 {
-    // СДЕЛАТЬ askSensor с returns(SensorMessage)
-
     /*! Закакз уведомления об изменении датчика */
     rpc askSensor(AskParams) returns(google.protobuf.Empty){}
 
@@ -240,4 +234,27 @@ service IONotifyController_i
             Будет пустым если всё хорошо.
     */
     rpc askSensorsSeq(AskSeqParams) returns(uniset3.IDSeq) {}
+}
+
+
+message SensorValue
+{
+    int64 id = 1;
+    int64 val = 2;
+};
+
+message SensorsStreamCmd
+{
+    uniset3.UIOCommand cmd = 1;
+    repeated SensorValue slist = 2;
+    optional uniset3.ConsumerInfo ci = 3;
+}
+
+/*!
+ * \interface IONotifyStreamController_i
+ * \brief Базовый интерфейс для рассылки уведомлений (через stream)
+*/
+service IONotifyStreamController_i
+{
+    rpc sensorsStream(stream SensorsStreamCmd) returns(stream uniset3.umessage.SensorMessage) {}
 }

@@ -186,19 +186,22 @@ namespace uniset3
         builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
         builder.RegisterService(static_cast<metrics::MetricsExporter_i::Service*>(&metricsproxy));
         builder.RegisterService(static_cast<configurator::Configurator_i::Service*>(&cproxy));
-        server = builder.BuildAndStart();
-
-        uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;
-        cout << "GRPC server listening on " << grpcHost << ":" << grpcPort << std::endl;
 
         // INIT
+        for( auto&& o : objects )
+           o.second->initBeforeRunServer(builder);
+
+        server = builder.BuildAndStart();
+        uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;
+        cout << "GRPC server listening on " << grpcHost << ":" << grpcPort << std::endl;
+        // INIT AFTER START
         {
             ostringstream tmp;
             tmp << grpcHost << ":" << grpcPort;
             const string realAddr = tmp.str();
 
             for( auto&& o : objects )
-                o.second->init(realAddr);
+                o.second->initAfterRunServer(builder, realAddr);
         }
 
         if( termControl )
@@ -255,16 +258,25 @@ namespace uniset3
 
         ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
 
-#if 0
-
         if( server && grpcPort >= 0 )
         {
             ulogsys << myname << "(shutdown): shutdown grpc server..." << endl;
-            server->Shutdown();
+            auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+            server->Shutdown(deadline);
             ulogsys << myname << "(shutdown): shutdown grpc server [OK]" << endl;
         }
 
-#endif
+        ulogsys << myname << "(shutdown): deactivate after stop server...  " << endl;
+        for( auto&& o : objects )
+        {
+            try
+            {
+                o.second->deactivateAfterStopServer();
+            }
+            catch(...){}
+        }
+        ulogsys << myname << "(shutdown): deactivate after stop server ok. " << endl;
+
         {
             std::unique_lock<std::mutex> lk(g_donemutex);
             g_done = true;
@@ -274,6 +286,7 @@ namespace uniset3
 
         if( g_finish_guard_thread )
             g_finish_guard_thread->join();
+
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::join()

@@ -120,21 +120,26 @@ namespace uniset3
         if( sz > 0 )
             setMaxSizeOfMessageQueue(sz);
 
-        uinfo << myname << "(init): SizeOfMessageQueue=" << getMaxSizeOfMessageQueue() << endl;
+        uinfo << myname << "(initBeforeRunServer): SizeOfMessageQueue=" << getMaxSizeOfMessageQueue() << endl;
     }
     // ------------------------------------------------------------------------------------------
-
-    /*!
-     *    \param om - указатель на менеджер, управляющий объектом
-     *    \return Возвращает \a true если инициализация прошла успешно, и \a false если нет
-    */
-    bool UniSetObject::init( const std::string& svcAddr )
+    bool UniSetObject::initBeforeRunServer( grpc::ServerBuilder& builder )
     {
-        uinfo << myname << ": init..." << endl;
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
+    bool UniSetObject::initAfterRunServer( grpc::ServerBuilder& builder, const std::string& svcAddr )
+    {
+        uinfo << myname << ": initBeforeRunServer..." << endl;
         uniset3::uniset_rwmutex_wrlock lock(refmutex);
         oref.set_addr(svcAddr);
         oref.set_type(getStrType());
-        uinfo << myname << ": init ok [" << oref << "]" << endl;
+        uinfo << myname << ": initBeforeRunServer ok [" << oref << "]" << endl;
+        return true;
+    }
+    // ------------------------------------------------------------------------------------------
+    bool UniSetObject::deactivateAfterStopServer()
+    {
         return true;
     }
     // ------------------------------------------------------------------------------------------
