@@ -237,7 +237,7 @@ namespace uniset3
             timeout_t heartbeat_msec = { 3000 };
             timeout_t ncreadytimeout_msec = { 180000 };
             timeout_t startupIgnoretimeout_msec = { 5000 };
-            timeout_t defaultDeadline_msec = { 30 };
+            timeout_t defaultDeadline_msec = { 200 };
     };
 
     /*! Глобальный указатель на конфигурацию (singleton) */

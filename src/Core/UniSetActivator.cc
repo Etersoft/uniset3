@@ -189,7 +189,7 @@ namespace uniset3
 
         // INIT
         for( auto&& o : objects )
-           o.second->initBeforeRunServer(builder);
+            o.second->initBeforeRunServer(builder);
 
         server = builder.BuildAndStart();
         uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;
@@ -222,10 +222,14 @@ namespace uniset3
         if( !thread )
         {
             std::unique_lock<std::mutex> lk(g_donemutex);
-            g_doneevent.wait_for(lk, std::chrono::milliseconds(TERMINATE_TIMEOUT_SEC * 1000), []()
+            while( !g_done )
             {
-                return (g_done == true);
-            });
+                g_doneevent.wait(lk, []()
+                {
+                    return (g_done == true);
+                });
+            }
+
             shutdown();
         }
     }
@@ -267,14 +271,16 @@ namespace uniset3
         }
 
         ulogsys << myname << "(shutdown): deactivate after stop server...  " << endl;
+
         for( auto&& o : objects )
         {
             try
             {
                 o.second->deactivateAfterStopServer();
             }
-            catch(...){}
+            catch(...) {}
         }
+
         ulogsys << myname << "(shutdown): deactivate after stop server ok. " << endl;
 
         {
@@ -296,11 +302,14 @@ namespace uniset3
 
         ulogsys << myname << "(join): ..." << endl;
 
-        std::unique_lock<std::mutex> lk(g_donemutex);
-        g_doneevent.wait(lk, []()
+        while( !g_done )
         {
-            return (g_done == true);
-        } );
+            std::unique_lock<std::mutex> lk(g_donemutex);
+            g_doneevent.wait(lk, []()
+            {
+                return (g_done == true);
+            });
+        }
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::terminate()
@@ -328,7 +337,7 @@ namespace uniset3
         g_doneevent.wait_for(lk, std::chrono::milliseconds(TERMINATE_TIMEOUT_SEC * 1000), []()
         {
             return (g_done == true);
-        } );
+        });
 
         if( !g_done )
         {
@@ -391,6 +400,6 @@ namespace uniset3
 
         //  sigaction(SIGSEGV, &act, &oact);
     }
-  // ------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------
 } // end of namespace uniset3
 // ------------------------------------------------------------------------------------------
