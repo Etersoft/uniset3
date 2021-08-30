@@ -59,6 +59,7 @@
 			<item id="516" iotype="AI" name="MonotonicAI_S" priority="Medium" textname="monitonic AI"/>
 
 			<item id="517" iotype="AI" name="FreezeAI_S" priority="Medium" textname="Freeze AI sesnor"/>
+			<item id="518" iotype="AI" name="AsyncClientAI_S" priority="Medium" textname="Async client AI sesnor"/>
 		</sensors>
 		<thresholds name="thresholds">
 			<sensor name="AI1_AS">

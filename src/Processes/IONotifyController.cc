@@ -641,7 +641,12 @@ void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
         case uniset3::UIODontNotify:     // отказ
         {
             if( askIterator != askLst.end() )
-                removeConsumer(askIterator->second, cons);
+            {
+                if( cli )
+                    removeSyncConsumer(askIterator->second, cli);
+                else
+                    removeConsumer(askIterator->second, cons);
+            }
 
             break;
         }
@@ -1185,7 +1190,7 @@ class IONotifyController::AsyncClientSession
 
         void reset_timer()
         {
-            wait_data_timer->Set(cq, deadline_seconds(10), &tags.on_data_timer);
+            wait_data_timer->Set(cq, deadline_seconds(wait_data_time_in_seconds), &tags.on_data_timer);
         }
 
         void on_write(bool ok)
@@ -1235,6 +1240,7 @@ class IONotifyController::AsyncClientSession
         TagSet tags;
         uniset3::IONotifyStreamController_i::AsyncService* service;
         std::unique_ptr<grpc::Alarm> wait_data_timer;
+        size_t wait_data_time_in_seconds = { 15*60*60 };
 
         IONotifyController* impl;
         std::shared_ptr<SyncClient> cli;
