@@ -187,6 +187,10 @@ namespace uniset3
                 rq.SetMaxThreads(git.getIntProp("maxThreads"));
                 builder.SetResourceQuota(rq);
             }
+
+//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 2000);
+//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 3000);
+//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
         }
 
         grpcHost = conf->getGRPCHost();
@@ -250,10 +254,6 @@ namespace uniset3
         }
     }
     // ------------------------------------------------------------------------------------------
-    /*!
-     *    Функция останавливает работу orb и завершает поток, а также удаляет ссылку из репозитория.
-     *    \note Объект становится недоступен другим процессам
-    */
     void UniSetActivator::shutdown()
     {
         if( !active )
