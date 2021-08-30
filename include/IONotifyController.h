@@ -237,6 +237,8 @@ namespace uniset3
                                    const std::shared_ptr<SyncClient>& cli,
                                    uniset3::ConsumerInfo _ci );
 
+            virtual bool getSensor(uniset3::ObjectId sid, uniset3::umessage::SensorMessage& sm );
+
             // функция для работы напрямую с указателем (оптимизация)
             virtual long localSetValue( std::shared_ptr<USensorInfo>& usi,
                                         long value, uniset3::ObjectId sup_id ) override;

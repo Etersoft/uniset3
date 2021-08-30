@@ -375,7 +375,6 @@ TEST_CASE("[SM]: stream client", "[sm][stream]")
     grpc::ClientContext ctx;
     ctx.set_deadline(uniset3::deadline_msec(500));
     SensorsStreamCmd request;
-    request.set_cmd(uniset3::UIONotify);
     auto s = request.add_slist();
     s->set_id(asyncTestSID);
     s->set_val(0);
@@ -384,7 +383,15 @@ TEST_CASE("[SM]: stream client", "[sm][stream]")
     std::unique_ptr<uniset3::IONotifyStreamController_i::Stub> stub(uniset3::IONotifyStreamController_i::NewStub(oref->c));
     auto stream = stub->sensorsStream(&ctx);
 
+    // Get
+    request.set_cmd(uniset3::UIOGet);
+    REQUIRE( stream->Write(request) );
+    REQUIRE( stream->Read(&reply) );
+    REQUIRE( reply.id() == asyncTestSID );
+    REQUIRE( reply.value() == 100 );
+
     // Notify
+    request.set_cmd(uniset3::UIONotify);
     REQUIRE( stream->Write(request) );
     REQUIRE( stream->Read(&reply) );
     REQUIRE( reply.id() == asyncTestSID );

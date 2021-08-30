@@ -541,6 +541,16 @@ grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const
     return grpc::Status::OK;
 }
 // ------------------------------------------------------------------------------------------
+bool IONotifyController::getSensor( uniset3::ObjectId sid, uniset3::umessage::SensorMessage& sm )
+{
+    auto li = find(sid);
+    if( li == ioEnd() )
+        return false;
+
+    sm = li->second->makeSensorMessage(true);
+    return true;
+}
+// ------------------------------------------------------------------------------------------
 void IONotifyController::setSyncClient( uniset3::ObjectId sid, int64_t value,
                                         const std::shared_ptr<SyncClient>& cli,
                                         uniset3::ConsumerInfo ci )
@@ -552,7 +562,7 @@ void IONotifyController::setSyncClient( uniset3::ObjectId sid, int64_t value,
         localSetValueIt( li, sid, value, ci.id() );
         return;
     }
-    catch( std::exception& ex)
+    catch( std::exception& ex )
     {
         ulog4 << "(setSyncClient): " << ex.what() << endl;
     }
@@ -1079,7 +1089,7 @@ IONotifyController::SyncClient::SyncClient(IONotifyController* i, AsyncClientSes
 
 }
 // -----------------------------------------------------------------------------
-void IONotifyController::SyncClient::readEvent(const uniset3::SensorsStreamCmd& request )
+void IONotifyController::SyncClient::readEvent( const uniset3::SensorsStreamCmd& request )
 {
     ulog4 << "[" << session << "](readEvent): cmd=" << request.cmd() << endl;
 
@@ -1087,6 +1097,15 @@ void IONotifyController::SyncClient::readEvent(const uniset3::SensorsStreamCmd& 
     {
         for( const auto& s : request.slist() )
             nc->setSyncClient(s.id(), s.val(), shared_from_this(), request.ci());
+    }
+    else if( request.cmd() == UIOGet )
+    {
+        uniset3::umessage::SensorMessage sm;
+        for( const auto& s : request.slist() )
+        {
+            if(nc->getSensor(s.id(), sm) )
+                pushData(sm);
+        }
     }
     else
     {
