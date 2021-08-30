@@ -6,6 +6,7 @@
 #include "UInterface.h"
 #include "DelayTimer.h"
 #include "TestObject.h"
+#include "IOController.grpc.pb.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -353,4 +354,50 @@ TEST_CASE("[SM]: freezeValue", "[sm][freezeValue]")
     REQUIRE( ui->getValue(517) == 150 );
     msleep(300);
     REQUIRE( obj->in_freeze_s == 150 );
+}
+// -----------------------------------------------------------------------------
+TEST_CASE("[SM]: stream client", "[sm][stream]")
+{
+    InitTest();
+
+    uniset3::SensorInfo si;
+    si.set_id(517);
+    si.set_node(uniset_conf()->getLocalNode());
+
+    REQUIRE_NOTHROW( ui->setValue(517, 100) );
+    REQUIRE( ui->getValue(517) == 100 );
+
+    auto oref = ui->resolve(shmID);
+    REQUIRE( oref );
+    REQUIRE( oref->c );
+
+    grpc::ClientContext ctx;
+    SensorsStreamCmd request;
+    request.set_cmd(uniset3::UIONotify);
+    auto s = request.add_slist();
+    s->set_id(517);
+    s->set_val(0);
+
+    umessage::SensorMessage reply;
+    std::unique_ptr<uniset3::IONotifyStreamController_i::Stub> stub(uniset3::IONotifyStreamController_i::NewStub(oref->c));
+    auto stream = stub->sensorsStream(&ctx);
+
+    REQUIRE( stream->Write(request) )
+    ;
+    REQUIRE( stream->Read(&reply) );
+    REQUIRE( reply.id() == 517 );
+    REQUIRE( reply.value() == 100 );
+
+    s->set_val(200);
+    request.set_cmd(uniset3::UIOSet);
+    REQUIRE( stream->Write(request) );
+
+    REQUIRE( stream->Read(&reply) );
+    REQUIRE( reply.id() == 517 );
+    REQUIRE( reply.value() == 200 );
+
+    REQUIRE( stream->WritesDone() );
+    auto st = stream->Finish();
+
+    REQUIRE( st.ok() );
 }
