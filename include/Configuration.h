@@ -157,6 +157,7 @@ namespace uniset3
 
             int getGRPCPort() const noexcept;
             std::string getGRPCHost() const noexcept;
+            xmlNode* getGRPCConfNode() const noexcept;
 
             int repositoryPort() const noexcept;
             std::string repositoryAddr() const noexcept;
@@ -210,11 +211,12 @@ namespace uniset3
             std::string secServices = { "" };
 
             // xml
-            xmlNode* xmlSensorsSec = { 0 };
-            xmlNode* xmlObjectsSec = { 0 };
-            xmlNode* xmlControllersSec = { 0 };
-            xmlNode* xmlServicesSec = { 0 };
-            xmlNode* xmlNodesSec = { 0 };
+            xmlNode* xmlSensorsSec = { nullptr };
+            xmlNode* xmlObjectsSec = { nullptr };
+            xmlNode* xmlControllersSec = { nullptr };
+            xmlNode* xmlServicesSec = { nullptr };
+            xmlNode* xmlNodesSec = { nullptr };
+            xmlNode* xmlGRPCConf = { nullptr };
 
             ObjectId localDBServer = { uniset3::DefaultObjectId };
             ObjectId localNode = { uniset3::DefaultObjectId };

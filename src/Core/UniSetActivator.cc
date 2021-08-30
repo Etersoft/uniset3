@@ -37,6 +37,7 @@
 // --------------------
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <grpcpp/resource_quota.h>
 #include "Exceptions.h"
 #include "unisetstd.h"
 #include "UInterface.h"
@@ -173,6 +174,20 @@ namespace uniset3
 
         termControl = terminate_control;
         auto conf = uniset_conf();
+
+        auto grpcConfNode = conf->getGRPCConfNode();
+
+        if( grpcConfNode != nullptr )
+        {
+            UniXML::iterator git = grpcConfNode;
+            grpc::ResourceQuota rq("UniSetActivator");
+
+            if( !git.getProp("maxThreads").empty() )
+            {
+                rq.SetMaxThreads(git.getIntProp("maxThreads"));
+                builder.SetResourceQuota(rq);
+            }
+        }
 
         grpcHost = conf->getGRPCHost();
         grpcPort = conf->getGRPCPort();

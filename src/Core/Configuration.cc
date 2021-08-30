@@ -469,6 +469,8 @@ namespace uniset3
             }
             else if( name == "GRPC" )
             {
+                xmlGRPCConf = it;
+
                 if( !it.getProp("deadline").empty() )
                     defaultDeadline_msec = it.getIntProp("deadline");
 
@@ -670,6 +672,11 @@ namespace uniset3
     std::string Configuration::getGRPCHost() const noexcept
     {
         return defGRPCHost;
+    }
+    // -------------------------------------------------------------------------
+    xmlNode* Configuration::getGRPCConfNode() const noexcept
+    {
+        return xmlGRPCConf;
     }
     // -------------------------------------------------------------------------
     int Configuration::repositoryPort() const noexcept
