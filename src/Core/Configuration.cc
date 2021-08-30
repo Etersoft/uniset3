@@ -735,11 +735,13 @@ namespace uniset3
             {
                 string dname(getServicesSection() + "/" + tmp);
                 dbID = oind->getIdByName(dname);
+
                 if( dbID == DefaultObjectId )
                 {
                     ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << dname << "'" << endl;
                     throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
                 }
+
                 auto s = ninf.add_services();
                 s->set_name(dname);
                 s->set_id(dbID);
@@ -987,6 +989,7 @@ namespace uniset3
     {
         // command line в приоритете
         string defhost_str = getArgParam("--grpc-host");
+
         if( !defhost_str.empty() )
             return defhost_str;
 
@@ -1017,7 +1020,7 @@ namespace uniset3
             return defPort;
 
         // Порт задан в переменной окружения
-         if( getenv("UNISET_GRPC_PORT") != NULL )
+        if( getenv("UNISET_GRPC_PORT") != NULL )
         {
             defport_str = getenv("UNISET_GRPC_PORT");
             return uni_atoi(defport_str);

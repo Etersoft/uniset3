@@ -1103,8 +1103,7 @@ class IONotifyController::AsyncClientSession
 
         ~AsyncClientSession()
         {
-            ulog4 << "[" << this << "] destroy.. [" << num << "]" << endl;
-            num--;
+            ulog4 << "[" << this << "] destroy.. [" << --num << "]" << endl;
         }
 
         static std::chrono::system_clock::time_point deadline_seconds(int s)

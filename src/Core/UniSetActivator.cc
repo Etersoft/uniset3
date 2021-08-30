@@ -222,6 +222,7 @@ namespace uniset3
         if( !thread )
         {
             std::unique_lock<std::mutex> lk(g_donemutex);
+
             while( !g_done )
             {
                 g_doneevent.wait(lk, []()

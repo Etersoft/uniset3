@@ -409,7 +409,7 @@ namespace uniset3
         *response->add_metrics() = createMetric("lostMessages", getCountOfLostMessages());
         *response->add_metrics() = createMetric("maxSizeOfMessageQueue", getMaxSizeOfMessageQueue());
         *response->add_metrics() = createMetric("isActive", isActive());
-        *response->add_metrics() = createMetric("cacheCount",ui->getCacheCount());
+        *response->add_metrics() = createMetric("cacheCount", ui->getCacheCount());
 
         return ::grpc::Status::OK;
     }
@@ -417,10 +417,12 @@ namespace uniset3
     ::grpc::Status UniSetObject::setParams(::grpc::ServerContext* context, const ::uniset3::configurator::Params* request, ::uniset3::configurator::Params* response)
     {
         auto i = request->params().find("MaxSizeOfMessageQueue");
+
         if( i != request->params().end() && i->second.has_dvalue() )
             setMaxSizeOfMessageQueue((size_t)i->second.dvalue());
 
         i = request->params().find("CacheSize");
+
         if( i != request->params().end() && i->second.has_dvalue() )
             ui->setCacheMaxSize((size_t)i->second.dvalue());
 
