@@ -30,6 +30,7 @@ namespace uniset3
         public:
 
             SMonitor( uniset3::ObjectId id );
+            SMonitor( uniset3::ObjectId id, const std::list<uniset3::ParamSInfo>& lst );
             ~SMonitor();
 
             // -----
