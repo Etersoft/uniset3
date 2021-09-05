@@ -40,14 +40,25 @@ UAsyncClient::~UAsyncClient()
 // ------------------------------------------------------------------------------------------
 void UAsyncClient::async_run( const std::string& host, int port, const std::shared_ptr<UniSetObject>& _consumer )
 {
-    if( consumer != nullptr  || active )
+    consumer = _consumer;
+
+    async_run_cb(host, port, [this](const uniset3::umessage::TransportMessage * tmsg)
+    {
+        grpc::ServerContext ctx;
+        google::protobuf::Empty empty;
+        consumer->push(&ctx, tmsg, &empty);
+    });
+}
+// ------------------------------------------------------------------------------------------
+void UAsyncClient::async_run_cb( const std::string& host, int port, CallBackFunction cb )
+{
+    if( active )
     {
         ostringstream err;
         err << "(UAsyncClient:async_run): async client is already running";
         throw SystemError(err.str());
     }
 
-    consumer = _consumer;
     active = true;
 
     thr = std::make_unique<std::thread>([ = ]()
@@ -56,7 +67,7 @@ void UAsyncClient::async_run( const std::string& host, int port, const std::shar
         {
             try
             {
-                mainLoop(host, 4444, consumer);
+                mainLoop(host, 4444, cb);
             }
             catch( std::exception& ex )
             {
@@ -113,10 +124,10 @@ struct TagSet
 class UAsyncClient::AsyncClientSession
 {
     public:
-        AsyncClientSession(const std::shared_ptr<UniSetObject>& _consumer,
-                           std::unique_ptr<IONotifyStreamController_i::Stub>& _stub,
-                           grpc::CompletionQueue* _cq)
-            : tags(this), consumer(_consumer), stub(std::move(_stub)), cq(_cq)
+        AsyncClientSession( const CallBackFunction& _cb,
+                            std::unique_ptr<IONotifyStreamController_i::Stub>& _stub,
+                            grpc::CompletionQueue* _cq)
+            : tags(this), cb(_cb), stub(std::move(_stub)), cq(_cq)
         {
             responder = stub->AsyncsensorsStream(&ctx, cq, &tags.on_start);
             wait_data_timer = make_unique<grpc::Alarm>();
@@ -135,9 +146,9 @@ class UAsyncClient::AsyncClientSession
             return std::chrono::system_clock::now() + std::chrono::seconds(s);
         }
 
-        static std::chrono::system_clock::time_point deadline_msec(int s)
+        static std::chrono::system_clock::time_point deadline_msec(int ms)
         {
-            return std::chrono::system_clock::now() + std::chrono::milliseconds(s);
+            return std::chrono::system_clock::now() + std::chrono::milliseconds(ms);
         }
 
         bool isClosed() const
@@ -150,7 +161,6 @@ class UAsyncClient::AsyncClientSession
             ulog4 << "AsyncClient[" << this << "] ON SHUTDOWN..." << endl;
             closed = true;
             wait_data_timer->Cancel();
-//            responder->Finish(&status, &tags.on_close);
         }
 
         void on_close()
@@ -161,12 +171,6 @@ class UAsyncClient::AsyncClientSession
             deleted = true;
             closed = true;
             wait_data_timer->Cancel();
-        }
-
-        void reconnect()
-        {
-            responder = stub->AsyncsensorsStream(&ctx, cq, &tags.on_start);
-            wait_data_timer->Set(cq, deadline_seconds(connection_timeout_in_seconds), &tags.on_data_timer);
         }
 
         void on_create(bool ok)
@@ -210,7 +214,7 @@ class UAsyncClient::AsyncClientSession
             ulog4 << "AsyncClient[" << this << "] ON READ..." << endl;
             responder->Read(&reply, &tags.on_read);
             tmsg = uniset3::to_transport<umessage::SensorMessage>(reply);
-            consumer->push(&server_ctx, &tmsg, &empty);
+            cb(&tmsg);
         }
 
         void on_data_timer(bool ok)
@@ -280,12 +284,9 @@ class UAsyncClient::AsyncClientSession
         TagSet tags;
         std::unique_ptr<grpc::Alarm> wait_data_timer;
         size_t wait_data_time_in_seconds = {15 * 60 * 60};
-        size_t connection_timeout_in_seconds = { 5 };
 
         uniset3::umessage::TransportMessage tmsg;
-        google::protobuf::Empty empty;
-        grpc::ServerContext server_ctx;
-        std::shared_ptr<UniSetObject> consumer;
+        CallBackFunction cb;
         std::unique_ptr<IONotifyStreamController_i::Stub> stub;
         grpc::CompletionQueue* cq;
         grpc::ClientContext ctx;
@@ -299,7 +300,7 @@ class UAsyncClient::AsyncClientSession
 };
 
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::mainLoop( const std::string& host, int port, const std::shared_ptr<UniSetObject>& consumer )
+void UAsyncClient::mainLoop( const std::string& host, int port, const CallBackFunction& cb )
 {
     using grpc::ClientAsyncReaderWriter;
 
@@ -326,16 +327,15 @@ void UAsyncClient::mainLoop( const std::string& host, int port, const std::share
 
     ulog4 << "(UAsyncClient): connect to " << addr << endl;
     std::unique_ptr<IONotifyStreamController_i::Stub> stub(IONotifyStreamController_i::NewStub(chan));
-    session = std::make_unique<AsyncClientSession>(consumer, stub, &cq);
+    session = std::make_unique<AsyncClientSession>(cb, stub, &cq);
 
     // send after create session
     if( !connected )
-        sendConnectionEvent(true);
-
-    void* raw_tag;
-    bool ok;
+        sendConnectionEvent(true, cb);
 
     connected = true;
+    void* raw_tag;
+    bool ok;
 
     while( active )
     {
@@ -367,15 +367,15 @@ void UAsyncClient::mainLoop( const std::string& host, int port, const std::share
     }
 
     if( connected )
-        sendConnectionEvent(false);
+        sendConnectionEvent(false, cb);
 
     connected = false;
     ulog4 << "(UAsyncClient): finished [server: " << addr << "]" << endl;
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::sendConnectionEvent(bool state)
+void UAsyncClient::sendConnectionEvent(bool state, const CallBackFunction& cb )
 {
-    if( connectionEventID <= 0 || !consumer )
+    if( connectionEventID <= 0 || !active )
         return;
 
     ulog4 << "(UAsyncClient): send connection event [eventID=" << connectionEventID
@@ -388,7 +388,7 @@ void UAsyncClient::sendConnectionEvent(bool state)
     sm.add_data(connectionEventID);
     sm.add_data(state ? 1 : 0 ); // 1 - connected, 0 - disconnected
     auto tmsg = uniset3::to_transport<umessage::SystemMessage>(sm);
-    consumer->push(&server_ctx, &tmsg, &empty);
+    cb(&tmsg);
 }
 // ------------------------------------------------------------------------------------------
 void UAsyncClient::terminate()

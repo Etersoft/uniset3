@@ -18,6 +18,7 @@
 #define UAsyncClient_H_
 // -----------------------------------------------------------------------------
 #include <memory>
+#include <functional>
 #include <UniSetObject.h>
 #include "UniSetTypes.h"
 #include "IOController.grpc.pb.h"
@@ -35,7 +36,10 @@ namespace uniset3
             void setValue( ObjectId sid, long value );
             void askSensor( ObjectId sid );
 
+            typedef std::function<void(const uniset3::umessage::TransportMessage* tm)> CallBackFunction;
+
             void async_run( const std::string& addr, int port, const std::shared_ptr<UniSetObject>& consumer );
+            void async_run_cb( const std::string& addr, int port, CallBackFunction cb );
             void terminate();
 
             // enabled/disable SystemMessage::NetworkInfo (disconnect/connect)
@@ -47,12 +51,11 @@ namespace uniset3
             class AsyncClientSession;
 
         protected:
-            void mainLoop( const std::string& host, int port, const std::shared_ptr<UniSetObject>& consumer );
-            void sendConnectionEvent(bool state);
+            void mainLoop( const std::string& host, int port, const CallBackFunction& cb );
+            void sendConnectionEvent(bool state, const CallBackFunction& cb );
 
         private:
             std::unique_ptr<AsyncClientSession> session;
-            std::shared_ptr<UniSetObject> consumer;
             std::unique_ptr<std::thread> thr;
             grpc::CompletionQueue cq;
             timeout_t reconnectPause_msec = { 5000 };
@@ -60,6 +63,8 @@ namespace uniset3
             int connectionEventID = {0 };
             std::atomic_bool connected = { false };
             std::atomic_bool active = { false };
+            std::shared_ptr<UniSetObject> consumer;
+
     };
     // -------------------------------------------------------------------------
 } // end of uniset namespace
