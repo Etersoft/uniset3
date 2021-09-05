@@ -27,7 +27,6 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/alarm.h>
 
-#include "UInterface.h"
 #include "IONotifyController.h"
 #include "Debug.h"
 #include "IOConfig.h"
@@ -1127,7 +1126,7 @@ class IONotifyController::AsyncClientSession
 
         ~AsyncClientSession()
         {
-            ulog4 << "[" << this << "] destroy.. [" << --num << "]" << endl;
+            ulog4 << "AsyncClientSession[" << this << "] destroy.. [" << --num << "]" << endl;
         }
 
         static std::chrono::system_clock::time_point deadline_seconds(int s)
@@ -1142,7 +1141,7 @@ class IONotifyController::AsyncClientSession
 
         void shutdown()
         {
-            ulog4 << "[" << this << "] ON SHUTDOWN..." << endl;
+            ulog4 << "AsyncClientSession[" << this << "] ON SHUTDOWN..." << endl;
             on_close();
         }
 
@@ -1170,7 +1169,7 @@ class IONotifyController::AsyncClientSession
                 return;
             }
 
-            ulog4 << "[" << this << "] ON CREATE...[" << num << "]" << endl;
+            ulog4 << "AsyncClientSession[" << this << "] ON CREATE...[" << num << "]" << endl;
             cli = impl->newClient(this);
             new AsyncClientSession(impl, service, cq);
             responder.Read(&request, &tags.on_read);
@@ -1181,14 +1180,17 @@ class IONotifyController::AsyncClientSession
         {
             if( !ok )
             {
-                ulog4 << "[" << this << "] ON CLOSE READ..." << endl;
+                if( closed )
+                    return;
+
+                ulog4 << "AsyncClientSession[" << this << "] ON CLOSE READ..." << endl;
                 closed = true;
                 wait_data_timer->Cancel();
                 responder.Finish(grpc::Status::OK, &tags.on_close);
                 return;
             }
 
-            ulog4 << "[" << this << "] ON READ..." << endl;
+            ulog4 << "AsyncClientSession[" << this << "] ON READ..." << endl;
             responder.Read(&request, &tags.on_read);
             cli->readEvent(request);
         }
@@ -1202,7 +1204,7 @@ class IONotifyController::AsyncClientSession
                 on_write(true);
             else
             {
-                ulog4 << "[" << this << "] ON WAIT WRITE DATA TIMEOUT..." << endl;
+                ulog4 << "AsyncClientSession[" << this << "] ON WAIT WRITE DATA TIMEOUT..." << endl;
                 reset_timer();
             }
         }
@@ -1219,23 +1221,25 @@ class IONotifyController::AsyncClientSession
 
             if( !ok )
             {
-                ulog4 << "[" << this << "] ON CLOSE WRITE..." << endl;
+                ulog4 << "AsyncClientSession[" << this << "] ON CLOSE WRITE..." << endl;
+                closed = true;
+                wait_data_timer->Cancel();
                 responder.Finish(grpc::Status::OK, &tags.on_close);
                 return;
             }
 
-            ulog4 << "[" << this << "] ON WRITE..." << endl;
+            ulog4 << "AsyncClientSession[" << this << "] ON WRITE..." << endl;
             std::lock_guard<std::mutex> lk(wr_queue_mutex);
 
             if( wr_queue.empty() )
             {
-                ulog4 << "[" << this << "] write: no new data.." << endl;
+                ulog4 << "AsyncClientSession[" << this << "] write: no new data.." << endl;
                 reset_timer();
                 return;
             }
 
             auto reply = wr_queue.front();
-            ulog4 << "[" << this << "] write: sid=" << reply.id() << " value=" << reply.value() << endl;
+            ulog4 << "AsyncClientSession[" << this << "] write: sid=" << reply.id() << " value=" << reply.value() << endl;
             responder.Write(reply, wr_options, &tags.on_write);
             wr_queue.pop();
         }
@@ -1288,7 +1292,7 @@ void IONotifyController::SyncClient::pushData( const uniset3::umessage::SensorMe
 // -----------------------------------------------------------------------------
 IONotifyController::SyncClient::~SyncClient()
 {
-    ulog4 << "[" << this << "] delete session.." << endl;
+    ulog4 << "AsyncClientSession[" << this << "] delete session.." << endl;
     delete session;
     session = nullptr;
 }
