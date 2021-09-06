@@ -5,7 +5,7 @@
 #include "UInterface.h"
 #include "UniSetTypes.h"
 #include "UHelpers.h"
-#include "UAsyncClient.h"
+#include "IONotifyStreamAsyncClient.h"
 #include "PassiveTimer.h"
 
 using namespace std;
@@ -19,7 +19,7 @@ const ObjectId async_sid = 123;
 class ClientRAII
 {
 public:
-    ClientRAII(UAsyncClient& _cons):
+    ClientRAII(IONotifyStreamAsyncClient& _cons):
         cons(_cons){}
 
     ~ClientRAII()
@@ -27,7 +27,7 @@ public:
         cons.terminate();
     }
 
-    UAsyncClient& cons;
+    IONotifyStreamAsyncClient& cons;
 };
 
 class TestObject :
@@ -59,13 +59,6 @@ class TestObject :
                     cerr << myname << "(push): SystemMessage: parse error" << endl;
                     return grpc::Status::OK;
                 }
-
-//                if( m.data(1) != 0 )
-//                {
-//                    cons.askSensor(10);
-//                    cons.setValue(10, 100);
-//                    cons.setValue(10, 110);
-//                }
             }
 
             return grpc::Status::OK;
@@ -80,11 +73,11 @@ void async_test_init()
     REQUIRE_FALSE( conf->oind->getNameById(async_sid).empty() );
 }
 
-TEST_CASE("UAsyncClient", "[UAsyncClient]")
+TEST_CASE("IONotifyStreamAsyncClient with UniSetObject", "[IONotifyStreamAsyncClient][uobject]")
 {
     async_test_init();
 
-    UAsyncClient cli;
+    IONotifyStreamAsyncClient cli;
     ClientRAII raii(cli);
 
     auto obj = make_shared<TestObject>();
@@ -107,5 +100,46 @@ TEST_CASE("UAsyncClient", "[UAsyncClient]")
     msleep(500);
     REQUIRE( obj->sm.id() == async_sid );
     REQUIRE( obj->sm.value() == 100 );
+}
+// -----------------------------------------------------------------------------
+TEST_CASE("IONotifyStreamAsyncClient with callback", "[IONotifyStreamAsyncClient][cb]")
+{
+    async_test_init();
+
+    IONotifyStreamAsyncClient cli;
+    ClientRAII raii(cli);
+
+    cli.enableConnectionEvent(1);
+
+    umessage::SensorMessage sm;
+    umessage::SystemMessage sysm;
+
+    cli.async_run_cb("localhost", SM_GRPC_PORT, [&](const uniset3::umessage::TransportMessage *msg){
+        if( msg->data().Is<umessage::SensorMessage>() )
+        {
+            REQUIRE( msg->data().UnpackTo(&sm) );
+        }
+        else if( msg->data().Is<umessage::SystemMessage>() )
+        {
+            REQUIRE( msg->data().UnpackTo(&sysm) );
+        }
+    });
+
+    uniset3::PassiveTimer ptTimeout(2000);
+    while( !cli.isConnected() && !ptTimeout.checkTime() )
+        msleep(200);
+
+    REQUIRE_FALSE(ptTimeout.checkTime() );
+
+    // ask sensor
+    cli.askSensor(async_sid);
+    msleep(500);
+    REQUIRE( sm.id() == async_sid );
+    //    REQUIRE( sm.value() == 10 ); // default value
+
+    cli.setValue(async_sid,100);
+    msleep(500);
+    REQUIRE( sm.id() == async_sid );
+    REQUIRE( sm.value() == 100 );
 }
 // -----------------------------------------------------------------------------

@@ -21,24 +21,24 @@
 #include <grpcpp/alarm.h>
 #include "UHelpers.h"
 #include "Configuration.h"
-#include "UAsyncClient.h"
+#include "IONotifyStreamAsyncClient.h"
 // ------------------------------------------------------------------------------------------
 using namespace uniset3;
 using namespace std;
 
 // ------------------------------------------------------------------------------------------
-UAsyncClient::UAsyncClient()
+IONotifyStreamAsyncClient::IONotifyStreamAsyncClient()
 {
 }
 
-UAsyncClient::~UAsyncClient()
+IONotifyStreamAsyncClient::~IONotifyStreamAsyncClient()
 {
     if( active )
         terminate();
 }
 
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::async_run( const std::string& host, int port, const std::shared_ptr<UniSetObject>& _consumer )
+void IONotifyStreamAsyncClient::async_run( const std::string& host, int port, const std::shared_ptr<UniSetObject>& _consumer )
 {
     consumer = _consumer;
 
@@ -50,12 +50,12 @@ void UAsyncClient::async_run( const std::string& host, int port, const std::shar
     });
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::async_run_cb( const std::string& host, int port, CallBackFunction cb )
+void IONotifyStreamAsyncClient::async_run_cb( const std::string& host, int port, CallBackFunction cb )
 {
     if( active )
     {
         ostringstream err;
-        err << "(UAsyncClient:async_run): async client is already running";
+        err << "(IONotifyStreamAsyncClient:async_run): async client is already running";
         throw SystemError(err.str());
     }
 
@@ -71,13 +71,13 @@ void UAsyncClient::async_run_cb( const std::string& host, int port, CallBackFunc
             }
             catch( std::exception& ex )
             {
-                ucrit << "(UAsyncClient): server=" << host << ":" << port << " error: " << ex.what() << endl;
+                ucrit << "(IONotifyStreamAsyncClient): server=" << host << ":" << port << " error: " << ex.what() << endl;
             }
 
             if( !active )
                 break;
 
-            ulog4 << "(UAsyncClient): try reconnect to server=" << host << ":" << port
+            ulog4 << "(IONotifyStreamAsyncClient): try reconnect to server=" << host << ":" << port
                   << " after " << reconnectPause_msec << " msec " << endl;
             msleep(reconnectPause_msec);
         }
@@ -99,14 +99,14 @@ struct TagData
         close
     };
 
-    UAsyncClient::AsyncClientSession* handler;
+    IONotifyStreamAsyncClient::AsyncClientSession* handler;
     Event evt;
 };
 
 // -----------------------------------------------------------------------------
 struct TagSet
 {
-    TagSet(UAsyncClient::AsyncClientSession* self)
+    TagSet(IONotifyStreamAsyncClient::AsyncClientSession* self)
         : on_start{self, TagData::Event::start},
           on_read{self, TagData::Event::read},
           on_write{self, TagData::Event::write},
@@ -121,7 +121,7 @@ struct TagSet
 };
 
 // -----------------------------------------------------------------------------
-class UAsyncClient::AsyncClientSession
+class IONotifyStreamAsyncClient::AsyncClientSession
 {
     public:
         AsyncClientSession( const CallBackFunction& _cb,
@@ -135,7 +135,7 @@ class UAsyncClient::AsyncClientSession
 
         ~AsyncClientSession()
         {
-            ulog4 << "AsyncClient[" << this << "] destroy.." << endl;
+            ulog4 << "IONotifyStreamAsyncClient[" << this << "] destroy.." << endl;
 
             if( !deleted )
                 shutdown();
@@ -158,7 +158,7 @@ class UAsyncClient::AsyncClientSession
 
         void shutdown()
         {
-            ulog4 << "AsyncClient[" << this << "] ON SHUTDOWN..." << endl;
+            ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON SHUTDOWN..." << endl;
             closed = true;
             wait_data_timer->Cancel();
         }
@@ -184,7 +184,7 @@ class UAsyncClient::AsyncClientSession
                 return;
             }
 
-            ulog4 << "AsyncClient[" << this << "] ON CREATE..." << endl;
+            ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON CREATE..." << endl;
             reset_timer();
 
             {
@@ -204,14 +204,14 @@ class UAsyncClient::AsyncClientSession
                 if( closed )
                     return;
 
-                ulog4 << "AsyncClient[" << this << "] ON CLOSE READ..." << endl;
+                ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON CLOSE READ..." << endl;
                 closed = true;
                 wait_data_timer->Cancel();
                 responder->Finish(&status, &tags.on_close);
                 return;
             }
 
-            ulog4 << "AsyncClient[" << this << "] ON READ..." << endl;
+            ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON READ..." << endl;
             responder->Read(&reply, &tags.on_read);
             tmsg = uniset3::to_transport<umessage::SensorMessage>(reply);
             cb(&tmsg);
@@ -226,7 +226,7 @@ class UAsyncClient::AsyncClientSession
                 on_write(true);
             else
             {
-                ulog4 << "AsyncClient[" << this << "] ON WAIT WRITE DATA TIMEOUT..." << endl;
+                ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON WAIT WRITE DATA TIMEOUT..." << endl;
                 reset_timer();
             }
         }
@@ -243,25 +243,25 @@ class UAsyncClient::AsyncClientSession
 
             if (!ok)
             {
-                ulog4 << "AsyncClient[" << this << "] ON CLOSE WRITE..." << endl;
+                ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON CLOSE WRITE..." << endl;
                 closed = true;
                 wait_data_timer->Cancel();
                 responder->Finish(&status, &tags.on_close);
                 return;
             }
 
-            ulog4 << "AsyncClient[" << this << "] ON WRITE..." << endl;
+            ulog4 << "IONotifyStreamAsyncClient[" << this << "] ON WRITE..." << endl;
             std::lock_guard<std::mutex> lk(cmd_queue_mutex);
 
             if (cmd_queue.empty())
             {
-                ulog4 << "AsyncClient[" << this << "] write: no new data.." << endl;
+                ulog4 << "IONotifyStreamAsyncClient[" << this << "] write: no new data.." << endl;
                 reset_timer();
                 return;
             }
 
             auto cmd = cmd_queue.front();
-            ulog4 << "AsyncClient[" << this << "] write: cmd=" << cmd.cmd() << endl;
+            ulog4 << "IONotifyStreamAsyncClient[" << this << "] write: cmd=" << cmd.cmd() << endl;
             responder->Write(cmd, wr_options, &tags.on_write);
             cmd_queue.pop();
         }
@@ -300,7 +300,7 @@ class UAsyncClient::AsyncClientSession
 };
 
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::mainLoop( const std::string& host, int port, const CallBackFunction& cb )
+void IONotifyStreamAsyncClient::mainLoop( const std::string& host, int port, const CallBackFunction& cb )
 {
     using grpc::ClientAsyncReaderWriter;
 
@@ -317,15 +317,15 @@ void UAsyncClient::mainLoop( const std::string& host, int port, const CallBackFu
     //    args.SetInt(GRPC_ARG_GRPCLB_CALL_TIMEOUT_MS, 500);
     //    auto chan = grpc::CreateCustomChannel(addr, grpc::InsecureChannelCredentials(), args);
 
-    ulog4 << "(UAsyncClient): try connect to " << addr << endl;
+    ulog4 << "(IONotifyStreamAsyncClient): try connect to " << addr << endl;
 
     if( !chan->WaitForConnected(AsyncClientSession::deadline_msec(connectTimeout_msec)) )
     {
-        ulog4 << "(UAsyncClient): connect to server " << addr << " timeout..[" << connectTimeout_msec << " msec]" << endl;
+        ulog4 << "(IONotifyStreamAsyncClient): connect to server " << addr << " timeout..[" << connectTimeout_msec << " msec]" << endl;
         return;
     }
 
-    ulog4 << "(UAsyncClient): connect to " << addr << endl;
+    ulog4 << "(IONotifyStreamAsyncClient): connect to " << addr << endl;
     std::unique_ptr<IONotifyStreamController_i::Stub> stub(IONotifyStreamController_i::NewStub(chan));
     session = std::make_unique<AsyncClientSession>(cb, stub, &cq);
 
@@ -370,15 +370,15 @@ void UAsyncClient::mainLoop( const std::string& host, int port, const CallBackFu
         sendConnectionEvent(false, cb);
 
     connected = false;
-    ulog4 << "(UAsyncClient): finished [server: " << addr << "]" << endl;
+    ulog4 << "(IONotifyStreamAsyncClient): finished [server: " << addr << "]" << endl;
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::sendConnectionEvent(bool state, const CallBackFunction& cb )
+void IONotifyStreamAsyncClient::sendConnectionEvent(bool state, const CallBackFunction& cb )
 {
     if( connectionEventID <= 0 || !active )
         return;
 
-    ulog4 << "(UAsyncClient): send connection event [eventID=" << connectionEventID
+    ulog4 << "(IONotifyStreamAsyncClient): send connection event [eventID=" << connectionEventID
           << " state=" << state << "]"
           << endl;
 
@@ -391,9 +391,9 @@ void UAsyncClient::sendConnectionEvent(bool state, const CallBackFunction& cb )
     cb(&tmsg);
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::terminate()
+void IONotifyStreamAsyncClient::terminate()
 {
-    ulog4 << "(UAsyncClient): terminate.. " << endl;
+    ulog4 << "(IONotifyStreamAsyncClient): terminate.. " << endl;
     active = false;
 
     if( session )
@@ -408,21 +408,21 @@ void UAsyncClient::terminate()
     consumer = nullptr;
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::enableConnectionEvent(int ID )
+void IONotifyStreamAsyncClient::enableConnectionEvent(int ID )
 {
     connectionEventID = ID;
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::disableConectionEvent()
+void IONotifyStreamAsyncClient::disableConectionEvent()
 {
     connectionEventID = 0;
 }
-bool UAsyncClient::isConnected() const
+bool IONotifyStreamAsyncClient::isConnected() const
 {
     return connected;
 }
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::setValue( ObjectId sid, long value )
+void IONotifyStreamAsyncClient::setValue( ObjectId sid, long value )
 {
     uniset3::SensorsStreamCmd request;
     request.set_cmd(uniset3::UIOSet);
@@ -435,7 +435,7 @@ void UAsyncClient::setValue( ObjectId sid, long value )
 }
 
 // ------------------------------------------------------------------------------------------
-void UAsyncClient::askSensor( ObjectId sid )
+void IONotifyStreamAsyncClient::askSensor( ObjectId sid )
 {
     uniset3::SensorsStreamCmd request;
     request.set_cmd(uniset3::UIONotify);

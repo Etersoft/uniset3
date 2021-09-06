@@ -14,8 +14,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 // -----------------------------------------------------------------------------
-#ifndef UAsyncClient_H_
-#define UAsyncClient_H_
+#ifndef IONotifyStreamAsyncClient_H_
+#define IONotifyStreamAsyncClient_H_
 // -----------------------------------------------------------------------------
 #include <memory>
 #include <functional>
@@ -26,12 +26,12 @@
 namespace uniset3
 {
     /*! Объект создаёт соединение с указанным сервером и через это соединение работает с датчиками и т..п */
-    class UAsyncClient:
+    class IONotifyStreamAsyncClient:
         public UniSetObject
     {
         public:
-            UAsyncClient();
-            ~UAsyncClient();
+            IONotifyStreamAsyncClient();
+            ~IONotifyStreamAsyncClient();
 
             void setValue( ObjectId sid, long value );
             void askSensor( ObjectId sid );

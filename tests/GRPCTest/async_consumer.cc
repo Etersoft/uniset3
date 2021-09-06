@@ -1,6 +1,6 @@
 #include <iostream>
 #include <memory>
-#include "UAsyncClient.h"
+#include "IONotifyStreamAsyncClient.h"
 
 
 using namespace std;
@@ -11,10 +11,10 @@ class TestObject :
 {
 
 public:
-    TestObject( UAsyncClient& _cons ):
+    TestObject( IONotifyStreamAsyncClient& _cons ):
         cons(_cons) {}
 
-    UAsyncClient& cons;
+    IONotifyStreamAsyncClient& cons;
 
     virtual ::grpc::Status push(::grpc::ServerContext *context, const ::uniset3::umessage::TransportMessage *msg,
                                 ::google::protobuf::Empty *response) override {
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     try {
         uniset_init(argc, argv);
 
-        UAsyncClient cons;
+        IONotifyStreamAsyncClient cons;
         auto obj = make_shared<TestObject>(cons);
 
         cons.enableConnectionEvent(1);
