@@ -351,11 +351,11 @@ namespace uniset3
             struct UThresholdInfo
             {
                 UThresholdInfo( uniset3::ObjectId _sid, long low, long hi, bool inv ):
-                hilimit(hi),
-                lowlimit(low),
-                state(NormalThreshold),
-                invert(inv),
-                sid(_sid)
+                    hilimit(hi),
+                    lowlimit(low),
+                    state(NormalThreshold),
+                    invert(inv),
+                    sid(_sid)
                 {
                 }
 

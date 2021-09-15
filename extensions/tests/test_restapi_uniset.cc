@@ -329,10 +329,12 @@ TEST_CASE("[REST API: /lost]", "[restapi][lost]")
     REQUIRE(jarr);
 
     bool myIdLost = false;
-    for( size_t i=0; i< jarr->size(); i++ )
+
+    for( size_t i = 0; i < jarr->size(); i++ )
     {
         auto jret = jarr->getObject(i);
         REQUIRE(jret);
+
         if( jret->get("id").convert<ObjectId>() == myID )
         {
             myIdLost = true;

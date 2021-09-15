@@ -24,6 +24,7 @@
 		<HttpResolver name="HttpResolver"/>
 		<HttpAPIGateway name="HttpAPIGateway"/>
 		<URepository name="URepository" port="8111"/>
+		<GRPC name="GRPC" deadline="100"/>
 		<LocalIOR name="1"/>
 		<Services>
 			<LocalTimeService AskLifeTimeSEC="10" MaxCountTimers="100" name="TimeService"/>

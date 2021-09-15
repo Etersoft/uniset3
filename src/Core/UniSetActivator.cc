@@ -37,6 +37,7 @@
 // --------------------
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <grpcpp/resource_quota.h>
 #include "Exceptions.h"
 #include "unisetstd.h"
 #include "UInterface.h"
@@ -174,6 +175,24 @@ namespace uniset3
         termControl = terminate_control;
         auto conf = uniset_conf();
 
+        auto grpcConfNode = conf->getGRPCConfNode();
+
+        if( grpcConfNode != nullptr )
+        {
+            UniXML::iterator git = grpcConfNode;
+            grpc::ResourceQuota rq("UniSetActivator");
+
+            if( !git.getProp("maxThreads").empty() )
+            {
+                rq.SetMaxThreads(git.getIntProp("maxThreads"));
+                builder.SetResourceQuota(rq);
+            }
+
+//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 2000);
+//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 3000);
+//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+        }
+
         grpcHost = conf->getGRPCHost();
         grpcPort = conf->getGRPCPort();
 
@@ -186,19 +205,22 @@ namespace uniset3
         builder.RegisterService(static_cast<IONotifyController_i::Service*>(&ionproxy));
         builder.RegisterService(static_cast<metrics::MetricsExporter_i::Service*>(&metricsproxy));
         builder.RegisterService(static_cast<configurator::Configurator_i::Service*>(&cproxy));
-        server = builder.BuildAndStart();
-
-        uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;
-        cout << "GRPC server listening on " << grpcHost << ":" << grpcPort << std::endl;
 
         // INIT
+        for( auto&& o : objects )
+            o.second->initBeforeRunServer(builder);
+
+        server = builder.BuildAndStart();
+        uinfo << "GRPC Server listening on " << grpcHost << ":" << grpcPort << std::endl;
+        cout << "GRPC server listening on " << grpcHost << ":" << grpcPort << std::endl;
+        // INIT AFTER START
         {
             ostringstream tmp;
             tmp << grpcHost << ":" << grpcPort;
             const string realAddr = tmp.str();
 
             for( auto&& o : objects )
-                o.second->init(realAddr);
+                o.second->initAfterRunServer(builder, realAddr);
         }
 
         if( termControl )
@@ -219,18 +241,19 @@ namespace uniset3
         if( !thread )
         {
             std::unique_lock<std::mutex> lk(g_donemutex);
-            g_doneevent.wait_for(lk, std::chrono::milliseconds(TERMINATE_TIMEOUT_SEC * 1000), []()
+
+            while( !g_done )
             {
-                return (g_done == true);
-            });
+                g_doneevent.wait(lk, []()
+                {
+                    return (g_done == true);
+                });
+            }
+
             shutdown();
         }
     }
     // ------------------------------------------------------------------------------------------
-    /*!
-     *    Функция останавливает работу orb и завершает поток, а также удаляет ссылку из репозитория.
-     *    \note Объект становится недоступен другим процессам
-    */
     void UniSetActivator::shutdown()
     {
         if( !active )
@@ -255,16 +278,27 @@ namespace uniset3
 
         ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
 
-#if 0
-
         if( server && grpcPort >= 0 )
         {
             ulogsys << myname << "(shutdown): shutdown grpc server..." << endl;
-            server->Shutdown();
+            auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+            server->Shutdown(deadline);
             ulogsys << myname << "(shutdown): shutdown grpc server [OK]" << endl;
         }
 
-#endif
+        ulogsys << myname << "(shutdown): deactivate after stop server...  " << endl;
+
+        for( auto&& o : objects )
+        {
+            try
+            {
+                o.second->deactivateAfterStopServer();
+            }
+            catch(...) {}
+        }
+
+        ulogsys << myname << "(shutdown): deactivate after stop server ok. " << endl;
+
         {
             std::unique_lock<std::mutex> lk(g_donemutex);
             g_done = true;
@@ -274,6 +308,7 @@ namespace uniset3
 
         if( g_finish_guard_thread )
             g_finish_guard_thread->join();
+
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::join()
@@ -283,11 +318,14 @@ namespace uniset3
 
         ulogsys << myname << "(join): ..." << endl;
 
-        std::unique_lock<std::mutex> lk(g_donemutex);
-        g_doneevent.wait(lk, []()
+        while( !g_done )
         {
-            return (g_done == true);
-        } );
+            std::unique_lock<std::mutex> lk(g_donemutex);
+            g_doneevent.wait(lk, []()
+            {
+                return (g_done == true);
+            });
+        }
     }
     // ------------------------------------------------------------------------------------------
     void UniSetActivator::terminate()
@@ -315,7 +353,7 @@ namespace uniset3
         g_doneevent.wait_for(lk, std::chrono::milliseconds(TERMINATE_TIMEOUT_SEC * 1000), []()
         {
             return (g_done == true);
-        } );
+        });
 
         if( !g_done )
         {
@@ -378,6 +416,6 @@ namespace uniset3
 
         //  sigaction(SIGSEGV, &act, &oact);
     }
-  // ------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------
 } // end of namespace uniset3
 // ------------------------------------------------------------------------------------------

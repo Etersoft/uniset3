@@ -59,7 +59,7 @@ namespace uniset3
             UniSetManager();
 
             friend class UniSetManagerProxy;
-            virtual bool init( const std::string& svcAddr );
+            virtual bool initAfterRunServer( grpc::ServerBuilder& builder, const std::string& svcAddr ) override;
 
             //! \note Переопределяя, не забывайте вызвать базовую
             virtual bool activateObject() override;

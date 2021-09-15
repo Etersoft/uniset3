@@ -54,7 +54,7 @@ message SystemMessage
         ReConfiguration = 5; /*! обновились параметры конфигурации */
         NetworkInfo = 6;     /*! обновилась информация о состоянии узлов в сети
                                  поля
-                                 data[0] - кто
+                                 data[0] - кто (ID)
                                  data[1] - новое состояние(true - connect,  false - disconnect)
                              */
         LogRotate = 7;    /*! переоткрыть файлы логов */

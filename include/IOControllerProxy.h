@@ -35,7 +35,7 @@ namespace uniset3
      * (не оптимально, но список IOController-ов обычно будет состоять из одного элемента (SharedMemory)
      */
     class IOControllerProxy final:
-            public IOController_i::Service
+        public IOController_i::Service
     {
         public:
             IOControllerProxy();

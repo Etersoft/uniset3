@@ -20,18 +20,18 @@
 #include <chrono>
 // --------------------------------------------------------------------------
 #define UPROFILE_TIME_BEGIN \
-std::chrono::time_point<std::chrono::system_clock> _start, _end; \
-_start = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::system_clock> _start, _end; \
+    _start = std::chrono::system_clock::now();
 
 #define UPROFILE_TIME_RESULT_MCS(comm) \
-end = std::chrono::system_clock::now(); \
-std::cerr << __LINE__ << ":" << __FILE__ << "(" << __FUNCTION__  << "): " << comm << elapsed time: " << std::chrono::duration_cast<std::chrono::microseconds>(_end - _start).count() << " ms\n";
+    end = std::chrono::system_clock::now(); \
+    std::cerr << __LINE__ << ":" << __FILE__ << "(" << __FUNCTION__  << "): " << comm << elapsed time: " << std::chrono::duration_cast<std::chrono::microseconds>(_end - _start).count() << " ms\n";
 
 #define UPROFILE_TIME_RESULT_MS(comm) \
-end = std::chrono::system_clock::now(); \
-std::cerr << __LINE__ << ":" << __FILE__ << "(" << __FUNCTION__  << "): " << comm << elapsed time: " << std::chrono::duration_cast<std::chrono::microseconds>(_end - _start).count() << " ms\n";
+    end = std::chrono::system_clock::now(); \
+    std::cerr << __LINE__ << ":" << __FILE__ << "(" << __FUNCTION__  << "): " << comm << elapsed time: " << std::chrono::duration_cast<std::chrono::microseconds>(_end - _start).count() << " ms\n";
 
 #define UPROFILE_TIME_RESULT_NS(comm) \
-end = std::chrono::system_clock::now(); \
-std::cerr << __LINE__ << ":" << __FILE__ << "(" << __FUNCTION__  << "): " << comm << elapsed time: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_end - _start).count() << " ms\n";
+    end = std::chrono::system_clock::now(); \
+    std::cerr << __LINE__ << ":" << __FILE__ << "(" << __FUNCTION__  << "): " << comm << elapsed time: " << std::chrono::duration_cast<std::chrono::nanoseconds>(_end - _start).count() << " ms\n";
 // --------------------------------------------------------------------------

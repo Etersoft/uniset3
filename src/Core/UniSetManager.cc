@@ -100,16 +100,16 @@ bool UniSetManager::remove( const std::shared_ptr<UniSetObject>& obj )
     return false;
 }
 // ------------------------------------------------------------------------------------------
-bool UniSetManager::init( const std::string& svcAddr )
+bool UniSetManager::initAfterRunServer( grpc::ServerBuilder& builder, const std::string& svcAddr )
 {
     // Инициализация самого менеджера и его подобъектов
-    if( !UniSetObject::init(svcAddr) )
+    if( !UniSetObject::initAfterRunServer(builder, svcAddr) )
         return false;
 
     uniset_rwmutex_rlock lock(olistMutex);
 
     for( auto&& o : olist)
-        o->init(svcAddr);
+        o->initAfterRunServer(builder, svcAddr);
 
     return true;
 }

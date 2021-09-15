@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package uniset3;
+
+option optimize_for = LITE_RUNTIME;
+// ---------------------------------------------------------------------------
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+// ---------------------------------------------------------------------------
+message TestParams
+{
+    int64 cmd = 1;
+    string msg = 2;
+}
+
+message RetMessage
+{
+    string msg = 1;
+}
+
+service TestAsyncService_i {
+    rpc getId(google.protobuf.Empty) returns(google.protobuf.Int64Value) {}
+    rpc streamTest(stream TestParams) returns(stream RetMessage) {}
+}

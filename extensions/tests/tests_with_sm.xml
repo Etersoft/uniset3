@@ -277,6 +277,9 @@
 			<!-- REST API test -->
 			<item id="122" iotype="AI" name="API_Sensor_AS" textname="SensorAI" precision="1" default="10" cmin="10" cmax="20" rmin="100" rmax="200"/>
 
+			<!-- AsyncClient test -->
+			<item id="123" iotype="AI" name="AsyncClient_Sensor_AS" textname="AsyncClient SensorAI" default="10"/>
+
 		</sensors>
 		<thresholds name="thresholds">
 			<sensor name="AI_AS">

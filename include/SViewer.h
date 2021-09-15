@@ -40,6 +40,13 @@ namespace uniset3
             void view();
             void monitor( timeout_t msec = 500 );
 
+            static void printInfo(uniset3::ObjectId id,
+                           const std::string& sname,
+                           long value,
+                           const std::string& supplier,
+                           const std::string& txtname, const std::string& iotype);
+
+
         protected:
             void readSection(const std::string& sec, const std::string& secRoot);
             void getSensorsInfo(uniset3::ObjectId iocontrollerID);
@@ -47,13 +54,6 @@ namespace uniset3
             virtual void updateSensors( uniset3::SensorIOInfoSeq& smap, uniset3::ObjectId oid );
 
             const std::string csec;
-
-            void printInfo(uniset3::ObjectId id,
-                           const std::string& sname,
-                           long value,
-                           const std::string& supplier,
-                           const std::string& txtname, const std::string& iotype);
-
             std::shared_ptr<UInterface> ui;
 
         private:

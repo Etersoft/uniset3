@@ -523,6 +523,7 @@ AC_CONFIG_FILES([Makefile
 				 src/Communications/Modbus/Makefile
 				 src/Communications/TCP/Makefile
 				 src/Communications/Http/Makefile
+				 src/Communications/GRPC/Makefile
 				 src/ObjectRepository/Makefile
 				 src/Processes/Makefile
 				 src/Services/Makefile
@@ -608,6 +609,5 @@ AC_CONFIG_FILES([Makefile
 				 wrappers/python/lib/pyUniSet/Makefile
 				 wrappers/python/netdata-plugin/Makefile
 				 wrappers/python/Makefile])
-				 
 
 AC_OUTPUT

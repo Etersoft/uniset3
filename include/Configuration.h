@@ -106,7 +106,7 @@ namespace uniset3
             size_t getCountOfNet() const noexcept;
             timeout_t getRepeatTimeout() const noexcept;
             size_t getRepeatCount() const noexcept;
-            std::string getNodeIP( uniset3::ObjectId node, size_t netNumber=0 ) const noexcept;
+            std::string getNodeIP( uniset3::ObjectId node, size_t netNumber = 0 ) const noexcept;
 
             uniset3::ObjectId getSensorID( const std::string& name ) const noexcept;
             uniset3::ObjectId getControllerID( const std::string& name ) const noexcept;
@@ -157,6 +157,7 @@ namespace uniset3
 
             int getGRPCPort() const noexcept;
             std::string getGRPCHost() const noexcept;
+            xmlNode* getGRPCConfNode() const noexcept;
 
             int repositoryPort() const noexcept;
             std::string repositoryAddr() const noexcept;
@@ -210,11 +211,12 @@ namespace uniset3
             std::string secServices = { "" };
 
             // xml
-            xmlNode* xmlSensorsSec = { 0 };
-            xmlNode* xmlObjectsSec = { 0 };
-            xmlNode* xmlControllersSec = { 0 };
-            xmlNode* xmlServicesSec = { 0 };
-            xmlNode* xmlNodesSec = { 0 };
+            xmlNode* xmlSensorsSec = { nullptr };
+            xmlNode* xmlObjectsSec = { nullptr };
+            xmlNode* xmlControllersSec = { nullptr };
+            xmlNode* xmlServicesSec = { nullptr };
+            xmlNode* xmlNodesSec = { nullptr };
+            xmlNode* xmlGRPCConf = { nullptr };
 
             ObjectId localDBServer = { uniset3::DefaultObjectId };
             ObjectId localNode = { uniset3::DefaultObjectId };
@@ -237,7 +239,7 @@ namespace uniset3
             timeout_t heartbeat_msec = { 3000 };
             timeout_t ncreadytimeout_msec = { 180000 };
             timeout_t startupIgnoretimeout_msec = { 5000 };
-            timeout_t defaultDeadline_msec = { 30 };
+            timeout_t defaultDeadline_msec = { 200 };
     };
 
     /*! Глобальный указатель на конфигурацию (singleton) */

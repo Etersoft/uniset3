@@ -502,7 +502,8 @@ namespace uniset3
 
         if( server )
         {
-            server->Shutdown();
+            auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+            server->Shutdown(deadline);
             server = nullptr;
         }
     }
@@ -514,7 +515,7 @@ namespace uniset3
     // -------------------------------------------------------------------------
     bool LogServer::check( bool restart_if_fail )
     {
-        // смущает пока только, что эта функция будет вызыватся (обычно) из другого потока
+        // смущает пока только, что эта функция будет вызываться (обычно) из другого потока
         try
         {
             // для проверки пробуем открыть соединение..

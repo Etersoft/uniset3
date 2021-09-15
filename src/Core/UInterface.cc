@@ -264,6 +264,7 @@ namespace uniset3
                     chan->addMetaData(ctx);
                     std::unique_ptr<IOController_i::Stub> stub(IOController_i::NewStub(chan->c));
                     grpc::Status st = stub->setValue(&ctx, request, &reply);
+
                     if( st.ok() )
                         return;
 
@@ -759,7 +760,7 @@ namespace uniset3
         catch( std::exception& ex )
         {
             ucrit << "UI(resolveORefOnly): myID=" << myid <<  ": resolve id=" << rid << "@" << node
-            << " catch " << ex.what() << endl;
+                  << " catch " << ex.what() << endl;
         }
 
         throw uniset3::ResolveNameError();

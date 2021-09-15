@@ -6,6 +6,7 @@
 #include "UInterface.h"
 #include "DelayTimer.h"
 #include "TestObject.h"
+#include "IOController.grpc.pb.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -353,4 +354,66 @@ TEST_CASE("[SM]: freezeValue", "[sm][freezeValue]")
     REQUIRE( ui->getValue(517) == 150 );
     msleep(300);
     REQUIRE( obj->in_freeze_s == 150 );
+}
+// -----------------------------------------------------------------------------
+TEST_CASE("[SM]: stream client", "[sm][stream]")
+{
+    InitTest();
+
+    const ObjectId asyncTestSID = 518;
+    uniset3::SensorInfo si;
+    si.set_id(asyncTestSID);
+    si.set_node(uniset_conf()->getLocalNode());
+
+    REQUIRE_NOTHROW( ui->setValue(asyncTestSID, 100) );
+    REQUIRE( ui->getValue(asyncTestSID) == 100 );
+
+    auto oref = ui->resolve(shmID);
+    REQUIRE( oref );
+    REQUIRE( oref->c );
+
+    grpc::ClientContext ctx;
+    ctx.set_deadline(uniset3::deadline_msec(500));
+    SensorsStreamCmd request;
+    auto s = request.add_slist();
+    s->set_id(asyncTestSID);
+    s->set_val(0);
+
+    umessage::SensorMessage reply;
+    std::unique_ptr<uniset3::IONotifyStreamController_i::Stub> stub(uniset3::IONotifyStreamController_i::NewStub(oref->c));
+    auto stream = stub->sensorsStream(&ctx);
+
+    // Get
+    request.set_cmd(uniset3::UIOGet);
+    REQUIRE( stream->Write(request) );
+    REQUIRE( stream->Read(&reply) );
+    REQUIRE( reply.id() == asyncTestSID );
+    REQUIRE( reply.value() == 100 );
+
+    // Notify
+    request.set_cmd(uniset3::UIONotify);
+    REQUIRE( stream->Write(request) );
+    REQUIRE( stream->Read(&reply) );
+    REQUIRE( reply.id() == asyncTestSID );
+    REQUIRE( reply.value() == 100 );
+
+    // Set value
+    s->set_val(200);
+    request.set_cmd(uniset3::UIOSet);
+    REQUIRE( stream->Write(request) );
+    REQUIRE( stream->Read(&reply) );
+    REQUIRE( reply.id() == asyncTestSID );
+    REQUIRE( reply.value() == 200 );
+
+    // DontNotify
+    request.set_cmd(uniset3::UIODontNotify);
+    REQUIRE( stream->Write(request) );
+    REQUIRE( stream->WritesDone() );
+    REQUIRE_NOTHROW( ui->setValue(asyncTestSID, 300) );
+    REQUIRE( ui->getValue(asyncTestSID) == 300 );
+    REQUIRE_FALSE( stream->Read(&reply) );
+
+    // finish
+    auto st = stream->Finish();
+    REQUIRE( st.ok() );
 }

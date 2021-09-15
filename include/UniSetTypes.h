@@ -332,23 +332,23 @@ namespace uniset3
     umessage::MessageHeader makeMessageHeader( uniset3::umessage::Priority p = uniset3::umessage::mpMedium );
     umessage::SystemMessage makeSystemMessage(umessage::SystemMessage::Command cmd = umessage::SystemMessage::Unknown);
     umessage::SensorMessage makeSensorMessage(ObjectId sid, long value, uniset3::IOType type);
-    umessage::TimerMessage makeTimerMessage(int tid=uniset3::DefaultTimerId, uniset3::umessage::Priority p = uniset3::umessage::mpMedium);
+    umessage::TimerMessage makeTimerMessage(int tid = uniset3::DefaultTimerId, uniset3::umessage::Priority p = uniset3::umessage::mpMedium);
     umessage::ConfirmMessage makeConfirmMessage(ObjectId sensor_id,
-                                                const double& sensor_value,
-                                                const uniset3::Timespec& sensor_time,
-                                                const uniset3::Timespec& confirm_time,
-                                                uniset3::umessage::Priority prior = uniset3::umessage::mpMedium);
+            const double& sensor_value,
+            const uniset3::Timespec& sensor_time,
+            const uniset3::Timespec& confirm_time,
+            uniset3::umessage::Priority prior = uniset3::umessage::mpMedium);
 
     umessage::TextMessage makeTextMessage( const std::string& msg,
-                int mtype,
-                const uniset3::Timespec& tm,
-                const uniset3::ProducerInfo& pi,
-                uniset3::umessage::Priority prior = uniset3::umessage::mpMedium,
-                ObjectId cons = uniset3::DefaultObjectId );
+                                           int mtype,
+                                           const uniset3::Timespec& tm,
+                                           const uniset3::ProducerInfo& pi,
+                                           uniset3::umessage::Priority prior = uniset3::umessage::mpMedium,
+                                           ObjectId cons = uniset3::DefaultObjectId );
     umessage::TextMessage makeTextMessage();
     // ---------------------------------------------------------------
-    uniset3::metrics::Metric createMetric( const std::string& name, const double val, const std::string& description="");
-    uniset3::metrics::Metric createMetric( const std::string& name, const std::string& val, const std::string& description="");
+    uniset3::metrics::Metric createMetric( const std::string& name, const double val, const std::string& description = "");
+    uniset3::metrics::Metric createMetric( const std::string& name, const std::string& val, const std::string& description = "");
     uniset3::configurator::ParamValue createParamValue( const double val );
     uniset3::configurator::ParamValue createParamValue( const std::string& val );
     // ---------------------------------------------------------------

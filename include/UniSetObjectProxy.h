@@ -33,7 +33,7 @@ namespace uniset3
      *  это сделано чтобы во время работы уже не требовалось лочить (mutex) список
      */
     class UniSetObjectProxy final:
-            public UniSetObject_i::Service
+        public UniSetObject_i::Service
     {
         public:
             UniSetObjectProxy();

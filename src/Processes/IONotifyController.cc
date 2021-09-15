@@ -23,8 +23,10 @@
 #include <time.h>
 #include <unistd.h>
 #include <iomanip>
+#include <queue>
+#include <grpcpp/grpcpp.h>
+#include <grpcpp/alarm.h>
 
-#include "UInterface.h"
 #include "IONotifyController.h"
 #include "Debug.h"
 #include "IOConfig.h"
@@ -330,7 +332,8 @@ std::string IONotifyController::getStrType() const
 // ------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getInfo): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -398,6 +401,42 @@ grpc::Status IONotifyController::getInfo(::grpc::ServerContext* context, const :
 }
 
 // ------------------------------------------------------------------------------------------
+bool IONotifyController::addSyncConsumer( ConsumerListInfo& lst, std::shared_ptr<SyncClient> cli )
+{
+    uniset_rwmutex_wrlock l(lst.mut);
+
+    for( auto&& it :  lst.clst )
+    {
+        if(it.client && it.client.get() == cli.get() )
+        {
+            // при перезаказе датчиков количество неудачных попыток послать сообщение
+            // считаем что "заказчик" опять на связи
+            it.attempt = maxAttemtps;
+            return false;
+        }
+    }
+
+    ConsumerInfoExt cinf(cli, maxAttemtps);
+    lst.clst.emplace_front( std::move(cinf) );
+    return true;
+}
+// ------------------------------------------------------------------------------------------
+bool IONotifyController::removeSyncConsumer( ConsumerListInfo& lst, const std::shared_ptr<SyncClient>& cli )
+{
+    uniset_rwmutex_wrlock l(lst.mut);
+
+    for( auto li = lst.clst.begin(); li != lst.clst.end(); ++li )
+    {
+        if(li->client && li->client.get() == cli.get() )
+        {
+            lst.clst.erase(li);
+            return true;
+        }
+    }
+
+    return false;
+}
+// ------------------------------------------------------------------------------------------
 /*!
  *    \param lst - список в который необходимо внести потребителя
  *    \param name - имя вносимого потребителя
@@ -462,7 +501,8 @@ bool IONotifyController::removeConsumer( ConsumerListInfo& lst, const ConsumerIn
 // ------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const ::uniset3::AskParams* request, ::google::protobuf::Empty* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(askSensor): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -500,8 +540,81 @@ grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const
     return grpc::Status::OK;
 }
 // ------------------------------------------------------------------------------------------
+bool IONotifyController::getSensor( uniset3::ObjectId sid, uniset3::umessage::SensorMessage& sm )
+{
+    auto li = find(sid);
+    if( li == ioEnd() )
+        return false;
+
+    sm = li->second->makeSensorMessage(true);
+    return true;
+}
+// ------------------------------------------------------------------------------------------
+void IONotifyController::setSyncClient( uniset3::ObjectId sid, int64_t value,
+                                        const std::shared_ptr<SyncClient>& cli,
+                                        uniset3::ConsumerInfo ci )
+{
+    auto li = ioEnd();
+
+    try
+    {
+        localSetValueIt( li, sid, value, ci.id() );
+        return;
+    }
+    catch( std::exception& ex )
+    {
+        ulog4 << "(setSyncClient): " << ex.what() << endl;
+    }
+}
+// ------------------------------------------------------------------------------------------
+void IONotifyController::askSyncClient( uniset3::ObjectId sid, uniset3::UIOCommand cmd,
+                                        const std::shared_ptr<SyncClient>& cli,
+                                        uniset3::ConsumerInfo ci )
+{
+    ulog2 << "(askSyncClient): поступил " << ( cmd == UIODontNotify ? "отказ" : "заказ" ) << " от "
+          << "(" << ci.id() << ")"
+          << " на датчик "
+          << uniset_conf()->oind->getNameById(sid) << endl;
+
+    auto li = myioEnd();
+
+    if( ci.id() == 0 )
+        ci.set_id(DefaultObjectId);
+
+    if( ci.node() == 0 )
+        ci.set_node(DefaultObjectId);
+
+    // если такого аналогового датчика нет, здесь сработает исключение...
+    try
+    {
+        localGetValue(li, sid);
+    }
+    catch( std::exception& ex )
+    {
+        // cli->pushError(smsg);
+        return;
+    }
+
+    {
+        uniset_rwmutex_wrlock lock(askIOMutex);
+        ask(askIOList, sid, ci, cmd, cli);
+    }
+
+    auto usi = li->second;
+
+    // посылка первый раз состояния
+    if( cmd == uniset3::UIONotify || (cmd == UIONotifyFirstNotNull && usi->sinf.value()) )
+    {
+        uniset3::uniset_rwmutex_rlock lock(usi->val_lock);
+        umessage::SensorMessage smsg( usi->makeSensorMessage(false) );
+        cli->pushData(smsg);
+    }
+}
+// ------------------------------------------------------------------------------------------
 void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
-                              const uniset3::ConsumerInfo& cons, uniset3::UIOCommand cmd)
+                              const uniset3::ConsumerInfo& cons,
+                              uniset3::UIOCommand cmd,
+                              std::shared_ptr<SyncClient> cli )
 {
     // поиск датчика в списке
     auto askIterator = askLst.find(sid);
@@ -513,11 +626,21 @@ void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
         case uniset3::UIONotifyFirstNotNull:
         {
             if( askIterator != askLst.end() )
-                addConsumer(askIterator->second, cons);
+            {
+                if( cli )
+                    addSyncConsumer(askIterator->second, cli);
+                else
+                    addConsumer(askIterator->second, cons);
+            }
             else
             {
                 ConsumerListInfo newlst; // создаем новый список
-                addConsumer(newlst, cons);
+
+                if( cli )
+                    addSyncConsumer(newlst, cli);
+                else
+                    addConsumer(newlst, cons);
+
                 askLst.emplace(sid, std::move(newlst));
             }
 
@@ -527,7 +650,12 @@ void IONotifyController::ask( AskMap& askLst, const uniset3::ObjectId sid,
         case uniset3::UIODontNotify:     // отказ
         {
             if( askIterator != askLst.end() )
-                removeConsumer(askIterator->second, cons);
+            {
+                if( cli )
+                    removeSyncConsumer(askIterator->second, cli);
+                else
+                    removeConsumer(askIterator->second, cons);
+            }
 
             break;
         }
@@ -620,6 +748,23 @@ void IONotifyController::send( ConsumerListInfo& lst, const uniset3::umessage::S
                 continue;
         }
 
+        if( !ci && li->client )
+        {
+            if( li->client->isClosed() )
+            {
+                li->client = nullptr;
+                li = lst.clst.erase(li);
+
+                if( li == lst.clst.end() )
+                    li--;
+
+                continue;
+            }
+
+            li->client->pushData(sm);
+            continue;
+        }
+
         for( int i = 0; i < sendAttemtps; i++ )
         {
             try
@@ -689,7 +834,13 @@ bool IONotifyController::activateObject()
     // сперва загружаем датчики и заказчиков..
     readConf();
     // а потом уже собственно активация..
-    return IOController::activateObject();
+    bool ret = IOController::activateObject();
+    asyncThread = std::thread([this]()
+    {
+        asyncMainLoop();
+    });
+
+    return ret;
 }
 // --------------------------------------------------------------------------------------------------------------
 void IONotifyController::sensorsRegistration()
@@ -832,7 +983,8 @@ std::shared_ptr<IOController::UThresholdInfo> IONotifyController::findThreshold(
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IONotifyController::askSensorsSeq(::grpc::ServerContext* context, const ::uniset3::AskSeqParams* request, ::uniset3::IDSeq* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(askSensorsSeq): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -856,6 +1008,331 @@ grpc::Status IONotifyController::askSensorsSeq(::grpc::ServerContext* context, c
     }
 
     return grpc::Status::OK;
+}
+// -----------------------------------------------------------------------------
+// ************* Async processing **************
+// -----------------------------------------------------------------------------
+bool IONotifyController::initBeforeRunServer( grpc::ServerBuilder& builder )
+{
+    bool ret = IOController::initBeforeRunServer(builder);
+    builder.RegisterService(static_cast<IONotifyStreamController_i::Service*>(&asyncService));
+    asyncCQ = builder.AddCompletionQueue();
+    return ret;
+}
+// -----------------------------------------------------------------------------
+bool IONotifyController::deactivateAfterStopServer()
+{
+    bool ret = IOController::deactivateAfterStopServer();
+    asyncCQ->Shutdown();
+    asyncThread.join();
+    return ret;
+}
+// -----------------------------------------------------------------------------
+std::shared_ptr<IONotifyController::SyncClient> IONotifyController::newClient(AsyncClientSession* sess )
+{
+    std::lock_guard<std::mutex> l(mutClients);
+    ulog4 << myname << "(async): ADD NEW CLIENT: " << sess << endl;
+    auto cli = std::make_shared<SyncClient>(this, sess);
+    clients[sess] = cli;
+    return cli;
+}
+// -----------------------------------------------------------------------------
+void IONotifyController::releaseClient( AsyncClientSession* sess )
+{
+    std::lock_guard<std::mutex> l(mutClients);
+    auto i = clients.find(sess);
+
+    if( i != clients.end() )
+    {
+        ulog4 << myname << "(async): REMOVE CLIENT: " << i->first << endl;
+        i->second->close();
+        i->second = nullptr;
+        clients.erase(i);
+    }
+}
+// -----------------------------------------------------------------------------
+struct TagData
+{
+    enum class Event
+    {
+        start,
+        read,
+        write,
+        data_timer,
+        close
+    };
+
+    IONotifyController::AsyncClientSession* handler;
+    Event evt;
+};
+// -----------------------------------------------------------------------------
+struct TagSet
+{
+    TagSet(IONotifyController::AsyncClientSession* self)
+        : on_start{self, TagData::Event::start},
+          on_read{self, TagData::Event::read},
+          on_write{self, TagData::Event::write},
+          on_data_timer{self, TagData::Event::data_timer},
+          on_close{self, TagData::Event::close} {}
+
+    TagData on_start;
+    TagData on_read;
+    TagData on_write;
+    TagData on_data_timer;
+    TagData on_close;
+};
+// -----------------------------------------------------------------------------
+IONotifyController::SyncClient::SyncClient(IONotifyController* i, AsyncClientSession* s):
+    nc(i), session(s)
+{
+
+}
+// -----------------------------------------------------------------------------
+void IONotifyController::SyncClient::readEvent( const uniset3::SensorsStreamCmd& request )
+{
+    ulog4 << "[" << session << "](readEvent): cmd=" << request.cmd() << endl;
+
+    if( request.cmd() == UIOSet )
+    {
+        for( const auto& s : request.slist() )
+            nc->setSyncClient(s.id(), s.val(), shared_from_this(), request.ci());
+    }
+    else if( request.cmd() == UIOGet )
+    {
+        uniset3::umessage::SensorMessage sm;
+        for( const auto& s : request.slist() )
+        {
+            if(nc->getSensor(s.id(), sm) )
+                pushData(sm);
+        }
+    }
+    else
+    {
+        for( const auto& s : request.slist() )
+            nc->askSyncClient(s.id(), request.cmd(), shared_from_this(), request.ci());
+    }
+}
+// -----------------------------------------------------------------------------
+class IONotifyController::AsyncClientSession
+{
+    public:
+        AsyncClientSession(IONotifyController* i, uniset3::IONotifyStreamController_i::AsyncService* srv, grpc::ServerCompletionQueue* scq)
+            : impl(i), tags(this), service(srv), cq(scq), responder(&ctx)
+        {
+            service->RequestsensorsStream(&ctx, &responder, cq, cq, &tags.on_start);
+            wait_data_timer = make_unique<grpc::Alarm>();
+            num++;
+        }
+
+        ~AsyncClientSession()
+        {
+            ulog4 << "AsyncClientSession[" << this << "] destroy.. [" << --num << "]" << endl;
+        }
+
+        static std::chrono::system_clock::time_point deadline_seconds(int s)
+        {
+            return std::chrono::system_clock::now() + std::chrono::seconds(s);
+        }
+
+        bool isClosed() const
+        {
+            return closed;
+        }
+
+        void shutdown()
+        {
+            ulog4 << "AsyncClientSession[" << this << "] ON SHUTDOWN..." << endl;
+            on_close();
+        }
+
+        void on_close()
+        {
+            if( deleted )
+                return;
+
+            deleted = true;
+            closed = true;
+            wait_data_timer->Cancel();
+            impl->releaseClient(this);
+            cli = nullptr;
+            // delete this;
+        }
+
+        void on_create( bool ok )
+        {
+            if( closed )
+                return;
+
+            if( !ok )
+            {
+                on_close();
+                return;
+            }
+
+            ulog4 << "AsyncClientSession[" << this << "] ON CREATE...[" << num << "]" << endl;
+            cli = impl->newClient(this);
+            new AsyncClientSession(impl, service, cq);
+            responder.Read(&request, &tags.on_read);
+            reset_timer();
+        }
+
+        void on_read( bool ok )
+        {
+            if( !ok )
+            {
+                if( closed )
+                    return;
+
+                ulog4 << "AsyncClientSession[" << this << "] ON CLOSE READ..." << endl;
+                closed = true;
+                wait_data_timer->Cancel();
+                responder.Finish(grpc::Status::OK, &tags.on_close);
+                return;
+            }
+
+            ulog4 << "AsyncClientSession[" << this << "] ON READ..." << endl;
+            responder.Read(&request, &tags.on_read);
+            cli->readEvent(request);
+        }
+
+        void on_data_timer(bool ok)
+        {
+            if( closed )
+                return;
+
+            if( !ok ) // timer was break (new data pushed)
+                on_write(true);
+            else
+            {
+                ulog4 << "AsyncClientSession[" << this << "] ON WAIT WRITE DATA TIMEOUT..." << endl;
+                reset_timer();
+            }
+        }
+
+        void reset_timer()
+        {
+            wait_data_timer->Set(cq, deadline_seconds(wait_data_time_in_seconds), &tags.on_data_timer);
+        }
+
+        void on_write(bool ok)
+        {
+            if( closed )
+                return;
+
+            if( !ok )
+            {
+                ulog4 << "AsyncClientSession[" << this << "] ON CLOSE WRITE..." << endl;
+                closed = true;
+                wait_data_timer->Cancel();
+                responder.Finish(grpc::Status::OK, &tags.on_close);
+                return;
+            }
+
+            ulog4 << "AsyncClientSession[" << this << "] ON WRITE..." << endl;
+            std::lock_guard<std::mutex> lk(wr_queue_mutex);
+
+            if( wr_queue.empty() )
+            {
+                ulog4 << "AsyncClientSession[" << this << "] write: no new data.." << endl;
+                reset_timer();
+                return;
+            }
+
+            auto reply = wr_queue.front();
+            ulog4 << "AsyncClientSession[" << this << "] write: sid=" << reply.id() << " value=" << reply.value() << endl;
+            responder.Write(reply, wr_options, &tags.on_write);
+            wr_queue.pop();
+        }
+
+        void push_data( const uniset3::umessage::SensorMessage& r )
+        {
+            if( deleted || closed )
+                return;
+
+            std::lock_guard<std::mutex> lk(wr_queue_mutex);
+            wr_queue.push(r);
+
+            if( wait_data_timer )
+                wait_data_timer->Cancel();
+        }
+
+    private:
+        static atomic_int64_t num;
+        std::atomic_bool closed = {false};
+        std::atomic_bool deleted = {false};
+        TagSet tags;
+        uniset3::IONotifyStreamController_i::AsyncService* service;
+        std::unique_ptr<grpc::Alarm> wait_data_timer;
+        size_t wait_data_time_in_seconds = { 15*60*60 };
+
+        IONotifyController* impl;
+        std::shared_ptr<SyncClient> cli;
+        grpc::ServerCompletionQueue* cq;
+        grpc::ServerContext ctx;
+        IONotifyController::RWResponder responder;
+        grpc::WriteOptions wr_options;
+
+        uniset3::SensorsStreamCmd request;
+        std::queue<uniset3::umessage::SensorMessage> wr_queue;
+        std::mutex wr_queue_mutex;
+};
+// -----------------------------------------------------------------------------
+atomic_int64_t IONotifyController::AsyncClientSession::num;
+// -----------------------------------------------------------------------------
+void IONotifyController::SyncClient::close()
+{
+    closed = true;
+}
+// -----------------------------------------------------------------------------
+void IONotifyController::SyncClient::pushData( const uniset3::umessage::SensorMessage& r )
+{
+    if( !closed )
+        session->push_data(r);
+}
+// -----------------------------------------------------------------------------
+IONotifyController::SyncClient::~SyncClient()
+{
+    ulog4 << "AsyncClientSession[" << this << "] delete session.." << endl;
+    delete session;
+    session = nullptr;
+}
+// -----------------------------------------------------------------------------
+bool IONotifyController::SyncClient::isClosed() const
+{
+    return closed;
+}
+// -----------------------------------------------------------------------------
+void IONotifyController::asyncMainLoop()
+{
+    new AsyncClientSession(this, &asyncService, asyncCQ.get());
+    void* raw_tag;
+    bool ok;
+
+    while( true )
+    {
+        raw_tag = nullptr;
+        bool ret = asyncCQ->Next(&raw_tag, &ok);
+        TagData* tag = reinterpret_cast<TagData*>(raw_tag);
+
+        if( !ret )
+        {
+            if( tag )
+                tag->handler->shutdown();
+
+            break;
+        }
+
+        if( tag->evt == TagData::Event::read )
+            tag->handler->on_read(ok);
+        else if( tag->evt == TagData::Event::data_timer )
+            tag->handler->on_data_timer(ok);
+        else if( tag->evt == TagData::Event::write )
+            tag->handler->on_write(ok);
+        else if( tag->evt == TagData::Event::close )
+            tag->handler->on_close();
+        else if( tag->evt == TagData::Event::start )
+            tag->handler->on_create(ok);
+    }
 }
 // -----------------------------------------------------------------------------
 #if 0

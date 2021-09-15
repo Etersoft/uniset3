@@ -1,6 +1,8 @@
 #include <iostream>
+#include <algorithm>
 #include "Exceptions.h"
 #include "UInterface.h"
+#include "IOController.grpc.pb.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -59,6 +61,7 @@ int main( int argc, char** argv )
         }
 
         std::list<ExtInfo> l;
+        bool useSync = false;
 
         for( auto&& it : lst )
         {
@@ -72,6 +75,8 @@ int main( int argc, char** argv )
 
             if( it.si.node() == DefaultObjectId )
                 it.si.set_node(conf->getLocalNode());
+            else
+                useSync = true; // если хоть один датчик на другом узле, используем удалённый вызов
 
             ExtInfo i;
             i.si = it.si;
@@ -99,7 +104,7 @@ int main( int argc, char** argv )
 
         int amsec = conf->getArgInt("--pause", "200");
 
-        if(amsec <= 10)
+        if( amsec <= 10 )
         {
             cerr << endl << "Ошибка, используйте --pause val - любое положительное число > 10" << endl << endl;
             return 1;
@@ -113,10 +118,65 @@ int main( int argc, char** argv )
         cout << "  max = " << amax << endl;
         cout << "  step = " << astep << endl;
         cout << "  pause = " << amsec << endl;
+        cout << "  sync_call = " << useSync << endl;
         cout << "------------------------------" << endl << endl;
 
-        int i = amin - astep, j = amax;
+        auto oref = ui.resolve(lst.begin()->si.id());
 
+        if( !oref->c )
+        {
+            cerr << "can't resolve server: " << oref->ref.addr() << endl;
+            return 1;
+        }
+
+        std::unique_ptr<IONotifyStreamController_i::Stub> stub(IONotifyStreamController_i::NewStub(oref->c));
+
+        grpc::ClientContext ctx;
+        SensorsStreamCmd request;
+        request.set_cmd(uniset3::UIOSet);
+
+        for( const auto& i : lst )
+        {
+            auto s = request.add_slist();
+            s->set_id(i.si.id());
+            s->set_val(i.val);
+        }
+
+        typedef std::unique_ptr< ::grpc::ClientReaderWriter< ::uniset3::SensorsStreamCmd, ::uniset3::umessage::SensorMessage>> StreamType;
+
+        StreamType stream;
+
+        if( !useSync )
+            stream = stub->sensorsStream(&ctx);
+
+        auto fSync = std::function<void(int)>([&](int i)
+        {
+            for( const auto& it : l )
+            {
+                try
+                {
+                    ui.setValue(it.si, i, DefaultObjectId);
+                }
+                catch( const uniset3::Exception& ex )
+                {
+                    cerr << endl << "save id=" << it.fname << " " << ex << endl;
+                }
+            }
+        });
+
+        auto fAsync = std::function<void(int)>([&](int i)
+        {
+            for( const auto& it : l )
+            {
+                for( int k = 0; k < request.slist_size(); k++ )
+                    request.mutable_slist(k)->set_val(i);
+
+                if( !stream->Write(request) )
+                    cerr << endl << "write error.." << endl;
+            }
+        });
+
+        int i = amin - astep, j = amax;
 
         while(1)
         {
@@ -129,17 +189,10 @@ int main( int argc, char** argv )
 
                 cout << "\r" << " i = " << j << "     " << flush;
 
-                for( const auto& it : l )
-                {
-                    try
-                    {
-                        ui.setValue(it.si, j, DefaultObjectId);
-                    }
-                    catch( const uniset3::Exception& ex )
-                    {
-                        cerr << endl << "save id=" << it.fname << " " << ex << endl;
-                    }
-                }
+                if( useSync )
+                    fSync(j);
+                else
+                    fAsync(j);
 
                 if(j <= amin)
                 {
@@ -156,17 +209,10 @@ int main( int argc, char** argv )
 
                 cout << "\r" << " i = " << i << "     " << flush;
 
-                for( std::list<ExtInfo>::iterator it = l.begin(); it != l.end(); ++it )
-                {
-                    try
-                    {
-                        ui.setValue(it->si, i, DefaultObjectId);
-                    }
-                    catch( const uniset3::Exception& ex )
-                    {
-                        cerr << endl << "save id=" << it->fname << " " << ex << endl;
-                    }
-                }
+                if( useSync )
+                    fSync(i);
+                else
+                    fAsync(i);
             }
 
             msleep(amsec);

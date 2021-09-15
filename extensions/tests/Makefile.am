@@ -11,7 +11,7 @@ tests_with_conf_SOURCES   = tests_with_conf.cc test_calibration.cc test_iobase.c
 tests_with_conf_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la
 tests_with_conf_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include
 
-tests_with_sm_SOURCES   = tests_with_sm.cc test_ui.cc test_iobase_with_sm.cc test_restapi_uniset.cc
+tests_with_sm_SOURCES   = tests_with_sm.cc test_ui.cc test_iobase_with_sm.cc test_restapi_uniset.cc test_ionotifystream_async_client.cc
 tests_with_sm_LDADD	 = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/extensions/lib/libUniSet3Extensions.la \
 	$(top_builddir)/extensions/SharedMemory/libUniSet3SharedMemory.la $(SIGC_LIBS) $(POCO_LIBS)
 tests_with_sm_CPPFLAGS  = -I$(top_builddir)/include -I$(top_builddir)/extensions/include \

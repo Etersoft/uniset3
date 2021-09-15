@@ -142,11 +142,19 @@ namespace uniset3
             //! Активизация объекта (переопределяется для необходимых действий после активизации)
             virtual bool activateObject();
 
+            //! Момент после активации всех объектов
+            virtual bool postActivateObjects();
+
             //! Деактивация объекта (переопределяется для необходимых действий при завершении работы)
             virtual bool deactivateObject();
 
-            //! Момент после активации всех объектов
-            virtual bool postActivateObjects();
+            //! Деактивация после остановки сервера
+            virtual bool deactivateAfterStopServer();
+
+            //! перед стартом grpc-сервера (регистрация сервисов)
+            virtual bool initBeforeRunServer( grpc::ServerBuilder& builder );
+            //! после старта grpc-сервера (известен адрес)
+            virtual bool initAfterRunServer( grpc::ServerBuilder& builder, const std::string& svcAddr );
 
             // прерывание работы всей программы (с вызовом shutdown)
             void uterminate();
@@ -194,8 +202,7 @@ namespace uniset3
 
             /*! функция потока */
             void work();
-            //! Инициализация параметров объекта
-            virtual bool init( const std::string& svcAddr );
+
             //! Прямая деактивизация объекта
             bool deactivate();
             //! Непосредственная активизация объекта

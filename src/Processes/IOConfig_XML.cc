@@ -422,7 +422,7 @@ namespace uniset3
         }
 
         ti->lowlimit = uit.getIntProp("lowlimit");
-        ti->hilimit  =uit.getIntProp("hilimit");
+        ti->hilimit  = uit.getIntProp("hilimit");
         ti->invert = uit.getIntProp("invert");
         ti->state = IOController::NormalThreshold;
         return true;

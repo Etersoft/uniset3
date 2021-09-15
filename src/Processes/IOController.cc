@@ -129,7 +129,8 @@ void IOController::activateInit()
 // ------------------------------------------------------------------------------------------
 ::grpc::Status IOController::getValue(::grpc::ServerContext* context, const ::uniset3::GetValueParams* request, ::google::protobuf::Int64Value* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getValue): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -184,7 +185,8 @@ long IOController::localGetValue( std::shared_ptr<USensorInfo>& usi )
 // ------------------------------------------------------------------------------------------
 grpc::Status IOController::freezeValue(::grpc::ServerContext* context, const ::uniset3::FreezeValueParams* request, ::google::protobuf::Empty* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(freezeValue): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -254,7 +256,8 @@ void IOController::localFreezeValue( std::shared_ptr<USensorInfo>& usi,
 // ------------------------------------------------------------------------------------------
 grpc::Status IOController::setValue(::grpc::ServerContext* context, const ::uniset3::SetValueParams* request, ::google::protobuf::Empty* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(setValue): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -382,7 +385,8 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
 // ------------------------------------------------------------------------------------------
 grpc::Status IOController::getIOType(::grpc::ServerContext* context, const ::uniset3::GetIOTypeParams* request, ::uniset3::RetIOType* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getIOType): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -503,7 +507,8 @@ void IOController::dumpToDB()
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IOController::getSensorsMap(::grpc::ServerContext* context, const ::uniset3::GetSensorsMapParams* request, ::uniset3::SensorIOInfoSeq* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getSensorsMap): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -532,7 +537,8 @@ uniset3::umessage::Priority IOController::getPriority( const uniset3::ObjectId s
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IOController::getSensorIOInfo(::grpc::ServerContext* context, const ::uniset3::GetSensorIOInfoParams* request, ::uniset3::SensorIOInfo* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getSensorIOInfo): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -556,7 +562,8 @@ grpc::Status IOController::getSensorIOInfo(::grpc::ServerContext* context, const
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IOController::getRawValue(::grpc::ServerContext* context, const ::uniset3::GetRawValueParams* request, ::google::protobuf::Int64Value* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getRawValue): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -594,7 +601,8 @@ grpc::Status IOController::getRawValue(::grpc::ServerContext* context, const ::u
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IOController::calibrate(::grpc::ServerContext* context, const ::uniset3::CalibrateParams* request, ::google::protobuf::Empty* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(calibrate): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -616,7 +624,8 @@ grpc::Status IOController::calibrate(::grpc::ServerContext* context, const ::uni
 // --------------------------------------------------------------------------------------------------------------
 grpc::Status IOController::getCalibrateInfo(::grpc::ServerContext* context, const ::uniset3::GetCalibrateInfoParams* request, ::uniset3::CalibrateInfo* response )
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getCalibrateInfo): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -750,7 +759,8 @@ IOController::IOStateList::iterator IOController::myiofind( const uniset3::Objec
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::uniset3::GetSensorSeqParams* request, ::uniset3::SensorIOInfoSeq* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getSensorSeq): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -778,7 +788,8 @@ grpc::Status IOController::getSensorSeq(::grpc::ServerContext* context, const ::
 // -----------------------------------------------------------------------------
 grpc::Status IOController::setOutputSeq(::grpc::ServerContext* context, const ::uniset3::SetOutputParams* request, ::uniset3::IDSeq* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(setOutputSeq): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -805,7 +816,8 @@ grpc::Status IOController::setOutputSeq(::grpc::ServerContext* context, const ::
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getTimeChange(::grpc::ServerContext* context, const ::uniset3::GetTimeChangeParams* request, ::uniset3::ShortIOInfo* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getTimeChange): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -832,7 +844,8 @@ grpc::Status IOController::getTimeChange(::grpc::ServerContext* context, const :
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getSensors(::grpc::ServerContext* context, const ::uniset3::GetSensorsParams* request, ::uniset3::ShortMapSeq* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getSensors): Deadline exceeded or Client cancelled, abandoning.");
     }
 
@@ -900,7 +913,8 @@ void IOController::USensorInfo::checkDepend( std::shared_ptr<USensorInfo>& d_it,
 // -----------------------------------------------------------------------------
 grpc::Status IOController::getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response)
 {
-    if (context->IsCancelled()) {
+    if (context->IsCancelled())
+    {
         return grpc::Status(grpc::StatusCode::CANCELLED, "(getInfo): Deadline exceeded or Client cancelled, abandoning.");
     }
 

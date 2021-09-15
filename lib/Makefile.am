@@ -18,6 +18,7 @@ libUniSet3_la_LIBADD	= -lm -lpthread -lstdc++ \
  $(top_builddir)/src/Communications/Modbus/libModbus.la \
  $(top_builddir)/src/Communications/TCP/libTCP.la \
  $(top_builddir)/src/Communications/Http/libHttp.la \
+ $(top_builddir)/src/Communications/GRPC/libUGRPC.la \
  $(top_builddir)/src/ObjectRepository/libObjectsRepository.la \
  $(top_builddir)/src/Processes/libProcesses.la \
  $(top_builddir)/src/Services/libServices.la \
