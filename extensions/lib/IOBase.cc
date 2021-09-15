@@ -25,6 +25,50 @@ using namespace std;
 namespace uniset3
 {
     // -----------------------------------------------------------------------------
+    IOBase::IOBase():
+    stype(uniset3::UnknownIOType),
+    cdiagram(nullptr),
+    value(0),
+    craw(0),
+    cprev(0),
+    safeval(0),
+    defval(0),
+    df(1),
+    nofilter(false),
+    f_median(false),
+    f_ls(false),
+    f_filter_iir(false),
+    ignore(false),
+    invert(false),
+    noprecision(false),
+    calcrop(true),
+    debounce_pause(false),
+    debounce_state(false),
+    ondelay_state(false),
+    offdelay_state(false),
+    d_id(uniset3::DefaultObjectId),
+    d_value(1),
+    d_off_value(0),
+    d_iotype(uniset3::UnknownIOType),
+    t_ai(uniset3::DefaultObjectId),
+    t_hilimit(0),
+    t_lowlimit(0),
+    t_invert(false),
+    front(false),
+    front_type(ftUnknown),
+    front_prev_state(false),
+    front_state(false),
+    rawdata(false)
+    {
+        si.set_id(uniset3::DefaultObjectId);
+        si.set_node(uniset3::DefaultObjectId);
+        cal.set_minraw(0);
+        cal.set_maxraw(0);
+        cal.set_mincal(0);
+        cal.set_maxcal(0);
+        cal.set_precision(0);
+    }
+    // -----------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, IOBase& inf )
     {
         return os << "(" << inf.si.id() << ")" << uniset_conf()->oind->getMapName(inf.si.id())
