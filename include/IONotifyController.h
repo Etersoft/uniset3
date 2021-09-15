@@ -149,7 +149,7 @@ namespace uniset3
             typedef ::grpc::ServerAsyncReaderWriter<uniset3::umessage::SensorMessage, uniset3::SensorsStreamCmd> RWResponder;
             class AsyncClientSession;
             struct SyncClient:
-               public std::enable_shared_from_this<SyncClient>
+                public std::enable_shared_from_this<SyncClient>
             {
                 SyncClient(IONotifyController* i, AsyncClientSession* s);
                 ~SyncClient();
@@ -168,8 +168,8 @@ namespace uniset3
             struct ConsumerInfoExt
             {
                 ConsumerInfoExt(const std::shared_ptr<SyncClient>& cli, size_t maxAttemtps = 10 ):
-                        client(cli),
-                        attempt(maxAttemtps) {}
+                    client(cli),
+                    attempt(maxAttemtps) {}
 
                 ConsumerInfoExt( const uniset3::ConsumerInfo& _ci, size_t maxAttemtps = 10 ):
                     ci(_ci),
@@ -234,8 +234,8 @@ namespace uniset3
                                 uniset3::ConsumerInfo _ci );
 
             virtual void setSyncClient( uniset3::ObjectId sid, int64_t value,
-                                   const std::shared_ptr<SyncClient>& cli,
-                                   uniset3::ConsumerInfo _ci );
+                                        const std::shared_ptr<SyncClient>& cli,
+                                        uniset3::ConsumerInfo _ci );
 
             virtual bool getSensor(uniset3::ObjectId sid, uniset3::umessage::SensorMessage& sm );
 
@@ -262,7 +262,7 @@ namespace uniset3
             friend class NCRestorer;
             friend class IONotifyControllerProxy;
 
-            virtual bool initBeforeRunServer( grpc::ServerBuilder &builder ) override;
+            virtual bool initBeforeRunServer( grpc::ServerBuilder& builder ) override;
             virtual bool deactivateAfterStopServer() override;
             //----------------------
             bool addSyncConsumer( ConsumerListInfo& lst, std::shared_ptr<SyncClient> cli );
