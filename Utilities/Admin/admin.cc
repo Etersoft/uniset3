@@ -13,7 +13,6 @@
 #include "UniSetManager.h"
 #include "UInterface.h"
 #include "Configuration.h"
-#include "ObjectIndex_XML.h"
 #include "MessageTypes.pb.h"
 #include "Debug.h"
 #include "UHelpers.h"
