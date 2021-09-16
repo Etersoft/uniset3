@@ -188,9 +188,9 @@ namespace uniset3
                 builder.SetResourceQuota(rq);
             }
 
-//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 2000);
-//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 3000);
-//            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
+            //            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIME_MS, 2000);
+            //            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 3000);
+            //            builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1);
         }
 
         grpcHost = conf->getGRPCHost();

@@ -1117,7 +1117,7 @@ class IONotifyController::AsyncClientSession
 {
     public:
         AsyncClientSession(IONotifyController* i, uniset3::IONotifyStreamController_i::AsyncService* srv, grpc::ServerCompletionQueue* scq)
-            : impl(i), tags(this), service(srv), cq(scq), responder(&ctx)
+            : tags(this), service(srv), impl(i), cq(scq), responder(&ctx)
         {
             service->RequestsensorsStream(&ctx, &responder, cq, cq, &tags.on_start);
             wait_data_timer = make_unique<grpc::Alarm>();

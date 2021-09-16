@@ -45,8 +45,8 @@ SMonitor::SMonitor(ObjectId id):
 
 SMonitor::SMonitor( uniset3::ObjectId id, const std::list<uniset3::ParamSInfo>& _lst ):
     UniSetObject(id),
-    script(""),
-    lst(_lst)
+    lst(_lst),
+    script("")
 {
 
 }

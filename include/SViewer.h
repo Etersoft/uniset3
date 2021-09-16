@@ -41,10 +41,10 @@ namespace uniset3
             void monitor( timeout_t msec = 500 );
 
             static void printInfo(uniset3::ObjectId id,
-                           const std::string& sname,
-                           long value,
-                           const std::string& supplier,
-                           const std::string& txtname, const std::string& iotype);
+                                  const std::string& sname,
+                                  long value,
+                                  const std::string& supplier,
+                                  const std::string& txtname, const std::string& iotype);
 
 
         protected:

@@ -23,9 +23,10 @@
 #include <sstream>
 #include <fstream>
 #include <Poco/File.h>
+#include "city.h"
+#include "farmhash.h"
 #include "UniSetTypes.h"
 #include "Configuration.h"
-#include "UHelpers.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -728,15 +729,46 @@ string uniset3::BadSymbolsToStr()
     return bad;
 }
 // ---------------------------------------------------------------------------------------------------------------
+struct keys_t
+{
+    uniset3::ObjectId id;
+    uniset3::ObjectId node;
+
+    keys_t( const uniset3::ObjectId& _id, const uniset3::ObjectId& _node ):
+        id(_id),
+        node(_node)
+    {}
+} __attribute__((packed));
+
 uniset3::KeyType uniset3::key( const uniset3::ObjectId id, const uniset3::ObjectId node )
 {
-    //! \warning что тут у нас с переполнением..
-    return KeyType( (id * node) + (id + 2 * node) );
+    keys_t k(id, node);
+    return uniset3::hash64( reinterpret_cast<char*>(&k), sizeof(k) );
 }
 // ---------------------------------------------------------------------------------------------------------------
 uniset3::KeyType uniset3::key( const uniset3::SensorInfo& si )
 {
     return key(si.id(), si.node());
+}
+// ---------------------------------------------------------------------------------------------------------------
+uint64_t uniset3::hash64( const std::string& str ) noexcept
+{
+    return CityHash_v1_0_2::CityHash64(str.data(), str.size());
+}
+
+uint64_t uniset3::hash64( const char* buf, size_t sz ) noexcept
+{
+    return CityHash_v1_0_2::CityHash64(buf, sz);
+}
+// ---------------------------------------------------------------------------------------------------------------
+uint32_t uniset3::hash32( const std::string& str ) noexcept
+{
+    return NAMESPACE_FOR_HASH_FUNCTIONS::Hash32(str.data(), str.size());
+}
+
+uint32_t uniset3::hash32( const char* buf, size_t sz ) noexcept
+{
+    return NAMESPACE_FOR_HASH_FUNCTIONS::Hash32(buf, sz);
 }
 // ---------------------------------------------------------------------------------------------------------------
 uniset3::umessage::MessageHeader uniset3::makeMessageHeader( uniset3::umessage::Priority prior )

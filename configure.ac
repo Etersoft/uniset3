@@ -518,6 +518,9 @@ AC_CONFIG_FILES([Makefile
 				 proto/UniSetTypes/Makefile
 				 proto/Processes/Makefile
 				 proto/Log/Makefile
+				 contrib/Makefile
+				 contrib/cityhash102/Makefile
+				 contrib/libfarmhash/Makefile
 				 src/Core/Makefile
 				 src/Communications/Makefile
 				 src/Communications/Modbus/Makefile

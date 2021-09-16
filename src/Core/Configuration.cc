@@ -32,7 +32,7 @@
 #include "Configuration.h"
 #include "Exceptions.h"
 #include "MessageTypes.pb.h"
-#include "ObjectIndex_XML.h"
+#include "ObjectIndex_hashXML.h"
 #include "ObjectIndex_idXML.h"
 #include "UniSetActivator.h"
 // -------------------------------------------------------------------------
@@ -241,7 +241,7 @@ namespace uniset3
                     {
                         if( it.getIntProp("idfromfile") == 0 )
                         {
-                            shared_ptr<ObjectIndex_XML> oi = make_shared<ObjectIndex_XML>(unixml); //(fileConfName);
+                            shared_ptr<ObjectIndex_hashXML> oi = make_shared<ObjectIndex_hashXML>(unixml); //(fileConfName);
                             oind = static_pointer_cast<ObjectIndex>(oi);
                         }
                         else
