@@ -164,7 +164,7 @@ TEST_CASE("ConfirmMessage", "[basic][message types][ConfirmMessage]" )
         REQUIRE( equal(cm.sensor_ts(), t_event) );
         REQUIRE( equal(cm.confirm_ts(), t_confirm) );
         CHECK( cm.broadcast() == false );
-        CHECK( cm.forward() == false );
+        CHECK( cm.forwarded() == false );
     }
 
     SECTION("Transport ConfirmMessage")

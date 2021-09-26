@@ -81,19 +81,19 @@ message RetIOType
 /*! Информация датчике */
 message SensorIOInfo
 {
-    int64 value = 1;                   /*!< значение */
-    bool blocked = 2;                  /*!< данное значение блокировано другим */
-    bool frozen = 3;                   /*!< данное значение "заморожено" */
-    int64 real_value = 4;              /*!< запомненное состояние, до блокировки или заморозки */
-    uniset3.IOType type = 5;     /*!< тиNewStub(oref)п */
-    int32 priority = 6;                /*!< приоритет уведомления */
+    int64 value = 1;             /*!< значение */
+    bool blocked = 2;            /*!< данное значение блокировано другим */
+    bool frozen = 3;             /*!< данное значение "заморожено" */
+    int64 real_value = 4;        /*!< запомненное состояние, до блокировки или заморозки */
+    uniset3.IOType type = 5;     /*!< тип */
+    int32 priority = 6;          /*!< приоритет уведомления */
     SensorInfo si = 7;
-    int64 default_val = 8;             /*!< значение по умолчанию */
-    CalibrateInfo ci = 9;              /*!< калибровочные параметры */
-    Timespec ts = 10;     /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
-    int64 supplier = 11;    /*!< идентификатор объекта изменившего состояние датчика */
-    bool dbignore = 12;     /*!< не сохранять изменения в БД */
-    int64 depend_sid = 13;  /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
+    int64 default_val = 8;       /*!< значение по умолчанию */
+    CalibrateInfo ci = 9;        /*!< калибровочные параметры */
+    Timespec ts = 10;      /*!< время последнего изменения датчика (clock_gettime(CLOCK_REALTIME) */
+    int64 supplier = 11;   /*!< идентификатор объекта изменившего состояние датчика */
+    bool dbignore = 12;    /*!< не сохранять изменения в БД */
+    int64 depend_sid = 13; /*!< датчик от которого зависит данный (при blocked=true). DefaultObjectId если не зависит */
 }
 
 message SensorIOInfoSeq
