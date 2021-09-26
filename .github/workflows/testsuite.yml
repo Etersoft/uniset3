@@ -43,7 +43,7 @@ jobs:
             # due broken comedi
             export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
             autoreconf -fiv
-            ./configure --disable-netdata --disable-python
+            ./configure --disable-netdata --disable-python --disable-pgsql
 
       - name: make
         run: make
