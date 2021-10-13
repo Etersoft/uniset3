@@ -22,8 +22,9 @@ import urllib.request, urllib.parse, urllib.error
 UHTTP_API_VERSION = 'v0'
 
 
-class UHTTPError:
+class UHTTPError(Exception):
     def __init__(self, err=''):
+        super().__init__(self)
         self.message = err
 
 

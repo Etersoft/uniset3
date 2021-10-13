@@ -225,6 +225,9 @@ class UConnector(_object):
     def getObjectInfo(self, *args) -> "std::string":
         return _pyUConnector.UConnector_getObjectInfo(self, *args)
 
+    def apiRequest(self, *args) -> "std::string":
+        return _pyUConnector.UConnector_apiRequest(self, *args)
+
     def activate_objects(self) -> "void":
         return _pyUConnector.UConnector_activate_objects(self)
 UConnector_swigregister = _pyUConnector.UConnector_swigregister
