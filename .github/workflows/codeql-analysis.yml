@@ -26,8 +26,8 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     container:
-      image: alt:sisyphus
-      
+      image: alt:p10
+
     env:
       CC: ccache gcc
       CCACHE_DIR: ${{ github.workspace }}/.ccache
