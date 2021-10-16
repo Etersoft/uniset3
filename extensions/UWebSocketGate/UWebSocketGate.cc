@@ -60,7 +60,7 @@ UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
 
     UniXML::iterator it(cnode);
 
-    int maxCacheSize = conf->getArgPInt("--" + prefix + "max-ui-cache-size", it.getProp("msgUIChacheSize"), 5000);
+    int maxCacheSize = conf->getArgPInt("--" + prefix + "max-ui-cache-size", it.getProp("msgUICacheSize"), 5000);
     ui->setCacheMaxSize(maxCacheSize);
 
     shm = make_shared<SMInterface>(shmID, ui, getId(), ic);
