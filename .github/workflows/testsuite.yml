@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: alt:sisyphus
+      image: alt:p10
 
     env:
       CC: ccache gcc

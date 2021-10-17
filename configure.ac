@@ -609,7 +609,7 @@ AC_CONFIG_FILES([Makefile
 				 testsuite/Makefile
 				 wrappers/Makefile
 				 wrappers/python/lib/Makefile
-				 wrappers/python/lib/pyUniSet/Makefile
+				 wrappers/python/lib/lib/Makefile
 				 wrappers/python/netdata-plugin/Makefile
 				 wrappers/python/Makefile])
 

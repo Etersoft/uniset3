@@ -52,7 +52,6 @@ namespace uniset3
             std::string getProp2( const std::string& name, const std::string& defval = "" ) const noexcept;
             std::string getProp( const std::string& name ) const noexcept;
             int getIntProp( const std::string& name ) const noexcept;
-            /// if value if not positive ( <= 0 ), returns def
             int getPIntProp( const std::string& name, int def ) const noexcept;
             void setProp( const std::string& name, const std::string& text ) noexcept;
 
@@ -150,8 +149,6 @@ namespace uniset3
             static std::string getProp2(const xmlNode* node, const std::string& name, const std::string& defval = "" ) noexcept;
 
             static int getIntProp(const xmlNode* node, const std::string& name) noexcept;
-
-            /// if value if not positive ( <= 0 ), returns def
             static int getPIntProp(const xmlNode* node, const std::string& name, int def) noexcept;
 
             // Установить свойство name указанного узла node

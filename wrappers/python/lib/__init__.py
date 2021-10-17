@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from .UGlobal import *
-from .UniXML import *
-from .UInterface import *
-from .UInterfaceUniSet import *
-from .UInterfaceModbus import *
+__all__ = ["UGlobal", "UInterface", "UInterfaceModbus", "UInterfaceUniSet", "UniSetHTTP", "UniXML"]
 
-from .pyUniSet.pyUniSet import *
-from .pyUniSet.pyUModbus import *
-from .pyUniSet.pyUConnector import *
+from .lib.UniSet import *
+from .lib.UModbus import *
+from .lib.UConnector import *
 
-from .pyUniSet.pyUExceptions import *
+from .lib.UExceptions import *
