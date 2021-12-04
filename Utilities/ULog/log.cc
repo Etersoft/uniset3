@@ -37,6 +37,7 @@ static struct option longopts[] =
     { "logfile", required_argument, 0, 'w' },
     { "logfile-truncate", required_argument, 0, 'z' },
     { "grep", required_argument, 0, 'g' },
+    { "timezone", required_argument, 0, 'm' },
     { NULL, 0, 0, 0 }
 };
 // --------------------------------------------------------------------------
@@ -75,6 +76,7 @@ static void print_help()
     printf("[-r | --rotate] [objName]                 - rotate log file.\n");
     printf("[-u | --save-loglevels] [objName]         - save log levels (disable restore after disconnected).\n");
     printf("[-y | --restore-loglevels] [objName]      - restore default log levels.\n");
+    printf("[-m | --timezone] [local|utc]             - set time zone for log, local or UTC.\n");
 
     printf("\n");
     printf("Examples:\n");
@@ -122,7 +124,7 @@ int main( int argc, char** argv )
     {
         while(1)
         {
-            opt = getopt_long(argc, argv, "chvlf:a:p:i:d:s:n:eorbx:w:zt:g:uby:", longopts, &optindex);
+            opt = getopt_long(argc, argv, "chvlf:a:p:i:d:s:n:eorbx:w:zt:g:uby:m:", longopts, &optindex);
 
             if( opt == -1 )
                 break;
@@ -270,6 +272,25 @@ int main( int argc, char** argv )
 
                     if( arg2 )
                         cmd.set_logname(arg2);
+
+                    cmdlist.add_cmd()->PackFrom(cmd);
+                }
+                break;
+
+                case 'm':
+                {
+                    logserver::LogCommand cmd;
+                    std::string tz(optarg);
+
+                    if( tz == "local" )
+                        cmd.set_cmd(uniset3::logserver::LOG_CMD_SHOW_LOCALTIME);
+                    else if( tz == "utc" )
+                        cmd.set_cmd(uniset3::logserver::LOG_CMD_SHOW_UTCTIME);
+                    else
+                    {
+                        cerr << "Error: Unknown timezone '" << tz << "'. Must be 'local' or 'utc'" << endl;
+                        return 1;
+                    }
 
                     cmdlist.add_cmd()->PackFrom(cmd);
                 }
