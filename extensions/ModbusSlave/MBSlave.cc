@@ -249,6 +249,13 @@ namespace uniset3
 
             vmonit(sessTimeout);
 
+            tmpval = conf->getArgInt("--" + prefix + "-socket-timeout", it.getProp("socketTimeout"));
+
+            if( tmpval > 0 )
+                sockTimeout = tmpval;
+
+            vmonit(sockTimeout);
+
             tmpval = conf->getArgInt("--" + prefix + "-session-maxnum", it.getProp("sessMaxNum"));
 
             if( tmpval > 0 )
@@ -643,6 +650,8 @@ namespace uniset3
             i.second.ptTimeout.reset();
 
         tcpserver->setMaxSessions( sessMaxNum );
+        tcpserver->setSessionTimeout(sessTimeout);
+        tcpserver->setSocketTimeout(sockTimeout);
 
         if( vaddr.empty() )
         {
@@ -685,9 +694,9 @@ namespace uniset3
                 if( tcpBreakIfFailRun )
                 {
                     cerr << myname << "(execute_tcp): error run tcpserver: "
-                           << tcpserver->getInetAddress()
-                           << ":" << tcpserver->getInetPort() << " err: not active.."
-                           << endl << flush;
+                         << tcpserver->getInetAddress()
+                         << ":" << tcpserver->getInetPort() << " err: not active.."
+                         << endl << flush;
                     uterminate();
                     return;
                 }
@@ -1588,6 +1597,7 @@ namespace uniset3
         cout << "--prefix-session-timeout msec   - Таймаут на закрытие соединения с 'клиентом', если от него нет запросов. По умолчанию: 10 сек." << endl;
         cout << "--prefix-session-maxnum num     - Маскимальное количество соединений. По умолчанию: 10." << endl;
         cout << "--prefix-session-count-id  id   - Датчик для отслеживания текущего количества соединений." << endl;
+        cout << "--prefix-socket-timeout msec    - Таймаут на переоткрытие сокета если долго нет соединений. По умолчанию: 0 (не переоткрывать)" << endl;
         cout << endl;
         cout << " Logs: " << endl;
         cout << "--prefix-log-...            - log control" << endl;
