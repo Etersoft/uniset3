@@ -41,6 +41,7 @@
 #include "UHttpRequestHandler.h"
 #include "UHttpServer.h"
 #include "UTCPCore.h"
+#include "RunLock.h"
 // -------------------------------------------------------------------------
 namespace uniset3
 {
@@ -72,7 +73,7 @@ namespace uniset3
         <UWebSocketGate name="UWebSocketGate" .../>
         \endcode
 
-        Количество создаваемых websocket-ов можно ограничить при помощи параметра maxWebsockets (--prefix-ws-max).
+        Количество создаваемых websocket-ов можно ограничить при помощи параметра maxWebsockets (--prefix-max-conn).
 
         \section sec_UWebSocketGate_DETAIL UWebSocketGate: Технические детали
            Вся релизация построена на "однопоточном" eventloop. Если датчики долго не меняются, то периодически посылается "ping" сообщение.
@@ -224,12 +225,14 @@ namespace uniset3
             class UWebSocket;
 
             virtual bool activateObject() override;
+            virtual bool deactivateObject() override;
             void run( bool async );
             virtual void evfinish() override;
             virtual void evprepare() override;
             void onCheckBuffer( ev::timer& t, int revents );
             void onActivate( ev::async& watcher, int revents ) ;
             void onCommand( ev::async& watcher, int revents );
+            void terminate();
 
 #ifndef DISABLE_REST_API
             void httpWebSocketPage( std::ostream& out, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp );
@@ -242,10 +245,8 @@ namespace uniset3
             Poco::JSON::Object::Ptr respError( Poco::Net::HTTPServerResponse& resp, Poco::Net::HTTPResponse::HTTPStatus s, const std::string& message );
             void makeResponseAccessHeader( Poco::Net::HTTPServerResponse& resp );
 #endif
-            ev::sig sigTERM;
-            ev::sig sigQUIT;
-            ev::sig sigINT;
-            void onTerminate( ev::sig& evsig, int revents );
+            ev::async sigTERM;
+            void onTerminate( ev::async& watcher, int revents );
 
             ev::async wsactivate; // активация WebSocket-ов
             std::shared_ptr<ev::async> wscmd;
@@ -258,6 +259,7 @@ namespace uniset3
 
             std::shared_ptr<DebugStream> mylog;
             std::shared_ptr<SMInterface> shm;
+            std::unique_ptr<uniset3::RunLock> runlock;
 
 #ifndef DISABLE_REST_API
             std::shared_ptr<Poco::Net::HTTPServer> httpserv;

@@ -11,7 +11,7 @@ set_repo_port $*
 FG=
 DBG=
 
-runRepository
+[ -z "${NO_RUN_REPOSITORY}" ] && runRepository || echo "skip run repository.."
 
 print_usage()
 {
