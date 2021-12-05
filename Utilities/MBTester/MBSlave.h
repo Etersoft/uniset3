@@ -92,7 +92,7 @@ class MBSlave
                 uniset3::ModbusRTU::DiagnosticRetMessage& reply );
 
         uniset3::ModbusRTU::mbErrCode read4314( uniset3::ModbusRTU::MEIMessageRDI& query,
-                                               uniset3::ModbusRTU::MEIMessageRetRDI& reply );
+                                                uniset3::ModbusRTU::MEIMessageRetRDI& reply );
 
         /*! интерфейс ModbusRTUSlave для обмена по RS */
         uniset3::ModbusRTUSlaveSlot* rscomm;

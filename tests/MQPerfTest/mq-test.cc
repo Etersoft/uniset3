@@ -60,15 +60,15 @@ int main(int argc, const char** argv)
     {
         uniset_init(argc, argv);
 
-    auto sm = makeSensorMessage(100, 2, uniset3::AI);
-    auto tmp = sm.SerializeAsString();
-    cout << "sm: " << tmp.size() << endl;
+        auto sm = makeSensorMessage(100, 2, uniset3::AI);
+        auto tmp = sm.SerializeAsString();
+        cout << "sm: " << tmp.size() << endl;
 
-    auto vm = uniset3::to_transport<uniset3::umessage::SensorMessage>(sm);
-    auto tmp2 = vm.SerializeAsString();
-    cout << "tm: " << tmp2.size() << endl;
+        auto vm = uniset3::to_transport<uniset3::umessage::SensorMessage>(sm);
+        auto tmp2 = vm.SerializeAsString();
+        cout << "tm: " << tmp2.size() << endl;
 
-    return 0;
+        return 0;
 
         int tnum = 10;
 

@@ -260,29 +260,32 @@ namespace uniset3
     // -------------------------------------------------------------------------
     timeout_t ModbusTCPServer::getTimer() const noexcept
     {
-		return tmTime_msec;
-	}
-	// -------------------------------------------------------------------------
-	void ModbusTCPServer::setSocketTimeout( timeout_t msec )
-	{
-	    socketTimeout_msec = msec;
-	    if( msec == UniSetTimer::WaitUpTime || msec == 0 )
-	    {
-	        socketTimeout_msec = 0;
-	        if( sockTimeout.is_active() )
-	            sockTimeout.stop();
-	    }
-	    else
-	    {
-	        tmSockTimeout = (double)msec / 1000.;
-	        if( sockTimeout.is_active() )
-	            sockTimeout.start( 0, tmSockTimeout );
-	    }
-	}
-	// ------------------------------------------------------------------------
-	timeout_t ModbusTCPServer::getSocketTimeout() const noexcept
-	{
-	    return socketTimeout_msec;
+        return tmTime_msec;
+    }
+    // -------------------------------------------------------------------------
+    void ModbusTCPServer::setSocketTimeout( timeout_t msec )
+    {
+        socketTimeout_msec = msec;
+
+        if( msec == UniSetTimer::WaitUpTime || msec == 0 )
+        {
+            socketTimeout_msec = 0;
+
+            if( sockTimeout.is_active() )
+                sockTimeout.stop();
+        }
+        else
+        {
+            tmSockTimeout = (double)msec / 1000.;
+
+            if( sockTimeout.is_active() )
+                sockTimeout.start( 0, tmSockTimeout );
+        }
+    }
+    // ------------------------------------------------------------------------
+    timeout_t ModbusTCPServer::getSocketTimeout() const noexcept
+    {
+        return socketTimeout_msec;
     }
     // -------------------------------------------------------------------------
     void ModbusTCPServer::iowait( timeout_t msec )

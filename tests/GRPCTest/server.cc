@@ -10,56 +10,62 @@ using namespace std;
 using namespace uniset3;
 // --------------------------------------------------------------------------
 class TestServerImpl:
-        public TestService_i::Service
+    public TestService_i::Service
 {
-public:
-    TestServerImpl( const std::string& name):
-        myname(name)
-    {}
-    virtual ~TestServerImpl(){}
-    virtual ::grpc::Status getId(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::Int64Value* response)
-    {
-	throw std::exception();
-	
-        cerr << myname << ": call " << endl;
-        for( const auto& i: context->client_metadata() )
-            cout << i.first << "=" << i.second << endl;
-
-        auto srvIt = context->client_metadata().find("serviceId");
-        if( srvIt != context->client_metadata().end() )
-            cout << "serviceId=" <<  atoi(srvIt->second.data());
-
-        response->set_value(7);
-        return grpc::Status::OK;
-    }
-
-    virtual ::grpc::Status streamTest(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter< ::google::protobuf::StringValue>* writer) override
-    {
-        int i = 0;
-        while(true)
+    public:
+        TestServerImpl( const std::string& name):
+            myname(name)
+        {}
+        virtual ~TestServerImpl() {}
+        virtual ::grpc::Status getId(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::google::protobuf::Int64Value* response)
         {
-            ::google::protobuf::StringValue s;
-            s.set_value(to_string(i));
-            if( !writer->Write(s) )
-            {
-                cerr << "client closed.." << endl;
-                return grpc::Status::OK;
-            }
-            i++;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            throw std::exception();
+
+            cerr << myname << ": call " << endl;
+
+            for( const auto& i : context->client_metadata() )
+                cout << i.first << "=" << i.second << endl;
+
+            auto srvIt = context->client_metadata().find("serviceId");
+
+            if( srvIt != context->client_metadata().end() )
+                cout << "serviceId=" <<  atoi(srvIt->second.data());
+
+            response->set_value(7);
+            return grpc::Status::OK;
         }
 
-        return grpc::Status::OK;
-    }
+        virtual ::grpc::Status streamTest(::grpc::ServerContext* context, const ::google::protobuf::Empty* request, ::grpc::ServerWriter< ::google::protobuf::StringValue>* writer) override
+        {
+            int i = 0;
 
-protected:
-    const std::string myname;
+            while(true)
+            {
+                ::google::protobuf::StringValue s;
+                s.set_value(to_string(i));
+
+                if( !writer->Write(s) )
+                {
+                    cerr << "client closed.." << endl;
+                    return grpc::Status::OK;
+                }
+
+                i++;
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
+
+            return grpc::Status::OK;
+        }
+
+    protected:
+        const std::string myname;
 
 };
 // --------------------------------------------------------------------------
 int main(int argc, const char** argv)
 {
     const std::string addr = "0.0.0.0:4444";
+
     try
     {
         grpc::EnableDefaultHealthCheckService(true);

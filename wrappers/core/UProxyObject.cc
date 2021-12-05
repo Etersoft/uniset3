@@ -77,7 +77,7 @@ UProxyObject::UProxyObject()
     throw UException("(UProxyObject): Unknown 'name'' or 'ID'");
 }
 // --------------------------------------------------------------------------
-UProxyObject::UProxyObject( const std::string& name ) 
+UProxyObject::UProxyObject( const std::string& name )
 {
     auto conf = uniset_conf();
 
@@ -119,12 +119,12 @@ UProxyObject::~UProxyObject()
 {
 }
 // --------------------------------------------------------------------------
-long UProxyObject::getValue( long id ) 
+long UProxyObject::getValue( long id )
 {
     return uobj->impl_getValue(id);
 }
 // --------------------------------------------------------------------------
-void UProxyObject::setValue( long id, long val ) 
+void UProxyObject::setValue( long id, long val )
 {
     uobj->impl_setValue(id, val);
 }
@@ -149,12 +149,12 @@ bool UProxyObject::smIsOK()
     return uobj->impl_smIsOK();
 }
 // --------------------------------------------------------------------------
-float UProxyObject::getFloatValue( long id ) 
+float UProxyObject::getFloatValue( long id )
 {
     return uobj->impl_getFloatValue(id);
 }
 // --------------------------------------------------------------------------
-void UProxyObject::addToAsk( long id ) 
+void UProxyObject::addToAsk( long id )
 {
     try
     {
@@ -168,7 +168,7 @@ void UProxyObject::addToAsk( long id )
     }
 }
 // --------------------------------------------------------------------------
-void UProxyObject::askSensor( long id ) 
+void UProxyObject::askSensor( long id )
 {
     try
     {
@@ -193,7 +193,7 @@ UProxyObject_impl::~UProxyObject_impl()
 
 }
 // --------------------------------------------------------------------------
-void UProxyObject_impl::impl_addToAsk( ObjectId id ) 
+void UProxyObject_impl::impl_addToAsk( ObjectId id )
 {
     auto conf = uniset_conf();
 
@@ -213,7 +213,7 @@ void UProxyObject_impl::impl_addToAsk( ObjectId id )
     smap[id] = i;
 }
 // --------------------------------------------------------------------------
-long UProxyObject_impl::impl_getValue( long id ) 
+long UProxyObject_impl::impl_getValue( long id )
 {
     std::unique_lock<std::mutex> lk(mutexSMap);
     auto i = smap.find(id);
@@ -228,7 +228,7 @@ long UProxyObject_impl::impl_getValue( long id )
     return i->second.value;
 }
 // --------------------------------------------------------------------------
-float UProxyObject_impl::impl_getFloatValue( long id ) 
+float UProxyObject_impl::impl_getFloatValue( long id )
 {
     std::unique_lock<std::mutex> lk(mutexSMap);
     auto i = smap.find(id);
@@ -249,7 +249,7 @@ bool UProxyObject_impl::impl_askIsOK()
     return askOK;
 }
 // --------------------------------------------------------------------------
-void UProxyObject_impl::impl_setValue( long id, long val ) 
+void UProxyObject_impl::impl_setValue( long id, long val )
 {
     try
     {
@@ -300,7 +300,7 @@ bool UProxyObject_impl::impl_smIsOK()
     return ui->isExists(s->second.si.id(), s->second.si.node());
 }
 // --------------------------------------------------------------------------
-void UProxyObject_impl::impl_askSensor( uniset3::ObjectId id ) 
+void UProxyObject_impl::impl_askSensor( uniset3::ObjectId id )
 {
     ui->askRemoteSensor(id, uniset3::UIONotify, uniset_conf()->getLocalNode(), getId());
     impl_addToAsk(id);
