@@ -14,10 +14,9 @@ jobs:
 
     env:
       CC: ccache gcc
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_DIR: ~/.ccache
       CXX: ccache g++
       USE_CCACHE: 1
-
     steps:
       - name: install packages
         run: |
@@ -28,15 +27,6 @@ jobs:
             libmosquitto-devel libprotobuf-devel \
             xsltproc python3-dev python-module-distribute swig
 
-      - name: cache
-        uses: actions/cache@v2
-        if: always()
-        with:
-          path: ${{ env.CCACHE_DIR }}
-          key: ${{ runner.os }}-ccache
-          restore-keys: |
-            ${{ runner.os }}-ccache
-
       - uses: actions/checkout@v2
       - name: configure
         run: |
@@ -45,6 +35,15 @@ jobs:
             export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
             autoreconf -fiv
             ./configure --disable-netdata --disable-python
+
+      - name: cache
+        uses: actions/cache@v2
+        if: always()
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-ccache
+          restore-keys: |
+            ${{ runner.os }}-ccache
 
       - name: make
         run: make
