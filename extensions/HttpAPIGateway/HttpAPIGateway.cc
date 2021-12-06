@@ -256,6 +256,7 @@ void HttpAPIGateway::requestMetrics(Poco::Net::HTTPServerRequest& req,
     }
 
     uniset3::metrics::Metrics ret;
+
     try
     {
         ret = ui.metrics(id);
@@ -282,7 +283,7 @@ void HttpAPIGateway::requestMetrics(Poco::Net::HTTPServerRequest& req,
         return;
     }
 
-//    rlog2 << myname << "(requestInfo): " << json_string << endl;
+    //    rlog2 << myname << "(requestInfo): " << json_string << endl;
 
     out << json_string;
     out.flush();
@@ -322,6 +323,7 @@ void HttpAPIGateway::requestResolve( Poco::Net::HTTPServerRequest& req, Poco::Ne
     }
 
     uniset3::ObjectRef oref;
+
     try
     {
         oref = ui.resolveORefOnly(id, uniset_conf()->getLocalNode());
@@ -364,8 +366,8 @@ void HttpAPIGateway::requestResolve( Poco::Net::HTTPServerRequest& req, Poco::Ne
 // -----------------------------------------------------------------------------
 // обработка запроса вида: /configure/get?[ID|NAME]&props=testname,name] from configure.xml
 void HttpAPIGateway::requestConfigureGet(Poco::Net::HTTPServerRequest& req,
-                                    Poco::Net::HTTPServerResponse& resp,
-                                    const UHttpContext& ctx)
+        Poco::Net::HTTPServerResponse& resp,
+        const UHttpContext& ctx)
 {
     using Poco::Net::HTTPResponse;
 
@@ -374,6 +376,7 @@ void HttpAPIGateway::requestConfigureGet(Poco::Net::HTTPServerRequest& req,
 
     Poco::URI uri(req.getURI());
     auto params = uri.getQueryParameters();
+
     if( params.empty() )
     {
         auto jdata = respError(resp, HTTPResponse::HTTP_BAD_REQUEST, "Unknown id or name");
@@ -407,6 +410,7 @@ void HttpAPIGateway::requestConfigureGet(Poco::Net::HTTPServerRequest& req,
     for( const auto& id : idlist )
     {
         Poco::JSON::Object::Ptr j = configure_params_by_name(id, props);
+
         if( j )
             jdata->add(j);
     }

@@ -42,17 +42,17 @@ TEST_CASE("HttpApiGateway: metrics", "[apigateway][metrics]")
     Poco::JSON::Parser parser;
     auto result = parser.parse(s);
 
-//    {
-//        "id": "6000",
-//        "name": "TestProc",
-//        "metrics": [
-//                {
-//            "name": "msgCount",
-//            "labels": {},
-//            "description": "",
-//            "dvalue": 0
-//            },
-//     ....
+    //    {
+    //        "id": "6000",
+    //        "name": "TestProc",
+    //        "metrics": [
+    //                {
+    //            "name": "msgCount",
+    //            "labels": {},
+    //            "description": "",
+    //            "dvalue": 0
+    //            },
+    //     ....
 
     Poco::JSON::Object::Ptr json = result.extract<Poco::JSON::Object::Ptr>();
     REQUIRE(json);
@@ -76,13 +76,13 @@ TEST_CASE("HttpApiGateway: resolve", "[apigateway][resolve]")
     Poco::JSON::Parser parser;
     auto result = parser.parse(s);
 
-//    {
-//        "id": "6000",
-//        "addr": "0.0.0.0:38831",
-//        "path": "UNISET_PLC/UniObjects/",
-//        "type": "UniSetManager",
-//        "metadata": {}
-//    }
+    //    {
+    //        "id": "6000",
+    //        "addr": "0.0.0.0:38831",
+    //        "path": "UNISET_PLC/UniObjects/",
+    //        "type": "UniSetManager",
+    //        "metadata": {}
+    //    }
 
     Poco::JSON::Object::Ptr json = result.extract<Poco::JSON::Object::Ptr>();
     REQUIRE(json);
@@ -101,32 +101,32 @@ TEST_CASE("HttpApiGateway: configure", "[apigateway][configure]")
     auto result = parser.parse(s);
 
     // Ожидаемый формат ответа:
-//    {
-//        "conf": [
-//          {
-//            "id": "2",
-//            "iotype": "DI",
-//            "mbaddr": "0x01",
-//            "mbfunc": "0x06",
-//            "mbreg": "0x02",
-//            "mbtype": "rtu",
-//            "name": "Input2_S",
-//            "nbit": "11",
-//            "priority": "Medium",
-//            "rs": "4",
-//            "textname": "Команда 2"
-//          },
-//          {
-//            "depend": "Input4_S",
-//            "id": "5",
-//            "iotype": "DI",
-//            "name": "Input5_S",
-//            "priority": "Medium",
-//            "textname": "Команда 5",
-//            "udp": "2"
-//          }
-//        ]
-//    }
+    //    {
+    //        "conf": [
+    //          {
+    //            "id": "2",
+    //            "iotype": "DI",
+    //            "mbaddr": "0x01",
+    //            "mbfunc": "0x06",
+    //            "mbreg": "0x02",
+    //            "mbtype": "rtu",
+    //            "name": "Input2_S",
+    //            "nbit": "11",
+    //            "priority": "Medium",
+    //            "rs": "4",
+    //            "textname": "Команда 2"
+    //          },
+    //          {
+    //            "depend": "Input4_S",
+    //            "id": "5",
+    //            "iotype": "DI",
+    //            "name": "Input5_S",
+    //            "priority": "Medium",
+    //            "textname": "Команда 5",
+    //            "udp": "2"
+    //          }
+    //        ]
+    //    }
 
     Poco::JSON::Object::Ptr json = result.extract<Poco::JSON::Object::Ptr>();
     REQUIRE(json);
@@ -161,20 +161,20 @@ TEST_CASE("HttpApiGateway: configure by props", "[apigateway][configure][props]"
     auto result = parser.parse(s);
 
     // Ожидаемый формат ответа:
-//    {
-//        "conf": [
-//          {
-//            "id": "2",
-//            "iotype": "DI",
-//            "name": "Input2_S"
-//          },
-//          {
-//            "id": "5",
-//            "iotype": "DI",
-//            "name": "Input5_S"
-//          }
-//       ]
-//    }
+    //    {
+    //        "conf": [
+    //          {
+    //            "id": "2",
+    //            "iotype": "DI",
+    //            "name": "Input2_S"
+    //          },
+    //          {
+    //            "id": "5",
+    //            "iotype": "DI",
+    //            "name": "Input5_S"
+    //          }
+    //       ]
+    //    }
 
     Poco::JSON::Object::Ptr json = result.extract<Poco::JSON::Object::Ptr>();
     REQUIRE(json);

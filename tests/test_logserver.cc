@@ -31,12 +31,13 @@ static int readPause = 2000;
 struct LogThreadGuard
 {
     LogThreadGuard(std::shared_ptr<LogReader>& l, std::future<bool>& f):
-      lreader(l),ret(f){}
+        lreader(l), ret(f) {}
 
     ~LogThreadGuard()
     {
         if( lreader )
             lreader->terminate();
+
         if( ret.valid() )
             ret.get();
     }
@@ -76,6 +77,7 @@ bool readlog_thread1()
             // lr1->setReadCount(1);
             // lr1->setLogLevel(Debug::ANY);
         }
+
         logserver::LogCommandList cmd;
 
         do
@@ -83,6 +85,7 @@ bool readlog_thread1()
             lr1->readLoop(ip, port, cmd, false);
         }
         while( lr1->isActive() );
+
         return true;
     }
     catch( std::exception& ex )
@@ -105,6 +108,7 @@ bool readlog_thread2()
             // lr2->setReadCount(1);
             // lr2->setLogLevel(Debug::ANY);
         }
+
         logserver::LogCommandList cmd;
 
         do

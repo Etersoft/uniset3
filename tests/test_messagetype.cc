@@ -17,7 +17,7 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
 
     SECTION("Default consturctor")
     {
-        auto sm = makeSensorMessage(DefaultObjectId,0,uniset3::DI);
+        auto sm = makeSensorMessage(DefaultObjectId, 0, uniset3::DI);
         CHECK( sm.header().priority() == mpMedium );
         CHECK( sm.header().node() == conf->getLocalNode() );
         CHECK( sm.header().supplier() == DefaultObjectId );
@@ -31,7 +31,7 @@ TEST_CASE("SensorMessage", "[basic][message types][SensorMessage]" )
         CHECK( sm.ci().maxraw() == 0 );
         CHECK( sm.ci().mincal() == 0 );
         CHECK( sm.ci().maxcal() == 0 );
-     }
+    }
 
     SECTION("Default SensorMessage")
     {
@@ -121,7 +121,7 @@ TEST_CASE("TimerMessage", "[basic][message types][TimerMessage]" )
     SECTION("Default TimerMessage")
     {
         int tid = 100;
-        TimerMessage tm =makeTimerMessage(tid);
+        TimerMessage tm = makeTimerMessage(tid);
         REQUIRE( tm.id() == tid );
     }
 

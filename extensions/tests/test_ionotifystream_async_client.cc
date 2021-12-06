@@ -18,16 +18,16 @@ const ObjectId async_sid = 123;
 
 class ClientRAII
 {
-public:
-    ClientRAII(IONotifyStreamAsyncClient& _cons):
-        cons(_cons){}
+    public:
+        ClientRAII(IONotifyStreamAsyncClient& _cons):
+            cons(_cons) {}
 
-    ~ClientRAII()
-    {
-        cons.terminate();
-    }
+        ~ClientRAII()
+        {
+            cons.terminate();
+        }
 
-    IONotifyStreamAsyncClient& cons;
+        IONotifyStreamAsyncClient& cons;
 };
 
 class TestObject :
@@ -35,8 +35,8 @@ class TestObject :
 {
 
     public:
-        TestObject(){}
-        ~TestObject(){}
+        TestObject() {}
+        ~TestObject() {}
 
         umessage::SensorMessage sm;
         umessage::SystemMessage sysm;
@@ -85,6 +85,7 @@ TEST_CASE("IONotifyStreamAsyncClient with UniSetObject", "[IONotifyStreamAsyncCl
     cli.async_run("localhost", SM_GRPC_PORT, obj);
 
     uniset3::PassiveTimer ptTimeout(2000);
+
     while( !cli.isConnected() && !ptTimeout.checkTime() )
         msleep(200);
 
@@ -94,9 +95,9 @@ TEST_CASE("IONotifyStreamAsyncClient with UniSetObject", "[IONotifyStreamAsyncCl
     cli.askSensor(async_sid);
     msleep(500);
     REQUIRE( obj->sm.id() == async_sid );
-//    REQUIRE( obj->sm.value() == 10 ); // default value
+    //    REQUIRE( obj->sm.value() == 10 ); // default value
 
-    cli.setValue(async_sid,100);
+    cli.setValue(async_sid, 100);
     msleep(500);
     REQUIRE( obj->sm.id() == async_sid );
     REQUIRE( obj->sm.value() == 100 );
@@ -114,7 +115,8 @@ TEST_CASE("IONotifyStreamAsyncClient with callback", "[IONotifyStreamAsyncClient
     umessage::SensorMessage sm;
     umessage::SystemMessage sysm;
 
-    cli.async_run_cb("localhost", SM_GRPC_PORT, [&](const uniset3::umessage::TransportMessage *msg){
+    cli.async_run_cb("localhost", SM_GRPC_PORT, [&](const uniset3::umessage::TransportMessage * msg)
+    {
         if( msg->data().Is<umessage::SensorMessage>() )
         {
             REQUIRE( msg->data().UnpackTo(&sm) );
@@ -126,6 +128,7 @@ TEST_CASE("IONotifyStreamAsyncClient with callback", "[IONotifyStreamAsyncClient
     });
 
     uniset3::PassiveTimer ptTimeout(2000);
+
     while( !cli.isConnected() && !ptTimeout.checkTime() )
         msleep(200);
 
@@ -137,7 +140,7 @@ TEST_CASE("IONotifyStreamAsyncClient with callback", "[IONotifyStreamAsyncClient
     REQUIRE( sm.id() == async_sid );
     //    REQUIRE( sm.value() == 10 ); // default value
 
-    cli.setValue(async_sid,100);
+    cli.setValue(async_sid, 100);
     msleep(500);
     REQUIRE( sm.id() == async_sid );
     REQUIRE( sm.value() == 100 );

@@ -24,65 +24,65 @@ using namespace Poco::Net;
 // -------------------------------------------------------------------------
 namespace uniset3
 {
-	using namespace UHttp;
-	// -------------------------------------------------------------------------
+    using namespace UHttp;
+    // -------------------------------------------------------------------------
 
-	UHttpServer::UHttpServer(std::shared_ptr<IHttpRequestRegistry>& supplier, const std::string& _host, int _port ):
-		sa(_host, _port)
-	{
-		try
-		{
-			mylog = std::make_shared<DebugStream>();
+    UHttpServer::UHttpServer(std::shared_ptr<IHttpRequestRegistry>& supplier, const std::string& _host, int _port ):
+        sa(_host, _port)
+    {
+        try
+        {
+            mylog = std::make_shared<DebugStream>();
 
-			/*! \FIXME: доделать конфигурирование параметров */
-			HTTPServerParams* httpParams = new HTTPServerParams;
-			httpParams->setMaxQueued(100);
-			httpParams->setMaxThreads(1);
+            /*! \FIXME: доделать конфигурирование параметров */
+            HTTPServerParams* httpParams = new HTTPServerParams;
+            httpParams->setMaxQueued(100);
+            httpParams->setMaxThreads(1);
 
-			reqFactory = std::make_shared<UHttpRequestHandlerFactory>(supplier);
+            reqFactory = std::make_shared<UHttpRequestHandlerFactory>(supplier);
 
-			http = std::make_shared<Poco::Net::HTTPServer>(reqFactory.get(), ServerSocket(sa), httpParams );
-		}
-		catch( std::exception& ex )
-		{
-			std::stringstream err;
-			err << "(UHttpServer::init): " << _host << ":" << _port << " ERROR: " << ex.what();
-			throw uniset3::SystemError(err.str());
-		}
+            http = std::make_shared<Poco::Net::HTTPServer>(reqFactory.get(), ServerSocket(sa), httpParams );
+        }
+        catch( std::exception& ex )
+        {
+            std::stringstream err;
+            err << "(UHttpServer::init): " << _host << ":" << _port << " ERROR: " << ex.what();
+            throw uniset3::SystemError(err.str());
+        }
 
-		mylog->info() << "(UHttpServer::init): init " << _host << ":" << _port << std::endl;
-	}
-	// -------------------------------------------------------------------------
-	UHttpServer::~UHttpServer()
-	{
-		if( http )
-			http->stop();
-	}
-	// -------------------------------------------------------------------------
-	void UHttpServer::start()
-	{
-		http->start();
-	}
-	// -------------------------------------------------------------------------
-	void UHttpServer::stop()
-	{
-		http->stop();
-	}
-	// -------------------------------------------------------------------------
-	UHttpServer::UHttpServer()
-	{
-	}
-	// -------------------------------------------------------------------------
-	std::shared_ptr<DebugStream> UHttpServer::log()
-	{
-		return mylog;
-	}
-	// -------------------------------------------------------------------------
-	void UHttpServer::setCORS_allow( const std::string& allow )
-	{
-		reqFactory->setCORS_allow(allow);
-	}
-	// -------------------------------------------------------------------------
+        mylog->info() << "(UHttpServer::init): init " << _host << ":" << _port << std::endl;
+    }
+    // -------------------------------------------------------------------------
+    UHttpServer::~UHttpServer()
+    {
+        if( http )
+            http->stop();
+    }
+    // -------------------------------------------------------------------------
+    void UHttpServer::start()
+    {
+        http->start();
+    }
+    // -------------------------------------------------------------------------
+    void UHttpServer::stop()
+    {
+        http->stop();
+    }
+    // -------------------------------------------------------------------------
+    UHttpServer::UHttpServer()
+    {
+    }
+    // -------------------------------------------------------------------------
+    std::shared_ptr<DebugStream> UHttpServer::log()
+    {
+        return mylog;
+    }
+    // -------------------------------------------------------------------------
+    void UHttpServer::setCORS_allow( const std::string& allow )
+    {
+        reqFactory->setCORS_allow(allow);
+    }
+    // -------------------------------------------------------------------------
 } // end of namespace uniset3
 // -------------------------------------------------------------------------
 #endif // #ifndef DISABLE_REST_API

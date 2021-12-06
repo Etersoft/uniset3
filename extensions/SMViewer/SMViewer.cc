@@ -36,6 +36,7 @@ SMViewer::~SMViewer()
 void SMViewer::run()
 {
     uniset3::SensorIOInfoSeq smap = shm->getSensorsMap();
+
     try
     {
         updateSensors(smap, getSharedMemoryID());

@@ -41,8 +41,8 @@ ComediInterface::~ComediInterface()
 {
     if( card )
     {
-	comedi_close(card);
-	card = nullptr;
+        comedi_close(card);
+        card = nullptr;
     }
 }
 // -----------------------------------------------------------------------------

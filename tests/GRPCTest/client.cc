@@ -11,7 +11,7 @@ int main(int argc, const char** argv)
 {
     const std::string addr = "localhost:4444";
 
-    unordered_map<string,string> metadata;
+    unordered_map<string, string> metadata;
     metadata["srv"] = "111";
     metadata["data2"] = "2222";
     metadata["data3"] = "3333";
@@ -23,7 +23,8 @@ int main(int argc, const char** argv)
         grpc::ClientContext ctx;
         google::protobuf::Empty empty;
         google::protobuf::Int64Value reply;
-        for( const auto& m: metadata )
+
+        for( const auto& m : metadata )
             ctx.AddMetadata(m.first, m.second);
 
         std::unique_ptr<TestService_i::Stub> stub(TestService_i::NewStub(chan));
@@ -36,12 +37,12 @@ int main(int argc, const char** argv)
         }
 
         reader->Finish();
-//        while( reader->recv)
+        //        while( reader->recv)
 
-//        if( st.ok() )
-//            cout << "id=" << reply.value() << endl;
-//        else
-//            cerr << "error: " << st.error_message() << endl;
+        //        if( st.ok() )
+        //            cout << "id=" << reply.value() << endl;
+        //        else
+        //            cerr << "error: " << st.error_message() << endl;
         return 0;
     }
     catch( const std::exception& e )

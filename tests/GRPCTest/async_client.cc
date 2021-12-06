@@ -34,20 +34,24 @@ int main(int argc, const char** argv)
             cerr << "write error..." << endl;
 
         request.set_msg("client message 2");
+
         if( !rwStream->Write(request) )
             cerr << "write error..." << endl;
 
         request.set_msg("client message 3");
+
         if( !rwStream->Write(request) )
             cerr << "write error..." << endl;
 
         cout << "begin read..." << endl;
+
         while( rwStream->Read(&reply) )
         {
-            cout << "read: " << reply.msg() <<endl;
+            cout << "read: " << reply.msg() << endl;
             request.set_msg("pong for " + reply.msg());
+
             if( !rwStream->Write(request) )
-               cerr << "write error..." << endl;
+                cerr << "write error..." << endl;
         }
 
         cout << "read terminated..." << endl;

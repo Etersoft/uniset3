@@ -592,6 +592,7 @@ namespace uniset3
             // TCPServer section..
             void initTCPClients( UniXML::iterator confnode );
 
+            timeout_t sockTimeout = { UniSetTimer::WaitUpTime };  /*!< таймаут на переоткрытие сокета (если нет сессий) */
             timeout_t sessTimeout = { 2000 };  /*!< таймаут на сессию */
             timeout_t updateStatTime = { 4000 };
             ModbusTCPServer::Sessions sess; /*!< список открытых сессий */

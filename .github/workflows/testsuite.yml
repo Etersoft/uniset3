@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: alt:p10
+      image: alt:sisyphus
 
     env:
       CC: ccache gcc
@@ -22,7 +22,7 @@ jobs:
       - name: install packages
         run: |
             apt-get update && apt-get -y install etersoft-build-utils su sudo \
-            git-core ccache gcc-c++ etersoft-build-utils catch-devel \
+            git-core ccache gcc-c++ etersoft-build-utils \
             libcomedi-devel libmariadb-devel libpqxx-devel libsqlite3-devel \
             libxml2-devel libsigc++2-devel libpoco-devel libev-devel libprotobuf-devel grpc-plugins libgrpc++-devel \
             libmosquitto-devel libprotobuf-devel \
@@ -30,6 +30,7 @@ jobs:
 
       - name: cache
         uses: actions/cache@v2
+        if: always()
         with:
           path: ${{ env.CCACHE_DIR }}
           key: ${{ runner.os }}-ccache
@@ -55,3 +56,11 @@ jobs:
         run: |
             cd testsuite;
             make check
+
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: testsuite-artifacts
+          path: testsuite
+          retention-days: 5

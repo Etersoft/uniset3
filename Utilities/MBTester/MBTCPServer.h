@@ -74,7 +74,7 @@ class MBTCPServer
                 uniset3::ModbusRTU::DiagnosticRetMessage& reply );
 
         uniset3::ModbusRTU::mbErrCode read4314( uniset3::ModbusRTU::MEIMessageRDI& query,
-                                               uniset3::ModbusRTU::MEIMessageRetRDI& reply );
+                                                uniset3::ModbusRTU::MEIMessageRetRDI& reply );
 
         /*! обработка запросов на чтение ошибок */
         uniset3::ModbusRTU::mbErrCode journalCommand( uniset3::ModbusRTU::JournalCommandMessage& query,

@@ -543,6 +543,7 @@ grpc::Status IONotifyController::askSensor(::grpc::ServerContext* context, const
 bool IONotifyController::getSensor( uniset3::ObjectId sid, uniset3::umessage::SensorMessage& sm )
 {
     auto li = find(sid);
+
     if( li == ioEnd() )
         return false;
 
@@ -1100,6 +1101,7 @@ void IONotifyController::SyncClient::readEvent( const uniset3::SensorsStreamCmd&
     else if( request.cmd() == UIOGet )
     {
         uniset3::umessage::SensorMessage sm;
+
         for( const auto& s : request.slist() )
         {
             if(nc->getSensor(s.id(), sm) )
@@ -1263,7 +1265,7 @@ class IONotifyController::AsyncClientSession
         TagSet tags;
         uniset3::IONotifyStreamController_i::AsyncService* service;
         std::unique_ptr<grpc::Alarm> wait_data_timer;
-        size_t wait_data_time_in_seconds = { 15*60*60 };
+        size_t wait_data_time_in_seconds = { 15 * 60 * 60 };
 
         IONotifyController* impl;
         std::shared_ptr<SyncClient> cli;

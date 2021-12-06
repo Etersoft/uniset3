@@ -158,6 +158,7 @@ void SMInterface::askSensor( uniset3::ObjectId id, uniset3::UIOCommand cmd, unis
 uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
 {
     GetSensorsMapParams request;
+
     if( ic )
     {
         SensorIOInfoSeq seq;

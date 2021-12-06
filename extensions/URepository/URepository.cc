@@ -83,6 +83,7 @@ URepository::URepository( const string& name, int argc, const char* const* argv,
     if( lockDir.empty() )
     {
         UniXML::iterator dirIt = xml->findNode(xml->getFirstNode(), "LockDir");
+
         if( !dirIt )
         {
             ostringstream err;
@@ -101,6 +102,7 @@ URepository::URepository( const string& name, int argc, const char* const* argv,
     else
     {
         UniXML::iterator locIt = xml->findNode(xml->getFirstNode(), "LocalIOR");
+
         if( locIt )
             localIOR = locIt.getIntProp("name");
     }
@@ -158,7 +160,7 @@ grpc::Status URepository::getInfo(::grpc::ServerContext* context, const ::google
 void URepository::run()
 {
     grpc::EnableDefaultHealthCheckService(true);
-//    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+    //    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::ServerBuilder builder;
     builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
     builder.RegisterService(static_cast<URepository_i::Service*>(this));
@@ -175,6 +177,7 @@ std::string URepository::status()
     auto chan = grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
     std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(chan));
     grpc::Status status = stub->getInfo(&ctx, request, &reply);
+
     if( !status.ok() )
     {
         ostringstream err;
@@ -200,14 +203,15 @@ grpc::Status URepository::resolve(::grpc::ServerContext* context, const ::google
         {
             return grpc::Status(grpc::StatusCode::NOT_FOUND, "");
         }
-        catch(...){}
+        catch(...) {}
 
         return grpc::Status(grpc::StatusCode::INTERNAL, "");
     }
 
     uniset3::uniset_rwmutex_rlock l(omutex);
     auto i = omap.find(request->value());
-    if( i!=omap.end() )
+
+    if( i != omap.end() )
     {
         *response = i->second;
         return grpc::Status::OK;
@@ -227,7 +231,8 @@ grpc::Status URepository::unregistration(::grpc::ServerContext* context, const :
 {
     uniset3::uniset_rwmutex_wrlock l(omutex);
     auto i = omap.find(request->value());
-    if( i!= omap.end() )
+
+    if( i != omap.end() )
         omap.erase(i);
 
     return grpc::Status::OK;
@@ -236,7 +241,8 @@ grpc::Status URepository::unregistration(::grpc::ServerContext* context, const :
 grpc::Status URepository::list(::grpc::ServerContext* context, const ::google::protobuf::StringValue* request, ::uniset3::ObjectRefList* response)
 {
     uniset3::uniset_rwmutex_rlock l(omutex);
-    for( const auto& o: omap )
+
+    for( const auto& o : omap )
     {
         if( o.second.path() != request->value() )
             continue;

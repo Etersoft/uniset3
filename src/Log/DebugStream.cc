@@ -211,7 +211,11 @@ std::ostream& DebugStream::printDate(Debug::type t, char brk) noexcept
 
         std::time_t tv = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         std::tm tms;
-        gmtime_r(&tv, &tms);
+
+        if( show_localtime )
+            localtime_r(&tv, &tms);
+        else
+            gmtime_r(&tv, &tms);
 
 #if __GNUC__ >= 5
         std::ostringstream fmt;
@@ -235,7 +239,11 @@ std::ostream& DebugStream::printTime(Debug::type t, char brk) noexcept
 
         timespec tv = uniset3::now_to_timespec(); // gettimeofday(tv,0);
         std::tm tms;
-        gmtime_r(&tv.tv_sec, &tms);
+
+        if( show_localtime )
+            localtime_r(&tv.tv_sec, &tms);
+        else
+            gmtime_r(&tv.tv_sec, &tms);
 
 #if __GNUC__ >= 5
         std::ostringstream fmt;
@@ -266,7 +274,11 @@ std::ostream& DebugStream::printDateTime(Debug::type t) noexcept
 
         timespec tv = uniset3::now_to_timespec(); // gettimeofday(tv,0);
         std::tm tms;
-        gmtime_r(&tv.tv_sec, &tms);
+
+        if( show_localtime )
+            localtime_r(&tv.tv_sec, &tms);
+        else
+            gmtime_r(&tv.tv_sec, &tms);
 
 #if __GNUC__ >= 5
         *this << std::put_time(&tms, "%Od/%Om/%Y %OH:%OM:%OS");

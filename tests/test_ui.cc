@@ -37,7 +37,7 @@ TEST_CASE("UInterface", "[UInterface]")
     REQUIRE_THROWS_AS( ui.resolve(sid, 10), uniset3::ResolveNameError& );
     REQUIRE_THROWS_AS( ui.resolve(sid, DefaultObjectId), ResolveNameError& );
 
-    umessage::SensorMessage sm = makeSensorMessage(sid,10,uniset3::AI);
+    umessage::SensorMessage sm = makeSensorMessage(sid, 10, uniset3::AI);
     sm.mutable_header()->set_consumer(testOID);
     umessage::TransportMessage tm = uniset3::to_transport<umessage::SensorMessage>(sm);
 

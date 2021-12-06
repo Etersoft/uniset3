@@ -306,6 +306,14 @@ namespace uniset3
                     l.log->onLogFile();
                     break;
 
+                case logserver::LOG_CMD_SHOW_LOCALTIME:
+                    l.log->showLocalTime(true);
+                    break;
+
+                case logserver::LOG_CMD_SHOW_UTCTIME:
+                    l.log->showLocalTime(false);
+                    break;
+
                 case logserver::LOG_CMD_FILTER:
                     l.log->signal_stream_event().connect( sigc::mem_fun(this, &LogServer::logOnEvent) );
                     break;
