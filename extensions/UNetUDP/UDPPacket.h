@@ -65,6 +65,8 @@ namespace uniset3
 
             //! \return uniset3::DefaultObjectId if not found
             long dID( size_t index ) const noexcept;
+
+            //! \return false if not found
             bool dValue( size_t index ) const noexcept;
 
             //! \return uniset3::DefaultObjectId if not found

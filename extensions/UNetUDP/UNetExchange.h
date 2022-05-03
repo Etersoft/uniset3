@@ -141,7 +141,7 @@ namespace uniset3
           ...
         </iocards>
       </item>
-      <item id="3001" ip="192.168.56.10" name="Node1" textname="Node1" unet_update_strategy="evloop"
+      <item id="3001" ip="192.168.56.10" name="Node1" textname="Node1"
             unet_multicast_ip="224.0.0.1"
             unet_multicast_iface="192.168.1.1"
             unet_multicast_port2="3031"

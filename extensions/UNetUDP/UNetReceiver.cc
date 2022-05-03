@@ -695,8 +695,8 @@ UNetReceiver::ReceiveRetCode UNetReceiver::receive() noexcept
             // обнуляем номер в том месте где записали, чтобы его не обрабатывал update
             pack->setNum(0);
         }
-        else if( pack->num() >= wnum )
-            wnum = pack->num() + 1;
+        else
+            wnum++;
 
         // начальная инициализация для чтения
         if( rnum == 0 )
