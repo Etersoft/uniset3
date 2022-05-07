@@ -513,7 +513,7 @@ void UNetReceiver::readEvent( ev::io& watcher ) noexcept
 //    stats.recvProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
 }
 // -----------------------------------------------------------------------------
-void UNetReceiver::checkConnection()
+bool UNetReceiver::checkConnection()
 {
     bool tout = false;
 
@@ -531,12 +531,21 @@ void UNetReceiver::checkConnection()
 
         if( w )
         {
-            if( tout )
-                slEvent(w, evTimeout);
-            else
-                slEvent(w, evOK);
+            try
+            {
+                if (tout)
+                    slEvent(w, evTimeout);
+                else
+                    slEvent(w, evOK);
+            }
+            catch( std::exception& ex )
+            {
+                unetcrit << myname << "(checkConnection): exception: " << ex.what() << endl;
+            }
         }
     }
+
+    return !tout;
 }
 // -----------------------------------------------------------------------------
 void UNetReceiver::updateEvent( ev::periodic& tm, int revents ) noexcept
@@ -554,7 +563,7 @@ void UNetReceiver::updateEvent( ev::periodic& tm, int revents ) noexcept
     tm.again();
 
     // смотрим есть ли связь..
-//    bool recvOk = checkConnection();
+    bool recvOk = checkConnection();
 
     // обновление данных в SM
     t_start = chrono::steady_clock::now();
@@ -577,7 +586,7 @@ void UNetReceiver::updateEvent( ev::periodic& tm, int revents ) noexcept
         {
             if( isInitOK() )
             {
-                bool r = respondInvert ? !isRecvOK() : isRecvOK();
+                bool r = respondInvert ? !recvOk : recvOk;
                 shm->localSetValue(itRespond, sidRespond, ( r ? 1 : 0 ), shm->ID());
             }
         }
