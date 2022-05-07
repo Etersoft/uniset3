@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libUniSet3BackendOpenTSDB
 Description: Support library for UniSet3BackendOpenTSDB
-Requires: libUniSet3Extensions
+Requires: libUniSet3Extensions libUniSet2SharedMemory
 Version: @VERSION@
 Libs: -L${libdir} -lUniSet3BackendOpenTSDB
 Cflags: -I${includedir}/@PACKAGE@/extensions

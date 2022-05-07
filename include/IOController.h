@@ -31,6 +31,7 @@
 #include "UniSetManager.h"
 #include "Configuration.h"
 #include "Mutex.h"
+#include "DBServer.h"
 //---------------------------------------------------------------------------
 namespace uniset3
 {
@@ -41,7 +42,7 @@ namespace uniset3
      * Поэтому неизменность ioList во время всей жизни объекта должна гарантироваться.
      * В частности, очень важной является структура USensorInfo, а также userdata,
      * которые используются для "кэширования" (сохранения) указателей на специальные данные.
-     * (см. также IONotifyContoller).
+     * (см. также IONotifyController).
     */
     class IOController:
         public UniSetManager,
@@ -54,6 +55,9 @@ namespace uniset3
 
             virtual ::grpc::Status getInfo(::grpc::ServerContext* context, const ::uniset3::GetInfoParams* request, ::google::protobuf::StringValue* response) override;
             virtual std::string getStrType() const override;
+
+            void setDBServer( const std::shared_ptr<uniset3::DBServer>& dbserver );
+
             // ----------------------------------------------------------------
             // Публичный (IDL) интерфейс IOController_i
             // ----------------------------------------------------------------
@@ -241,6 +245,8 @@ namespace uniset3
 
             bool isPingDBServer;    // флаг связи с DBServer-ом
             uniset3::ObjectId dbserverID = { uniset3::DefaultObjectId };
+            std::shared_ptr<uniset3::DBServer> dbserver = { nullptr };
+            ::google::protobuf::Empty empty;
 
             std::mutex loggingMutex; /*!< logging info mutex */
 
