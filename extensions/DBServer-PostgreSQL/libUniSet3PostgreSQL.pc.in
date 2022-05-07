@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: libUniSet3PostgreSQL
 Description: Support library for libUniSet3PostgreSQL
-Requires: libUniSet3 libpqxx
+Requires: libUniSet3 libpqxx libUniSet2SharedMemory
 Version: @VERSION@
 Libs: -L${libdir} -lUniSet3-pgsql
 Cflags: -I${includedir}/@PACKAGE@ -I${includedir}/@PACKAGE@/extensions/pgsql

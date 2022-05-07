@@ -455,18 +455,33 @@ void IOController::ioUnRegistration( const uniset3::ObjectId sid )
     ui->unregister(sid);
 }
 // ---------------------------------------------------------------------------
+void IOController::setDBServer( const std::shared_ptr<DBServer>& db )
+{
+    dbserver = db;
+}
+// ---------------------------------------------------------------------------
 void IOController::logging( uniset3::umessage::SensorMessage& sm )
 {
     std::lock_guard<std::mutex> l(loggingMutex);
 
     try
     {
-        // значит на этом узле нет DBServer-а
-        if( dbserverID == uniset3::DefaultObjectId )
-        {
-            isPingDBServer = false;
-            return;
-        }
+		if( dbserver )
+		{
+            sm.mutable_header()->set_consumer(dbserverID);
+            umessage::TransportMessage tm = to_transport<SensorMessage>(sm);
+            grpc::ServerContext ctx;
+		    dbserver->push(&ctx, &tm, &empty);
+		    isPingDBServer = true;
+		    return;
+		}
+
+		// значит на этом узле нет DBServer-а
+		if( dbserverID == uniset3::DefaultObjectId )
+		{
+			isPingDBServer = false;
+			return;
+		}
 
         sm.mutable_header()->set_consumer(dbserverID);
         umessage::TransportMessage tm = to_transport<SensorMessage>(sm);
