@@ -24,14 +24,13 @@ int main(int argc, char* argv[] )
             cout << "--confile    - Использовать указанный конф. файл. По умолчанию configure.xml" << endl;
             SharedMemory::help_print(argc, argv);
             cout << endl << endl << "--------------- CATCH HELP --------------" << endl;
-            session.showHelp("test_with_sm");
+            session.showHelp();
             return 0;
         }
 
-        int returnCode = session.applyCommandLine( argc, argv, Catch::Session::OnUnusedOptions::Ignore );
-
-        if( returnCode != 0 ) // Indicates a command line error
-            return returnCode;
+        int returnCode = session.applyCommandLine( argc, argv );
+        //        if( returnCode != 0 ) // Indicates a command line error
+        //            return returnCode;
 
         uniset_init(argc, argv);
 
@@ -64,10 +63,6 @@ int main(int argc, char* argv[] )
 
         act->oaDestroy();
         return ret;
-    }
-    catch( const SystemError& err )
-    {
-        cerr << "(tests_with_sm): " << err << endl;
     }
     catch( const uniset3::Exception& ex )
     {
