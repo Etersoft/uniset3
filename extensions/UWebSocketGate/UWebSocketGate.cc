@@ -61,6 +61,13 @@ UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
     if( mylog->verbose() == 0 )
         mylog->verbose(1);
 
+    loga = make_shared<LogAgregator>(myname + "-loga");
+    loga->add(mylog);
+    loga->add(ulog());
+
+    logserv = make_shared<LogServer>(loga);
+    logserv->init( prefix + "logserver", cnode );
+
     UniXML::iterator it(cnode);
 
     int maxCacheSize = conf->getArgPInt("--" + prefix + "max-ui-cache-size", it.getProp("msgUICacheSize"), 5000);
@@ -73,7 +80,6 @@ UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
     wscmd = make_shared<ev::async>();
     wsactivate.set<UWebSocketGate, &UWebSocketGate::onActivate>(this);
     wscmd->set<UWebSocketGate, &UWebSocketGate::onCommand>(this);
-    sigTERM.set<UWebSocketGate, &UWebSocketGate::onTerminate>(this);
     iocheck.set<UWebSocketGate, &UWebSocketGate::checkMessages>(this);
 
     maxMessagesProcessing = conf->getArgPInt("--" + prefix + "max-messages-processing", conf->getField("maxMessagesProcessing"), maxMessagesProcessing);
@@ -86,6 +92,12 @@ UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
 
     if( sz > 0 )
         setMaxSizeOfMessageQueue(sz);
+
+    if( findArgParam("--" + prefix + "run-logserver", conf->getArgc(), conf->getArgv()) != -1 )
+    {
+        logserv_host = conf->getArg2Param("--" + prefix + "logserver-host", it.getProp("logserverHost"), "localhost");
+        logserv_port = conf->getArgPInt("--" + prefix + "logserver-port", it.getProp("logserverPort"), getId());
+    }
 
 #ifndef DISABLE_REST_API
     wsHeartbeatTime_sec = (float)conf->getArgPInt("--" + prefix + "heartbeat-time", it.getProp("wsHeartbeatTimeTime"), int(wsHeartbeatTime_sec * 1000)) / 1000.0;
@@ -178,46 +190,27 @@ UWebSocketGate::~UWebSocketGate()
 //--------------------------------------------------------------------------------------------
 void UWebSocketGate::terminate()
 {
-    try
-    {
-        if( httpserv )
-            httpserv->stop();
-    }
-    catch( std::exception& ex )
-    {
-        mywarn << myname << "(terminate): "  << ex.what() << endl;
-    }
+    myinfo << myname << "(terminate): terminate..." << endl;
 
     try
     {
-        evstop();
+        httpserv->stop();
+        httpserv = nullptr;
     }
     catch( std::exception& ex )
     {
-        mywarn << myname << "(terminate): "  << ex.what() << endl;
+        myinfo << myname << "(terminate): http server: "  << ex.what() << endl;
     }
 
-    uniset_rwmutex_wrlock lock(wsocksMutex);
-
-    for( auto&& s : wsocks )
-        s->term();
-}
-//--------------------------------------------------------------------------------------------
-void UWebSocketGate::onTerminate( ev::async& watcher, int revents )
-{
-    if( EV_ERROR & revents )
+    try
     {
-        mycrit << myname << "(onTerminate): invalid event" << endl;
-        return;
+        if( evIsActive() )
+            evstop();
     }
-
-    myinfo << myname << "(onTerminate): terminate..." << endl;
-    uniset_rwmutex_wrlock lock(wsocksMutex);
-
-    for( auto&& s : wsocks )
-        s->term();
-
-    watcher.stop();
+    catch( std::exception& ex )
+    {
+        myinfo << myname << "(terminate): evstop: "  << ex.what() << endl;
+    }
 }
 //--------------------------------------------------------------------------------------------
 void UWebSocketGate::checkMessages( ev::timer& t, int revents )
@@ -259,6 +252,7 @@ grpc::Status UWebSocketGate::getInfo(::grpc::ServerContext* context, const ::uni
     inf << oinf.value() << endl;
     //  inf << vmon.pretty_str() << endl;
     inf << endl;
+    inf << "LogServer:  " << logserv_host << ":" << logserv_port << endl;
 
     {
         uniset_rwmutex_wrlock lock(wsocksMutex);
@@ -364,6 +358,10 @@ void UWebSocketGate::help_print()
     cout << "--prefix-log-verbosity N                     - Уровень подробностей [1...5]" << endl;
     cout << "  Пример параметров для запуска с подробными логами: " << endl;
     cout << "  --ws-log-add-levels any --ws-log-verbosity 5" << endl;
+    cout << " LogServer: " << endl;
+    cout << "--prefix-run-logserver      - run logserver. Default: localhost:id" << endl;
+    cout << "--prefix-logserver-host ip  - listen ip. Default: localhost" << endl;
+    cout << "--prefix-logserver-port num - listen port. Default: ID" << endl;
 }
 // -----------------------------------------------------------------------------
 void UWebSocketGate::run( bool async )
@@ -391,9 +389,6 @@ void UWebSocketGate::evprepare()
 
     wscmd->set(loop);
     wscmd->start();
-
-    sigTERM.set(loop);
-    sigTERM.start();
 
     iocheck.set(loop);
     iocheck.start(0, check_sec);
@@ -628,6 +623,10 @@ bool UWebSocketGate::deactivateObject()
 {
     myinfoV(3) << myname << "(deactivateObject):.." << endl;
     terminate();
+
+    if( logserv && logserv->isRunning() )
+        logserv->terminate();
+
     return UniSetObject::deactivateObject();
 }
 // -----------------------------------------------------------------------------
@@ -639,6 +638,65 @@ bool UWebSocketGate::activateObject()
         run(true);
 
     return ret;
+}
+// -----------------------------------------------------------------------------
+void UWebSocketGate::sysCommand( const uniset3::umessage::SystemMessage* _sm )
+{
+    UniSetObject::sysCommand(_sm);
+
+    switch( _sm->cmd() )
+    {
+        case SystemMessage::WatchDog:
+        case SystemMessage::StartUp:
+        {
+            try
+            {
+                if( !logserv_host.empty() && logserv_port != 0 && !logserv->isRunning() )
+                {
+                    myinfo << myname << "(sysCommand): run log server " << logserv_host << ":" << logserv_port << endl;
+                    logserv->async_run(logserv_host, logserv_port);
+                }
+            }
+            catch( std::exception& ex )
+            {
+                mywarn << myname << "(sysCommand): CAN`t run log server err: " << ex.what() << endl;
+            }
+            catch( ... )
+            {
+                mywarn << myname << "(sysCommand): CAN`t run log server err: catch ..." << endl;
+            }
+
+            break;
+        }
+
+        case SystemMessage::FoldUp:
+        case SystemMessage::Finish:
+            break;
+
+        case SystemMessage::LogRotate:
+        {
+            if( logserv && !logserv_host.empty() && logserv_port != 0 )
+            {
+                try
+                {
+                    mylogany << myname << "(sysCommand): try restart logserver.." << endl;
+                    logserv->check(true);
+                }
+                catch( std::exception& ex )
+                {
+                    mywarn << myname << "(sysCommand): CAN`t restart log server err: " << ex.what() << endl;
+                }
+                catch( ... )
+                {
+                    mywarn << myname << "(sysCommand): CAN`t restart log server err: catch ..." << endl;
+                }
+            }
+        }
+        break;
+
+        default:
+            break;
+    }
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<UWebSocketGate::UWebSocket> UWebSocketGate::newWebSocket( Poco::Net::HTTPServerRequest* req,
