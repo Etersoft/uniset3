@@ -214,6 +214,10 @@ namespace uniset3
             {
                 return mylog;
             }
+            inline std::shared_ptr<uniset3::LogAgregator> logAgregator() noexcept
+            {
+                return loga;
+            }
 
 #ifndef DISABLE_REST_API
             virtual void handleRequest( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp ) override;
@@ -226,6 +230,7 @@ namespace uniset3
 
             virtual bool activateObject() override;
             virtual bool deactivateObject() override;
+            virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
             void run( bool async );
             virtual void evfinish() override;
             virtual void evprepare() override;
@@ -245,8 +250,6 @@ namespace uniset3
             Poco::JSON::Object::Ptr respError( Poco::Net::HTTPServerResponse& resp, Poco::Net::HTTPResponse::HTTPStatus s, const std::string& message );
             void makeResponseAccessHeader( Poco::Net::HTTPServerResponse& resp );
 #endif
-            ev::async sigTERM;
-            void onTerminate( ev::async& watcher, int revents );
 
             ev::async wsactivate; // активация WebSocket-ов
             std::shared_ptr<ev::async> wscmd;
@@ -258,8 +261,13 @@ namespace uniset3
             int maxMessagesProcessing  = { 100 };
 
             std::shared_ptr<DebugStream> mylog;
+            std::shared_ptr<uniset3::LogAgregator> loga;
             std::shared_ptr<SMInterface> shm;
             std::unique_ptr<uniset3::RunLock> runlock;
+
+            std::shared_ptr<uniset3::LogServer> logserv;
+            std::string logserv_host = {""};
+            int logserv_port = {0};
 
 #ifndef DISABLE_REST_API
             std::shared_ptr<Poco::Net::HTTPServer> httpserv;
