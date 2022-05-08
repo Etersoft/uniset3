@@ -306,8 +306,8 @@ void UNetReceiver::statisticsEvent(ev::periodic& tm, int revents) noexcept
     t_end = chrono::steady_clock::now();
     float sec = chrono::duration_cast<chrono::duration<float>>(t_end - t_stats).count();
     t_stats = t_end;
-    statRecvPerSec = recvCount / sec;
-    statUpPerSec = upCount / sec;
+    stats.recvPerSec = recvCount / sec;
+    stats.upPerSec = upCount / sec;
 
     recvCount = 0;
     upCount = 0;
@@ -509,8 +509,9 @@ void UNetReceiver::readEvent( ev::io& watcher ) noexcept
         std::lock_guard<std::mutex> l(tmMutex);
         ptRecvTimeout.reset();
     }
+
     t_end = chrono::steady_clock::now();
-//    stats.recvProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
+    stats.recvProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
 }
 // -----------------------------------------------------------------------------
 bool UNetReceiver::checkConnection()
@@ -578,7 +579,7 @@ void UNetReceiver::updateEvent( ev::periodic& tm, int revents ) noexcept
     }
 
     t_end = chrono::steady_clock::now();
-//    stats.upProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
+    stats.upProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
 
     if( sidRespond != DefaultObjectId )
     {
@@ -831,15 +832,20 @@ const std::string UNetReceiver::getShortInfo() const noexcept
       << " lostPackets=" << setw(6) << getLostPacketsNum()
       << endl
       << "\t["
-      << " recvTimeout=" << setw(6) << recvTimeout
-      << " prepareTime=" << setw(6) << prepareTime
-      << " evrunTimeout=" << setw(6) << evrunTimeout
-      << " lostTimeout=" << setw(6) << lostTimeout
-      << " updatepause=" << setw(6) << updatepause
-      << " maxDifferens=" << setw(6) << maxDifferens
+      << " recvTimeout=" << recvTimeout
+      << " prepareTime=" << prepareTime
+      << " evrunTimeout=" << evrunTimeout
+      << " lostTimeout=" << lostTimeout
+      << " updatepause=" << updatepause
+      << " maxDifferens=" << maxDifferens
       << " ]"
       << endl
-      << "\t[ qsize=" << (wnum - rnum) << " recv=" << statRecvPerSec << " update=" << statUpPerSec << " per sec ]";
+      << "\t[ qsize:" << setw(3) << (wnum - rnum)
+      << " recv:" << setprecision(3) << setw(6) << stats.recvPerSec << " msg/sec"
+      << " update:" << setprecision(3) << setw(6) << stats.upPerSec << " msg/sec"
+      << " upTime:" << setw(6) << stats.upProcessingTime_microsec << " usec"
+      << " recvTime:" << setw(6) << stats.recvProcessingTime_microsec << " usec"
+      << " ]";
 
     return s.str();
 }

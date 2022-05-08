@@ -256,6 +256,7 @@ int main(int argc, char* argv[])
                         }
 
                         size_t ret = udp.receiveBytes(rbuf, sizeof(rbuf));
+
                         if( ret < 0 )
                         {
                             cerr << "(recv): no data?!" << endl;
@@ -284,9 +285,9 @@ int main(int argc, char* argv[])
                         {
                             if( prev_num != (pack.num() - 1) )
                                 cerr << "WARNING! Incorrect sequence of packets! current=" << pack.num()
-                                        << " prev=" << prev_num
-                                        << " lost: " << std::labs(pack.num() - prev_num)
-                                        << endl;
+                                     << " prev=" << prev_num
+                                     << " lost: " << std::labs(pack.num() - prev_num)
+                                     << endl;
 
                             prev_num = pack.num();
                         }
