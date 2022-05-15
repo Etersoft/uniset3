@@ -66,7 +66,7 @@ namespace uniset3
      * выкинуто исключение при неудачной попытке создания соединения.
      * \warning setCheckConnectionPause(msec) должно быть кратно sendpause!
      */
-    class UNetSender
+    class UNetSender final
     {
         public:
             UNetSender( std::unique_ptr<UNetSendTransport>&& transport, const std::shared_ptr<SMInterface>& smi
@@ -78,7 +78,7 @@ namespace uniset3
                         , size_t maxDCount = UniSetUDP::MaxDCount
                         , size_t maxACount = UniSetUDP::MaxACount );
 
-            virtual ~UNetSender();
+            ~UNetSender();
 
             typedef size_t sendfactor_t;
 
@@ -105,7 +105,7 @@ namespace uniset3
 
             typedef std::unordered_map<uniset3::ObjectId, UItem> UItemMap;
 
-            size_t getDataPackCount() const;
+            size_t getDataPackCount() const noexcept;
 
             void start();
             void stop();
@@ -132,41 +132,41 @@ namespace uniset3
             void updateSensor( uniset3::ObjectId id, long value );
 
             /*! Обновить значение по итератору */
-            void updateItem( UItem& it, long value );
+            void updateItem( const UItem& it, long value );
 
-            inline void setSendPause( int msec )
+            inline void setSendPause( int msec ) noexcept
             {
                 sendpause = msec;
             }
-            inline void setPackSendPause( int msec )
+            inline void setPackSendPause( int msec ) noexcept
             {
                 packsendpause = msec;
             }
-            inline void setPackSendPauseFactor( int factor )
+            inline void setPackSendPauseFactor( int factor ) noexcept
             {
                 packsendpauseFactor = factor;
             }
 
-            void setCheckConnectionPause( int msec );
+            void setCheckConnectionPause( int msec ) noexcept;
 
             /*! заказать датчики */
             void askSensors( uniset3::UIOCommand cmd );
 
             /*! инициализация  итераторов */
-            void initIterators();
+            void initIterators() noexcept;
 
-            inline std::shared_ptr<DebugStream> getLog()
+            inline std::shared_ptr<DebugStream> getLog() noexcept
             {
                 return unetlog;
             }
 
-            virtual const std::string getShortInfo() const;
+            std::string getShortInfo() const noexcept;
 
-            inline size_t getADataSize() const
+            inline size_t getADataSize() const noexcept
             {
                 return maxAData;
             }
-            inline size_t getDDataSize() const
+            inline size_t getDDataSize() const noexcept
             {
                 return maxDData;
             }

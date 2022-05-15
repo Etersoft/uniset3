@@ -163,7 +163,7 @@ namespace uniset3
             updateItem( it->second, value );
     }
     // -----------------------------------------------------------------------------
-    void UNetSender::updateItem( UItem& it, long value )
+    void UNetSender::updateItem( const UItem& it, long value )
     {
         auto& pk = mypacks[it.pack_sendfactor];
 
@@ -176,7 +176,7 @@ namespace uniset3
             mypack.msg.setAData(it.pack_ind, value);
     }
     // -----------------------------------------------------------------------------
-    void UNetSender::setCheckConnectionPause( int msec )
+    void UNetSender::setCheckConnectionPause( int msec ) noexcept
     {
         if( msec > 0 )
             ptCheckConnection.setTiming(msec);
@@ -461,7 +461,6 @@ namespace uniset3
                          << UniSetUDP::MaxDCount << endl << flush;
 
                 std::terminate();
-                return false;
             }
         }
         else if( p.iotype == uniset3::AI || p.iotype == uniset3::AO ) // -V560
@@ -527,7 +526,7 @@ namespace uniset3
         return os << " sid=" << p.id;
     }
     // -----------------------------------------------------------------------------
-    void UNetSender::initIterators()
+    void UNetSender::initIterators() noexcept
     {
         for( auto&& it : items )
             shm->initIterator(it.second.ioit);
@@ -539,12 +538,12 @@ namespace uniset3
             shm->askSensor(it.second.id, cmd);
     }
     // -----------------------------------------------------------------------------
-    size_t UNetSender::getDataPackCount() const
+    size_t UNetSender::getDataPackCount() const noexcept
     {
         return mypacks.size();
     }
     // -----------------------------------------------------------------------------
-    const std::string UNetSender::getShortInfo() const
+    std::string UNetSender::getShortInfo() const noexcept
     {
         // warning: будет вызываться из другого потока
         // (считаем что чтение безопасно)
@@ -561,12 +560,12 @@ namespace uniset3
           << "\t   packs([sendfactor]=num): "
           << endl;
 
-        for( auto i = mypacks.begin(); i != mypacks.end(); ++i )
+        for( const auto& p : mypacks )
         {
-            s << "        \t[" << i->first << "]=" << i->second.size() << endl;
+            s << "        \t[" << p.first << "]=" << p.second.size() << endl;
             size_t n = 0;
 
-            for( const auto& pack : i->second )
+            for( const auto& pack : p.second )
             {
                 //uniset_rwmutex_rlock l(p->mut);
                 s << "        \t\t[" << (n++) << "]=" << sizeof(pack.msg) << " bytes"

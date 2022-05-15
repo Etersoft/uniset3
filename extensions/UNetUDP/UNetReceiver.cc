@@ -791,7 +791,6 @@ UNetReceiver::CacheVec* UNetReceiver::getACache( UniSetUDP::UDPMessage* pack ) n
     }
 
     CacheVec* a_info = &ait->second;
-
     if( pack->asize() == a_info->size() )
         return a_info;
 
@@ -818,7 +817,7 @@ void UNetReceiver::connectEvent( UNetReceiver::EventSlot sl ) noexcept
     slEvent = sl;
 }
 // -----------------------------------------------------------------------------
-const std::string UNetReceiver::getShortInfo() const noexcept
+std::string UNetReceiver::getShortInfo() const noexcept
 {
     // warning: будет вызываться из другого потока
     // (считаем что чтение безопасно)
