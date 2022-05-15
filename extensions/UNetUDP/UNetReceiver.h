@@ -92,7 +92,7 @@ namespace uniset3
      * выкинуто исключение при неудачной попытке создания соединения.
     */
     // -----------------------------------------------------------------------------
-    class UNetReceiver:
+    class UNetReceiver final:
         protected EvWatcher,
         public std::enable_shared_from_this<UNetReceiver>
     {
@@ -105,7 +105,7 @@ namespace uniset3
             void start();
             void stop();
 
-            inline const std::string getName() const
+            inline std::string getName() const noexcept
             {
                 return myname;
             }
@@ -152,12 +152,12 @@ namespace uniset3
             void connectEvent( EventSlot sl ) noexcept;
 
             // --------------------------------------------------------------------
-            inline std::shared_ptr<DebugStream> getLog()
+            inline std::shared_ptr<DebugStream> getLog() noexcept
             {
                 return unetlog;
             }
 
-            virtual const std::string getShortInfo() const noexcept;
+            std::string getShortInfo() const noexcept;
 
         protected:
 
@@ -172,7 +172,6 @@ namespace uniset3
             };
 
             ReceiveRetCode receive() noexcept;
-            void step() noexcept;
             void update() noexcept;
             void callback( ev::io& watcher, int revents ) noexcept;
             void readEvent( ev::io& watcher ) noexcept;
@@ -193,7 +192,7 @@ namespace uniset3
             size_t rnext( size_t num );
 
         private:
-            UNetReceiver();
+            UNetReceiver() {}
 
             timeout_t updatepause = { 100 };   /*!< периодичность обновления данных в SM, [мсек] */
 
