@@ -679,6 +679,7 @@ UNetReceiver::ReceiveRetCode UNetReceiver::receive() noexcept
                      << endl;
 
             lostPackets += pack->num() > wnum ? (pack->num() - wnum - 1) : 1;
+
             // реинициализируем позицию для чтения
             rnum = pack->num();
             wnum = pack->num() + 1;
