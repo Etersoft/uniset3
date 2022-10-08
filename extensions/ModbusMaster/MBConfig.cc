@@ -995,6 +995,11 @@ namespace uniset3
             }
         }
 
+        auto p = it.getProp("parity");
+
+        if( !p.empty() )
+            d->second->parity = ComPort::getParity(p);
+
         return true;
     }
     // -----------------------------------------------------------------------------

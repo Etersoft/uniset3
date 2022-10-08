@@ -225,9 +225,9 @@ std::shared_ptr<MBTCPMaster> MBTCPMaster::init_mbmaster(int argc, const char* co
 
     if( ID == uniset3::DefaultObjectId )
     {
-        dcrit << "(MBTCPMaster): идентификатор '" << name
-              << "' не найден в конф. файле!"
-              << " в секции " << conf->getObjectsSection() << endl;
+        cerr << "(MBTCPMaster): идентификатор '" << name
+             << "' не найден в конф. файле!"
+             << " в секции " << conf->getObjectsSection() << endl;
         return 0;
     }
 
