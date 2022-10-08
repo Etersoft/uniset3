@@ -192,7 +192,6 @@ namespace uniset3
     uniset3::Timespec to_uniset_timespec(struct timespec ts);
     bool equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept;
 
-
     /*! Разбивка строки по указанному символу */
     IDList split_id(const std::string& str, char sep = ',');
     std::vector<std::string> split(const std::string& str, char sep = ',');

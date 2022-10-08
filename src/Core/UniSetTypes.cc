@@ -900,3 +900,4 @@ std::ostream& uniset3::operator<<( std::ostream& os, const uniset3::ObjectRef& o
 
     return os;
 }
+// -------------------------------------------------------------------------
