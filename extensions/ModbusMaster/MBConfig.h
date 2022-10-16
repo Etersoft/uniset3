@@ -193,6 +193,8 @@ namespace uniset3
                 // специфические поля для RS
                 ComPort::Speed speed = { ComPort::ComSpeed38400 };
                 ComPort::Parity parity = { ComPort::NoParity };
+                ComPort::CharacterSize csize = { ComPort::CSize8 };
+                ComPort::StopBits stopBits = { ComPort::OneBit };
 
                 std::string getShortInfo() const;
             };

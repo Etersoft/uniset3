@@ -75,22 +75,23 @@ void ComPort::openPort()
     cfsetispeed(&options, B19200);          /* Set the baud rates to 19200 */
     cfsetospeed(&options, B19200);
 
-    cfmakeraw(&options);
-    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ISIG | IEXTEN/*|NOFLUSH*/ | TOSTOP);
-    options.c_cflag &= ~CSTOPB;
-    options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK);
-    options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IUCLC | IMAXBEL);
-    options.c_oflag &= ~OPOST;
-    options.c_cflag &= ~CRTSCTS;
-    options.c_cflag &= ~HUPCL;
-    options.c_iflag &= ~(IXON | IXOFF | IXANY);
-    options.c_cc[VMIN] = 0;
-    options.c_cc[VTIME] = 1;
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
-    options.c_cflag &= ~PARENB;
-    options.c_iflag &= ~INPCK;
-    options.c_cflag |= (CLOCAL | CREAD);
+
+	cfmakeraw(&options);
+	options.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ISIG | IEXTEN/*|NOFLUSH*/ | TOSTOP);
+	options.c_cflag &= ~CSTOPB;
+	options.c_iflag &= ~(IGNBRK | BRKINT | PARMRK);
+	options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IUCLC | IMAXBEL);
+	options.c_oflag &= ~OPOST;
+	options.c_cflag &= ~CRTSCTS;
+	options.c_cflag &= ~HUPCL;
+	options.c_iflag &= ~(IXON | IXOFF | IXANY);
+	options.c_cc[VMIN] = 0;
+	options.c_cc[VTIME] = 1;
+	options.c_cflag &= ~CSIZE;
+	options.c_cflag |= charSize;
+	options.c_cflag &= ~PARENB;
+	options.c_iflag &= ~INPCK;
+	options.c_cflag |= (CLOCAL | CREAD);
 
     tcsetattr(fd, TCSAFLUSH, &options);
 }
@@ -126,6 +127,18 @@ void ComPort::setSpeed( Speed s )
     cfsetospeed(&options, speed);
 
     tcsetattr(fd, TCSADRAIN, &options);
+}
+// --------------------------------------------------------------------------------
+ComPort::CharacterSize ComPort::getCharacterSize(const std::string& s )
+{
+    if( s == "cs5" )
+        return CSize5;
+    if( s == "cs6" )
+        return CSize6;
+    if( s == "cs7" )
+        return CSize7;
+
+    return CSize8;
 }
 // --------------------------------------------------------------------------------
 ComPort::Parity ComPort::getParity( const std::string& s )
@@ -225,6 +238,16 @@ void ComPort::setCharacterSize(CharacterSize csize)
     options.c_cflag |= csize;
 
     tcsetattr(fd, TCSADRAIN, &options);
+}
+// --------------------------------------------------------------------------------
+ComPort::CharacterSize ComPort::getCharacterSize()
+{
+    return charSize;
+}
+// --------------------------------------------------------------------------------
+ComPort::StopBits ComPort::getStopBits()
+{
+    return stopBits;
 }
 // --------------------------------------------------------------------------------
 void ComPort::setStopBits(StopBits sBit)

@@ -171,17 +171,28 @@ namespace uniset3
             if( speed.empty() )
                 speed = "38400";
 
-            string parity  = conf->getArgParam("--" + prefix + "-parity", it.getProp("parity"));
+            string parity = conf->getArgParam("--" + prefix + "-parity", it.getProp("parity"));
+            int stopbits  = conf->getArgInt("--" + prefix + "-stopbits", it.getProp("stopBits"));
             bool use485F = conf->getArgInt("--" + prefix + "-use485F", it.getProp("use485F"));
             bool transmitCtl = conf->getArgInt("--" + prefix + "-transmit-ctl", it.getProp("transmitCtl"));
+            string charsize = conf->getArgParam("--" + prefix + "-char-size", it.getProp("charSize"));
 
             auto rs = make_shared<ModbusRTUSlaveSlot>(dev, use485F, transmitCtl);
             rs->setSpeed(speed);
+
             if( !parity.empty() )
                 rs->setParity(parity);
+
             rs->setRecvTimeout(2000);
             rs->setAfterSendPause(aftersend_pause);
             rs->setReplyTimeout(reply_tout);
+
+            if( stopbits > 0 )
+                rs->setStopBits((ComPort::StopBits)stopbits);
+
+            if( !charsize.empty() )
+                rs->setCharSize(ComPort::getCharacterSize(charsize));
+
             // rs->setLog(mblog);
 
             mbslot = std::static_pointer_cast<ModbusServerSlot>(rs);
@@ -1592,8 +1603,12 @@ namespace uniset3
         cout << " Настройки протокола RTU: " << endl;
         cout << "--prefix-dev devname  - файл устройства" << endl;
         cout << "--prefix-speed        - Скорость обмена (9600,19920,38400,57600,115200)." << endl;
-        cout << "--prefix-parity       - Контроль чётности (odd,even,noparity,space,mark)." << endl;
-
+        cout << "--prefix-parity val   - Контроль чётности (odd,even,noparity,space,mark)." << endl;
+        cout << "--prefix-charsize val - Битность (cs5, cs6, cs7, cs8). По умолчанию: cs8" << endl;
+        cout << "--prefix-stopbits val - Стоп-биты" << endl;
+        cout << "                    1 - OneBit" << endl;
+        cout << "                    2 - OneAndHalfBits" << endl;
+        cout << "                    3 - TwoBits" << endl;
         cout << " Настройки протокола TCP: " << endl;
         cout << "--prefix-inet-addr [xxx.xxx.xxx.xxx | hostname ]  - this modbus server address" << endl;
         cout << "--prefix-inet-port num - this modbus server port. Default: 502" << endl;

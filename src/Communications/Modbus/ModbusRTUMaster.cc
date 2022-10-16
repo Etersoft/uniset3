@@ -28,7 +28,6 @@ namespace uniset3
     using namespace std;
     using namespace ModbusRTU;
     using namespace uniset3;
-
     // -------------------------------------------------------------------------
     ModbusRTUMaster::ModbusRTUMaster( const string& dev, bool use485, bool tr_ctl ):
         port(NULL),
@@ -129,6 +128,22 @@ namespace uniset3
     {
         if( port != NULL)
             port->setCharacterSize(csize);
+    }
+    // -------------------------------------------------------------------------
+    ComPort::CharacterSize ModbusRTUMaster::getCharacterSize()
+    {
+        if( port != NULL)
+            return port->getCharacterSize();
+
+        return ComPort::CSize8;
+    }
+    // -------------------------------------------------------------------------
+    ComPort::StopBits ModbusRTUMaster::getStopBits()
+    {
+        if( port != NULL)
+            port->getStopBits();
+
+        return ComPort::OneBit;
     }
     // -------------------------------------------------------------------------
     void ModbusRTUMaster::setStopBits( ComPort::StopBits sBit )
