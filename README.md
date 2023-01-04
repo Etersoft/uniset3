@@ -4,11 +4,11 @@ UniSet ![Gihub testsuite Status](https://github.com/Etersoft/uniset3/actions/wor
 UniSet is a library for distributed control systems development.
 There are set of base components to construct this kind of systems:
 * base interfaces for your implementation of control algorithms.
-* algorithms for a discrete and analog input/output based on COMEDI interface.
+* algorithms for a discrete and analog input/output based on [COMEDI](https://github.com/Linux-Comedi/comedi) interface.
 * IPC mechanism based on GRPC (protobuf).
 * logging system based on MySQL, SQLite, PostgreSQL databases.
 * logging to TSDB (influxdb, opentsdb)
-* supported MQTT (libmosquittopp)
+* supported MQTT ([libmosquittopp](http://mosquitto.org))
 * fast network protocol based on udp (UNet)
 * utilities for system's configuration based on XML.
 * python interface
