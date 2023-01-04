@@ -12,8 +12,8 @@ init_testsuite || exit 1
 --mbtcp-filter-value 1 \
 --mbtcp-gateway-iaddr localhost \
 --mbtcp-gateway-port 20048 \
---mbtcp-polltime 50 --mbtcp-recv-timeout 500
-# --mbtcp-log-add-levels info,warn,crit
+--mbtcp-polltime 50 --mbtcp-recv-timeout 500 --mbtcp-timeout 2500
+# --mbtcp-log-add-levels any
 #--mbtcp-default-mbinit-ok 1
 #--dlog-add-levels any
 
