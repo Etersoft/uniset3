@@ -207,7 +207,7 @@ namespace uniset3
             if( !mret.second )
             {
                 ostringstream err;
-                err << "Object name collision. The '" << nm << "' already exists.";
+                err << "Name collision. The '" << name << "' already exists.";
                 throw uniset3::SystemError(err.str());
             }
 
@@ -215,8 +215,9 @@ namespace uniset3
 
             if( !ret.second )
             {
+                auto coll = omap[inf.id];
                 ostringstream err;
-                err << "ObjectID collision. The '" << nm << "' already exists.";
+                err << "ID '" << nm << "' has collision with '" << coll.repName << "'";
                 throw uniset3::SystemError(err.str());
             }
         }
@@ -257,7 +258,6 @@ namespace uniset3
 
             const string name(it.getProp("name"));
             inf.id = uniset3::hash32(name);
-
             inf.repName = name;
 
             // textname
@@ -273,8 +273,9 @@ namespace uniset3
 
             if( !ret.second )
             {
+                auto coll = omap[inf.id];
                 ostringstream err;
-                err << "node ObjectID collision. The '" << name << "' already exists.";
+                err << "NodeID '" << name << "' has collision with '" << coll.repName << "'";
                 throw uniset3::SystemError(err.str());
             }
 
