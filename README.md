@@ -7,7 +7,7 @@ There are set of base components to construct this kind of systems:
 * algorithms for a discrete and analog input/output based on [COMEDI](https://github.com/Linux-Comedi/comedi) interface.
 * IPC mechanism based on GRPC (protobuf).
 * logging system based on MySQL, SQLite, PostgreSQL databases.
-* logging to TSDB (influxdb, opentsdb)
+* logging to TSDB ([influxdb](https://github.com/influxdata/influxdb), opentsdb)
 * supported MQTT ([libmosquittopp](http://mosquitto.org))
 * fast network protocol based on udp (UNet)
 * utilities for system's configuration based on XML.
