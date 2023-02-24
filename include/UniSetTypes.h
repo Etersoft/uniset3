@@ -122,6 +122,9 @@ namespace uniset3
         public:
 
             IDList( const std::vector<std::string>& v );
+#if __cplusplus >= 201703L
+        IDList( const std::vector<std::string_view>& v );
+#endif
             IDList();
             ~IDList();
 
@@ -171,10 +174,10 @@ namespace uniset3
 
     //! Преобразование строки в число (воспринимает префикс 0, как 8-ное, префикс 0x, как 16-ное, минус для отриц. чисел)
     int uni_atoi( const char* str ) noexcept;
-    inline int uni_atoi( const std::string& str ) noexcept
-    {
-        return uni_atoi(str.c_str());
-    }
+    int uni_atoi( const std::string& str ) noexcept;
+#if __cplusplus >= 201703L
+    int uni_atoi_sv( std::string_view str ) noexcept;
+#endif
 
     char* uni_strdup( const std::string& src );
 
@@ -193,8 +196,12 @@ namespace uniset3
     bool equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept;
 
     /*! Разбивка строки по указанному символу */
-    IDList split_id(const std::string& str, char sep = ',');
-    std::vector<std::string> split(const std::string& str, char sep = ',');
+    IDList split_by_id( const std::string& str, char sep = ',' );
+    std::vector<std::string> split( const std::string& str, char sep = ',' );
+#if __cplusplus >= 201703L
+    IDList split_by_id( std::string_view str, char sep = ',' );
+    std::vector<std::string_view> split_sv( std::string_view str, char sep = ',' );
+#endif
 
     struct ParamSInfo
     {
@@ -207,7 +214,9 @@ namespace uniset3
        Если '=' не указано, возвращается val=0
        Если @node не указано, возвращается node=DefaultObjectId */
     std::list<ParamSInfo> getSInfoList( const std::string& s, std::shared_ptr<uniset3::Configuration> conf = nullptr );
-
+#if __cplusplus >= 201703L
+    std::list<ParamSInfo> getSInfoList_sv( std::string_view s, std::shared_ptr<uniset3::Configuration> conf = nullptr );
+#endif
 
     /*! Функция разбора строки вида: id1@node1,id2@node2,...
       Если @node не указано, возвращается node=DefaultObjectId */
@@ -218,6 +227,9 @@ namespace uniset3
      * Т.е. например "-10" или "100.0" или "10 000" - числом считаться не будут!
     */
     bool is_digit( const std::string& s ) noexcept;
+#if __cplusplus >= 201703L
+    bool is_digit_sv( std::string_view s ) noexcept;
+#endif
 
     /*! замена всех вхождений подстроки
      * \param src - исходная строка
