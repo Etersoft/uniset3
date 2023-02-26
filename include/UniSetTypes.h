@@ -141,6 +141,7 @@ namespace uniset3
             }
 
             std::list<ObjectId> getList() const noexcept;
+            const std::list<ObjectId>& ref() const noexcept;
 
             // за освобождение выделенной памяти
             // отвечает вызывающий!
