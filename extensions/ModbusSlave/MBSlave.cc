@@ -342,18 +342,6 @@ namespace uniset3
             maxHeartBeat = conf->getArgPInt("--" + prefix + "-heartbeat-max", it.getProp("heartbeat_max"), 10);
             test_id = sidHeartBeat;
         }
-        else
-        {
-            test_id = conf->getSensorID("TestMode_S");
-
-            if( test_id == DefaultObjectId )
-            {
-                ostringstream err;
-                err << myname << ": test_id unknown. 'TestMode_S' not found...";
-                mbcrit << myname << "(init): " << err.str() << endl;
-                throw SystemError(err.str());
-            }
-        }
 
         askcount_id = conf->getSensorID(conf->getArgParam("--" + prefix + "-askcount-id", it.getProp("askcount_id")));
         mbinfo << myname << ": init askcount_id=" << askcount_id << endl;
@@ -1292,6 +1280,10 @@ namespace uniset3
             mbcrit << myname << "(initItem): Unknown '" << prop_prefix << "mbaddr' for " << it.getProp("name") << endl;
             return false;
         }
+
+        // init test_id
+        if( test_id == DefaultObjectId )
+            test_id = p.si.id;
 
         ModbusAddr mbaddr = ModbusRTU::str2mbAddr(s_mbaddr);
 
