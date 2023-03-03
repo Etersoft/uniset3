@@ -18,9 +18,11 @@ int main( int argc, const char** argv )
     {
         if( argc > 1 && ( !strcmp(argv[1], "--help") || !strcmp(argv[1], "-h") ) )
         {
-            cout << "Usage: uniset-smonit [ args ] --sid id1@node1,Sensor2@node2,id2,sensorname3,... " << endl
+            cout << "Usage: uniset-smonit [ args ] --sid id1@node1,Sensor2@node2,id2,sensorname3,... or --filters-field [--filter-value]" << endl
                  << "Args: " << endl
-                 << "--name XXX - name for smonit. Default: TestProc (only for remote sensors)" << endl;
+                 << "--name XXX - name for smonit. Default: TestProc" << endl
+                 << "--filter-field name      - Считывать список опрашиваемых датчиков, только у которых есть поле field" << endl
+                 << "--filter-value val       - Считывать список опрашиваемых датчиков, только у которых field=value" << endl;
             //                 << " --script scriptname \n"
             cout << uniset3::Configuration::help() << endl;
             return 0;
