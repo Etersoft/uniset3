@@ -61,6 +61,7 @@ namespace uniset3
             bool waitSMready( int msec, int pause = 5000 );
             bool waitSMworking( uniset3::ObjectId, int msec, int pause = 3000 );
             bool waitSMreadyWithCancellation( int msec, std::atomic_bool& cancelFlag, int pause = 5000 );
+            bool waitSMworkingWithCancellation( uniset3::ObjectId sid, int ready_timeout, std::atomic_bool& cancelFlag, int pmsec );
 
             inline bool isLocalwork() const noexcept
             {
