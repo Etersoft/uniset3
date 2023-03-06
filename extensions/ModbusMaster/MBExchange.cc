@@ -86,9 +86,10 @@ namespace uniset3
             ic->logAgregator()->add(loga);
 
         // определяем фильтр
-        mbconf->s_field = conf->getArgParam("--" + prefix + "-filter-field");
-        mbconf->s_fvalue = conf->getArgParam("--" + prefix + "-filter-value");
-        mbinfo << myname << "(init): read fileter-field='" << mbconf->s_field
+
+        mbconf->s_field = conf->getArg2Param("--" + prefix + "-filter-field", it.getProp("filterField"));
+        mbconf->s_fvalue = conf->getArg2Param("--" + prefix + "-filter-value", it.getProp("filterField"));
+        mbinfo << myname << "(init): read filter-field='" << mbconf->s_field
                << "' filter-value='" << mbconf->s_fvalue << "'" << endl;
 
         mbconf->prefix = prefix;
@@ -152,10 +153,12 @@ namespace uniset3
                 ptHeartBeat.setTiming(UniSetTimer::WaitUpTime);
 
             maxHeartBeat = conf->getArgPInt("--" + prefix + "-heartbeat-max", it.getProp("heartbeat_max"), 10);
-            test_id = sidHeartBeat;
         }
 
-        mbinfo << myname << "(init): test_id=" << test_id << endl;
+        string sm_ready_sid = conf->getArgParam("--" + prefix + "-sm-test-sid", it.getProp2("smTestSID", "TestMode_S"));
+        sidTestSMReady = conf->getSensorID(sm_ready_sid);
+        mbinfo << myname << "(init): sidTestSMReady=" << sidTestSMReady << endl;
+        vmonit(sidTestSMReady);
 
         string emode = conf->getArgParam("--" + prefix + "-exchange-mode-id", it.getProp("exchangeModeID"));
 
@@ -223,6 +226,7 @@ namespace uniset3
         cout << "--prefix-filter-value val       - Считывать список опрашиваемых датчиков, только у которых field=value" << endl;
         cout << "--prefix-statistic-sec sec      - Выводить статистику опроса каждые sec секунд" << endl;
         cout << "--prefix-sm-ready-timeout       - время на ожидание старта SM" << endl;
+        cout << "--prefix-sm-ready-test-sid name - Датчик для проверки готовности SM к работе. По умолчанию идёт попытка автоопределения." << endl;
         cout << "--prefix-exchange-mode-id       - Идентификатор (AI) датчика, позволяющего управлять работой процесса" << endl;
         cout << "--prefix-set-prop-prefix val    - Использовать для свойств указанный или пустой префикс." << endl;
         cout << "--prefix-default-mbtype [rtu|rtu188|mtr]  - У датчиков которых не задан 'mbtype' использовать данный. По умолчанию: 'rtu'" << endl;
@@ -333,8 +337,8 @@ namespace uniset3
                 std::abort();
             }
 
-            if( test_id == DefaultObjectId )
-                test_id = mbconf->conf->getSensorID(it.getProp("name"));
+            if(sidTestSMReady == DefaultObjectId )
+                sidTestSMReady = mbconf->conf->getSensorID(it.getProp("name"));
         }
 
         return true;
@@ -1993,7 +1997,7 @@ namespace uniset3
     // ------------------------------------------------------------------------------------------
     void MBExchange::askSensors( uniset3::UIOCommand cmd )
     {
-        if( !shm->waitSMworking(test_id, activateTimeout, 50) )
+        if( !shm->waitSMworking(sidTestSMReady, activateTimeout, 50) )
         {
             ostringstream err;
             err << myname

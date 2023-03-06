@@ -1569,6 +1569,13 @@ end_private(false)
 
     si.set_id(uniset3::DefaultObjectId);
     si.set_node(conf->getLocalNode());
+    smTestID = conf->getSensorID(init4_str(conf->getArgParam("--" + argprefix + "sm-test-sid"),conf->getProp(cnode,"smTestSID"),conf->getProp(globalnode,"smTestSID"),""));
+    <xsl:for-each select="//smap/item">
+    <xsl:if test="normalize-space(@smTestID)!=''">
+    if( smTestID == DefaultObjectId )
+        smTestID = <xsl:value-of select="@name"/>;
+    </xsl:if>
+    </xsl:for-each>
 
     sleep_msec = conf->getArgPInt("--" + argprefix + "sleep-msec","<xsl:call-template name="settings"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>", <xsl:call-template name="settings"><xsl:with-param name="varname" select="'sleep-msec'"/></xsl:call-template>);
 
@@ -2087,6 +2094,7 @@ askPause(uniset_conf()->getPIntProp(cnode,"askPause",2000))
 
     resetMsgTime = uni_atoi(init4_str(conf->getArgParam("--" + argprefix + "resetMsgTime"), conf->getProp(cnode,"resetMsgTime"), conf->getProp(globalnode,"resetMsgTime"), s_resetTime));
     ptResetMsg.setTiming(resetMsgTime);
+    smTestID = conf->getSensorID(init4_str(conf->getArgParam("--" + argprefix + "sm-test-sid"), conf->getProp(cnode,"smTestSID"), conf->getProp(globalnode,"smTestSID"), ""));
 
     int sm_tout = conf->getArgInt("--" + argprefix + "sm-ready-timeout","<xsl:call-template name="settings"><xsl:with-param name="varname" select="'smReadyTimeout'"/></xsl:call-template>");
     if( sm_tout == 0 )
