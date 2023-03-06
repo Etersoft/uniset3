@@ -143,7 +143,7 @@ namespace uniset3
             uniset3::ObjectId sidHeartBeat = { uniset3::DefaultObjectId };
             long maxHeartBeat = { 10 };
             IOController::IOStateList::iterator itHeartBeat;
-            uniset3::ObjectId test_id = { uniset3::DefaultObjectId };
+            uniset3::ObjectId sidTestSMReady = {uniset3::DefaultObjectId };
 
             uniset3::ObjectId sidExchangeMode = { uniset3::DefaultObjectId }; /*!< идентификатор для датчика режима работы */
             IOController::IOStateList::iterator itExchangeMode;
