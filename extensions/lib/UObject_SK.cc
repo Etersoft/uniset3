@@ -494,7 +494,7 @@ void UObject_SK::preSysCommand( const uniset3::umessage::SystemMessage* _sm )
             ostate = "StartUp: wait sm ready..";
             if( !waitSM(smReadyTimeout) )
             {
-                if( !cancelled )
+                if( !canceled )
                     uterminate();
                 return;
             }
@@ -935,7 +935,7 @@ bool UObject_SK::activateObject()
 // -----------------------------------------------------------------------------
 bool UObject_SK::deactivateObject()
 {
-    cancelled = true;
+    canceled = true;
     return UniSetObject::deactivateObject();
 }
 // -----------------------------------------------------------------------------
@@ -953,19 +953,18 @@ bool UObject_SK::waitSM( int wait_msec, ObjectId _testID )
 
     if( _testID == DefaultObjectId )
         return true;
-        
+
     myinfo << myname << "(waitSM): waiting SM ready "
             << wait_msec << " msec"
             << " testID=" << _testID << endl;
-        
+
     // waitReady можно использовать т.к. датчик это по сути IONotifyController
-    if( !ui->waitReadyWithCancellation(_testID,wait_msec,cancelled) )
+    if( !ui->waitReadyWithCancellation(_testID,wait_msec,canceled) )
     {
         ostringstream err;
         err << myname 
             << "(waitSM): Не дождались готовности(exists) SharedMemory к работе в течение " 
             << wait_msec << " мсек";
-
         mycrit << err.str() << endl;
         return false;
     }
@@ -976,7 +975,7 @@ bool UObject_SK::waitSM( int wait_msec, ObjectId _testID )
         err << myname
             << "(waitSM): Не дождались готовности(work) SharedMemory к работе в течение "
             << wait_msec << " мсек";
-    
+
         mycrit << err.str() << endl;
         return false;
     }
@@ -1135,7 +1134,7 @@ void UObject_SK::preAskSensors( uniset3::UIOCommand _cmd )
         mycrit << myname
             << "(preAskSensors): ************* don`t activated?! ************" << endl;
 
-    while( !cancelled )
+    while( !canceled )
     {
         try
         {

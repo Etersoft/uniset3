@@ -199,7 +199,7 @@ class UObject_SK:
 
         uniset3::timeout_t smReadyTimeout;     /*!< время ожидания готовности SM */
         std::atomic_bool activated = { false };
-        std::atomic_bool cancelled = { false };
+        std::atomic_bool canceled = { false };
         uniset3::timeout_t activateTimeout;    /*!< время ожидания готовности UniSetObject к работе */
         uniset3::PassiveTimer ptStartUpTimeout;    /*!< время на блокировку обработки WatchDog, если недавно был StartUp */
         int askPause; /*!< пауза между неудачными попытками заказать датчики */
