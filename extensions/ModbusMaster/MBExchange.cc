@@ -88,12 +88,12 @@ namespace uniset3
         // определяем фильтр
 
         mbconf->s_field = conf->getArg2Param("--" + prefix + "-filter-field", it.getProp("filterField"));
-        mbconf->s_fvalue = conf->getArg2Param("--" + prefix + "-filter-value", it.getProp("filterField"));
+        mbconf->s_fvalue = conf->getArg2Param("--" + prefix + "-filter-value", it.getProp("filterValue"));
         mbinfo << myname << "(init): read filter-field='" << mbconf->s_field
                << "' filter-value='" << mbconf->s_fvalue << "'" << endl;
 
         mbconf->prefix = prefix;
-        mbconf->prop_prefix = initPropPrefix(mbconf->s_field, "");
+        mbconf->prop_prefix = initPropPrefix("");
 
         stat_time = conf->getArgPInt("--" + prefix + "-statistic-sec", it.getProp("statistic_sec"), 0);
         vmonit(stat_time);
@@ -180,17 +180,11 @@ namespace uniset3
         vmonit(allInitOK);
     }
     // -----------------------------------------------------------------------------
-    std::string MBExchange::initPropPrefix( const std::string& s_field,
-                                            const std::string& def_prop_prefix )
+    std::string MBExchange::initPropPrefix( const std::string& def_prop_prefix )
     {
         auto conf = uniset_conf();
 
         string pp = def_prop_prefix;
-
-        // если задано поле для "фильтрации"
-        // то в качестве префикса используем его
-        if( !s_field.empty() )
-            pp = s_field + "_";
 
         // если "принудительно" задан префикс используем его.
         const string p = "--" + mbconf->prefix + "-set-prop-prefix";
