@@ -39,7 +39,7 @@ MBTCPMultiMaster::MBTCPMultiMaster( uniset3::ObjectId objId, uniset3::ObjectId s
 
     auto conf = uniset_conf();
 
-    mbconf->prop_prefix = initPropPrefix(mbconf->s_field, "tcp_");
+    mbconf->prop_prefix = initPropPrefix("tcp_");
     mbinfo << myname << "(init): prop_prefix=" << mbconf->prop_prefix << endl;
 
     UniXML::iterator it(cnode);
@@ -765,7 +765,7 @@ grpc::Status MBTCPMultiMaster::getInfo(::grpc::ServerContext* context, const ::u
 // ----------------------------------------------------------------------------
 bool MBTCPMultiMaster::reconfigure( const std::shared_ptr<uniset3::UniXML>& xml, const std::shared_ptr<uniset3::MBConfig>& newConf )
 {
-    newConf->prop_prefix = initPropPrefix(newConf->s_field, "tcp_");
+    newConf->prop_prefix = initPropPrefix("tcp_");
     UniXML::iterator it(newConf->cnode);
 
     int newChecktime = it.getIntProp("checktime");

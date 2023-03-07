@@ -41,11 +41,6 @@ RTUExchange::RTUExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const
     // префикс для "свойств" - по умолчанию
     mbconf->prop_prefix = "";
 
-    // если задано поле для "фильтрации"
-    // то в качестве префикса используем его
-    if( !mbconf->s_field.empty() )
-        mbconf->prop_prefix = mbconf->s_field + "_";
-
     // если "принудительно" задан префикс
     // используем его.
     {
@@ -93,9 +88,9 @@ RTUExchange::RTUExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const
     if( !cs.empty() )
         csize = ComPort::getCharacterSize(cs);
 
-    mbconf->sleepPause_msec = conf->getArgPInt("--" + mbconf->prefix + "-sleepPause-usec", it.getProp("slepePause"), 100);
+    mbconf->sleepPause_msec = conf->getArgPInt("--" + mbconf->prefix + "-sleepPause-msec", it.getProp("sleepPause"), 100);
 
-    rs_pre_clean = conf->getArgInt("--" + mbconf->prefix + "-pre-clean", it.getProp("pre_clean"));
+    rs_pre_clean = conf->getArgInt("--" + mbconf->prefix + "-pre-clean", it.getProp("preClean"));
 
     if( shm->isLocalwork() )
         mbconf->loadConfig(conf->getConfXML(), conf->getXMLSensorsSection());
