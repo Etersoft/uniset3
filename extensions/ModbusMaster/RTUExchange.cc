@@ -26,12 +26,7 @@ using namespace uniset3::extensions;
 // -----------------------------------------------------------------------------
 RTUExchange::RTUExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const std::shared_ptr<SharedMemory>& ic,
                          const std::string& prefix_ ):
-    MBExchange(objId, shmId, ic, prefix_),
-    mbrtu(0),
-    defSpeed(ComPort::ComSpeed38400),
-    use485F(false),
-    transmitCtl(false),
-    rs_pre_clean(false)
+    MBExchange(objId, shmId, ic, prefix_)
 {
     if( objId == DefaultObjectId )
         throw uniset3::SystemError("(RTUExchange): objId=-1?!! Use --" + mbconf->prefix + "-name" );
@@ -63,16 +58,18 @@ RTUExchange::RTUExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const
     if( devname.empty() )
         throw uniset3::SystemError(myname + "(RTUExchange): Unknown device..." );
 
-    string speed = conf->getArgParam("--" + mbconf->prefix + "-speed", it.getProp("speed"));
+    string speed = conf->getArgParam("--" + mbconf->prefix + "-speed", it.getProp2("speed", ComPort::getSpeed(defSpeed)));
 
     if( speed.empty() )
         speed = "38400";
+
+    defSpeed = ComPort::getSpeed(speed);
 
     mbinfo << myname << "(init): device=" << devname << " speed=" << speed << endl;
 
     use485F = conf->getArgInt("--" + mbconf->prefix + "-use485F", it.getProp("use485F"));
     transmitCtl = conf->getArgInt("--" + mbconf->prefix + "-transmit-ctl", it.getProp("transmitCtl"));
-    defSpeed = ComPort::getSpeed(speed);
+
     auto p = conf->getArgParam("--" + mbconf->prefix + "-parity", it.getProp("parity"));
 
     if( !p.empty() )
@@ -97,47 +94,56 @@ RTUExchange::RTUExchange(uniset3::ObjectId objId, uniset3::ObjectId shmId, const
     else
         ic->addReadItem( sigc::mem_fun(this, &RTUExchange::readItem) );
 
-    initMB(false);
+    // mb = initMB(false);
 
-    if( dlog()->is_info() )
+    if( mblog->is_info() )
         MBConfig::printMap(mbconf->devices);
 }
 // -----------------------------------------------------------------------------
 void RTUExchange::help_print( int argc, const char* const* argv )
 {
-    cout << "Default: prefix='rs'" << endl;
     MBExchange::help_print(argc, argv);
-    //    cout << " Настройки протокола RS: " << endl;
-    cout << "--prefix-dev devname  - файл устройства" << endl;
-    cout << "--prefix-speed        - Скорость обмена (9600,19920,38400,57600,115200)." << endl;
-    cout << "--prefix-my-addr      - адрес текущего узла" << endl;
-    cout << "--prefix-recv-timeout - Таймаут на ожидание ответа." << endl;
-    cout << "--prefix-pre-clean    - Очищать буфер перед каждым запросом" << endl;
-    cout << "--prefix-sleepPause-usec - Таймаут на ожидание очередного байта" << endl;
+    cout << "--rs-dev devname     - файл устройства" << endl;
+    cout << "--rs-speed           - Скорость обмена (9600,19920,38400,57600,115200)." << endl;
+    cout << "--rs-my-addr         - адрес текущего узла" << endl;
+    cout << "--rs-recv-timeout    - Таймаут на ожидание ответа." << endl;
+    cout << "--rs-pre-clean       - Очищать буфер перед каждым запросом" << endl;
+    cout << "--rs-sleepPause-usec - Таймаут на ожидание очередного байта" << endl;
+    cout << "--rs-parity [odd|even|noparity|space|mark] - Контроль чётности. По умолчанию: NoParity" << endl;
+    cout << "--rs-stopbits [1|2|3]                      - Стоп бит. По умолчанию: 1" << endl;
+    cout << "--rs-charsize [cs5|cs6|cs7|cs8]            - Размер символа. По умолчанию 8" << endl;
 }
 // -----------------------------------------------------------------------------
 RTUExchange::~RTUExchange()
 {
-    //    delete mbrtu;
 }
 // -----------------------------------------------------------------------------
 std::shared_ptr<ModbusClient> RTUExchange::initMB( bool reopen )
 {
     if( !file_exists(devname) )
     {
+        mbwarn << myname << "(init): Not found device "  << devname << endl;
+
         if( mbrtu )
         {
-            mb = nullptr;
+            mbwarn << myname << "(init): Not found device '"  << devname << "' Close exchange.." << endl;
             mbrtu = nullptr;
+            mb = nullptr;
         }
 
         return mbrtu;
     }
 
+    if( mb )
+        ptInitChannel.reset();
+
     if( mbrtu )
     {
         if( !reopen )
+        {
+            mb = mbrtu;
             return mbrtu;
+        }
 
         mbrtu = nullptr;
         mb = nullptr;
@@ -165,7 +171,7 @@ std::shared_ptr<ModbusClient> RTUExchange::initMB( bool reopen )
         mbrtu->setStopBits(stopBits);
         mbrtu->setParity(parity);
 
-        mbinfo << myname << "(init): dev=" << devname << " speed=" << ComPort::getSpeed( mbrtu->getSpeed() ) << endl;
+        mbinfo << myname << "(init): reinit dev=" << devname << " speed=" << ComPort::getSpeed( mbrtu->getSpeed() ) << endl;
     }
     catch( const std::exception& ex )
     {
@@ -221,7 +227,12 @@ bool RTUExchange::poll()
 
         updateSM();
         allInitOK = false;
-        return false;
+
+        if( !mb )
+            return false;
+
+        for( auto&& d : mbconf->devices )
+            d.second->resp_ptInit.reset();
     }
 
     if( !allInitOK )
@@ -237,7 +248,7 @@ bool RTUExchange::poll()
     ComPort::CharacterSize cs = mbrtu->getCharacterSize();
     ComPort::StopBits sb = mbrtu->getStopBits();
 
-    for( auto it1 : mbconf->devices )
+    for( auto&& it1 : mbconf->devices )
     {
         auto d = it1.second;
 
@@ -299,11 +310,13 @@ bool RTUExchange::poll()
                 }
                 catch( ModbusRTU::mbException& ex )
                 {
-                    dlog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
-                          << " reg=" << ModbusRTU::dat2str(it->second->mbreg)
-                          << " for sensors: ";
-                    mbconf->print_plist(dlog()->level3(), it->second->slst);
-                    dlog()->level3(false) << " err: " << ex << endl;
+                    if( mblog->debugging(Debug::LEVEL3) )
+                    {
+                        mblog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
+                               << " reg=" << ModbusRTU::dat2str(it->second->mbreg)
+                               << " for sensors: " << to_string(it->second->slst)
+                               << endl << " err: " << ex << endl;
+                    }
                 }
 
                 if( it == rmap->end() )
@@ -313,7 +326,23 @@ bool RTUExchange::poll()
                     return false;
             }
         }
+
+        if( stat_time > 0 )
+            poll_count++;
     }
+
+    if( stat_time > 0 && ptStatistic.checkTime() )
+    {
+        ostringstream s;
+        s << "number of calls is " << poll_count << " (poll time: " << stat_time << " sec)";
+        statInfo = s.str();
+        mblog9 << myname << "(stat): " << statInfo << endl;
+        ptStatistic.reset();
+        poll_count = 0;
+    }
+
+    if( !isProcActive() )
+        return false;
 
     // update SharedMemory...
     updateSM();
@@ -330,7 +359,10 @@ bool RTUExchange::poll()
     if( trReopen.hi(allNotRespond) )
         ptReopen.reset();
 
-    if( allNotRespond && ptReopen.checkTime() )
+    if( trReopen.hi(allNotRespond && exchangeMode != MBConfig::emSkipExchange) )
+        ptReopen.reset();
+
+    if( allNotRespond && exchangeMode != MBConfig::emSkipExchange && ptReopen.checkTime() )
     {
         mbwarn << myname << ": REOPEN timeout..(" << ptReopen.getInterval() << ")" << endl;
 
@@ -338,7 +370,6 @@ bool RTUExchange::poll()
         ptReopen.reset();
     }
 
-    //    printMap(rmap);
     return !allNotRespond;
 }
 // -----------------------------------------------------------------------------
