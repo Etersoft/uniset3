@@ -109,7 +109,6 @@ namespace uniset3
             friend std::ostream& operator<<( std::ostream& os, const RSProperty& p );
 
             typedef std::list<RSProperty> PList;
-            std::ostream& print_plist( std::ostream& os, const PList& p );
 
             typedef std::map<ModbusRTU::RegID, std::shared_ptr<RegInfo>> RegMap;
             struct RegInfo
@@ -285,5 +284,9 @@ namespace uniset3
     // --------------------------------------------------------------------------
 } // end of namespace uniset3
 // -----------------------------------------------------------------------------
+namespace std
+{
+    std::string to_string( const uniset3::MBConfig::PList& p );
+}
 #endif // _MBConfig_H_
 // -----------------------------------------------------------------------------
