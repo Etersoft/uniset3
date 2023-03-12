@@ -172,7 +172,6 @@ namespace uniset3
         - "del:id1,id2,name3,..." - отказаться от уведомления об изменении датчиков
         - "get:id1,id2,name3,..." - получить текущее значение датчиков (разовое сообщение ShortSensorInfo)
 
-
         Если длина команды превышает допустимое значение, то возвращается ошибка
         \code
         {
@@ -263,7 +262,7 @@ namespace uniset3
             virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
             ev::timer iocheck;
             double check_sec = { 0.05 };
-            int maxMessagesProcessing  = { 100 };
+            int maxMessagesProcessing  = { 200 };
 
             std::shared_ptr<DebugStream> mylog;
             std::shared_ptr<uniset3::LogAgregator> loga;
@@ -272,7 +271,7 @@ namespace uniset3
 
             std::shared_ptr<uniset3::LogServer> logserv;
             std::string logserv_host = {""};
-            int logserv_port = {0};
+            int logserv_port = { 0 };
 
 #ifndef DISABLE_REST_API
             std::shared_ptr<Poco::Net::HTTPServer> httpserv;
@@ -281,7 +280,7 @@ namespace uniset3
             std::string httpCORS_allow = { "*" };
 
             double wsHeartbeatTime_sec = { 3.0 };
-            double wsSendTime_sec = { 0.5 };
+            double wsSendTime_sec = { 0.2 };
             size_t wsMaxSend = { 5000 };
             size_t wsMaxCmd = { 200 };
 
@@ -317,6 +316,8 @@ namespace uniset3
 
                     struct sinfo
                     {
+                        sinfo( const std::string& _cmd, uniset3::ObjectId _id ): cmd(_cmd), id(_id) {}
+
                         std::string err; // ошибка при работе с датчиком (например при заказе)
                         uniset3::ObjectId id = { uniset3::DefaultObjectId };
                         std::string cmd = "";
@@ -332,9 +333,9 @@ namespace uniset3
                     void sensorInfo( const uniset3::umessage::SensorMessage* sm );
                     void doCommand( const std::shared_ptr<SMInterface>& ui );
                     static Poco::JSON::Object::Ptr to_short_json( sinfo* si );
-                    static void fill_short_json(Poco::JSON::Object* p, sinfo* si);
-                    static void fill_json(Poco::JSON::Object* p, const uniset3::umessage::SensorMessage* sm, sinfo* si );
                     static Poco::JSON::Object::Ptr to_json( const uniset3::umessage::SensorMessage* sm, sinfo* si );
+                    static void fill_short_json( Poco::JSON::Object* p, sinfo* si );
+                    static void fill_json( Poco::JSON::Object* p, const uniset3::umessage::SensorMessage* sm, sinfo* si );
 
                     void term();
                     void waitCompletion();
@@ -350,10 +351,11 @@ namespace uniset3
                 protected:
 
                     void write();
-                    void sendResponse( sinfo& si );
-                    void sendShortResponse( sinfo& si );
+                    void sendResponse( sinfo* si );
+                    void sendShortResponse( sinfo* si );
                     void onCommand( std::string_view cmd );
                     void sendError( std::string_view message );
+                    void returnObjectToPool( Poco::JSON::Object* json );
 
                     ev::timer iosend;
                     double send_sec = { 0.5 };
@@ -375,8 +377,8 @@ namespace uniset3
 
                     std::atomic_bool cancelled = { false };
 
-                    std::unordered_map<uniset3::ObjectId, sinfo> smap;
-                    std::queue<sinfo> qcmd; // очередь команд
+                    std::unordered_map<uniset3::ObjectId, std::shared_ptr<sinfo> > smap;
+                    std::queue< std::shared_ptr<sinfo> > qcmd; // очередь команд
 
                     Poco::Net::HTTPServerRequest* req;
                     Poco::Net::HTTPServerResponse* resp;
@@ -404,7 +406,6 @@ namespace uniset3
                         wsgate->delWebSocket(ws);
                     }
 
-
                 private:
                     std::shared_ptr<UWebSocket> ws;
                     UWebSocketGate* wsgate;
@@ -415,7 +416,6 @@ namespace uniset3
             std::list<std::shared_ptr<UWebSocket>> wsocks;
             uniset3::uniset_rwmutex wsocksMutex;
             size_t maxwsocks = { 50 }; // максимальное количество websocket-ов
-
 
             class UWebSocketGateRequestHandlerFactory:
                 public Poco::Net::HTTPRequestHandlerFactory
