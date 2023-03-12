@@ -225,9 +225,7 @@ namespace uniset3
             void onWebSocketSession( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp );
 #endif
 
-            static Poco::JSON::Object::Ptr to_json( const uniset3::umessage::SensorMessage* sm, std::string_view err );
             static Poco::JSON::Object::Ptr error_to_json( std::string_view err );
-            static void fill_json(Poco::JSON::Object* p, const uniset3::umessage::SensorMessage* sm, std::string_view err );
             static void fill_error_json(Poco::JSON::Object* p, std::string_view err );
             static Poco::JSON::Object::Ptr make_child_raw_ptr(Poco::JSON::Object* root, const std::string& key );
 
@@ -323,6 +321,8 @@ namespace uniset3
                         uniset3::ObjectId id = { uniset3::DefaultObjectId };
                         std::string cmd = "";
                         long value = { 0 }; // set value
+                        // cache
+                        std::string name;
                     };
 
                     void ask( uniset3::ObjectId id );
@@ -333,6 +333,8 @@ namespace uniset3
                     void doCommand( const std::shared_ptr<SMInterface>& ui );
                     static Poco::JSON::Object::Ptr to_short_json( sinfo* si );
                     static void fill_short_json(Poco::JSON::Object* p, sinfo* si);
+                    static void fill_json(Poco::JSON::Object* p, const uniset3::umessage::SensorMessage* sm, sinfo* si );
+                    static Poco::JSON::Object::Ptr to_json( const uniset3::umessage::SensorMessage* sm, sinfo* si );
 
                     void term();
                     void waitCompletion();
