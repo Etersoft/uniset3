@@ -30,6 +30,7 @@
 #include <sigc++/sigc++.h>
 #include <Poco/JSON/Object.h>
 #include <Poco/Net/WebSocket.h>
+#include <Poco/ObjectPool.h>
 #include "UniSetTypes.h"
 #include "LogAgregator.h"
 #include "UniSetObject.h"
@@ -224,6 +225,12 @@ namespace uniset3
             void onWebSocketSession( Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp );
 #endif
 
+            static Poco::JSON::Object::Ptr to_json( const uniset3::umessage::SensorMessage* sm, std::string_view err );
+            static Poco::JSON::Object::Ptr error_to_json( std::string_view err );
+            static void fill_json(Poco::JSON::Object* p, const uniset3::umessage::SensorMessage* sm, std::string_view err );
+            static void fill_error_json(Poco::JSON::Object* p, std::string_view err );
+            static Poco::JSON::Object::Ptr make_child_raw_ptr(Poco::JSON::Object* root, const std::string& key );
+
         protected:
 
             class UWebSocket;
@@ -280,12 +287,12 @@ namespace uniset3
             size_t wsMaxSend = { 5000 };
             size_t wsMaxCmd = { 200 };
 
-            static Poco::JSON::Object::Ptr to_json( const uniset3::umessage::SensorMessage* sm, std::string_view err );
-            static Poco::JSON::Object::Ptr error_to_json( std::string_view err );
+            int jpoolCapacity = { 200 };
+            int jpoolPeakCapacity = { 5000 };
 
             /*! класс реализует работу с websocket через eventloop
-             * Из-за того, что поступление логов может быть достаточно быстрым
-             * чтобы не "завалить" браузер кучей сообщений,
+             * Из-за того, что поступление событий может быть достаточно быстрым
+             * чтобы не "завалить" клиента кучей сообщений,
              * сделана посылка не по факту приёма сообщения, а раз в send_sec,
              * не более maxsend сообщений.
              * \todo websocket: может стоит объединять сообщения в одну посылку (пока считаю преждевременной оптимизацией)
@@ -295,7 +302,9 @@ namespace uniset3
             {
                 public:
                     UWebSocket( Poco::Net::HTTPServerRequest* req,
-                                Poco::Net::HTTPServerResponse* resp);
+                                Poco::Net::HTTPServerResponse* resp,
+                                int jpoolCapacity = 100,
+                                int jpoolPeakCapacity = 500 );
 
                     virtual ~UWebSocket();
 
@@ -316,7 +325,6 @@ namespace uniset3
                         long value = { 0 }; // set value
                     };
 
-
                     void ask( uniset3::ObjectId id );
                     void del( uniset3::ObjectId id );
                     void get( uniset3::ObjectId id );
@@ -324,9 +332,9 @@ namespace uniset3
                     void sensorInfo( const uniset3::umessage::SensorMessage* sm );
                     void doCommand( const std::shared_ptr<SMInterface>& ui );
                     static Poco::JSON::Object::Ptr to_short_json( sinfo* si );
+                    static void fill_short_json(Poco::JSON::Object* p, sinfo* si);
 
                     void term();
-
                     void waitCompletion();
 
                     // настройка
@@ -372,7 +380,10 @@ namespace uniset3
                     Poco::Net::HTTPServerResponse* resp;
 
                     // очередь json-на отправку
-                    std::queue<Poco::JSON::Object::Ptr> jbuf;
+                    std::queue<Poco::JSON::Object*> jbuf;
+                    std::unique_ptr<Poco::ObjectPool< Poco::JSON::Object >> jpoolSM;
+                    std::unique_ptr<Poco::ObjectPool< Poco::JSON::Object >> jpoolErr;
+                    std::unique_ptr<Poco::ObjectPool< Poco::JSON::Object >> jpoolShortSM;
 
                     // очередь данных на посылку..
                     std::queue<uniset3::UTCPCore::Buffer*> wbuf;
