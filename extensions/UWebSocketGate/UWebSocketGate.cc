@@ -18,8 +18,6 @@
  *  \author Pavel Vainerman
 */
 // --------------------------------------------------------------------------
-#include <sstream>
-#include <iomanip>
 #include <unistd.h>
 
 #include "unisetstd.h"
@@ -284,7 +282,7 @@ grpc::Status UWebSocketGate::getInfo(::grpc::ServerContext* context, const ::uni
     return grpc::Status::OK;
 }
 //--------------------------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::fill_short_json( Poco::JSON::Object* json, sinfo* si )
+void UWebSocketGate::UWebSocket::fill_short_json( Poco::JSON::Object::Ptr& json, const std::shared_ptr<sinfo>& si )
 {
     json->set("type", "ShortSensorInfo");
     json->set("error", si->err);
@@ -292,7 +290,7 @@ void UWebSocketGate::UWebSocket::fill_short_json( Poco::JSON::Object* json, sinf
     json->set("value", si->value);
 }
 //--------------------------------------------------------------------------------------------
-Poco::JSON::Object::Ptr UWebSocketGate::UWebSocket::to_short_json( sinfo* si )
+Poco::JSON::Object::Ptr UWebSocketGate::UWebSocket::to_short_json( const std::shared_ptr<sinfo>& si )
 {
     Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
     json->set("type", "ShortSensorInfo");
@@ -302,14 +300,7 @@ Poco::JSON::Object::Ptr UWebSocketGate::UWebSocket::to_short_json( sinfo* si )
     return json;
 }
 //--------------------------------------------------------------------------------------------
-Poco::JSON::Object::Ptr UWebSocketGate::make_child_raw_ptr( Poco::JSON::Object* root, const std::string& key )
-{
-    Poco::JSON::Object::Ptr child = new Poco::JSON::Object();
-    root->set(key, child);
-    return child;
-}
-//--------------------------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::fill_json( Poco::JSON::Object* json, const umessage::SensorMessage* sm, sinfo* si )
+void UWebSocketGate::UWebSocket::fill_json( Poco::JSON::Object::Ptr& json, const uniset3::umessage::SensorMessage* sm, const std::shared_ptr<sinfo>& si )
 {
     json->set("type", "SensorInfo");
     json->set("error", std::string(si->err));
@@ -327,7 +318,7 @@ void UWebSocketGate::UWebSocket::fill_json( Poco::JSON::Object* json, const umes
     auto calibr = json->getObject("calibration");
 
     if( !calibr )
-        calibr = make_child_raw_ptr(json, "calibration");
+        calibr = uniset3::json::make_child(json, "calibration");
 
     calibr->set("cmin", sm->ci().mincal());
     calibr->set("cmax", sm->ci().maxcal());
@@ -336,13 +327,13 @@ void UWebSocketGate::UWebSocket::fill_json( Poco::JSON::Object* json, const umes
     calibr->set("precision", sm->ci().precision());
 }
 //--------------------------------------------------------------------------------------------
-void UWebSocketGate::fill_error_json( Poco::JSON::Object* json, std::string_view err )
+void UWebSocketGate::fill_error_json( Poco::JSON::Object::Ptr& json, std::string_view err )
 {
     json->set("type", "Error");
     json->set("message", std::string(err));
 }
 //--------------------------------------------------------------------------------------------
-Poco::JSON::Object::Ptr UWebSocketGate::UWebSocket::to_json( const umessage::SensorMessage* sm, sinfo* si )
+Poco::JSON::Object::Ptr UWebSocketGate::UWebSocket::to_json( const umessage::SensorMessage* sm, const std::shared_ptr<sinfo>& si )
 {
     Poco::JSON::Object::Ptr json = new Poco::JSON::Object();
 
@@ -401,10 +392,10 @@ void UWebSocketGate::help_print()
     cout << "--ws-name name                      - Имя. Для поиска настроечной секции в configure.xml" << endl;
     cout << "--uniset-object-size-message-queue num  - Размер uniset-очереди сообщений. По умолчанию: 10000" << endl;
     cout << "--ws-msg-check-time msec            - Период опроса uniset-очереди сообщений, для обработки новых сообщений. По умолчанию: 10 мсек" << endl;
-    cout << "--ws-max-messages-processing num    - Количество uniset-сообщений обрабатывамых за один раз. По умолчанию: 100" << endl;
+    cout << "--ws-max-messages-processing num    - Количество uniset-сообщений обрабатываемых за один раз. По умолчанию: 100" << endl;
 
     cout << "websockets: " << endl;
-    cout << "--ws-max-conn num             - Максимальное количество одновременных подключений (клиентов). По усмолчанию: 50" << endl;
+    cout << "--ws-max-conn num             - Максимальное количество одновременных подключений (клиентов). По умолчанию: 50" << endl;
     cout << "--ws-heartbeat-time msec      - Период сердцебиения в соединении. По умолчанию: 3000 мсек" << endl;
     cout << "--ws-send-time msec           - Период посылки сообщений. По умолчанию: 500 мсек" << endl;
     cout << "--ws-max-send num             - Максимальное число сообщений посылаемых за один раз. По умолчанию: 5000" << endl;
@@ -851,9 +842,10 @@ UWebSocketGate::UWebSocket::UWebSocket( Poco::Net::HTTPServerRequest* _req,
     setReceiveTimeout(uniset3::PassiveTimer::millisecToPoco(recvTimeout));
     setMaxPayloadSize(sizeof(rbuf));
 
-    jpoolSM = make_unique<Poco::ObjectPool< Poco::JSON::Object >>(jpoolCapacity, jpoolPeakCapacity);
-    jpoolErr = make_unique<Poco::ObjectPool< Poco::JSON::Object >>(jpoolCapacity, jpoolPeakCapacity);
-    jpoolShortSM = make_unique<Poco::ObjectPool< Poco::JSON::Object >>(jpoolCapacity, jpoolPeakCapacity);
+    jpoolSM = make_unique<Poco::ObjectPool< Poco::JSON::Object, Poco::JSON::Object::Ptr >>(jpoolCapacity, jpoolPeakCapacity);
+    jpoolErr = make_unique<Poco::ObjectPool< Poco::JSON::Object, Poco::JSON::Object::Ptr >>(jpoolCapacity, jpoolPeakCapacity);
+    jpoolShortSM = make_unique<Poco::ObjectPool< Poco::JSON::Object, Poco::JSON::Object::Ptr >>(jpoolCapacity, jpoolPeakCapacity);
+    wbufpool = make_unique<Poco::ObjectPool< uniset3::UTCPCore::Buffer >>(jpoolCapacity, jpoolPeakCapacity);
 }
 // -----------------------------------------------------------------------------
 UWebSocketGate::UWebSocket::~UWebSocket()
@@ -864,8 +856,9 @@ UWebSocketGate::UWebSocket::~UWebSocket()
     // удаляем всё что осталось
     while( !wbuf.empty() )
     {
-        delete wbuf.front();
+        auto b = wbuf.front();
         wbuf.pop();
+        wbufpool->returnObject(b);
     }
 
     while( !jbuf.empty() )
@@ -879,7 +872,7 @@ UWebSocketGate::UWebSocket::~UWebSocket()
         qcmd.pop();
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::returnObjectToPool( Poco::JSON::Object* json )
+void UWebSocketGate::UWebSocket::returnObjectToPool( Poco::JSON::Object::Ptr& json )
 {
     auto stype = json->get("type").toString();
 
@@ -958,7 +951,9 @@ void UWebSocketGate::UWebSocket::send( ev::timer& t, int revents )
 
         out << "]}";
 
-        wbuf.emplace( new UTCPCore::Buffer(std::move(out.str())) );
+        auto b = wbufpool->borrowObject();
+        b->reset(std::move(out.str()));
+        wbuf.emplace(b);
 
         myinfoV(4) << req->clientAddress().toString() << "(write): batch " << i << " objects" << endl;
     }
@@ -986,7 +981,9 @@ void UWebSocketGate::UWebSocket::ping( ev::timer& t, int revents )
         return;
     }
 
-    wbuf.emplace(new UTCPCore::Buffer(ping_str));
+    auto b = wbufpool->borrowObject();
+    b->reset(ping_str);
+    wbuf.emplace(b);
 
     if( ioping.is_active() )
         ioping.stop();
@@ -1136,7 +1133,7 @@ void UWebSocketGate::UWebSocket::sensorInfo( const uniset3::umessage::SensorMess
     }
 
     auto j = jpoolSM->borrowObject();
-    fill_json(j, sm, s->second.get());
+    fill_json(j, sm, s->second);
     jbuf.emplace(j);
 
     if( ioping.is_active() )
@@ -1190,7 +1187,7 @@ void UWebSocketGate::UWebSocket::doCommand( const std::shared_ptr<SMInterface>& 
 
                 s->value = ui->getValue(s->id);
                 s->err = "";
-                sendShortResponse(s.get());
+                sendShortResponse(s);
             }
 
             s->err = "";
@@ -1204,7 +1201,7 @@ void UWebSocketGate::UWebSocket::doCommand( const std::shared_ptr<SMInterface>& 
                 s->name = ObjectIndex::getShortName(uniset_conf()->oind->getMapName(s->id));
 
             s->err = ex.what();
-            sendResponse(s.get());
+            sendResponse(s);
         }
     }
 
@@ -1212,7 +1209,7 @@ void UWebSocketGate::UWebSocket::doCommand( const std::shared_ptr<SMInterface>& 
         cmdsignal->send();
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::sendShortResponse( sinfo* si )
+void UWebSocketGate::UWebSocket::sendShortResponse( const std::shared_ptr<sinfo>& si )
 {
     if( jbuf.size() > maxsize )
     {
@@ -1228,7 +1225,7 @@ void UWebSocketGate::UWebSocket::sendShortResponse( sinfo* si )
         ioping.stop();
 }
 // -----------------------------------------------------------------------------
-void UWebSocketGate::UWebSocket::sendResponse( sinfo* si )
+void UWebSocketGate::UWebSocket::sendResponse( const std::shared_ptr<sinfo>& si )
 {
     if( jbuf.size() > maxsize )
     {
@@ -1335,8 +1332,6 @@ void UWebSocketGate::UWebSocket::onCommand( std::string_view cmdtxt )
 // -----------------------------------------------------------------------------
 void UWebSocketGate::UWebSocket::write()
 {
-    UTCPCore::Buffer* msg = nullptr;
-
     if( wbuf.empty() )
     {
         if( !ioping.is_active() )
@@ -1345,10 +1340,13 @@ void UWebSocketGate::UWebSocket::write()
         return;
     }
 
-    msg = wbuf.front();
+    UTCPCore::Buffer* msg = wbuf.front();
 
     if( !msg )
+    {
+        wbuf.pop();
         return;
+    }
 
     using Poco::Net::WebSocket;
     using Poco::Net::WebSocketException;
@@ -1388,7 +1386,7 @@ void UWebSocketGate::UWebSocket::write()
         if( msg->nbytes() == 0 )
         {
             wbuf.pop();
-            delete msg;
+            wbufpool->returnObject(msg);
         }
 
         if( !wbuf.empty() )
