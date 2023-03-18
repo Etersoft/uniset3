@@ -1003,8 +1003,47 @@ namespace uniset3
             }
         }
     }
+    // ------------------------------------------------------------------------------------------
+    uint8_t MBExchange::firstBit( uint16_t mask )
+    {
+        uint8_t n = 0;
 
-    // -----------------------------------------------------------------------------
+        while( mask != 0 )
+        {
+            if( mask & 1 )
+                break;
+
+            mask = (mask >> 1);
+            n++;
+        }
+
+        return n;
+    }
+    // ------------------------------------------------------------------------------------------
+    uint16_t MBExchange::forceSetBits( uint16_t value, uint16_t set, uint16_t mask, uint8_t offset )
+    {
+        if( mask == 0 )
+            return set;
+
+        return MBExchange::setBits(value, set, mask, offset);
+    }
+    // ------------------------------------------------------------------------------------------
+    uint16_t MBExchange::setBits( uint16_t value, uint16_t set, uint16_t mask, uint8_t offset )
+    {
+        if( mask == 0 )
+            return value;
+
+        return (value & (~mask)) | ((set << offset) & mask);
+    }
+    // ------------------------------------------------------------------------------------------
+    uint16_t MBExchange::getBits( uint16_t value, uint16_t mask, uint8_t offset )
+    {
+        if( mask == 0 )
+            return value;
+
+        return (value & mask) >> offset;
+    }
+    // ------------------------------------------------------------------------------------------
     void MBExchange::updateRTU( MBConfig::RegMap::iterator& rit )
     {
         auto& r = rit->second;
@@ -1027,7 +1066,7 @@ namespace uniset3
         if( !isUpdateSM(save, r->dev->mode) )
             return;
 
-        // если ещё не обменивались ни разу с устройством, то ингнорируем (не обновляем значение в SM)
+        // если ещё не обменивались ни разу с устройством, то игнорируем (не обновляем значение в SM)
         if( !r->mb_initOK && !isSafeMode(r->dev) )
             return;
 
@@ -1038,6 +1077,8 @@ namespace uniset3
                << " vtype=" << p->vType
                << " rnum=" << p->rnum
                << " nbit=" << (int)p->nbit
+               << " mask=" << p->mask
+               << " offset=" << (int)p->offset
                << " save=" << save
                << " ioype=" << p->stype
                << " mb_initOK=" << r->mb_initOK
@@ -1079,36 +1120,31 @@ namespace uniset3
                     {
                         if(  r->mb_initOK )
                         {
+                            uint16_t val = 0;
+
                             if( useSafeval )
-                                r->mbval = p->safeval;
+                                val = p->safeval;
                             else
                             {
                                 if( p->stype == uniset3::DI || p->stype == uniset3::DO )
-                                    r->mbval = IOBase::processingAsDO( p, shm, force_out );
+                                    val = IOBase::processingAsDO( p, shm, force_out );
                                 else
-                                    r->mbval = IOBase::processingAsAO( p, shm, force_out );
+                                    val = IOBase::processingAsAO( p, shm, force_out );
                             }
 
+                            r->mbval = MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset);
                             r->sm_initOK = true;
                         }
                     }
                     else
                     {
-                        if( p->stype == uniset3::DI ||
-                                p->stype == uniset3::DO )
-                        {
-                            if( useSafeval )
-                                IOBase::processingAsDI( p, p->safeval, shm, force );
-                            else
-                                IOBase::processingAsDI( p, r->mbval, shm, force );
-                        }
+                        uint16_t val = useSafeval ? p->safeval : r->mbval;
+                        val = MBExchange::getBits(val, p->mask, p->offset);
+
+                        if( p->stype == uniset3::DI || p->stype == uniset3::DO )
+                            IOBase::processingAsDI( p, val, shm, force );
                         else
-                        {
-                            if( useSafeval )
-                                IOBase::processingAsAI( p, p->safeval, shm, force );
-                            else
-                                IOBase::processingAsAI( p, (signed short)(r->mbval), shm, force );
-                        }
+                            IOBase::processingAsAI( p, (int16_t)val, shm, force );
                     }
 
                     return;
@@ -1124,35 +1160,32 @@ namespace uniset3
                 {
                     if( r->mb_initOK )
                     {
+                        uint16_t val = 0;
+
                         if( useSafeval )
-                            r->mbval = p->safeval;
+                            val = p->safeval;
                         else
                         {
+
                             if( p->stype == uniset3::DI || p->stype == uniset3::DO )
-                                r->mbval = (int16_t)IOBase::processingAsDO( p, shm, force_out );
+                                val = (int16_t)IOBase::processingAsDO( p, shm, force_out );
                             else
-                                r->mbval = (int16_t)IOBase::processingAsAO( p, shm, force_out );
+                                val = (int16_t)IOBase::processingAsAO( p, shm, force_out );
                         }
 
+                        r->mbval = MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset);
                         r->sm_initOK = true;
                     }
                 }
                 else
                 {
+                    uint16_t val = useSafeval ? p->safeval : r->mbval;
+                    val = MBExchange::getBits(val, p->mask, p->offset);
+
                     if( p->stype == uniset3::DI || p->stype == uniset3::DO )
-                    {
-                        if( useSafeval )
-                            IOBase::processingAsDI( p, p->safeval, shm, force );
-                        else
-                            IOBase::processingAsDI( p, r->mbval, shm, force );
-                    }
+                        IOBase::processingAsDI( p, val, shm, force );
                     else
-                    {
-                        if( useSafeval )
-                            IOBase::processingAsAI( p, p->safeval, shm, force );
-                        else
-                            IOBase::processingAsAI( p, (signed short)(r->mbval), shm, force );
-                    }
+                        IOBase::processingAsAI( p, (int16_t)val, shm, force );
                 }
 
                 return;
@@ -1163,25 +1196,31 @@ namespace uniset3
                 {
                     if( r->mb_initOK )
                     {
+                        uint16_t val = 0;
+
                         if( useSafeval )
-                            r->mbval = p->safeval;
+                            val = p->safeval;
                         else
                         {
                             if( p->stype == uniset3::DI || p->stype == uniset3::DO )
-                                r->mbval = (uint16_t)IOBase::processingAsDO( p, shm, force_out );
+                                val = (uint16_t)IOBase::processingAsDO( p, shm, force_out );
                             else
-                                r->mbval = (uint16_t)IOBase::processingAsAO( p, shm, force_out );
+                                val = (uint16_t)IOBase::processingAsAO( p, shm, force_out );
                         }
 
+                        r->mbval = MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset);
                         r->sm_initOK = true;
                     }
                 }
                 else
                 {
+                    uint16_t val = useSafeval ? p->safeval : r->mbval;
+                    val = MBExchange::getBits(val, p->mask, p->offset);
+
                     if( p->stype == uniset3::DI || p->stype == uniset3::DO )
-                        IOBase::processingAsDI( p, useSafeval ? p->safeval : r->mbval, shm, force );
+                        IOBase::processingAsDI( p, val, shm, force );
                     else
-                        IOBase::processingAsAI( p, useSafeval ? p->safeval : (uint16_t)r->mbval, shm, force );
+                        IOBase::processingAsAI( p, (uint16_t)val, shm, force );
                 }
 
                 return;
@@ -1202,7 +1241,7 @@ namespace uniset3
                         long v = useSafeval ? p->safeval : IOBase::processingAsAO( p, shm, force_out );
                         VTypes::Byte b(r->mbval);
                         b.raw.b[p->nbyte - 1] = v;
-                        r->mbval = b.raw.w;
+                        r->mbval = MBExchange::forceSetBits(r->mbval, b.raw.w, p->mask, p->offset);
                         r->sm_initOK = true;
                     }
                 }
@@ -1213,7 +1252,8 @@ namespace uniset3
                     else
                     {
                         VTypes::Byte b(r->mbval);
-                        IOBase::processingAsAI( p, b.raw.b[p->nbyte - 1], shm, force );
+                        uint16_t val = MBExchange::getBits(b.raw.b[p->nbyte - 1], p->mask, p->offset);
+                        IOBase::processingAsAI( p, val, shm, force );
                     }
                 }
 
@@ -1259,7 +1299,7 @@ namespace uniset3
                         DataGuard d(VTypes::F2::wsize());
 
                         for( size_t k = 0; k < VTypes::F2::wsize(); k++, i++ )
-                            d.data[k] = i->second->mbval;
+                            d.data[k] =  i->second->mbval;
 
                         float f = 0;
 

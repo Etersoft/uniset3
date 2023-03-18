@@ -6,7 +6,7 @@
 --smemory-id SharedMemory \
 --mbtcp-set-prop-prefix \
 --mbtcp-filter-field rs \
---mbtcp-filter-value 5 \
+--mbtcp-filter-value 6 \
 --mbtcp-gateway-iaddr localhost \
 --mbtcp-gateway-port 2048 \
 --mbtcp-recv-timeout 900 \
