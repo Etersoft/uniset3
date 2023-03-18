@@ -22,6 +22,7 @@
 #include <extensions/Extensions.h>
 #include "MBConfig.h"
 #include "modbus/MBLogSugar.h"
+#include "MBExchange.h" // only for function 'firstBit'
 // -------------------------------------------------------------------------
 namespace uniset3
 {
@@ -378,7 +379,7 @@ namespace uniset3
             return true;
         }
 
-        const string sbit(IOBase::initProp(it, "nbit", prop_prefix, false));
+        const string sbit = IOBase::initProp(it, "nbit", prop_prefix, false);
 
         if( !sbit.empty() )
         {
@@ -392,15 +393,13 @@ namespace uniset3
             }
         }
 
-        if( p.nbit > 0 &&
-                ( p.stype == uniset3::AI ||
-                  p.stype == uniset3::AO ) )
+        if( p.nbit > 0 && ( p.stype == uniset3::AI || p.stype == uniset3::AO ) )
         {
-            mbwarn << "(initRSProperty): (ignore) uncorrect param`s nbit!=0(" << p.nbit << ")"
+            mbwarn << "(initRSProperty): (ignore) incorrect param`s nbit!=0(" << p.nbit << ")"
                    << " for iotype=" << p.stype << " for " << it.getProp("name") << endl;
         }
 
-        const string sbyte(IOBase::initProp(it, "nbyte", prop_prefix, false) );
+        const string sbyte = IOBase::initProp(it, "nbyte", prop_prefix, false);
 
         if( !sbyte.empty() )
         {
@@ -414,7 +413,7 @@ namespace uniset3
             }
         }
 
-        const string vt( IOBase::initProp(it, "vtype", prop_prefix, false) );
+        const string vt = IOBase::initProp(it, "vtype", prop_prefix, false);
 
         if( vt.empty() )
         {
@@ -436,6 +435,43 @@ namespace uniset3
 
             p.vType = v;
             p.rnum = VTypes::wsize(v);
+        }
+
+        const string smask = IOBase::initProp(it, "mbmask", prop_prefix, false);
+
+        if( !smask.empty() )
+        {
+            if( p.nbit != -1 )
+            {
+                mbcrit << myname << "(initRSProperty): config error: nbit!=0 and mbmask!=0 for "
+                       << it.getProp("name")
+                       << endl;
+
+                return false;
+            }
+
+            if( p.nbyte > 0 )
+            {
+                mbcrit << myname << "(initRSProperty): config error: nbyte!=0 and mbmask!=0 for "
+                       << it.getProp("name")
+                       << endl;
+
+                return false;
+            }
+
+            uint16_t mask = uni_atoi(smask);
+
+            if( mask == 0 )
+            {
+                mbcrit << myname << "(initRSProperty): config error: mbmask=0 for "
+                       << it.getProp("name")
+                       << endl;
+
+                return false;
+            }
+
+            p.offset = MBExchange::firstBit(mask);
+            p.mask = mask;
         }
 
         return true;
@@ -732,7 +768,7 @@ namespace uniset3
             }
         }
 
-        // Фомируем список инициализации
+        // Формируем список инициализации
         bool need_init = IOBase::initIntProp(it, "preinit", prop_prefix, false);
 
         if( need_init && ModbusRTU::isWriteFunction(ri->mbfunc) )

@@ -117,6 +117,16 @@ static void InitTest()
 
 }
 // -----------------------------------------------------------------------------
+static bool exchangeIsOk()
+{
+    PassiveTimer pt(5000);
+
+    while( !pt.checkTime() && ui->getValue(slaveNotRespond) )
+        msleep(300);
+
+    return !pt.checkTime();
+}
+// -----------------------------------------------------------------------------
 TEST_CASE("MBTCPMultiMaster: rotate channel", "[modbus][mbmaster][mbtcpmultimaster]")
 {
     // Т.к. respond/notrespond проверяется по возможности создать соединение
