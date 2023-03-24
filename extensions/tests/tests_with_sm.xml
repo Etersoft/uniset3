@@ -280,6 +280,9 @@
 			<!-- AsyncClient test -->
 			<item id="123" iotype="AI" name="AsyncClient_Sensor_AS" textname="AsyncClient SensorAI" default="10"/>
 
+			<!-- on/off delay -->
+			<item ondelay="200" offdelay="100" id="200" iotype="DI" name="Input8_S" textname="Датчик 8"/>
+
 		</sensors>
 		<thresholds name="thresholds">
 			<sensor name="AI_AS">
