@@ -84,6 +84,12 @@ namespace uniset3
 
             static const long not_specified_value = { std::numeric_limits<long>::max() };
 
+            enum class Mode : int
+            {
+                mEnabled = 0, /*!< обычный режим */
+                mDisabled = 1 /*!< посылка отключена */
+            };
+
             struct UItem
             {
                 UItem():
@@ -147,6 +153,8 @@ namespace uniset3
                 packsendpauseFactor = factor;
             }
 
+            void setModeID( uniset3::ObjectId id ) noexcept;
+
             void setCheckConnectionPause( int msec ) noexcept;
 
             /*! заказать датчики */
@@ -200,6 +208,11 @@ namespace uniset3
             std::atomic_bool activated = { false };
             PassiveTimer ptCheckConnection;
 
+            // режим работы
+            uniset3::ObjectId sidMode = { uniset3::DefaultObjectId };
+            IOController::IOStateList::iterator itMode;
+            Mode mode = { Mode::mEnabled };
+
             typedef std::unordered_map<sendfactor_t, std::vector<PackMessage>> Packs;
 
             // mypacks заполняется в начале и дальше с ним происходит только чтение
@@ -222,6 +235,11 @@ namespace uniset3
     };
     // --------------------------------------------------------------------------
 } // end of namespace uniset3
+// -----------------------------------------------------------------------------
+namespace std
+{
+    std::string to_string( const uniset3::UNetSender::Mode& p );
+}
 // -----------------------------------------------------------------------------
 #endif // UNetSender_H_
 // -----------------------------------------------------------------------------

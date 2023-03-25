@@ -873,6 +873,27 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
                 unetcrit << myname <<  "(init): IGNORE! channel2 create error: " << ex.what() << endl;
             }
 
+            string s_sendmode_id(n_it.getProp("unet_sendmode_id"));
+
+            if( !s_sendmode_id.empty() )
+            {
+                auto sendmode_id = conf->getSensorID(s_sendmode_id);
+
+                if( sendmode_id == uniset3::DefaultObjectId )
+                {
+                    ostringstream err;
+                    err << myname << ": " << n_it.getProp("name") << " : Unknown unet_sendmode_id.. Not found id for '" << s_sendmode_id << "'" << endl;
+                    unetcrit << myname << "(init): " << err.str() << endl;
+                    throw SystemError(err.str());
+                }
+
+                unetinfo << myname << "(init): node='" << n << "' unet_sendmode_id=" << s_sendmode_id << endl;
+                sender->setModeID(sendmode_id);
+
+                if( sender2 )
+                    sender2->setModeID(sendmode_id);
+            }
+
             continue;
         }
 
@@ -1016,6 +1037,24 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
             }
         }
 
+        string s_recvmode_id(n_it.getProp("unet_recvmode_id"));
+        uniset3::ObjectId recvmode_id = uniset3::DefaultObjectId;
+
+        if( !s_recvmode_id.empty() )
+        {
+            recvmode_id = conf->getSensorID(s_recvmode_id);
+
+            if( recvmode_id == uniset3::DefaultObjectId )
+            {
+                ostringstream err;
+                err << myname << ": " << n_it.getProp("name") << " : Unknown 'unet_recvmode_id'.. Not found id for '" << s_recvmode_id << "'" << endl;
+                unetcrit << myname << "(init): " << err.str() << endl;
+                throw SystemError(err.str());
+            }
+
+            unetinfo << myname << "(init): (node='" << n << "') unet_recvmode_id=" << s_recvmode_id << endl;
+        }
+
         unetinfo << myname << "(init): (node='" << n << "') add basic receiver " << transport1->ID() << endl;
         auto r1 = make_shared<UNetReceiver>(std::move(transport1), shm, false, prefix);
 
@@ -1026,6 +1065,7 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
         r1->setLockUpdate(false);
         r1->setRespondID(resp_id, resp_invert);
         r1->setLostPacketsID(lp_id);
+        r1->setModeID(recvmode_id);
         r1->connectEvent( sigc::mem_fun(this, &UNetExchange::receiverEvent) );
 
         shared_ptr<UNetReceiver> r2(nullptr);
@@ -1048,6 +1088,7 @@ void UNetExchange::initUDPTransport( UniXML::iterator n_it,
                 r2->setLockUpdate(true);
                 r2->setRespondID(resp2_id, resp_invert);
                 r2->setLostPacketsID(lp2_id);
+                r2->setModeID(recvmode_id);
                 r2->connectEvent( sigc::mem_fun(this, &UNetExchange::receiverEvent) );
             }
         }
@@ -1124,11 +1165,28 @@ void UNetExchange::initMulticastTransport( UniXML::iterator n_it,
         // INIT SENDER
         unetinfo << myname << "(init): " << n_it.getProp("name") << " init sender.." << endl;
 
+        auto s_sendmode_id = n_it.getProp("unet_sendmode_id");
+        uniset3::ObjectId sendmode_id = uniset3::DefaultObjectId;
+
+        if( !s_sendmode_id.empty() )
+        {
+            sendmode_id = conf->getSensorID(s_sendmode_id);
+
+            if( sendmode_id == uniset3::DefaultObjectId )
+            {
+                ostringstream err;
+                err << myname << ": " << n_it.getProp("name") << " : Unknown 'uner_sendmode_id'.. Not found id for '" << s_sendmode_id << "'" << endl;
+                unetcrit << myname << "(init):  " << err.str() << endl;
+                throw SystemError(err.str());
+            }
+        }
+
         auto s1 = MulticastSendTransport::createFromXml(root, n_it, 0);
         unetinfo << myname << "(init): " << n_it.getProp("name") << " send (channel1) to multicast group: " << s1->getGroupAddress().toString() << endl;
 
         sender = make_shared<UNetSender>(std::move(s1), shm, false, s_field, s_fvalue, "unet", prefix);
         loga->add(sender->getLog());
+        sender->setModeID(sendmode_id);
 
         try
         {
@@ -1145,7 +1203,10 @@ void UNetExchange::initMulticastTransport( UniXML::iterator n_it,
             }
 
             if( sender2 )
+            {
                 loga->add(sender2->getLog());
+                sender2->setModeID(sendmode_id);
+            }
             else
                 unetwarn << myname << "(ignore): " << n_it.getProp("name") << " sender for Channel2 disabled " << endl;
         }
@@ -1303,6 +1364,22 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
         }
     }
 
+    auto s_recvmode_id = n_it.getProp("unet_recvmode_id");
+    uniset3::ObjectId recvmode_id = uniset3::DefaultObjectId;
+
+    if( !s_recvmode_id.empty() )
+    {
+        recvmode_id = conf->getSensorID(s_recvmode_id);
+
+        if( recvmode_id == uniset3::DefaultObjectId )
+        {
+            ostringstream err;
+            err << myname << ": " << n_it.getProp("name") << " : Unknown 'unet_recvmode_id'.. Not found id for '" << s_recvmode_id << "'" << endl;
+            unetcrit << myname << "(init):  " << err.str() << endl;
+            throw SystemError(err.str());
+        }
+    }
+
     unetinfo << myname << "(init): (node='" << n_it.getProp("name") << "') add channel1 receiver " << transport1->ID() << " iface: " << transport1->iface() << endl;
     unetinfo << myname << "(init): receive (channel1) from multicast groups: " << endl;
 
@@ -1318,6 +1395,7 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     r1->setLockUpdate(false);
     r1->setRespondID(resp_id, resp_invert);
     r1->setLostPacketsID(lp_id);
+    r1->setModeID(recvmode_id);
     r1->connectEvent( sigc::mem_fun(this, &UNetExchange::receiverEvent) );
 
     shared_ptr<UNetReceiver> r2(nullptr);
@@ -1345,6 +1423,7 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
             r2->setLockUpdate(true);
             r2->setRespondID(resp2_id, resp_invert);
             r2->setLostPacketsID(lp2_id);
+            r2->setModeID(recvmode_id);
             r2->connectEvent( sigc::mem_fun(this, &UNetExchange::receiverEvent) );
         }
     }
@@ -1363,3 +1442,4 @@ void UNetExchange::initMulticastReceiverForNode( UniXML::iterator root, UniXML::
     ri.setChannelSwitchCountID(channelswitchcount_id);
     recvlist.emplace_back( std::move(ri) );
 }
+// -----------------------------------------------------------------------------

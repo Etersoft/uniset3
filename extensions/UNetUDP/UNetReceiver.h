@@ -84,9 +84,9 @@ namespace uniset3
      * ======================================
      * Попытка создать сокет производиться сразу в конструкторе, если это не получается,
      * то создаётся таймер (evCheckConnection), который периодически (checkConnectionTime) пытается вновь
-     * открыть сокет.. и так бесконечно, пока не получиться. Это важно для систем, где в момент загрузки программы
+     * открыть сокет.. и так бесконечно, пока не получится. Это важно для систем, где в момент загрузки программы
      * (в момент создания объекта UNetReceiver) ещё может быть не поднята сеть или какой-то сбой с сетью и требуется
-     * ожидание (без вылета программы) пока "внешняя система мониторинга" не поднимет сеть).
+     * ожидание (без вылета программы) пока "внешняя система мониторинга" не поднимет сеть.
      * Если такая логика не требуется, то можно задать в конструкторе
      * последним аргументом флаг nocheckconnection=true, тогда при создании объекта UNetReceiver, в конструкторе будет
      * выкинуто исключение при неудачной попытке создания соединения.
@@ -130,9 +130,9 @@ namespace uniset3
             void setInitPause( timeout_t msec ) noexcept;
             void setBufferSize( size_t sz ) noexcept;
             void setMaxReceiveAtTime( size_t sz ) noexcept;
-
             void setRespondID( uniset3::ObjectId id, bool invert = false ) noexcept;
             void setLostPacketsID( uniset3::ObjectId id ) noexcept;
+            void setModeID( uniset3::ObjectId id ) noexcept;
 
             void forceUpdate() noexcept; // пересохранить очередной пакет в SM даже если данные не менялись
 
@@ -146,6 +146,12 @@ namespace uniset3
             {
                 evOK,        /*!< связь есть */
                 evTimeout    /*!< потеря связи */
+            };
+
+            enum class Mode : int
+            {
+                mEnabled = 0, /*!< обычный режим */
+                mDisabled = 1 /*!< обмен отключён */
             };
 
             typedef sigc::slot<void, const std::shared_ptr<UNetReceiver>&, Event> EventSlot;
@@ -249,6 +255,11 @@ namespace uniset3
             uniset3::ObjectId sidLostPackets = { uniset3::DefaultObjectId };
             IOController::IOStateList::iterator itLostPackets;
 
+            // режим работы
+            uniset3::ObjectId sidMode = { uniset3::DefaultObjectId };
+            IOController::IOStateList::iterator itMode;
+            Mode mode = { Mode::mEnabled };
+
             std::atomic_bool activated = { false };
 
             size_t cbufSize = { 100 }; /*!< размер буфера для сообщений по умолчанию */
@@ -284,12 +295,19 @@ namespace uniset3
             typedef std::unordered_map<long, CacheVec> CacheMap;
             CacheMap d_icache_map;     /*!< кэш итераторов для булевых */
             CacheMap a_icache_map;     /*!< кэш итераторов для аналоговых */
+            size_t cacheMissed; // количество промахов
+            Trigger trOnMode; /*!< триггер на включение режима mEnabled */
 
             CacheVec* getDCache( UniSetUDP::UDPMessage* pack ) noexcept;
             CacheVec* getACache( UniSetUDP::UDPMessage* pack ) noexcept;
     };
     // --------------------------------------------------------------------------
 } // end of namespace uniset3
+// -----------------------------------------------------------------------------
+namespace std
+{
+    std::string to_string( const uniset3::UNetReceiver::Mode& p );
+}
 // -----------------------------------------------------------------------------
 #endif // UNetReceiver_H_
 // -----------------------------------------------------------------------------
