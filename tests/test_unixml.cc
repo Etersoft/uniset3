@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------------
 #include "Exceptions.h"
 #include "UniXML.h"
-#include "UniSetTypes.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -24,31 +23,34 @@ TEST_CASE("UniXML", "[unixml][basic]" )
         REQUIRE_THROWS_AS( UniXML("tests_unixml_badfile.xml"), uniset3::Exception );
     }
 
-    UniXML uxml("tests_unixml.xml");
-    CHECK( uxml.isOpen() );
+    SECTION( "Correct file" )
+    {
+        UniXML uxml("tests_unixml.xml");
+        CHECK( uxml.isOpen() );
 
-    xmlNode* cnode = uxml.findNode(uxml.getFirstNode(), "UniSet");
-    CHECK( cnode != NULL );
-    // проверка поиска "вглубь"
-    CHECK( uxml.findNode(uxml.getFirstNode(), "Services") != NULL );
+        xmlNode* cnode = uxml.findNode(uxml.getFirstNode(), "UniSet");
+        CHECK( cnode != NULL );
+        // проверка поиска "вглубь"
+        CHECK( uxml.findNode(uxml.getFirstNode(), "Services") != NULL );
 
-    xmlNode* tnode = uxml.findNode(uxml.getFirstNode(), "TestData");
-    CHECK( tnode != NULL );
-    CHECK( uxml.getProp(tnode, "text") == "text" );
-    CHECK( uxml.getIntProp(tnode, "x") == 10 );
-    CHECK( uxml.getPIntProp(tnode, "y", -20) == 100 );
-    CHECK( uxml.getPIntProp(tnode, "zero", 20) == 0 );
-    CHECK( uxml.getPIntProp(tnode, "negative", 20) == -10 );
-    CHECK( uxml.getPIntProp(tnode, "unknown", 20) == 20 );
+        xmlNode* tnode = uxml.findNode(uxml.getFirstNode(), "TestData");
+        CHECK( tnode != NULL );
+        CHECK( uxml.getProp(tnode, "text") == "text" );
+        CHECK( uxml.getIntProp(tnode, "x") == 10 );
+        CHECK( uxml.getPIntProp(tnode, "y", -20) == 100 );
+        CHECK( uxml.getPIntProp(tnode, "zero", 20) == 0 );
+        CHECK( uxml.getPIntProp(tnode, "negative", 20) == -10 );
+        CHECK( uxml.getPIntProp(tnode, "unknown", 20) == 20 );
 
-    CHECK( uxml.getProp2(tnode, "unknown", "def") == "def" );
-    CHECK( uxml.getProp2(tnode, "text", "def") == "text" );
+        CHECK( uxml.getProp2(tnode, "unknown", "def") == "def" );
+        CHECK( uxml.getProp2(tnode, "text", "def") == "text" );
 
-    // nextNode
-    // create
-    // remove
-    // copy
-    // nextNode
+        // nextNode
+        // create
+        // remove
+        // copy
+        // nextNode
+    }
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UniXML::iterator", "[unixml][iterator][basic]" )

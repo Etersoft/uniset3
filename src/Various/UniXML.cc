@@ -575,7 +575,6 @@ const string UniXML_iterator::getName() const noexcept
 
     return "";
 }
-
 // -------------------------------------------------------------------------
 string UniXML_iterator::getProp2( const string& name, const string& defval ) const noexcept
 {
