@@ -369,6 +369,8 @@ namespace uniset3
                     size_t maxsend = { 5000 };
                     size_t maxcmd = { 200 };
                     const int Kbuf = { 10 }; // коэффициент для буфера сообщений (maxsend умножается на Kbuf)
+                    static const size_t sbufLen = 100 * 1024;
+                    char sbuf[sbufLen]; // буфер используемый для преобразования json в потом байт (см. send)
 
                     ev::timer ioping;
                     double ping_sec = { 3.0 };
