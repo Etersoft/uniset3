@@ -1,3 +1,3 @@
-SUBDIRS=cityhash102 libfarmhash
+SUBDIRS=cityhash102 murmurhash
 
 include $(top_builddir)/include.mk

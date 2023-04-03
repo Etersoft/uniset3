@@ -415,12 +415,13 @@ TEST_CASE("UniSetTypes: hash64", "[utypes][hash64]" )
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: hash32", "[utypes][hash32]" )
 {
-    REQUIRE( uniset3::hash32("test") == uint32_t(168770635) );
-    REQUIRE( uniset3::hash32("test2") == uint32_t(4018550908) );
-    REQUIRE( uniset3::hash32("2tset") == uint32_t(1660083104) );
+    //    REQUIRE( sizeof(uniset3::ObjectId) == sizeof(uint32_t) );
+    REQUIRE( uniset3::hash32("test") == uint32_t(403862830) );
+    REQUIRE( uniset3::hash32("test2") == uint32_t(2011244668) );
+    REQUIRE( uniset3::hash32("2tset") == uint32_t(3437323062) );
     REQUIRE( uniset3::hash32("ttt1") != uniset3::hash32("1ttt") );
     REQUIRE( uniset3::hash32("ta") != uniset3::hash32("at") );
-    REQUIRE( uniset3::hash32("DefaultObjectId") == 122387491 );
+    REQUIRE( uniset3::hash32("DefaultObjectId") == 1920521126 );
 }
 // -----------------------------------------------------------------------------
 TEST_CASE("UniSetTypes: key", "[utypes][key]" )

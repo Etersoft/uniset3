@@ -27,9 +27,10 @@
 #endif
 #include <Poco/File.h>
 #include "city.h"
-#include "farmhash.h"
+
 #include "UniSetTypes.h"
 #include "Configuration.h"
+#include "MurmurHash2.h"
 // -----------------------------------------------------------------------------
 using namespace std;
 using namespace uniset3;
@@ -984,12 +985,12 @@ uint64_t uniset3::hash64( const char* buf, size_t sz ) noexcept
 // ---------------------------------------------------------------------------------------------------------------
 uint32_t uniset3::hash32( const std::string& str ) noexcept
 {
-    return NAMESPACE_FOR_HASH_FUNCTIONS::Hash32(str.data(), str.size());
+    return MurmurHash2( (const void*)str.data(), str.size(), 0);
 }
 
 uint32_t uniset3::hash32( const char* buf, size_t sz ) noexcept
 {
-    return NAMESPACE_FOR_HASH_FUNCTIONS::Hash32(buf, sz);
+    return MurmurHash2((const void*)buf, sz, 0);
 }
 // ---------------------------------------------------------------------------------------------------------------
 uniset3::umessage::MessageHeader uniset3::makeMessageHeader( uniset3::umessage::Priority prior )

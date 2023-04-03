@@ -8,10 +8,10 @@ libUCore_la_SOURCES = UniSetTypes.pb.cc UniSetTypes.grpc.pb.cc UniSetTypes.cc \
 	UInterface.cc URepository.grpc.pb.cc URepository.pb.cc \
 	UniSetObjectProxy.cc UniSetManagerProxy.cc IOControllerProxy.cc IONotifyControllerProxy.cc
 libUCore_la_CXXFLAGS = -I$(top_builddir)/contrib/cityhash102/include \
-	-I$(top_builddir)/contrib/libfarmhash \
+	-I$(top_builddir)/contrib/murmurhash/include \
 	$(PROTOBUF_CFLAGS)
 libUCore_la_LIBADD = $(top_builddir)/contrib/cityhash102/libCityHash102.la \
-	$(top_builddir)/contrib/libfarmhash/libFarmHash.la \
+	$(top_builddir)/contrib/murmurhash/libMurMurHash.la \
 	$(PROTOBUF_LIBS)
 
 include $(top_builddir)/include.mk
