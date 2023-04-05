@@ -25,7 +25,7 @@ namespace uniset3
     using namespace uniset3::extensions;
     // -------------------------------------------------------------------------
     TA2D::TA2D(Element::ElementID id, long filterValue ):
-        Element(id),
+        Element(id, true),
         myout(false),
         fvalue(filterValue)
     {
@@ -43,8 +43,11 @@ namespace uniset3
         bool prev = myout;
         myout = ( fvalue == value );
 
-        if( prev != myout )
+        if( prev != myout || init_out )
+        {
+            init_out = false;
             Element::setChildOut();
+        }
     }
     // -------------------------------------------------------------------------
     long TA2D::getOut() const
