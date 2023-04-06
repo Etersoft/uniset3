@@ -187,6 +187,7 @@ namespace uniset3
             }
 
             inf.id = uniset3::hash32(nm);
+//            inf.name = nm;
 
             // name
             ostringstream n;
@@ -258,6 +259,7 @@ namespace uniset3
 
             const string name(it.getProp("name"));
             inf.id = uniset3::hash32(name);
+//            inf.name = name;
             inf.repName = name;
 
             // textname
