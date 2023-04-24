@@ -66,7 +66,6 @@ namespace uniset3
                 return "";
             }
 
-
             std::shared_ptr<LogAgregator> loga;
             std::shared_ptr<DebugStream> dblog;
             std::shared_ptr<LogServer> logserv;

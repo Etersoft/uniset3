@@ -78,11 +78,13 @@ namespace uniset3
 
             bool isConnectOk() const;
 
+            static constexpr std::string_view tblcols = { "date,time,time_usec,sensor_id,value,node" };
+
         protected:
             typedef std::unordered_map<int, std::string> DBTableMap;
 
             virtual void initDBServer() override;
-            virtual void initDB( std::unique_ptr<PostgreSQLInterface>& db ) {};
+            virtual void onReconnect( std::unique_ptr<PostgreSQLInterface>& db ) {};
 
             virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
@@ -93,7 +95,6 @@ namespace uniset3
             virtual std::string getMonitInfo( const std::string& params ) override;
 
             bool writeToBase( const std::string& query );
-            void createTables( const std::shared_ptr<PostgreSQLInterface>& db );
 
             enum Timers
             {
@@ -108,14 +109,11 @@ namespace uniset3
 
             void flushBuffer();
 
-            // writeBuffer
-            const std::initializer_list<std::string_view> tblcols = { "date", "time", "time_usec", "sensor_id", "value", "node" };
-
             typedef std::vector<PostgreSQLInterface::Record> InsertBuffer;
             void flushInsertBuffer();
             virtual void addRecord( const PostgreSQLInterface::Record&& rec );
             virtual bool writeInsertBufferToDB( const std::string& table
-                                                , const std::initializer_list<std::string_view> colname
+                                                , std::string_view colname
                                                 , const InsertBuffer& ibuf );
 
         private:

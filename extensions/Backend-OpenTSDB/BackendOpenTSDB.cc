@@ -191,7 +191,6 @@ std::shared_ptr<BackendOpenTSDB> BackendOpenTSDB::init_opendtsdb( int argc,
     if( !name.empty() )
     {
         ID = conf->getServiceID(name);
-
         if( ID == uniset3::DefaultObjectId )
         {
             dcrit << "(BackendOpenTSDB): Not found ServiceID for '" << name

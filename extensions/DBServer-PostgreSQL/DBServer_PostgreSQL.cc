@@ -263,7 +263,7 @@ void DBServer_PostgreSQL::addRecord( const PostgreSQLInterface::Record&& rec )
 }
 //--------------------------------------------------------------------------------------------
 bool DBServer_PostgreSQL::writeInsertBufferToDB( const std::string& tableName
-        , const std::initializer_list<std::string_view> colNames
+        , std::string_view colNames
         , const InsertBuffer& wbuf )
 {
     return db->copy(tableName, colNames, wbuf);
@@ -309,7 +309,7 @@ void DBServer_PostgreSQL::initDBServer()
 
     if( connect_ok )
     {
-        initDB(db);
+        onReconnect(db);
         return;
     }
 
@@ -377,40 +377,8 @@ void DBServer_PostgreSQL::initDBServer()
         connect_ok = true;
         askTimer(DBServer_PostgreSQL::ReconnectTimer, 0);
         askTimer(DBServer_PostgreSQL::PingTimer, PingTime);
-        //        createTables(db);
-        initDB(db);
+        onReconnect(db);
         flushBuffer();
-    }
-}
-//--------------------------------------------------------------------------------------------
-void DBServer_PostgreSQL::createTables( const std::shared_ptr<PostgreSQLInterface>& db )
-{
-    auto conf = uniset_conf();
-
-    UniXML_iterator it( conf->getNode("Tables") );
-
-    if(!it)
-    {
-        dbcrit << myname << ": section <Tables> not found.." << endl;
-        throw Exception();
-    }
-
-    if( !it.goChildren() )
-        return;
-
-    for( ; it; it.goNext() )
-    {
-        if( it.getName() != "comment" )
-        {
-            dbcrit << myname  << "(createTables): create " << it.getName() << endl;
-            ostringstream query;
-            query << "CREATE TABLE " << conf->getProp(it, "name") << "(" << conf->getProp(it, "create") << ")";
-
-            if( !db->query(query.str()) )
-            {
-                dbcrit << myname << "(createTables): error: \t\t" << db->error() << endl;
-            }
-        }
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -513,7 +481,7 @@ string DBServer_PostgreSQL::getMonitInfo( const string& params )
 }
 //--------------------------------------------------------------------------------------------
 std::shared_ptr<DBServer_PostgreSQL> DBServer_PostgreSQL::init_dbserver( int argc, const char* const* argv,
-    const std::shared_ptr<uniset3::SharedMemory>& shm, const std::string& prefix )
+        const std::shared_ptr<uniset3::SharedMemory>& shm, const std::string& prefix )
 {
     auto conf = uniset_conf();
 
@@ -523,19 +491,21 @@ std::shared_ptr<DBServer_PostgreSQL> DBServer_PostgreSQL::init_dbserver( int arg
 
     if( !name.empty() )
     {
-        ObjectId ID = conf->getObjectID(name);
+        ObjectId ID = conf->getServiceID(name);
 
         if( ID == uniset3::DefaultObjectId )
         {
-            cerr << "(DBServer_PostgreSQL): Unknown ObjectID for '" << name << endl;
-            return 0;
+            cerr << "(DBServer_PostgreSQL): Unknown ServiceID for '" << name << endl;
+            return nullptr;
         }
     }
 
     uinfo << "(DBServer_PostgreSQL): name = " << name << "(" << ID << ")" << endl;
     auto db = make_shared<DBServer_PostgreSQL>(ID, prefix);
+
     if( shm )
         shm->setDBServer(db);
+
     return db;
 }
 // -----------------------------------------------------------------------------

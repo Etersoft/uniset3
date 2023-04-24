@@ -172,7 +172,7 @@ uniset3::IDList::IDList( const std::vector<string>& svec ): // -V730
 }
 #if __cplusplus >= 201703L
 uniset3::IDList::IDList( const std::vector<string_view>& svec ): // -V730
-        uniset3::IDList::IDList()
+    uniset3::IDList::IDList()
 {
     auto conf = uniset_conf();
 
@@ -304,11 +304,13 @@ std::vector<std::string_view> uniset3::split_sv( std::string_view str, char sep 
 
         pos = str.find(sep, prev);
 
-        if( pos == string_view::npos )        {
+        if( pos == string_view::npos )
+        {
             auto s = str.substr(prev, sz - prev);
 
             if( !s.empty() )
                 v.emplace_back(s);
+
             break;
         }
 
@@ -710,21 +712,31 @@ int uniset3::uni_atoi_sv( std::string_view s ) noexcept
     if( s.size() > 1 && s[0] == '-' )
     {
         int n = 0;
-        if( s.size() > 2 && s[1] == '0' && s[2] == 'x' ) {
-            std::from_chars(s.data()+3, s.data() + s.size(), n, 16);
+
+        if( s.size() > 2 && s[1] == '0' && s[2] == 'x' )
+        {
+            std::from_chars(s.data() + 3, s.data() + s.size(), n, 16);
             n *= -1;
-        } else {
+        }
+        else
+        {
             std::from_chars(s.data(), s.data() + s.size(), n, 10);
         }
+
         return n;
     }
 
     unsigned int n = 0;
-    if( s.size() > 2 && s[0] == '0' && s[1] == 'x' ) {
-        std::from_chars(s.data()+2, s.data() + s.size(), n, 16);
-    } else {
+
+    if( s.size() > 2 && s[0] == '0' && s[1] == 'x' )
+    {
+        std::from_chars(s.data() + 2, s.data() + s.size(), n, 16);
+    }
+    else
+    {
         std::from_chars(s.data(), s.data() + s.size(), n, 10);
     }
+
     return n;
 }
 #endif
@@ -734,27 +746,38 @@ int uniset3::uni_atoi( const std::string& s ) noexcept
 #if __cplusplus < 201703L
     return uni_atoi(s.c_str());
 #else
+
     if( s.empty() )
         return 0;
 
     if( s.size() > 1 && s[0] == '-' )
     {
         int n = 0;
-        if( s.size() > 2 && s[1] == '0' && s[2] == 'x' ) {
-            std::from_chars(s.data()+3, s.data() + s.size(), n, 16);
+
+        if( s.size() > 2 && s[1] == '0' && s[2] == 'x' )
+        {
+            std::from_chars(s.data() + 3, s.data() + s.size(), n, 16);
             n *= -1;
-        } else {
+        }
+        else
+        {
             std::from_chars(s.data(), s.data() + s.size(), n, 10);
         }
+
         return n;
     }
 
     unsigned int n = 0;
-    if( s.size() > 2 && s[0] == '0' && s[1] == 'x' ) {
-        std::from_chars(s.data()+2, s.data() + s.size(), n, 16);
-    } else {
+
+    if( s.size() > 2 && s[0] == '0' && s[1] == 'x' )
+    {
+        std::from_chars(s.data() + 2, s.data() + s.size(), n, 16);
+    }
+    else
+    {
         std::from_chars(s.data(), s.data() + s.size(), n, 10);
     }
+
     return n;
 #endif
 }

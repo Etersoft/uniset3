@@ -346,7 +346,7 @@ namespace uniset3
 
         for( ; it.getCurrent(); it.goNext() )
         {
-            const string name = it.getName();
+            string name = it.getName();
 
             if( name == "LocalNode" )
             {
@@ -358,14 +358,13 @@ namespace uniset3
             }
             else if( name == "LocalDBServer" )
             {
-                //DBServer
-                const string secDB( getServicesSection() + "/" + it.getProp("name"));
-                localDBServer = oind->getIdByName(secDB);
+                name = it.getProp("name");
+                localDBServer = getServiceID(name);
 
                 if( localDBServer == DefaultObjectId )
                 {
                     ostringstream msg;
-                    msg << "Configuration: DBServer '" << secDB << "' not found ServiceID in <services>!";
+                    msg << "Configuration: DBServer '" << name << "' not found ServiceID in <services>!";
                     ucrit << msg.str() << endl;
                     throw uniset3::SystemError(msg.str());
                 }
@@ -740,17 +739,16 @@ namespace uniset3
 
             if( !tmp.empty() )
             {
-                string dname(getServicesSection() + "/" + tmp);
-                dbID = oind->getIdByName(dname);
+                dbID = getServiceID(tmp);
 
                 if( dbID == DefaultObjectId )
                 {
-                    ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << dname << "'" << endl;
-                    throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + dname + "'");
+                    ucrit << "Configuration(createNodesList): Not found ID for DBServer name='" << tmp << "'" << endl;
+                    throw uniset3::SystemError("Configuration(createNodesList: Not found ID for DBServer name='" + tmp + "'");
                 }
 
                 auto s = ninf.add_services();
-                s->set_name(dname);
+                s->set_name(tmp);
                 s->set_id(dbID);
             }
 
