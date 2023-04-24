@@ -273,7 +273,7 @@ void DBServer_MySQL::initDBServer()
 
     if( connect_ok )
     {
-        initDB(db);
+        onReconnect(db);
         return;
     }
 
@@ -335,38 +335,8 @@ void DBServer_MySQL::initDBServer()
         connect_ok = true;
         askTimer(DBServer_MySQL::ReconnectTimer, 0);
         askTimer(DBServer_MySQL::PingTimer, PingTime);
-        //        createTables(db);
-        initDB(db);
+        onReconnect(db);
         flushBuffer();
-    }
-}
-//--------------------------------------------------------------------------------------------
-void DBServer_MySQL::createTables( MySQLInterface* db )
-{
-    auto conf = uniset_conf();
-
-    UniXML::iterator it( conf->getNode("Tables") );
-
-    if(!it)
-    {
-        dbcrit << myname << ": section <Tables> not found.." << endl;
-        throw Exception();
-    }
-
-    if( !it.goChildren() )
-        return;
-
-    for( ; it; it.goNext() )
-    {
-        if( it.getName() != "comment" )
-        {
-            dbinfo << myname  << "(createTables): create " << it.getName() << endl;
-            ostringstream query;
-            query << "CREATE TABLE " << conf->getProp(it, "name") << "(" << conf->getProp(it, "create") << ")";
-
-            if( !db->query(query.str()) )
-                dbcrit << myname << "(createTables): error: \t\t" << db->error() << endl;
-        }
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -432,12 +402,12 @@ std::shared_ptr<DBServer_MySQL> DBServer_MySQL::init_dbserver( int argc, const c
 
     if( !name.empty() )
     {
-        ObjectId ID = conf->getObjectID(name);
+        ObjectId ID = conf->getServiceID(name);
 
         if( ID == uniset3::DefaultObjectId )
         {
-            cerr << "(DBServer_MySQL): Unknown ObjectID for '" << name << endl;
-            return 0;
+            cerr << "(DBServer_MySQL): Unknown ServiceID for '" << name << endl;
+            return nullptr;
         }
     }
 

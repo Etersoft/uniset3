@@ -176,7 +176,7 @@ namespace uniset3
             typedef std::unordered_map<int, std::string> DBTableMap;
 
             virtual void initDBServer() override;
-            virtual void initDB( const std::unique_ptr<MySQLInterface>& db ) {};
+            virtual void onReconnect(const std::unique_ptr<MySQLInterface>& db ) {};
 
             virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
             virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
@@ -186,7 +186,6 @@ namespace uniset3
             virtual std::string getMonitInfo( const std::string& params ) override;
 
             bool writeToBase( const std::string& query );
-            void createTables( MySQLInterface* db );
 
             enum Timers
             {
