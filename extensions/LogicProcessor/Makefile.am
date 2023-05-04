@@ -9,7 +9,7 @@ libUniSet3LProcessor_la_LIBADD	= $(top_builddir)/lib/libUniSet3.la \
 	$(top_builddir)/extensions/lib/libUniSet3Extensions.la $(SIGC_LIBS)
 libUniSet3LProcessor_la_CXXFLAGS	= -I$(top_builddir)/extensions/include \
 	-I$(top_builddir)/extensions/SharedMemory $(SIGC_CFLAGS)
-libUniSet3LProcessor_la_SOURCES 	= Element.cc TOR.cc TAND.cc TDelay.cc TNOT.cc TA2D.cc \
+libUniSet3LProcessor_la_SOURCES 	= Element.cc TOR.cc TAND.cc TDelay.cc TNOT.cc TA2D.cc TSEL_R.cc TRS.cc \
 Schema.cc SchemaXML.cc LProcessor.cc PassiveLProcessor.cc
 
 bin_PROGRAMS = @PACKAGE@-logicproc @PACKAGE@-plogicproc

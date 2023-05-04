@@ -26,7 +26,7 @@ namespace uniset3
     using namespace uniset3::extensions;
     // -------------------------------------------------------------------------
     TOR::TOR(ElementID id, size_t num, bool st):
-        Element(id,true),
+        Element(id, true),
         myout(false)
     {
         if( num != 0 )
