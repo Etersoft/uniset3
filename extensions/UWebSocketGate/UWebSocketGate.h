@@ -171,6 +171,8 @@ namespace uniset3
         - "ask:id1,id2,name3,..." - подписаться на уведомления об изменении датчиков (sensorInfo)
         - "del:id1,id2,name3,..." - отказаться от уведомления об изменении датчиков
         - "get:id1,id2,name3,..." - получить текущее значение датчиков (разовое сообщение ShortSensorInfo)
+        - "freeze:id1=val1,id2=val2,name3=val4,..." - выставить значение и заморозить изменение датчиков
+        - "unfreeze:id1,id2,name3..." - разморозить изменения датчиков
 
         Если длина команды превышает допустимое значение, то возвращается ошибка
         \code
@@ -329,6 +331,8 @@ namespace uniset3
                     void del( uniset3::ObjectId id );
                     void get( uniset3::ObjectId id );
                     void set( uniset3::ObjectId id, long value );
+                    void freeze( uniset3::ObjectId id, long value );
+                    void unfreeze( uniset3::ObjectId id );
                     void sensorInfo( const uniset3::umessage::SensorMessage* sm );
                     void doCommand( const std::shared_ptr<SMInterface>& ui );
 

@@ -404,6 +404,7 @@ namespace uniset3
 
         // Проверяем именно в такой последовательности!
         set = it->check_debounce(set);       // фильтр дребезга
+
         if(set)
         {
             set = it->check_on_delay(set);  // фильтр на срабатывание
@@ -414,6 +415,7 @@ namespace uniset3
             set = it->check_off_delay(set); // фильтр на отпускание
             set = it->check_on_delay(set);  // фильтр на срабатывание
         }
+
         set = it->check_front(set);     // работа по фронту (проверять после debounce_xxx!)
 
         {

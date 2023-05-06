@@ -189,6 +189,31 @@ uniset3::SensorIOInfoSeq SMInterface::getSensorsMap()
     END_FUNC(SMInterface::getSensorsMap)
 }
 // --------------------------------------------------------------------------
+void SMInterface::freezeValue( uniset3::ObjectId id, bool set,
+                               long value, uniset3::ObjectId sup_id )
+{
+    if( ic )
+    {
+        BEG_FUNC1(SMInterface::freezeValue)
+        FreezeValueParams request;
+        request.set_id(id);
+        request.set_value(value);
+        request.set_sup_id(myid);
+        request.set_set(set);
+        ic->freezeValue(&ctx, &request, &empty);
+        return;
+        END_FUNC(SMInterface::freezeValue)
+    }
+
+    BEG_FUNC(SMInterface::freezeValue)
+    uniset3::SensorInfo si;
+    si.set_id(id);
+    si.set_node(ui->getConf()->getLocalNode());
+    ui->freezeValue(si, set, value, sup_id);
+    return;
+    END_FUNC(SMInterface::freezeValue)
+}
+// --------------------------------------------------------------------------
 bool SMInterface::exists()
 {
     if( ic )

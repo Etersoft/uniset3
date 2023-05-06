@@ -46,6 +46,8 @@ namespace uniset3
 
             uniset3::SensorIOInfoSeq getSensorsMap();
 
+            void freezeValue( uniset3::ObjectId id, bool set, long value, uniset3::ObjectId supplier );
+
             void localSetValue( IOController::IOStateList::iterator& it,
                                 uniset3::ObjectId sid,
                                 long newvalue, uniset3::ObjectId sup_id );
