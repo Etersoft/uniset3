@@ -109,6 +109,7 @@ namespace uniset3
 
             void flushBuffer();
 
+            // writeBuffer
             typedef std::vector<PostgreSQLInterface::Record> InsertBuffer;
             void flushInsertBuffer();
             virtual void addRecord( const PostgreSQLInterface::Record&& rec );
