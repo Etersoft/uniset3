@@ -29,7 +29,6 @@ namespace uniset3
         Element(id, true),
         myout(st)
     {
-        ins.emplace_front(1, !st);
     }
     // -------------------------------------------------------------------------
     TNOT::~TNOT()
