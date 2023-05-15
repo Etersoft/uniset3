@@ -33,7 +33,7 @@ namespace uniset3
         {
             // создаём заданное количество входов
             for( unsigned int i = 1; i <= inCount; i++ )
-                ins.emplace_front(i, false); // addInput(i,st);
+                ins.emplace_back(i, false); // addInput(i,st);
         }
     }
 

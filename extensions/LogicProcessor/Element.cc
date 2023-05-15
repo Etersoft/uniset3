@@ -56,7 +56,7 @@ namespace uniset3
             throw LogicException(msg.str());
         }
 
-        outs.emplace_front(el, num);
+        outs.emplace_back(el, num);
     }
     // -------------------------------------------------------------------------
     void Element::delChildOut( std::shared_ptr<Element>& el )
@@ -115,7 +115,7 @@ namespace uniset3
             }
         }
 
-        ins.emplace_front(num, value);
+        ins.emplace_back(num, value);
     }
     // -------------------------------------------------------------------------
     void Element::delInput( size_t num )
