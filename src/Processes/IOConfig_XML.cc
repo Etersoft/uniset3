@@ -211,6 +211,14 @@ namespace uniset3
         inf->sinf.set_dbignore(it.getIntProp("dbignore"));
         inf->sinf.set_value(inf->sinf.default_val());
         inf->sinf.set_real_value(inf->sinf.value());
+        inf->readonly = it.getIntProp("readonly");
+
+        if( !it.getProp("frozen_value").empty() )
+        {
+            inf->frozen_value = it.getIntProp("frozen_value");
+            inf->sinf.set_frozen(true);
+            inf->sinf.set_value(inf->frozen_value);
+        }
 
         const string d_txt( it.getProp("depend") );
 

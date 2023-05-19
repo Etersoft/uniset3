@@ -64,6 +64,23 @@ using namespace uniset3;
     } \
 
 // --------------------------------------------------------------------------
+static void continue_or_throw(const grpc::Status& st, const std::string& fname = "")
+{
+    if( st.error_code() != grpc::StatusCode::UNAVAILABLE && st.error_code() != grpc::StatusCode::DEADLINE_EXCEEDED )
+    {
+        ostringstream err;
+        err << fname << " error(" << st.error_code() << "): " << st.error_message();
+        throw uniset3::SystemError(err.str());
+    }
+
+    if( st.error_code() == grpc::StatusCode::INVALID_ARGUMENT )
+    {
+        ostringstream err;
+        err << fname << " error(" << st.error_code() << "): " << st.error_message();
+        throw uniset3::IOBadParam(err.str());
+    }
+}
+// --------------------------------------------------------------------------
 SMInterface::SMInterface( uniset3::ObjectId _shmID, const std::shared_ptr<UInterface>& _ui,
                           uniset3::ObjectId _myid, const std::shared_ptr<IONotifyController> ic ):
     ic(ic),
@@ -89,7 +106,11 @@ void SMInterface::setValue( uniset3::ObjectId id, long value )
         request.set_id(id);
         request.set_value(value);
         request.set_sup_id(myid);
-        ic->setValue(&ctx, &request, &empty);
+        auto status = ic->setValue(&ctx, &request, &empty);
+
+        if( !status.ok() )
+            continue_or_throw(status, __FUNCTION__);
+
         return;
         END_FUNC(SMInterface::setValue)
     }
@@ -200,7 +221,11 @@ void SMInterface::freezeValue( uniset3::ObjectId id, bool set,
         request.set_value(value);
         request.set_sup_id(myid);
         request.set_set(set);
-        ic->freezeValue(&ctx, &request, &empty);
+        auto status = ic->freezeValue(&ctx, &request, &empty);
+
+        if( !status.ok() )
+            continue_or_throw(status, __FUNCTION__);
+
         return;
         END_FUNC(SMInterface::freezeValue)
     }

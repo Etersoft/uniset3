@@ -38,6 +38,13 @@ namespace uniset3
     // -----------------------------------------------------------------------------
     static void continue_or_throw(const grpc::Status& st, const std::string& fname = "")
     {
+        if( st.error_code() == grpc::StatusCode::INVALID_ARGUMENT )
+        {
+            ostringstream err;
+            err << fname << " error(" << st.error_code() << "): " << st.error_message();
+            throw uniset3::IOBadParam(err.str());
+        }
+
         if( st.error_code() != grpc::StatusCode::UNAVAILABLE && st.error_code() != grpc::StatusCode::DEADLINE_EXCEEDED )
         {
             ostringstream err;
@@ -201,6 +208,10 @@ namespace uniset3
                 chan = nullptr;
             }
         }
+        catch( const uniset3::IOBadParam& ex )
+        {
+            throw;
+        }
         catch( const std::exception& ex )
         {
             rcache.erase(si.id(), si.node());
@@ -274,6 +285,10 @@ namespace uniset3
                 msleep(uconf->getRepeatTimeout());
                 chan = nullptr;
             }
+        }
+        catch( const uniset3::IOBadParam& ex )
+        {
+            throw;
         }
         catch( const std::exception& ex )
         {
