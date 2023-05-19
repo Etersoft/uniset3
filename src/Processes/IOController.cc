@@ -197,11 +197,15 @@ grpc::Status IOController::freezeValue(::grpc::ServerContext* context, const ::u
         localFreezeValueIt( li, request->id(), request->set(), request->value(), request->sup_id() );
         return grpc::Status::OK;
     }
+    catch( uniset3::IOBadParam& ex )
+    {
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, ex.what());
+    }
     catch(...) {}
 
     ostringstream err;
-    err << "(IOController::freezeValue): sid=" << request->id() << " not found. Supplier " << request->sup_id();
-    return grpc::Status(grpc::StatusCode::NOT_FOUND, err.str());
+    err << "(IOController::freezeValue): sid=" << request->id() << " unknown exception. Supplier " << request->sup_id();
+    return grpc::Status(grpc::StatusCode::INTERNAL, err.str());
 }
 // ------------------------------------------------------------------------------------------
 void IOController::localFreezeValueIt( IOController::IOStateList::iterator& li,
@@ -236,6 +240,14 @@ void IOController::localFreezeValue( std::shared_ptr<USensorInfo>& usi,
                                      long value,
                                      uniset3::ObjectId sup_id )
 {
+    if( usi->readonly )
+    {
+        ostringstream err;
+        err << myname << "(localFreezeValue): Readonly sensor (" << usi->sinf.si().id() << ")"
+            << "name: " << uniset_conf()->oind->getNameById(usi->sinf.si().id());
+        throw uniset3::IOBadParam(err.str().c_str());
+    }
+
     ulog4 << myname << "(localFreezeValue): (" << usi->sinf.si().id() << ")"
           << uniset_conf()->oind->getNameById(usi->sinf.si().id())
           << " value=" << value
@@ -267,6 +279,10 @@ grpc::Status IOController::setValue(::grpc::ServerContext* context, const ::unis
     {
         localSetValueIt( li, request->id(), request->value(), request->sup_id() );
         return grpc::Status::OK;
+    }
+    catch( uniset3::IOBadParam& ex )
+    {
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, ex.what());
     }
     catch(...) {}
 
@@ -303,6 +319,14 @@ long IOController::localSetValueIt( IOController::IOStateList::iterator& li,
 long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
                                   long value, uniset3::ObjectId sup_id )
 {
+    if( usi->readonly )
+    {
+        ostringstream err;
+        err << myname << "(localSetValue): Readonly sensor (" << usi->sinf.si().id() << ")"
+            << "name: " << uniset_conf()->oind->getNameById(usi->sinf.si().id());
+        throw uniset3::IOBadParam(err.str().c_str());
+    }
+
     // if( !usi ) - не проверяем, т.к. считаем что это внутренние функции и несуществующий указатель передать не могут
     bool changed = false;
     bool blockChanged = false;
@@ -312,7 +336,6 @@ long IOController::localSetValue( std::shared_ptr<USensorInfo>& usi,
     {
         // lock
         uniset_rwmutex_wrlock lock(usi->val_lock);
-
         usi->sinf.set_supplier(sup_id); // запоминаем того кто изменил
 
         changed = ( usi->sinf.real_value() != value );
@@ -466,22 +489,22 @@ void IOController::logging( uniset3::umessage::SensorMessage& sm )
 
     try
     {
-		if( dbserver )
-		{
+        if( dbserver )
+        {
             sm.mutable_header()->set_consumer(dbserverID);
             umessage::TransportMessage tm = to_transport<SensorMessage>(sm);
             grpc::ServerContext ctx;
-		    dbserver->push(&ctx, &tm, &empty);
-		    isPingDBServer = true;
-		    return;
-		}
+            dbserver->push(&ctx, &tm, &empty);
+            isPingDBServer = true;
+            return;
+        }
 
-		// значит на этом узле нет DBServer-а
-		if( dbserverID == uniset3::DefaultObjectId )
-		{
-			isPingDBServer = false;
-			return;
-		}
+        // значит на этом узле нет DBServer-а
+        if( dbserverID == uniset3::DefaultObjectId )
+        {
+            isPingDBServer = false;
+            return;
+        }
 
         sm.mutable_header()->set_consumer(dbserverID);
         umessage::TransportMessage tm = to_transport<SensorMessage>(sm);
@@ -1077,12 +1100,32 @@ void IOController::getSensorInfo( Poco::JSON::Array::Ptr& jdata, std::shared_ptr
     if( shortInfo )
         return;
 
+    <<< <<< < HEAD
     jsens->set("type", uniset3::iotype2str(s->sinf.type()));
     jsens->set("default_val", s->sinf.default_val());
     jsens->set("dbignore", s->sinf.dbignore());
     jsens->set("nchanges", s->nchanges);
     jsens->set("frozen", s->sinf.frozen());
     jsens->set("blocked", s->sinf.blocked());
+    == == == =
+        jsens->set("type", uniset::iotype2str(s->type));
+    jsens->set("default_val", s->default_val);
+    jsens->set("dbignore", s->dbignore);
+    jsens->set("nchanges", s->nchanges);
+    jsens->set("undefined", s->undefined);
+    jsens->set("frozen", s->frozen);
+    jsens->set("blocked", s->blocked);
+    jsens->set("readonly", s->readonly);
+
+    if( s->depend_sid != DefaultObjectId )
+    {
+        jsens->set("depend_sensor", ORepHelpers::getShortName(uniset_conf()->oind->getMapName(s->depend_sid)));
+        jsens->set("depend_sensor_id", s->depend_sid);
+        jsens->set("depend_value", s->d_value);
+        jsens->set("depend_off_value", s->d_off_value);
+    }
+
+    >>> >>> > e87c4a09 ((iocontrol): supported "readonly" sensors, supported "frozen_value" by default)
 
     if( s->sinf.depend_sid() != DefaultObjectId )
     {
