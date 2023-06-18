@@ -105,6 +105,7 @@ UWebSocketGate::UWebSocketGate( uniset3::ObjectId id
     wsSendTime_sec = (float)conf->getArgPInt("--" + prefix + "send-time", it.getProp("wsSendTime"), int(wsSendTime_sec * 1000.0)) / 1000.0;
     wsMaxSend = conf->getArgPInt("--" + prefix + "max-send", it.getProp("wsMaxSend"), wsMaxSend);
     wsMaxCmd = conf->getArgPInt("--" + prefix + "max-cmd", it.getProp("wsMaxCmd"), wsMaxCmd);
+    wsPongTimeout_sec = conf->getArgPInt("--" + prefix + "pong-timeout", it.getProp("wsPongTimeout_sec"), wsPongTimeout_sec);
 
     myinfoV(1) << myname << "(init): maxSend=" << wsMaxSend
                << " maxCmd=" << wsMaxCmd
@@ -400,6 +401,7 @@ void UWebSocketGate::help_print()
     cout << "--ws-send-time msec           - Период посылки сообщений. По умолчанию: 500 мсек" << endl;
     cout << "--ws-max-send num             - Максимальное число сообщений посылаемых за один раз. По умолчанию: 5000" << endl;
     cout << "--ws-max-cmd num              - Максимальное число команд обрабатываемых за один раз. По умолчанию: 200" << endl;
+    cout << "--ws-pong-timeout msec        - Таймаут, на ответ на сообщение ping. По умолчанию: 5000" << endl;
 
     cout << "http: " << endl;
     cout << "--ws-host ip                  - IP на котором слушает http сервер. По умолчанию: localhost" << endl;
@@ -783,6 +785,7 @@ std::shared_ptr<UWebSocketGate::UWebSocket> UWebSocketGate::newWebSocket( Poco::
         ws->setSendPeriod(wsSendTime_sec);
         ws->setMaxSendCount(wsMaxSend);
         ws->setMaxCmdCount(wsMaxCmd);
+        ws->setPongTimeout(wsPongTimeout_sec);
         ws->mylog = mylog;
 
         for( const auto& i : idlist.ref() )
@@ -836,6 +839,7 @@ UWebSocketGate::UWebSocket::UWebSocket( Poco::Net::HTTPServerRequest* _req,
     ioping.set<UWebSocketGate::UWebSocket, &UWebSocketGate::UWebSocket::ping>(this);
     iosend.set<UWebSocketGate::UWebSocket, &UWebSocketGate::UWebSocket::send>(this);
     iorecv.set<UWebSocketGate::UWebSocket, &UWebSocketGate::UWebSocket::read>(this);
+    iopong.set<UWebSocketGate::UWebSocket, &UWebSocketGate::UWebSocket::pong>(this);
 
     maxsize = maxsend * Kbuf;
 
@@ -892,6 +896,7 @@ std::string UWebSocketGate::UWebSocket::getInfo() const noexcept
         << ": jbuf=" << jbuf.size()
         << " wbuf=" << wbuf.size()
         << " ping_sec=" << ping_sec
+        << " pongTimeout_sec=" << pongTimeout_sec
         << " maxsend=" << maxsend
         << " send_sec=" << send_sec
         << " maxcmd=" << maxcmd;
@@ -908,6 +913,7 @@ void UWebSocketGate::UWebSocket::set( ev::dynamic_loop& loop, std::shared_ptr<ev
 {
     iosend.set(loop);
     ioping.set(loop);
+    iopong.set(loop);
 
     iosend.start(0, send_sec);
     ioping.start(ping_sec, ping_sec);
@@ -989,6 +995,23 @@ void UWebSocketGate::UWebSocket::ping( ev::timer& t, int revents )
         ioping.stop();
 }
 // -----------------------------------------------------------------------------
+void UWebSocketGate::UWebSocket::pong( ev::timer& t, int revents )
+{
+    if( EV_ERROR & revents )
+        return;
+
+    if( cancelled )
+        return;
+
+    if( pongCounter > 1 )
+    {
+        myinfoV(4) << req->clientAddress().toString() << "(pong): pong timeout " << pongTimeout_sec
+                   << " sec. Terminate session.." << endl;
+        term();
+        return;
+    }
+}
+// -----------------------------------------------------------------------------
 void UWebSocketGate::UWebSocket::read( ev::io& io, int revents )
 {
     if( EV_ERROR & revents )
@@ -1019,6 +1042,7 @@ void UWebSocketGate::UWebSocket::read( ev::io& io, int revents )
 
         if( (flags & WebSocket::FRAME_OP_BITMASK) == WebSocket::FRAME_OP_PING)
         {
+            myinfoV(4) << req->clientAddress().toString() << "(read): ping request => send pong" << endl;
             sendFrame(rbuf, n, WebSocket::FRAME_FLAG_FIN | WebSocket::FRAME_OP_PONG);
             return;
         }
@@ -1026,6 +1050,8 @@ void UWebSocketGate::UWebSocket::read( ev::io& io, int revents )
         if( (flags & WebSocket::FRAME_OP_BITMASK) & WebSocket::FRAME_OP_PONG )
         {
             myinfoV(4) << req->clientAddress().toString() << "(read): pong.." << endl;
+            iopong.stop();
+            pongCounter = 0;
             return;
         }
 
@@ -1045,7 +1071,6 @@ void UWebSocketGate::UWebSocket::read( ev::io& io, int revents )
         }
 
         const std::string_view cmd(rbuf, n);
-
         onCommand(cmd);
 
         // откладываем ping, т.к. что-то в канале и так было
@@ -1416,6 +1441,8 @@ void UWebSocketGate::UWebSocket::write()
     if( msg->len == ping_str.size() )
     {
         flags = WebSocket::FRAME_FLAG_FIN | WebSocket::FRAME_OP_PING;
+        iopong.start(pongTimeout_sec, pongTimeout_sec);
+        pongCounter++;
         myinfoV(4) << req->clientAddress().toString() << "(write): ping.." << endl;
     }
 
@@ -1512,6 +1539,7 @@ void UWebSocketGate::UWebSocket::term()
     ioping.stop();
     iosend.stop();
     iorecv.stop();
+    iopong.stop();
     finish.notify_all();
 }
 // -----------------------------------------------------------------------------
@@ -1548,6 +1576,12 @@ void UWebSocketGate::UWebSocket::setMaxCmdCount( size_t val )
 {
     if( val > 0 )
         maxcmd = val;
+}
+// -----------------------------------------------------------------------------
+void UWebSocketGate::UWebSocket::setPongTimeout( const double& val )
+{
+    if( val > 0 )
+        pongTimeout_sec = val;
 }
 // -----------------------------------------------------------------------------
 void UWebSocketGate::httpWebSocketPage( std::ostream& ostr, Poco::Net::HTTPServerRequest& req, Poco::Net::HTTPServerResponse& resp )
