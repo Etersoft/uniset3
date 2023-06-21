@@ -58,7 +58,7 @@ int main( int argc,char* argv[] )
 
         string name = conf->getArgParam("--name","<xsl:value-of select="normalize-space($OID)"/>");
         string secname = conf->getArgParam("--secname","<xsl:value-of select="$CLASSNAME"/>");
-        obj = make_object&lt;<xsl:value-of select="$CLASSNAME"/>&gt;(name, secname);
+        auto obj = make_object&lt;<xsl:value-of select="$CLASSNAME"/>&gt;(name, secname);
 
         auto act = UniSetActivator::Instance();
         act-&gt;add(obj);
