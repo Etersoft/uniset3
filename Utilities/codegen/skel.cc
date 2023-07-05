@@ -19,19 +19,27 @@ Skel::Skel()
     throw Exception();
 }
 // -----------------------------------------------------------------------------
-void Skel::step()
+void Skel::sysCommand( const umessage::SystemMessage* sm )
 {
-}
-// -----------------------------------------------------------------------------
-void Skel::sensorInfo( const SensorMessage* sm )
-{
-}
-// -----------------------------------------------------------------------------
-void Skel::timerInfo( const TimerMessage* tm )
-{
+
 }
 // -----------------------------------------------------------------------------
 void Skel::askSensors( uniset3::UIOCommand cmd )
+{
+
+}
+// -----------------------------------------------------------------------------
+void Skel::step()
+{
+
+}
+// -----------------------------------------------------------------------------
+void Skel::sensorInfo( const umessage::SensorMessage* sm )
+{
+
+}
+// -----------------------------------------------------------------------------
+void Skel::timerInfo( const umessage::TimerMessage* tm )
 {
 
 }
