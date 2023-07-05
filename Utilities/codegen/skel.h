@@ -15,9 +15,10 @@ class Skel:
         Skel();
 
         virtual void step() override;
-        virtual void sensorInfo( const uniset3::messages::SensorMessage* sm ) override;
-        virtual void timerInfo( const uniset3::messages::TimerMessage* tm ) override;
+        virtual void sensorInfo( const uniset3::umessage::SensorMessage* sm ) override;
+        virtual void timerInfo( const uniset3::umessage::TimerMessage* tm ) override;
         virtual void askSensors( uniset3::UIOCommand cmd ) override;
+        virtual void sysCommand( const uniset3::umessage::SystemMessage* sm ) override;
 
     private:
 };
