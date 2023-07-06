@@ -34,7 +34,7 @@ test_oindex_hash.cc
 #test_uhttp.cc
 
 tests_with_conf_LDADD   = $(top_builddir)/lib/libUniSet3.la $(top_builddir)/contrib/cityhash102/libCityHash102.la $(top_builddir)/contrib/murmurhash/libMurMurHash.la
-tests_with_conf_CPPFLAGS = -I$(top_builddir)/include -I$(top_builddir)/contrib/cityhash102/include -I$(top_builddir)/contrib/murmurhash/include
+tests_with_conf_CPPFLAGS = -I$(top_builddir)/include -I$(top_builddir)/contrib/cityhash102/include -I$(top_builddir)/contrib/murmurhash/include -I$(top_builddir)/contrib/catch2
 tests_with_conf_SOURCES = tests_with_conf.cc \
 test_conftest.cc \
 test_ui.cc \
@@ -42,7 +42,8 @@ test_iorfile.cc \
 test_messagetype.cc \
 test_utypes.cc \
 test_mqueue.cc \
-test_uobject.cc
+test_uobject.cc \
+test_lt_object.cc
 
 # threadtst_SOURCES = threadtst.cc
 # threadtst_LDADD 	= $(top_builddir)/lib/libUniSet3.la ${SIGC_LIBS}

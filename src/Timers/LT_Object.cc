@@ -97,6 +97,7 @@ timeout_t LT_Object::checkTimers( UniSetObject* obj )
                     tm.set_priority(li->priority);
                     tmsg.mutable_header()->set_priority(li->priority);
                     tmsg.set_id(li->id);
+                    tmsg.set_interval_msec(li->tmr.getInterval());
                     tm.mutable_data()->PackFrom(tmsg);
 
                     // помещаем себе в очередь сообщение
