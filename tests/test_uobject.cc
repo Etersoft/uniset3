@@ -18,7 +18,7 @@ using namespace uniset3::umessage;
 // --------------------------------------------------------------------------
 shared_ptr<TestUObject> uobj;
 // --------------------------------------------------------------------------
-void initTest()
+static void initTest()
 {
     REQUIRE( uniset_conf() != nullptr );
 
