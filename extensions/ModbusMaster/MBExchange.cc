@@ -115,6 +115,8 @@ namespace uniset3
         mbconf->mbregFromID = conf->getArgInt("--" + prefix + "-reg-from-id", it.getProp("regFromId"));
         mbinfo << myname << "(init): mbregFromID=" << mbconf->mbregFromID << endl;
 
+        mbconf->init_mbval_changed = conf->getArgPInt("--" + prefix + "-init-mbval-changed", it.getProp("init_mbval_changed"), 1) ? true : false ;
+
         mbconf->polltime = conf->getArgPInt("--" + prefix + "-polltime", it.getProp("polltime"), 100);
         initPause = conf->getArgPInt("--" + prefix + "-init-pause", it.getProp("initPause"), 3000);
 
@@ -226,6 +228,7 @@ namespace uniset3
         cout << "--prefix-default-mbadd addr     - У датчиков которых не задан 'mbaddr' использовать данный. По умолчанию: ''" << endl;
         cout << "--prefix-default-mbinit-ok 0,1  - Флаг инициализации. 1 - не ждать первого обмена с устройством, а сохранить при старте в SM значение 'default'" << endl;
         cout << "--prefix-query-max-count max    - Максимальное количество запрашиваемых за один раз регистров (При условии no-query-optimization=0). По умолчанию: " << ModbusRTU::MAXDATALEN << "." << endl;
+        cout << "--prefix-init-mbval-changed 0,1 - Инициализация флага изменения значения датчика регистра. Значение по умолчанию при запуске процесса." << endl;
         cout << endl;
         cout << " Logs: " << endl;
         cout << "--prefix-log-...            - log control" << endl;
@@ -850,6 +853,8 @@ namespace uniset3
 
                 // игнорируем return т.к. в случае ошибки будет исключение..
                 (void)mb->write06(dev->mbaddr, p->mbreg, p->mbval);
+                // после отправки скидываем флаг изменения значения регистра
+                p->mbval_changed = false;
             }
             break;
 
@@ -874,12 +879,21 @@ namespace uniset3
                 ModbusRTU::WriteOutputMessage msg(dev->mbaddr, p->mbreg);
 
                 for( size_t i = 0; i < p->q_count; i++, it++ )
+                {
                     msg.addData(it->second->mbval);
+
+                    if( i > 0 )// Сразу скидываем все кроме самого первого
+                        it->second->mbval_changed = false;
+                }
 
                 it--;
 
                 // игнорируем return т.к. в случае ошибки будет исключение..
                 (void)mb->write10(msg);
+                // только для работы по изменению!
+                // после отправки скидываем флаг изменения значения первого регистра в группе
+                // т.к. по нему проверяем условие для отправки.
+                p->mbval_changed = false;
             }
             break;
 
@@ -901,6 +915,8 @@ namespace uniset3
 
                 // игнорируем return т.к. в случае ошибки будет исключение..
                 (void)mb->write05(dev->mbaddr, p->mbreg, p->mbval);
+                // после отправки скидываем флаг изменения значения регистра
+                p->mbval_changed = false;
             }
             break;
 
@@ -1101,7 +1117,7 @@ namespace uniset3
                         {
                             bool set = useSafeval ? p->safeval : IOBase::processingAsDO( p, shm, force_out );
                             b.set(p->nbit, set);
-                            r->mbval = b.mdata();
+                            r->setMBVal( b.mdata() );
                             r->sm_initOK = true;
                         }
                     }
@@ -1132,7 +1148,7 @@ namespace uniset3
                                     val = IOBase::processingAsAO( p, shm, force_out );
                             }
 
-                            r->mbval = MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset);
+                            r->setMBVal( MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset) );
                             r->sm_initOK = true;
                         }
                     }
@@ -1173,7 +1189,7 @@ namespace uniset3
                                 val = (int16_t)IOBase::processingAsAO( p, shm, force_out );
                         }
 
-                        r->mbval = MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset);
+                        r->setMBVal( MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset) );
                         r->sm_initOK = true;
                     }
                 }
@@ -1208,7 +1224,7 @@ namespace uniset3
                                 val = (uint16_t)IOBase::processingAsAO( p, shm, force_out );
                         }
 
-                        r->mbval = MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset);
+                        r->setMBVal( MBExchange::forceSetBits(r->mbval, val, p->mask, p->offset) );
                         r->sm_initOK = true;
                     }
                 }
@@ -1241,7 +1257,8 @@ namespace uniset3
                         long v = useSafeval ? p->safeval : IOBase::processingAsAO( p, shm, force_out );
                         VTypes::Byte b(r->mbval);
                         b.raw.b[p->nbyte - 1] = v;
-                        r->mbval = MBExchange::forceSetBits(r->mbval, b.raw.w, p->mask, p->offset);
+
+                        r->setMBVal( MBExchange::forceSetBits(r->mbval, b.raw.w, p->mask, p->offset) );
                         r->sm_initOK = true;
                     }
                 }
@@ -1269,21 +1286,30 @@ namespace uniset3
                     {
                         //! \warning НЕ РЕШЕНО safeval --> float !
                         float f = useSafeval ? (float)p->safeval : IOBase::processingFasAO( p, shm, force_out );
+                        bool changed = false;
 
                         if( p->vType == VTypes::vtF2 )
                         {
                             VTypes::F2 f2(f);
 
                             for( size_t k = 0; k < VTypes::F2::wsize(); k++, i++ )
-                                i->second->mbval = f2.raw.v[k];
+                            {
+                                changed |= i->second->setMBVal( f2.raw.v[k] );
+                            }
+
                         }
                         else if( p->vType == VTypes::vtF2r )
                         {
                             VTypes::F2r f2(f);
 
                             for( size_t k = 0; k < VTypes::F2r::wsize(); k++, i++ )
-                                i->second->mbval = f2.raw.v[k];
+                            {
+                                changed |= i->second->setMBVal( f2.raw_backorder.v[k] );
+                            }
                         }
+
+                        // Признак изменения выставляем только у начального регистра
+                        p->reg->rit->second->mbval_changed = changed;
 
                         r->sm_initOK = true;
                     }
@@ -1329,9 +1355,15 @@ namespace uniset3
                         //! \warning НЕ РЕШЕНО safeval --> float !
                         float f = useSafeval ? (float)p->safeval : IOBase::processingFasAO( p, shm, force_out );
                         VTypes::F4 f4(f);
+                        bool changed = false;
 
                         for( size_t k = 0; k < VTypes::F4::wsize(); k++, i++ )
-                            i->second->mbval = f4.raw.v[k];
+                        {
+                            changed |= i->second->setMBVal( f4.raw.v[k] );
+                        }
+
+                        // Признак изменения выставляем только у начального регистра
+                        p->reg->rit->second->mbval_changed = changed;
 
                         r->sm_initOK = true;
                     }
@@ -1364,21 +1396,29 @@ namespace uniset3
                     if( r->mb_initOK )
                     {
                         long v = useSafeval ? p->safeval : IOBase::processingAsAO( p, shm, force_out );
+                        bool changed = false;
 
                         if( p->vType == VTypes::vtI2 )
                         {
                             VTypes::I2 i2( (int32_t)v );
 
                             for( size_t k = 0; k < VTypes::I2::wsize(); k++, i++ )
-                                i->second->mbval = i2.raw.v[k];
+                            {
+                                changed |= i->second->setMBVal( i2.raw.v[k] );
+                            }
                         }
                         else if( p->vType == VTypes::vtI2r )
                         {
                             VTypes::I2r i2( (int32_t)v );
 
                             for( size_t k = 0; k < VTypes::I2::wsize(); k++, i++ )
-                                i->second->mbval = i2.raw.v[k];
+                            {
+                                changed |= i->second->setMBVal( i2.raw_backorder.v[k] );
+                            }
                         }
+
+                        // Признак изменения выставляем только у начального регистра
+                        p->reg->rit->second->mbval_changed = changed;
 
                         r->sm_initOK = true;
                     }
@@ -1422,21 +1462,29 @@ namespace uniset3
                     if( r->mb_initOK )
                     {
                         long v = useSafeval ? p->safeval : IOBase::processingAsAO( p, shm, force_out );
+                        bool changed = false;
 
                         if( p->vType == VTypes::vtU2 )
                         {
                             VTypes::U2 u2(v);
 
                             for( size_t k = 0; k < VTypes::U2::wsize(); k++, i++ )
-                                i->second->mbval = u2.raw.v[k];
+                            {
+                                changed |= i->second->setMBVal( u2.raw.v[k] );
+                            }
                         }
                         else if( p->vType == VTypes::vtU2r )
                         {
                             VTypes::U2r u2(v);
 
                             for( size_t k = 0; k < VTypes::U2::wsize(); k++, i++ )
-                                i->second->mbval = u2.raw.v[k];
+                            {
+                                changed |= i->second->setMBVal( u2.raw_backorder.v[k] );
+                            }
                         }
+
+                        // Признак изменения выставляем только у начального регистра
+                        p->reg->rit->second->mbval_changed = changed;
 
                         r->sm_initOK = true;
                     }
@@ -2226,7 +2274,7 @@ namespace uniset3
 
             for( auto&& m : d->pollmap )
             {
-                if( m.first > 1 && (ncycle % m.first) != 0 )
+                if( m.first != MBConfig::changeOnlyWrite && m.first > 1 && (ncycle % m.first) != 0 )
                     continue;
 
                 auto&& regmap = m.second;
@@ -2237,6 +2285,11 @@ namespace uniset3
                         return false;
 
                     if( exchangeMode == MBConfig::emSkipExchange )
+                        continue;
+
+
+                    // Для pollfactor == 65535 пропускаем для отсылки только регистры, которые были изменены.
+                    if( m.first == MBConfig::changeOnlyWrite && !it->second->mbval_changed )
                         continue;
 
                     try

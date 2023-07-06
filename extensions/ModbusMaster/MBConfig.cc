@@ -197,7 +197,8 @@ namespace uniset3
         //             << ModbusRTU::addr2str(d->mbaddr) << " optimization..." << endl;
 
         for( const auto& m : d->pollmap )
-            rtuQueryOptimizationForRegMap(m.second, maxQueryCount);
+            if( m.first != changeOnlyWrite )
+                rtuQueryOptimizationForRegMap(m.second, maxQueryCount);
     }
     // -----------------------------------------------------------------------------
     void MBConfig::rtuQueryOptimizationForRegMap( const std::shared_ptr<RegMap>& regmap, size_t maxQueryCount )
@@ -347,7 +348,7 @@ namespace uniset3
         mp->insert( std::make_pair(regID, ri) );
         ri->rit = mp->find(regID);
 
-        mbinfo << myname << "(addReg): reg=" << ModbusRTU::dat2str(r) << "(regID=" << regID << ")" << endl;
+        mbinfo << myname << "(addReg): reg=" << ModbusRTU::dat2str(r) << "(regID=" << regID << ") mapsize=" << mp->size() << endl;
 
         return ri;
     }
@@ -627,8 +628,24 @@ namespace uniset3
 
         /*! приоритет опроса:
          * 1...n - задаёт "частоту" опроса. Т.е. каждые 1...n циклов
+         * 0 - значение по-умолчанию фактически тоже, что и 1.
+         * 65535 - Отдельное значение для записи регистров по изменению значения датчика.
+         *         По-этому без оптимизации "склейки" регистров в один запрос.
+         * TODO:
+         * - На подумать, оптимизировать запросы если регистры для записи по изменению идут подряд, в каких случаях это будет полезно.
+         * - На подумать, сделать общий флаг для группы(всех датчиков), чтобы не проверять все регистры по отдельности. Т.е. когда есть оптимизация,
+         * отправляем все по изменению хотя бы одного датчика.
         */
         size_t pollfactor = IOBase::initIntProp(it, "pollfactor", prop_prefix, false, 0);
+
+        if( ( !ModbusRTU::isWriteFunction((ModbusRTU::SlaveFunctionCode)fn) || dev->dtype != MBConfig::dtRTU )
+                && pollfactor == changeOnlyWrite )
+        {
+            ostringstream err;
+            err << myname << "(initItem): " << it.getProp("name") << " for pollfactor(" << changeOnlyWrite
+                << ") only write functions and type dtRTU are allowed!";
+            throw uniset3::SystemError(err.str());
+        }
 
         std::shared_ptr<RegMap> rmap;
 
@@ -647,6 +664,57 @@ namespace uniset3
         //  - ID > диапазона возможных регитров
         //  - разные функции должны давать разный ID
         ModbusRTU::RegID rID = ModbusRTU::genRegID(mbreg, fn);
+
+        // Проверка того, что одинаковые регистры не встречаются в разных pollmap.
+        // Если будет найден регистр в отличной от целевой rmap, то будет исключение.
+        if( checkDuplicationRegID( rID, dev, rmap ) )
+        {
+            ostringstream err;
+            err << myname << "(checkDuplicationRegID): Found dublicate for RegID " << rID <<
+                " enable crit logs for see it ";
+            throw uniset3::SystemError(err.str());
+        }
+
+        // Проверка на пересечение с регистрами из нескольких слов.
+        // Если регистр имеет тип размером в несколько слов, то проверяем что нет дубликата регистра
+        // в одно слово. Для записи регистров из нескольких слов задается соответствующая функция
+        // отличная от функции для обычных регистров из одного слова. Поэтому проверка на дубликат
+        // выше не обнаружит пересечение таких регистров. Для этого проверка ниже, которая также проверит
+        // на пересечение регистры из нескольких слов между собой.
+        // Проверка только для регистров на запись!
+        bool bad_status = false;
+        ModbusRTU::RegID rID2;
+
+        if( fn == ModbusRTU::fnWriteOutputSingleRegister )
+        {
+            rID2 = ModbusRTU::genRegID(mbreg, ModbusRTU::fnWriteOutputRegisters);
+            bad_status = checkDuplicationRegID( rID2, dev, nullptr );
+        }
+        else if( fn == ModbusRTU::fnWriteOutputRegisters )
+        {
+            for(int i = 0; i < p.rnum; i++)
+            {
+                rID2 = ModbusRTU::genRegID(mbreg + i, ModbusRTU::fnWriteOutputSingleRegister);
+                bad_status = checkDuplicationRegID( rID2, dev, nullptr );
+
+                if(bad_status)
+                    break;
+
+                rID2 = ModbusRTU::genRegID(mbreg + i, ModbusRTU::fnWriteOutputRegisters);
+                bad_status = checkDuplicationRegID( rID2, dev, nullptr );
+
+                if(bad_status)
+                    break;
+            }
+        }
+
+        if(bad_status)
+        {
+            ostringstream err;
+            err << myname << "(checkDuplicationRegID): Found dublicate for RegID " << rID2 <<
+                " enable crit logs to see it ";
+            throw uniset3::SystemError(err.str());
+        }
 
         auto ri = addReg(rmap, rID, mbreg, it, dev);
 
@@ -667,18 +735,26 @@ namespace uniset3
         ri->dev = dev;
 
         // ПРОВЕРКА!
-        // если функция на запись, то надо проверить
-        // что один и тотже регистр не перезапишут несколько датчиков
-        // это возможно только, если они пишут биты!!
+        // Если функция на запись, то надо проверить
+        // что один и тот же регистр не перезапишут несколько датчиков.
+        // Это возможно только, если они пишут биты!!
+        // 1). На запись целый датчик может быть только один на регистр.
+        // 2). Битовый датчик может быть один и больше на регистр.
+        // 3). Датчиков с маской для регистра может быть несколько.
+        // 4). Байтовый тип регистра на запись не обрабатывает несколько датчиков в одном регистре
+        // т.е. для байтового типа может быть только один датчик на регистр и соответственно только
+        // один "nbyte". Попытка привязать два датчика с разными "nbyte" к одному регистру
+        // приведет к ошибке конфигурирования.
         // ИТОГ:
-        // Если для функций записи список датчиков для регистра > 1
-        // значит в списке могут быть только битовые датчики
-        // и если идёт попытка внести в список не битовый датчик то ОШИБКА!
+        // Если для функций записи список датчиков для регистра > 0
+        // значит в списке уже есть либо целый датчик, либо битовый, либо датчик с маской.
+        // Если идёт попытка внести в список целый датчик, то ОШИБКА!
         // И наоборот: если идёт попытка внести битовый датчик, а в списке
         // уже сидит датчик занимающий целый регистр, то тоже ОШИБКА!
+
         if( ModbusRTU::isWriteFunction(ri->mbfunc) )
         {
-            if( p.nbit < 0 &&  ri->slst.size() > 1 )
+            if( p.nbit < 0 && p.mask == 0 && ri->slst.size() > 0 )
             {
                 ostringstream sl;
                 sl << "[ ";
@@ -689,7 +765,7 @@ namespace uniset3
                 sl << "]";
 
                 ostringstream err;
-                err << myname << "(initItem): FAILED! Sharing SAVE (not bit saving) to "
+                err << myname << "(initItem): FAILED! Sharing SAVE (not bit or mask saving) to "
                     << " mbreg=" << ModbusRTU::dat2str(ri->mbreg) << "(" << (int)ri->mbreg << ")"
                     << " conflict with sensors " << sl.str();
 
@@ -713,9 +789,48 @@ namespace uniset3
                 }
             }
 
+            // Проверка на пересечение маск в регистре
+            if( p.mask != 0 && ri->slst.size() > 0 )
+            {
+                for( const auto& it2 : ri->slst )
+                {
+                    if( it2.mask == 0 )
+                    {
+                        ostringstream err;
+                        err << myname << "(initItem): FAILED! Sharing SAVE (mbreg="
+                            << ModbusRTU::dat2str(ri->mbreg) << "(" << (int)ri->mbreg
+                            << ") conflict with non masked register "
+                            << ObjectIndex::getShortName(conf->oind->getMapName(it2.si.id())) << "!"
+                            << " IGNORE --> " << it.getProp("name");
+
+                        mbcrit  << err.str() << endl;
+                        throw uniset3::SystemError(err.str());
+                    }
+
+                    if( (it2.mask & p.mask) != 0)
+                    {
+                        ostringstream err;
+                        err << myname << "(initItem): FAILED! Sharing SAVE (mbreg="
+                            << ModbusRTU::dat2str(ri->mbreg) << "(" << (int)ri->mbreg
+                            << ") intersection of the mask with the added sensors)!"
+                            << " IGNORE --> " << it.getProp("name");
+
+                        mbcrit  << err.str() << endl;
+                        throw uniset3::SystemError(err.str());
+                    }
+                }
+            }
+
             // Раз это регистр для записи, то как минимум надо сперва
             // инициализировать значением из SM
             ri->sm_initOK = IOBase::initIntProp(it, "sm_initOK", prop_prefix, false);
+            // Инициализации для регистров с отправкой по изменению:
+            // - либо тегом "init_mbval_changed" для каждого регистра;
+            // - либо общий тег "init_mbval_changed" на всех в настроечной секции процесса. Тоже
+            // и для параметра --prefix-init-mbval-changed в командной строке при запуске.
+            // Если mbval_changed=true, регистр запишется сразу после запуска, иначе только после
+            // изменения значения датчика.
+            ri->mbval_changed = IOBase::initIntProp(it, "init_mbval_changed", prop_prefix, false, init_mbval_changed);
             ri->mb_initOK = true;
         }
         else
@@ -752,8 +867,7 @@ namespace uniset3
                 {
                     // Если занимает несколько регистров, а указана функция записи "одного",
                     // то это ошибка..
-                    if( ri->mbfunc != ModbusRTU::fnWriteOutputRegisters &&
-                            ri->mbfunc != ModbusRTU::fnForceMultipleCoils )
+                    if( ri->mbfunc != ModbusRTU::fnWriteOutputRegisters )
                     {
                         ostringstream err;
                         err << myname << "(initItem): Bad write function ='" << ModbusRTU::fnWriteOutputSingleRegister
@@ -1031,6 +1145,30 @@ namespace uniset3
             d->second->stopBits = (ComPort::StopBits)sb;
 
         return true;
+    }
+    // -----------------------------------------------------------------------------
+    bool MBConfig::checkDuplicationRegID( const ModbusRTU::RegID id, const std::shared_ptr<RTUDevice>& dev, const std::shared_ptr<RegMap>& rmap ) const
+    {
+        if( dev == nullptr )
+            return false;
+
+        bool ret = false;
+
+        for( const auto& d : dev->pollmap )
+        {
+            if( d.second == rmap )
+                continue;
+
+            if( d.second->find(id) != d.second->end() )
+            {
+                mbcrit << myname << "(checkDuplicationRegID): Found dublicate for RegID " << id <<
+                       " mbreg " << (*d.second)[id]->mbreg << " mbfunc " << (*d.second)[id]->mbfunc <<
+                       " in pollmap " << d.first << endl;
+                ret = true;
+            }
+        }
+
+        return ret;
     }
     // -----------------------------------------------------------------------------
     std::ostream& operator<<( std::ostream& os, const MBConfig::ExchangeMode& em )
