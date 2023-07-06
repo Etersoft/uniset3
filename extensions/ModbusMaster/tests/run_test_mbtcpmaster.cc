@@ -70,6 +70,12 @@ int main( int argc, const char* argv[] )
             return 1;
         }
 
+        if( !mbm->isExists() )
+        {
+            cerr << "(tests_mbtcpmaster): ModbusMaster not exist! (timeout=" << tout << ")" << endl;
+            return 1;
+        }
+
         return session.run();
     }
     catch( const std::exception& e )
