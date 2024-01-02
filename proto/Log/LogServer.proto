@@ -22,6 +22,8 @@ enum LogCommandID
     LOG_CMD_RESTORE_LOGLEVEL = 9;
     LOG_CMD_SHOW_LOCALTIME = 10;
     LOG_CMD_SHOW_UTCTIME = 11;
+    LOG_CMD_VERBOSITY = 12;
+
 }
 
 message LogCommand

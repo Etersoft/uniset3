@@ -71,7 +71,7 @@ void LogReader::setReadCount( size_t n )
     readcount = n;
 }
 // -------------------------------------------------------------------------
-void LogReader::setTimeout(timeout_t msec)
+void LogReader::setTimeout( timeout_t msec )
 {
     if( msec == UniSetTimer::WaitUpTime )
         readTimeout = 24 * 60 * 60 * 1000; // 24 hours

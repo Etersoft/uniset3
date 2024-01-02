@@ -329,6 +329,10 @@ namespace uniset3
                 case logserver::LOG_CMD_NOP:
                     break;
 
+                case logserver::LOG_CMD_VERBOSITY:
+                    l.log->verbose((Debug::verbosity)msg.data());
+                    break;
+
                 default:
                     mylog.warn() << "(cmdProcessing): Unknown command '" << msg.cmd() << "'" << endl;
                     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "unknown log server command " + to_string(msg.cmd()));
