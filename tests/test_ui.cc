@@ -28,27 +28,27 @@ TEST_CASE("UInterface", "[UInterface]")
 
     CHECK( ui.getConfIOType(sid) != uniset3::UnknownIOType );
 
-    REQUIRE_THROWS_AS( ui.getValue(DefaultObjectId), uniset3::ORepFailed& );
-    REQUIRE_THROWS_AS( ui.getValue(sid), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.getValue(sid, DefaultObjectId), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.getValue(sid, 100), uniset3::Exception& );
+    REQUIRE_THROWS_AS( ui.getValue(DefaultObjectId), uniset3::ORepFailed );
+    REQUIRE_THROWS_AS( ui.getValue(sid), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.getValue(sid, DefaultObjectId), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.getValue(sid, 100), uniset3::Exception );
 
-    REQUIRE_THROWS_AS( ui.resolve(sid), uniset3::ORepFailed& );
-    REQUIRE_THROWS_AS( ui.resolve(sid, 10), uniset3::ResolveNameError& );
-    REQUIRE_THROWS_AS( ui.resolve(sid, DefaultObjectId), ResolveNameError& );
+    REQUIRE_THROWS_AS( ui.resolve(sid), uniset3::ORepFailed );
+    REQUIRE_THROWS_AS( ui.resolve(sid, 10), uniset3::ResolveNameError );
+    REQUIRE_THROWS_AS( ui.resolve(sid, DefaultObjectId), ResolveNameError );
 
     umessage::SensorMessage sm = makeSensorMessage(sid, 10, uniset3::AI);
     sm.mutable_header()->set_consumer(testOID);
     umessage::TransportMessage tm = uniset3::to_transport<umessage::SensorMessage>(sm);
 
-    REQUIRE_THROWS_AS( ui.send(tm), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.send(tm, -20), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.send(tm, DefaultObjectId), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.getTimeChange(sid, -20), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.getTimeChange(sid, DefaultObjectId), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.getTimeChange(sid, conf->getLocalNode()), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.sendText(testOID, "hello", 1), uniset3::Exception& );
-    REQUIRE_THROWS_AS( ui.sendText(testOID, "hello", 1, -20), uniset3::Exception& );
+    REQUIRE_THROWS_AS( ui.send(tm), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.send(tm, -20), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.send(tm, DefaultObjectId), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.getTimeChange(sid, -20), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.getTimeChange(sid, DefaultObjectId), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.getTimeChange(sid, conf->getLocalNode()), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.sendText(testOID, "hello", 1), uniset3::Exception );
+    REQUIRE_THROWS_AS( ui.sendText(testOID, "hello", 1, -20), uniset3::Exception );
 
     CHECK_FALSE( ui.isExists(sid) );
     CHECK_FALSE( ui.isExists(sid, DefaultObjectId) );

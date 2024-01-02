@@ -31,7 +31,7 @@ TEST_CASE("HttpResolver: resolve", "[urepository][ui]")
     InitTest();
 
     REQUIRE_NOTHROW( ui->resolve(TestProc, Node1) );
-    REQUIRE_THROWS_AS( ui->resolve(DefaultObjectId, Node1), uniset3::ResolveNameError& );
+    REQUIRE_THROWS_AS( ui->resolve(DefaultObjectId, Node1), uniset3::ResolveNameError );
     REQUIRE( ui->isExists(TestProc, Node1) );
 }
 // -----------------------------------------------------------------------------

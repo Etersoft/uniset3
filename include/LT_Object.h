@@ -146,6 +146,7 @@ namespace uniset3
                     curTick(cnt - 1)
                 {
                     tmr.setTiming(timeMS);
+                    curTimeMS = timeMS;
                 };
 
                 inline void reset()
@@ -173,7 +174,10 @@ namespace uniset3
                 PassiveTimer tmr;
             };
 
-            class Timer_eq: public std::unary_function<TimerInfo, bool>
+            class Timer_eq
+#if __cplusplus < 201103L
+                : public std::unary_function<TimerInfo, bool>
+#endif
             {
                 public:
                     Timer_eq(uniset3::TimerId t): tid(t) {}

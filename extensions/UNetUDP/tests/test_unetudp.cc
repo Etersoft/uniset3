@@ -457,10 +457,10 @@ TEST_CASE("[UNetUDP]: perf test", "[unetudp][zero][perf]")
     pack.setNum(1);
 
     for( size_t i = 0; i < uniset3::UniSetUDP::MaxACount; i++ )
-    {
         pack.addAData(i, i);
+
+    for( size_t i = 0; i < uniset3::UniSetUDP::MaxDCount; i++ )
         pack.addDData(i, true);
-    }
 
     UniSetUDP::UDPMessage pack2;
     const std::string s = pack.serializeAsString();

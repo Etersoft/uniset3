@@ -20,8 +20,8 @@ TEST_CASE("UniXML", "[unixml][basic]" )
 
     SECTION( "Bad file" )
     {
-        REQUIRE_THROWS_AS( UniXML("unknown.xml"), uniset3::NameNotFound& );
-        REQUIRE_THROWS_AS( UniXML("tests_unixml_badfile.xml"), uniset3::Exception& );
+        REQUIRE_THROWS_AS( UniXML("unknown.xml"), uniset3::NameNotFound );
+        REQUIRE_THROWS_AS( UniXML("tests_unixml_badfile.xml"), uniset3::Exception );
     }
 
     UniXML uxml("tests_unixml.xml");
@@ -234,6 +234,116 @@ TEST_CASE("UniXML createFromText", "[unixml][createFromText]" )
     CHECK_FALSE( uxml.isOpen() );
 
     const string badtext = "<?xml version=";
-    REQUIRE_THROWS_AS(uxml.createFromText(badtext), uniset3::SystemError& );
+    REQUIRE_THROWS_AS(uxml.createFromText(badtext), uniset3::SystemError );
+}
+// -----------------------------------------------------------------------------
+TEST_CASE("UniXML include", "[unixml][XInclude]")
+{
+
+    SECTION( "wrong xi:include" )
+    {
+        REQUIRE_THROWS_AS( UniXML("tests_unixml_badinclude.xml"), uniset3::SystemError );
+
+        UniXML uxml;
+        CHECK_FALSE( uxml.isOpen() );
+
+        const string text = \
+                            "<?xml version=\"1.0\" encoding=\"utf-8\"?> \
+                            <TestConf xmlns:xi=\"http://www.w3.org/2001/XInclude\"> \
+                            <UserData/> \
+                            <ObjectsMap idfromfile=\"1\"> \
+                                <sensors name=\"Sensors\"> \
+                                    <xi:include href=\"tests_unixml_nonExist.xml\" xpointer=\"xpointer(//item)\"/> \
+                                </sensors> \
+                            </ObjectsMap> \
+                            </TestConf>";
+
+        REQUIRE_THROWS_AS( uxml.createFromText(text), uniset3::SystemError );
+    }
+
+    SECTION( "correct xi:include" )
+    {
+        UniXML uxml("tests_unixml_xinclude.xml");
+        CHECK( uxml.isOpen() );
+
+        xmlNode* cnode = uxml.findNode(uxml.getFirstNode(), "sensors");
+        CHECK( cnode != NULL );
+
+        UniXML::iterator it(cnode);
+
+        REQUIRE( it.goChildren() == true );
+
+        REQUIRE( it.findName("item", "DumpSensor8_S") == true );
+
+        REQUIRE(it.getProp("name") == "DumpSensor8_S");
+        it++;
+        REQUIRE(it.getProp("name") == "MB1_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "MB2_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "MB3_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "IOTestMode_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "imitator_performance1");
+        it++;
+        REQUIRE(it.getProp("name") == "performance1");
+        it++;
+        REQUIRE(it.getProp("name") == "Message1");
+        it++;
+        REQUIRE(it.getProp("name") == "MB1_Mode_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "Input50_S");
+        it++;
+        REQUIRE(it.getProp("name") == "Input51_S");
+        it++;
+        REQUIRE(it.getProp("name") == "Input52_S");
+        it++;
+        REQUIRE(it.getProp("name") == "Input53_S");
+        it++;
+        REQUIRE(it.getProp("name") == "AI64_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "D65_S");
+        it++;
+    }
+
+    SECTION( "from text correct xi:include" )
+    {
+        UniXML uxml;
+        CHECK_FALSE( uxml.isOpen() );
+
+        const string text = \
+                            "<?xml version=\"1.0\" encoding=\"utf-8\"?> \
+                            <TestConf xmlns:xi=\"http://www.w3.org/2001/XInclude\"> \
+                            <UserData/> \
+                            <ObjectsMap idfromfile=\"1\"> \
+                                <sensors name=\"Sensors\"> \
+                                    <xi:include href=\"tests_unixml_extpart1.xml\" xpointer=\"xpointer(//item)\"/> \
+                                </sensors> \
+                            </ObjectsMap> \
+                            </TestConf>";
+
+        REQUIRE_NOTHROW(uxml.createFromText(text));
+        CHECK( uxml.isOpen() );
+
+        xmlNode* cnode = uxml.findNode(uxml.getFirstNode(), "sensors");
+        CHECK( cnode != NULL );
+
+        UniXML::iterator it(cnode);
+
+        REQUIRE( it.goChildren() == true );
+
+        REQUIRE(it.getProp("name") == "MB1_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "MB2_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "MB3_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "IOTestMode_AS");
+        it++;
+        REQUIRE(it.getProp("name") == "imitator_performance1");
+        it++;
+        REQUIRE(it.getProp("name") == "performance1");
+    }
 }
 // -----------------------------------------------------------------------------

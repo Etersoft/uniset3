@@ -192,15 +192,6 @@ namespace uniset3
     uniset3::Timespec to_uniset_timespec(struct timespec ts);
     bool equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept;
 
-    inline bool operator==( const struct timespec& r1,  const struct timespec& r2 )
-    {
-        return ( r1.tv_sec == r2.tv_sec && r1.tv_nsec == r2.tv_nsec );
-    }
-
-    inline bool operator!=( const struct timespec& r1,  const struct timespec& r2 )
-    {
-        return !(operator==(r1, r2));
-    }
 
     /*! Разбивка строки по указанному символу */
     IDList split_id(const std::string& str, char sep = ',');
@@ -393,4 +384,12 @@ namespace uniset3
     // -----------------------------------------------------------------------------------------
 } // end of namespace uniset3
 // -----------------------------------------------------------------------------------------
+inline bool operator==(const struct timespec& r1, const struct timespec& r2)
+{
+    return (r1.tv_sec == r2.tv_sec && r1.tv_nsec == r2.tv_nsec);
+}
+inline bool operator!=(const struct timespec& r1, const struct timespec& r2)
+{
+    return !(operator==(r1, r2));
+}
 #endif
