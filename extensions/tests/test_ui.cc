@@ -51,14 +51,14 @@ TEST_CASE("UInterface", "[UInterface]")
 
     SECTION( "GET/SET" )
     {
-        REQUIRE_THROWS_AS( ui->getValue(DefaultObjectId), uniset3::ORepFailed& );
+        REQUIRE_THROWS_AS( ui->getValue(DefaultObjectId), uniset3::ORepFailed );
         REQUIRE_NOTHROW( ui->setValue(sid, 1) );
         REQUIRE( ui->getValue(sid) == 1 );
         REQUIRE_NOTHROW( ui->setValue(sid, 100) );
         REQUIRE( ui->getValue(sid) == 100 ); // хоть это и дискретный датчик.. функция-то универсальная..
 
-        REQUIRE_THROWS_AS( ui->getValue(sid, DefaultObjectId), uniset3::Exception& );
-        REQUIRE_THROWS_AS( ui->getValue(sid, 100), uniset3::Exception& );
+        REQUIRE_THROWS_AS( ui->getValue(sid, DefaultObjectId), uniset3::Exception );
+        REQUIRE_THROWS_AS( ui->getValue(sid, 100), uniset3::Exception );
 
         REQUIRE_NOTHROW( ui->setValue(aid, 10) );
         REQUIRE( ui->getValue(aid) == 10 );
@@ -71,16 +71,16 @@ TEST_CASE("UInterface", "[UInterface]")
 
         REQUIRE_NOTHROW( ui->setValue(si, 20, DefaultObjectId) );
         REQUIRE( ui->getValue(aid) == 20 );
-        REQUIRE_THROWS_AS( ui->getValue(aid, -2), uniset3::Exception& );
+        REQUIRE_THROWS_AS( ui->getValue(aid, -2), uniset3::Exception );
 
         si.set_id(sid);
         REQUIRE_NOTHROW( ui->setValue(si, 15, DefaultObjectId) );
         REQUIRE( ui->getValue(sid) == 15 );
 
         si.set_node(-2);
-        REQUIRE_THROWS_AS( ui->setValue(si, 20, DefaultObjectId), uniset3::Exception& );
+        REQUIRE_THROWS_AS( ui->setValue(si, 20, DefaultObjectId), uniset3::Exception );
 
-        REQUIRE_THROWS_AS( ui->getTimeChange(sid, DefaultObjectId), uniset3::ORepFailed& );
+        REQUIRE_THROWS_AS( ui->getTimeChange(sid, DefaultObjectId), uniset3::ORepFailed );
         REQUIRE_NOTHROW( ui->getTimeChange(sid, conf->getLocalNode()) );
 
         REQUIRE( ui->getIOType(sid, conf->getLocalNode()) == uniset3::DI );
@@ -90,11 +90,11 @@ TEST_CASE("UInterface", "[UInterface]")
     SECTION( "resolve" )
     {
         REQUIRE_NOTHROW( ui->resolve(sid) );
-        REQUIRE_THROWS_AS( ui->resolve(sid, 10), uniset3::ResolveNameError& );
-        REQUIRE_THROWS_AS( ui->resolve(sid, DefaultObjectId), uniset3::ResolveNameError& );
+        REQUIRE_THROWS_AS( ui->resolve(sid, 10), uniset3::ResolveNameError );
+        REQUIRE_THROWS_AS( ui->resolve(sid, DefaultObjectId), uniset3::ResolveNameError );
         REQUIRE_NOTHROW( ui->resolveORefOnly(sid, conf->getLocalNode()) );
-        REQUIRE_THROWS_AS( ui->resolveORefOnly(sid, 10), uniset3::ResolveNameError& );
-        REQUIRE_THROWS_AS( ui->resolveORefOnly(sid, DefaultObjectId), uniset3::ResolveNameError& );
+        REQUIRE_THROWS_AS( ui->resolveORefOnly(sid, 10), uniset3::ResolveNameError );
+        REQUIRE_THROWS_AS( ui->resolveORefOnly(sid, DefaultObjectId), uniset3::ResolveNameError );
     }
 
     SECTION( "send" )
@@ -167,17 +167,17 @@ TEST_CASE("UInterface", "[UInterface]")
 
     SECTION( "ask" )
     {
-        REQUIRE_THROWS_AS( ui->askSensor(sid, uniset3::UIONotify), uniset3::IOBadParam& );
+        REQUIRE_THROWS_AS( ui->askSensor(sid, uniset3::UIONotify), uniset3::IOBadParam );
         REQUIRE_NOTHROW( ui->askSensor(sid, uniset3::UIONotify, testOID) );
         REQUIRE_NOTHROW( ui->askSensor(aid, uniset3::UIONotify, testOID) );
         REQUIRE_NOTHROW( ui->askSensor(aid, uniset3::UIODontNotify, testOID) );
         REQUIRE_NOTHROW( ui->askSensor(sid, uniset3::UIODontNotify, testOID) );
 
-        REQUIRE_THROWS_AS( ui->askSensor(-20, uniset3::UIONotify), uniset3::Exception& );
+        REQUIRE_THROWS_AS( ui->askSensor(-20, uniset3::UIONotify), uniset3::Exception );
 
         REQUIRE_NOTHROW( ui->askRemoteSensor(sid, uniset3::UIONotify, conf->getLocalNode(), testOID) );
         REQUIRE_NOTHROW( ui->askRemoteSensor(aid, uniset3::UIONotify, conf->getLocalNode(), testOID) );
-        REQUIRE_THROWS_AS( ui->askRemoteSensor(sid, uniset3::UIONotify, -3, testOID), uniset3::Exception& );
+        REQUIRE_THROWS_AS( ui->askRemoteSensor(sid, uniset3::UIONotify, -3, testOID), uniset3::Exception );
 
         uniset3::IDList lst;
         lst.add(aid);

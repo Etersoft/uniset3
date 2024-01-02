@@ -168,7 +168,7 @@ void BackendOpenTSDB::help_print( int argc, const char* const* argv )
     cout << "             add-levels ...  " << endl;
     cout << "             del-levels ...  " << endl;
     cout << "             set-levels ...  " << endl;
-    cout << "             logfile filanme " << endl;
+    cout << "             logfile filename" << endl;
     cout << "             no-debug " << endl;
     cout << endl;
     cout << " LogServer: " << endl;
@@ -186,20 +186,18 @@ std::shared_ptr<BackendOpenTSDB> BackendOpenTSDB::init_opendtsdb( int argc,
     auto conf = uniset_conf();
 
     string name = conf->getArgParam("--" + prefix + "-name", "BackendOpenTSDB");
+    ObjectId ID = conf->getDBServer();
 
-    if( name.empty() )
+    if( !name.empty() )
     {
-        dcrit << "(BackendOpenTSDB): Unknown name. Usage: --" <<  prefix << "-name" << endl;
-        return 0;
-    }
+        ID = conf->getServiceID(name);
 
-    ObjectId ID = conf->getObjectID(name);
-
-    if( ID == uniset3::DefaultObjectId )
-    {
-        dcrit << "(BackendOpenTSDB): Not found ID for '" << name
-              << " in '" << conf->getObjectsSection() << "' section" << endl;
-        return 0;
+        if( ID == uniset3::DefaultObjectId )
+        {
+            dcrit << "(BackendOpenTSDB): Not found ServiceID for '" << name
+                  << " in '" << conf->getServicesSection() << "' section" << endl;
+            return nullptr;
+        }
     }
 
     string confname = conf->getArgParam("--" + prefix + "-confnode", name);

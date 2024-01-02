@@ -40,10 +40,15 @@ namespace uniset3
 {
     typedef std::vector< std::pair<const std::string, const std::string> > UniXMLPropList;
 
-    class UniXML_iterator:
-        public std::iterator<std::bidirectional_iterator_tag, xmlNode, ptrdiff_t, xmlNode*, xmlNode&>
+    class UniXML_iterator
     {
         public:
+            using iterator_category = std::bidirectional_iterator_tag;
+            using value_type = xmlNode;
+            using difference_type = ptrdiff_t;
+            using pointer = const value_type*;
+            using reference = const value_type&;
+
             UniXML_iterator(xmlNode* node) noexcept:
                 curNode(node)
             {}
@@ -52,6 +57,7 @@ namespace uniset3
             std::string getProp2( const std::string& name, const std::string& defval = "" ) const noexcept;
             std::string getProp( const std::string& name ) const noexcept;
             int getIntProp( const std::string& name ) const noexcept;
+            /// if value if not positive ( <= 0 ), returns def
             int getPIntProp( const std::string& name, int def ) const noexcept;
             void setProp( const std::string& name, const std::string& text ) noexcept;
 
@@ -149,6 +155,8 @@ namespace uniset3
             static std::string getProp2(const xmlNode* node, const std::string& name, const std::string& defval = "" ) noexcept;
 
             static int getIntProp(const xmlNode* node, const std::string& name) noexcept;
+
+            /// if value if not positive ( <= 0 ), returns def
             static int getPIntProp(const xmlNode* node, const std::string& name, int def) noexcept;
 
             // Установить свойство name указанного узла node

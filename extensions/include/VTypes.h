@@ -286,6 +286,15 @@ namespace uniset3
                 {
                     return raw;
                 }
+                // ------------------------------------------
+                bool operator==(const int& a) const
+                {
+                    return (int)raw == a;
+                }
+                bool operator==(const long& a) const
+                {
+                    return (long)raw == a;
+                }
 
                 uint16_t raw;
         };
@@ -325,6 +334,15 @@ namespace uniset3
                 {
                     return raw;
                 }
+                // ------------------------------------------
+                bool operator== (const int& a) const
+                {
+                    return (int)raw == a;
+                }
+                bool operator== (const long& a) const
+                {
+                    return (long)raw == a;
+                }
 
                 int16_t raw;
         };
@@ -348,7 +366,7 @@ namespace uniset3
                     memset(raw.v, 0, sizeof(raw.v));
                 }
 
-                I2( int32_t v ) noexcept
+                I2( const int32_t& v ) noexcept
                 {
                     raw.val = v;
                 }
@@ -388,7 +406,7 @@ namespace uniset3
                     raw_backorder.val = 0;
                 }
 
-                I2r( const int32_t v ) noexcept: I2(v)
+                I2r( const int32_t& v ) noexcept: I2(v)
                 {
                     raw_backorder = raw;
                     std::swap(raw_backorder.v[0], raw_backorder.v[1]);
@@ -425,7 +443,7 @@ namespace uniset3
                     memset(raw.v, 0, sizeof(raw.v));
                 }
 
-                U2( uint32_t v ) noexcept
+                U2( const uint32_t& v ) noexcept
                 {
                     raw.val = v;
                 }
@@ -475,7 +493,7 @@ namespace uniset3
                     raw_backorder.val = 0;
                 }
 
-                U2r( int32_t v ) noexcept: U2(v)
+                U2r( const uint32_t& v ) noexcept: U2(v)
                 {
                     raw_backorder = raw;
                     std::swap(raw_backorder.v[0], raw_backorder.v[1]);

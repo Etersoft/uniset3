@@ -40,25 +40,24 @@ jobs:
       - uses: actions/checkout@v2
       - name: configure
         run: |
+            export CCACHE_ENABLE=yes
+            export GCC_USE_CCACHE=1
             export CXXFLAGS='-pipe -O2 -pedantic -Wall'
             # due broken comedi
             export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
             autoreconf -fiv
             ./configure --disable-netdata --disable-python
-
       - name: make
-        run: make
-
-      - name: Show summary of ccache configuration and statistics counters
-        run: ccache --show-stats
-
+        run: |
+            export GCC_USE_CCACHE=1
+            export ALLOW_ROOT_USER=1
+            jmake
       - name: testsuite
         run: |
             cd testsuite;
             make check
-
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: testsuite-artifacts

@@ -19,27 +19,28 @@
 // ---------------------------------------------------------------------------
 #include <string>
 // ---------------------------------------------------------------------------
-namespace uniset3 {
-// ---------------------------------------------------------------------------
-/*!
- * RunLock неявно использует pid процесса который вызывает lock();
- */
-class RunLock
+namespace uniset3
 {
-    public:
-        RunLock( const std::string& lockfile );
-		~RunLock();
-		
-        bool isLocked() const;
-        bool lock() const;
-        bool unlock() const;
-        bool isLockOwner() const;
+    // ---------------------------------------------------------------------------
+    /*!
+     * RunLock неявно использует pid процесса который вызывает lock();
+     */
+    class RunLock
+    {
+        public:
+            RunLock( const std::string& lockfile );
+            ~RunLock();
 
-    protected:
-        const std::string lockfile;
-	
-};
-// ----------------------------------------------------------------------------
+            bool isLocked() const;
+            bool lock() const;
+            bool unlock() const;
+            bool isLockOwner() const;
+
+        protected:
+            const std::string lockfile;
+
+    };
+    // ----------------------------------------------------------------------------
 } // end of namespace uniset3
 // ----------------------------------------------------------------------------
 #endif
