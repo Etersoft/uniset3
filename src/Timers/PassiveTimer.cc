@@ -51,7 +51,7 @@ namespace uniset3
         if( t_msec == 0 )
             return true;
 
-        return ( std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t_start).count() >= t_inner_msec.count() );
+        return ( std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t_start).count() >= t_inner_msec.count() );
     }
 
     //------------------------------------------------------------------------------
@@ -72,13 +72,13 @@ namespace uniset3
     // Запустить таймер
     void PassiveTimer::reset(void) noexcept
     {
-        t_start = std::chrono::high_resolution_clock::now();
+        t_start = std::chrono::steady_clock::now();
     }
     //------------------------------------------------------------------------------
     // получить текущее значение таймера
     timeout_t PassiveTimer::getCurrent() const noexcept
     {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t_start).count();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - t_start).count();
     }
     //------------------------------------------------------------------------------
     timeout_t PassiveTimer::getInterval() const noexcept

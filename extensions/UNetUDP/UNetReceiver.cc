@@ -303,13 +303,11 @@ void UNetReceiver::statisticsEvent(ev::periodic& tm, int revents) noexcept
         return;
     }
 
-    statRecvPerSec = recvCount;
-    statUpPerSec = upCount;
-
-    //  unetlog9 << myname << "(statisctics):"
-    //           << " recvCount=" << recvCount << "[per sec]"
-    //           << " upCount=" << upCount << "[per sec]"
-    //           << endl;
+    t_end = chrono::steady_clock::now();
+    float sec = chrono::duration_cast<chrono::duration<float>>(t_end - t_stats).count();
+    t_stats = t_end;
+    statRecvPerSec = recvCount / sec;
+    statUpPerSec = upCount / sec;
 
     recvCount = 0;
     upCount = 0;
@@ -485,6 +483,7 @@ void UNetReceiver::readEvent( ev::io& watcher ) noexcept
         return;
 
     bool ok = false;
+    t_start = chrono::steady_clock::now();
 
     try
     {
@@ -510,6 +509,8 @@ void UNetReceiver::readEvent( ev::io& watcher ) noexcept
         std::lock_guard<std::mutex> l(tmMutex);
         ptRecvTimeout.reset();
     }
+    t_end = chrono::steady_clock::now();
+//    stats.recvProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
 }
 // -----------------------------------------------------------------------------
 void UNetReceiver::checkConnection()
@@ -552,7 +553,12 @@ void UNetReceiver::updateEvent( ev::periodic& tm, int revents ) noexcept
     // взводим таймер опять..
     tm.again();
 
-    // собственно обработка события
+    // смотрим есть ли связь..
+//    bool recvOk = checkConnection();
+
+    // обновление данных в SM
+    t_start = chrono::steady_clock::now();
+
     try
     {
         update();
@@ -562,8 +568,8 @@ void UNetReceiver::updateEvent( ev::periodic& tm, int revents ) noexcept
         unetcrit << myname << "(updateEvent): " << ex.what() << std::endl;
     }
 
-    // смотрим есть ли связь..
-    checkConnection();
+    t_end = chrono::steady_clock::now();
+//    stats.upProcessingTime_microsec = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count();
 
     if( sidRespond != DefaultObjectId )
     {

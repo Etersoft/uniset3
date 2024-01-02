@@ -210,6 +210,10 @@ namespace uniset3
             size_t recvCount = { 0 };
             size_t upCount = { 0 };
 
+            std::chrono::steady_clock::time_point t_start;
+            std::chrono::steady_clock::time_point t_end;
+            std::chrono::steady_clock::time_point t_stats;
+
             // текущая статистика
             size_t statRecvPerSec = { 0 }; /*!< количество принимаемых пакетов в секунду */
             size_t statUpPerSec = { 0 };    /*!< количество обработанных пакетов в секунду */
