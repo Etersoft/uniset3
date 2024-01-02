@@ -23,6 +23,7 @@
 #include <sstream>
 #include <time.h>
 #include "PassiveTimer.h"
+#include <iostream>
 // ------------------------------------------------------------------------------------------
 using namespace std;
 // ------------------------------------------------------------------------------------------
@@ -66,10 +67,12 @@ namespace uniset3
                     cv_working.wait(lk);
             }
             else
-                cv_working.wait_for(lk, std::chrono::milliseconds(t_msec), [&]()
             {
-                return (terminated == true);
-            } );
+                cv_working.wait_until(lk, std::chrono::steady_clock::now() + std::chrono::milliseconds(t_msec), [&]()
+                {
+                    return (terminated == true);
+                });
+            }
 
             terminated = true;
             return true;

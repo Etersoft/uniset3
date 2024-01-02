@@ -45,11 +45,11 @@ namespace uniset3
 
         thr = unisetstd::make_unique<std::thread>( [&] { CommonEventLoop::defaultLoop(); } );
 
-        std::unique_lock<std::mutex> lock2(looprunOK_mutex);
-        looprunOK_event.wait_for(lock2, std::chrono::milliseconds(waitTimeout_msec), [&]()
-        {
-            return (isrunning == true);
-        } );
+		std::unique_lock<std::mutex> lock2(looprunOK_mutex);
+		looprunOK_event.wait_until(lock2, std::chrono::steady_clock::now() + std::chrono::milliseconds(waitTimeout_msec), [&]()
+		{
+			return (isrunning == true);
+		} );
 
         return isrunning;
     }
@@ -69,11 +69,11 @@ namespace uniset3
 
         evprep.send(); // будим default loop
 
-        // ожидаем обработки evprepare (которая будет в defaultLoop)
-        prep_event.wait_for(locker, std::chrono::milliseconds(waitTimeout_msec), [ = ]()
-        {
-            return ( prep_notify == true );
-        } );
+		// ожидаем обработки evprepare (которая будет в defaultLoop)
+		prep_event.wait_until(locker, std::chrono::steady_clock::now() + std::chrono::milliseconds(waitTimeout_msec), [ = ]()
+		{
+			return ( prep_notify == true );
+		} );
 
         // сбрасываем флаг
         prep_notify = false;
