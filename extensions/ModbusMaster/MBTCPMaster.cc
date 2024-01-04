@@ -217,7 +217,7 @@ std::shared_ptr<MBTCPMaster> MBTCPMaster::init_mbmaster(int argc, const char* co
 
     if( name.empty() )
     {
-        dcrit << "(MBTCPMaster): Не задан name'" << endl;
+        cerr << "(MBTCPMaster): Не задан name'" << endl;
         return 0;
     }
 
