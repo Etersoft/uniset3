@@ -75,7 +75,7 @@ jobs:
             # due broken comedi
             export CXXFLAGS="$CXXFLAGS -Wl,--unresolved-symbols=ignore-in-shared-libs"
             autoreconf -fiv
-            ./configure --disable-netdata --disable-python --disable-pgsql --disable-opcua --disable-tests
+            ./configure --disable-netdata --disable-python --disable-pgsql --disable-clickhouse --disable-opcua --disable-tests
             make
 
       - name: Show summary of ccache configuration and statistics counters
