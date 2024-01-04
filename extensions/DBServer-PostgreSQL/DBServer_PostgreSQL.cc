@@ -294,6 +294,10 @@ void DBServer_PostgreSQL::sensorInfo( const uniset3::umessage::SensorMessage* si
     {
         dbcrit << myname << "(insert_main_history): " << ex.what() << endl;
     }
+    catch( ... )
+    {
+        dbcrit << myname << "(insert_main_history): catch ..." << endl;
+    }
 }
 //--------------------------------------------------------------------------------------------
 void DBServer_PostgreSQL::initDBServer()

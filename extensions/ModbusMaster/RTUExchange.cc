@@ -281,19 +281,24 @@ bool RTUExchange::poll()
 
         d->prev_numreply.store(d->numreply);
 
-
-        dlog3 << myname << "(poll): ask addr=" << ModbusRTU::addr2str(d->mbaddr)
-              << " regs=" << d->pollmap.size() << endl;
+        mblog3 << myname << "(poll): ask addr=" << ModbusRTU::addr2str(d->mbaddr)
+               << " regs=" << d->pollmap.size() << endl;
 
         for( auto&& m : d->pollmap )
         {
-            if( m.first != 0 && (ncycle % m.first) != 0 )
+            if( m.first > 1 && (ncycle % m.first) != 0 )
                 continue;
 
-            auto rmap = m.second;
+            auto&& rmap = m.second;
 
-            for( auto&& it = rmap->begin(); it != rmap->end(); ++it )
+            for( auto it = rmap->begin(); it != rmap->end(); ++it )
             {
+                if( !isProcActive() )
+                    return false;
+
+                if( exchangeMode == MBConfig::emSkipExchange )
+                    continue;
+
                 try
                 {
                     if( d->dtype == MBConfig::dtRTU || d->dtype == MBConfig::dtMTR )
@@ -310,13 +315,10 @@ bool RTUExchange::poll()
                 }
                 catch( ModbusRTU::mbException& ex )
                 {
-                    if( mblog->debugging(Debug::LEVEL3) )
-                    {
-                        mblog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
-                               << " reg=" << ModbusRTU::dat2str(it->second->mbreg)
-                               << " for sensors: " << to_string(it->second->slst)
-                               << endl << " err: " << ex << endl;
-                    }
+                    mblog3 << myname << "(poll): FAILED ask addr=" << ModbusRTU::addr2str(d->mbaddr)
+                           << " reg=" << ModbusRTU::dat2str(it->second->mbreg)
+                           << " for sensors: " << to_string(it->second->slst)
+                           << endl << " err: " << ex << endl;
                 }
 
                 if( it == rmap->end() )

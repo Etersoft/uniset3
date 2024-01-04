@@ -21,7 +21,7 @@ static struct option longopts[] =
 static void print_help()
 {
     printf("-h       - this message\n");
-    printf("-v       - Print all umessage to stdout\n");
+    printf("-v       - Print all messages to stdout\n");
     printf("-i addr  - LogServer ip or hostname. Default: localhost.\n");
     printf("-p port  - LogServer port. Default: 3333.\n");
 }

@@ -706,7 +706,7 @@ std::shared_ptr<MBTCPMultiMaster> MBTCPMultiMaster::init_mbmaster( int argc, con
 
     if( name.empty() )
     {
-        dcrit << "(MBTCPMultiMaster): Не задан name'" << endl;
+        cerr << "(MBTCPMultiMaster): Не задан name'" << endl;
         return 0;
     }
 
