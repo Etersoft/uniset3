@@ -13,6 +13,7 @@
 %def_enable logdb
 %def_enable opentsdb
 %def_enable uwebsocket
+%def_enable opcua
 
 %ifarch %ix86
 %def_enable com485f
@@ -68,6 +69,11 @@ BuildRequires: libpqxx-devel >= 7.6.0
 BuildRequires: libmosquitto-devel
 %endif
 
+%if_enabled opcua
+BuildRequires: libopen62541-devel libopen62541pp-devel >= 0.3.0-alt1
+%endif
+
+
 %if_enabled netdata
 BuildRequires: netdata
 %endif
@@ -82,10 +88,6 @@ BuildRequires(pre): rpm-build-python3
 
 %if_enabled docs
 BuildRequires: doxygen graphviz ImageMagick-tools
-%endif
-
-%if_enabled tests
-BuildRequires: catch
 %endif
 
 #set_verify_elf_method textrel=strict,rpath=strict,unresolved=strict
@@ -331,6 +333,24 @@ Requires: %name-extension-common-devel = %version-%release
 Libraries needed to develop for uniset MQTT extension
 %endif
 
+%if_enabled opcua
+%package extension-opcua
+Group: Development/C++
+Summary: OPC UA support for %{name}
+Requires: %name-extension-common = %version-%release
+
+%description extension-opcua
+OPC UA support for %{name}
+
+%package extension-opcua-devel
+Group: Development/C++
+Summary: Libraries needed to develop for uniset OPC UA extension
+Requires: %name-extension-common-devel = %version-%release
+
+%description extension-opcua-devel
+Libraries needed to develop for uniset OPC UA extension
+%endif
+
 %if_enabled api
 %package extension-api-gateway
 Group: Development/C++
@@ -354,7 +374,10 @@ Libraries needed to develop for uniset HTTP API Gateway extension
 
 %build
 %autoreconf
-%configure %{subst_enable docs} %{subst_enable mysql} %{subst_enable sqlite} %{subst_enable pgsql} %{subst_enable python} %{subst_enable io} %{subst_enable logicproc} %{subst_enable tests} %{subst_enable mqtt} %{subst_enable api} %{subst_enable netdata} %{subst_enable logdb} %{subst_enable com485f} %{subst_enable opentsdb} %{subst_enable uwebsocket}
+%if "%__gcc_version_major" < "12"
+%add_optflags -std=c++17
+%endif
+%configure %{subst_enable docs} %{subst_enable mysql} %{subst_enable sqlite} %{subst_enable pgsql} %{subst_enable python} %{subst_enable io} %{subst_enable logicproc} %{subst_enable tests} %{subst_enable mqtt} %{subst_enable api} %{subst_enable netdata} %{subst_enable logdb} %{subst_enable com485f} %{subst_enable opentsdb} %{subst_enable uwebsocket} %{subst_enable opcua}
 %make_build
 
 %install
@@ -517,6 +540,17 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_pkgconfigdir/libUniSet3MQTTPublisher*.pc
 %_libdir/libUniSet3MQTTPublisher*.so
 %_includedir/%oname/extensions/mqtt/
+%endif
+
+%if_enabled opcua
+%files extension-opcua
+%_bindir/%oname-opcua*
+%_libdir/libUniSet3OPCUA*.so.*
+
+%files extension-opcua-devel
+%_pkgconfigdir/libUniSet3OPCUA*.pc
+%_libdir/libUniSet3OPCUA*.so
+%_includedir/%oname/extensions/opcua/
 %endif
 
 %if_enabled api

@@ -32,6 +32,7 @@
 #include <ostream>
 #include <chrono>
 #include <thread>
+#include <regex>
 
 #include "UniSetTypes.pb.h"
 #include "IOController.pb.h"
@@ -123,7 +124,7 @@ namespace uniset3
 
             IDList( const std::vector<std::string>& v );
 #if __cplusplus >= 201703L
-        IDList( const std::vector<std::string_view>& v );
+            IDList( const std::vector<std::string_view>& v );
 #endif
             IDList();
             ~IDList();
@@ -370,6 +371,7 @@ namespace uniset3
     // Проверка xml-узла на соответствие <...f_prop="f_val">,
     // если не задано f_val, то проверяется, что просто f_prop!=""
     bool check_filter( UniXML::iterator& it, const std::string& f_prop, const std::string& f_val = "" ) noexcept;
+    bool check_filter_re( UniXML::iterator& it, const std::string& f_prop, const std::regex& re ) noexcept;
 
     // RAII для флагов форматирования ostream..
     class ios_fmt_restorer

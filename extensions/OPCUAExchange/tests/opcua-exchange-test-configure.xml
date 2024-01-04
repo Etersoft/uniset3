@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UNISETPLC xmlns:xi="http://www.w3.org/2001/XInclude">
+	<UserData/>
+	<UniSet>
+		<NameService host="localhost" port="2809"/>
+		<LocalNode name="LocalhostNode"/>
+		<RootSection name="UNISET_PLC"/>
+		<CountOfNet name="1"/>
+		<RepeatCount name="3"/>
+		<RepeatTimeoutMS name="50"/>
+		<WatchDogTime name="0"/>
+		<PingNodeTime name="0"/>
+		<AutoStartUpTime name="1"/>
+		<DumpStateTime name="10"/>
+		<SleepTickMS name="500"/>
+		<UniSetDebug levels="" name="ulog"/>
+		<ConfDir name="./"/>
+		<DataDir name="./"/>
+		<BinDir name="./"/>
+		<LogDir name="./"/>
+		<DocDir name="./"/>
+		<LockDir name="./"/>
+		<LocalIOR name="1"/>
+		<Services></Services>
+	</UniSet>
+	<dlog name="dlog"/>
+	<settings>
+	    <SharedMemory name="SharedMemory" shmID="SharedMemory"/>
+	    <OPCUAExchange1 name="OPCUAExchange1" addr1="opc.tcp://localhost:4840" addr2="opc.tcp://localhost:4841" timeout="1000"
+			respond1_s="OPCUA1_Respond1_S" respond2_s="OPCUA1_Respond2_S" respond_s="OPCUA1_Respond_S" exchangeModeID="OPCUA1_Mode_AS"
+		/>
+  	</settings>
+	<ObjectsMap idfromfile="1">
+		<nodes port="2809">
+			<item id="3000" ip="127.0.0.1" name="LocalhostNode" textname="Локальный узел"/>
+		</nodes>
+		<sensors name="Sensors">
+			<item id="10" iotype="DI" name="OPCUA1_Respond_S" textname="Наличие связи с OPC UA Server1"/>
+			<item id="11" iotype="DI" name="OPCUA1_Respond1_S" textname="Наличие связи с OPC UA канал N1"/>
+			<item id="12" iotype="DI" name="OPCUA1_Respond2_S" textname="Наличие связи с OPC UA Канал N2"/>
+			<item id="13" iotype="AI" name="OPCUA1_Mode_AS" textname="Режим работы OPCUAExchange"/>
+
+			<item id="1000" opc="1" opcua_nodeid="Attr1" iotype="AI" name="Attr1_AS" textname="Тестовый датчик N1"/>
+			<item id="1001" opc="1" opcua_nodeid="Attr2" iotype="DI" name="Attr2_S" textname="Тестовый датчик N2"/>
+			<item id="1010" opc="1" opcua_nodeid="Attr3" iotype="AO" name="Attr3_C" textname="Тестовый выход N3"/>
+			<item id="1011" opc="1" opcua_nodeid="Attr4" iotype="DO" name="Attr4_C" textname="Тестовый выход N4"/>
+			<item id="1020" opc="1" opcua_nodeid="Attr5" ioignore="1" iotype="AI" name="Attr5_AS" textname="Тестовый датчик (игнор)"/>
+			<item id="1021" opc="1" opcua_nodeid="i=101" iotype="AI" name="I101_AS" textname="Тестовый датчик i101"/>
+			<!-- types -->
+			<item id="1022" opc="1" opcua_nodeid="i=1002" opcua_type="int16" iotype="AO" name="I1002_AS" textname="Тестовый датчик i1002 (int16)"/>
+			<item id="1023" opc="1" opcua_nodeid="i=1003" opcua_type="uint16" iotype="AO" name="I1003_AS" textname="Тестовый датчик i1003 (uint16)"/>
+			<item id="1024" opc="1" opcua_nodeid="i=1004" opcua_type="int64" iotype="AO" name="I1004_AS" textname="Тестовый датчик i1004 (int64)"/>
+			<item id="1025" opc="1" opcua_nodeid="i=1005" opcua_type="uint64" iotype="AO" name="I1005_AS" textname="Тестовый датчик i1005 (uint64)"/>
+			<item id="1026" opc="1" opcua_nodeid="i=1006" opcua_type="byte" iotype="AO" name="I1006_AS" textname="Тестовый датчик i1006 (byte)"/>
+			<!-- mask -->
+			<item id="1027" opc="1" opcua_nodeid="Attr6" opcua_mask="3" iotype="AI" name="Attr6_AS" textname="Тестовый датчик N6"/>
+			<item id="1028" opc="1" opcua_nodeid="Attr7" opcua_mask="3" iotype="AO" name="Attr7_C" textname="Тестовый выход N7"/>
+			<!-- float -->
+			<item id="1029" opc="1" opcua_nodeid="Float1" opcua_type="float" precision="2" iotype="AI" name="Float1_AS" textname="Тестовый датчик float N1"/>
+			<item id="1030" opc="1" opcua_nodeid="FloatOut1" opcua_type="float" precision="2" iotype="AO" name="Float1_C" textname="Тестовый выход float N1"/>
+		</sensors>
+		<thresholds/>
+		<controllers name="Controllers">
+			<item id="5000" name="SharedMemory"/>
+		</controllers>
+		<services name="Services">
+		</services>
+		<objects name="UniObjects">
+			<item id="6000" name="TestProc"/>
+			<item id="6004" name="OPCUAExchange1"/>
+		</objects>
+	</ObjectsMap>
+	<messages idfromfile="1" name="messages"/>
+</UNISETPLC>

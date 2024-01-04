@@ -1,4 +1,5 @@
-SUBDIRS=MQPerfTest PocoTest UHttpTest GRPCTest
+SUBDIRS=MQPerfTest PocoTest UHttpTest GRPCTest Open62541Test
+
 #TCPSocketTest
 if HAVE_TESTS
 ############################################################################

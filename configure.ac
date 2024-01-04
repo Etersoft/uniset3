@@ -186,6 +186,23 @@ fi
 AM_CONDITIONAL(DISABLE_OPENTSDB, test ${buildtsdb} = false)
 AM_CONDITIONAL(ENABLE_OPENTSDB, test ${buildtsdb} = true)
 
+#check opc-ua support
+AC_MSG_CHECKING([opc-ua support])
+buildopcua=true
+AC_ARG_ENABLE(opcua, AC_HELP_STRING([--disable-opcua], [disable OPC-UA support]),
+[ if test $enableval = yes; then buildopcua=true; else buildopcua=false; fi],[ buildopcua=true; ])
+
+if test ${buildopcua} = true; then
+	AC_MSG_RESULT([enabled])
+	PKG_CHECK_MODULES(OPEN62541PP, open62541pp)
+	PKG_CHECK_MODULES(OPEN62541, open62541)
+else
+	AC_MSG_RESULT([disabled])
+fi
+
+AM_CONDITIONAL(DISABLE_OPCUA, test ${buildopcua} = false)
+AM_CONDITIONAL(ENABLE_OPCUA, test ${buildopcua} = true)
+
 #check io support
 AC_MSG_CHECKING([io support])
 buildio=true
@@ -258,7 +275,6 @@ else
 fi
 
 AM_CONDITIONAL(HAVE_EXTENTIONS, test ${ext} = true)
-
 
 #check python support
 AC_MSG_CHECKING([python support])
@@ -432,6 +448,8 @@ if test ${buildtests} = true; then
 	AC_CONFIG_TESTDIR(extensions/URepository/tests)
 	AC_CONFIG_TESTDIR(extensions/HttpAPIGateway/tests)
 	AC_CONFIG_TESTDIR(extensions/UWebSocketGate/tests)
+	AC_CONFIG_TESTDIR(extensions/OPCUAServer/tests)
+	AC_CONFIG_TESTDIR(extensions/OPCUAExchange/tests)
 
 	TESTSUITE_DIR="\$(top_builddir)/testsuite"
 	AC_SUBST(TESTSUITE_DIR)
@@ -542,6 +560,7 @@ AC_CONFIG_FILES([Makefile
 				 tests/PocoTest/Makefile
 				 tests/UHttpTest/Makefile
 				 tests/TCPSocketTest/Makefile
+				 tests/Open62541Test/Makefile
 				 docs/Makefile
 				 docs/UniSetDox.cfg
 				 docs/UniSetDoxDevel.cfg
@@ -602,6 +621,12 @@ AC_CONFIG_FILES([Makefile
 				 extensions/UWebSocketGate/Makefile
 				 extensions/UWebSocketGate/tests/Makefile
 				 extensions/UWebSocketGate/libUniSet3UWebSocketGate.pc
+				 extensions/OPCUAServer/Makefile
+				 extensions/OPCUAServer/tests/Makefile
+				 extensions/OPCUAServer/libUniSet3OPCUAServer.pc
+				 extensions/OPCUAExchange/Makefile
+				 extensions/OPCUAExchange/tests/Makefile
+				 extensions/OPCUAExchange/libUniSet3OPCUAExchange.pc
 				 extensions/HttpAPIGateway/Makefile
 				 extensions/HttpAPIGateway/tests/Makefile
 				 extensions/HttpAPIGateway/libUniSet3HttpAPIGateway.pc
