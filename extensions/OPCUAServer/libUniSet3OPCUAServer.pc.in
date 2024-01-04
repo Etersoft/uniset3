@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libUniSet3OPCUAServer
+Description: Support library for UniSet3OPCUAServer
+Requires: libUniSet3Extensions open62541pp
+Version: @VERSION@
+Libs: -L${libdir} -lUniSet3OPCUAServer
+Cflags: -I${includedir}/@PACKAGE@/extensions/opcua
