@@ -13,6 +13,7 @@
 %def_enable logdb
 %def_enable opentsdb
 %def_enable uwebsocket
+%def_enable clickhouse
 %def_enable opcua
 
 %ifarch %ix86
@@ -63,6 +64,10 @@ BuildRequires: libsqlite3-devel
 
 %if_enabled pgsql
 BuildRequires: libpqxx-devel >= 7.6.0
+%endif
+
+%if_enabled clickhouse
+BuildRequires: libclickhouse-cpp-devel >= 2.4.0
 %endif
 
 %if_enabled mqtt
@@ -261,6 +266,25 @@ Libraries needed to develop for backend for OpenTSDB
 
 %endif
 
+%if_enabled clickhouse
+%package extension-clickhouse
+Group: Development/C++
+Summary: backend for ClickHouse
+Requires: %name-extension-common = %version-%release
+
+%description extension-clickhouse
+Backend for ClickHouse
+
+%package extension-clickhouse-devel
+Group: Development/Databases
+Summary: Libraries needed to develop for uniset ClickHouse backend
+Requires: %name-extension-common-devel = %version-%release
+
+%description extension-clickhouse-devel
+Libraries needed to develop for backend for ClickHouse
+
+%endif
+
 %if_enabled pgsql
 %package extension-pgsql
 Group: Development/Databases
@@ -377,7 +401,7 @@ Libraries needed to develop for uniset HTTP API Gateway extension
 %if "%__gcc_version_major" < "12"
 %add_optflags -std=c++17
 %endif
-%configure %{subst_enable docs} %{subst_enable mysql} %{subst_enable sqlite} %{subst_enable pgsql} %{subst_enable python} %{subst_enable io} %{subst_enable logicproc} %{subst_enable tests} %{subst_enable mqtt} %{subst_enable api} %{subst_enable netdata} %{subst_enable logdb} %{subst_enable com485f} %{subst_enable opentsdb} %{subst_enable uwebsocket} %{subst_enable opcua}
+%configure %{subst_enable docs} %{subst_enable mysql} %{subst_enable sqlite} %{subst_enable pgsql} %{subst_enable python} %{subst_enable io} %{subst_enable logicproc} %{subst_enable tests} %{subst_enable mqtt} %{subst_enable api} %{subst_enable netdata} %{subst_enable logdb} %{subst_enable com485f} %{subst_enable opentsdb} %{subst_enable clickhouse} %{subst_enable uwebsocket} %{subst_enable opcua}
 %make_build
 
 %install
@@ -459,6 +483,21 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_pkgconfigdir/libUniSet3BackendOpenTSDB.pc
 %_includedir/%oname/extensions/BackendOpenTSDB.h
 %_libdir/libUniSet3BackendOpenTSDB.so
+%endif
+
+%if_enabled clickhouse
+%files extension-clickhouse
+%_bindir/%oname-backend-clickhouse*
+%_bindir/%oname-clickhouse-admin
+%_bindir/%oname-clickhouse-helper
+%_libdir/libUniSet3BackendClickHouse.so.*
+%_datadir/%oname/clickhouse/
+%dir %_datadir/%oname/clickhouse/init.d
+
+%files extension-clickhouse-devel
+%_pkgconfigdir/libUniSet3BackendClickHouse.pc
+%_includedir/%oname/extensions/BackendClickHouse.h
+%_libdir/libUniSet3BackendClickHouse.so
 %endif
 
 %if_enabled pgsql
@@ -571,6 +610,9 @@ rm -f %buildroot%_docdir/%oname/html/*.md5
 %_includedir/%oname/extensions/*.*
 %if_enabled opentsdb
 %exclude %_includedir/%oname/extensions/BackendOpenTSDB.h
+%endif
+%if_enabled clickhouse
+%exclude %_includedir/%oname/extensions/BackendClickHouse.h
 %endif
 %_libdir/libUniSet3Extensions.so
 %_libdir/libUniSet3MB*.so

@@ -197,6 +197,8 @@ namespace uniset3
     uniset3::Timespec now_to_uniset_timespec(); /*!< получение текущего времени */
     uniset3::Timespec to_uniset_timespec(struct timespec ts);
     bool equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept;
+    int64_t timespec_to_nanosec( const struct timespec& ts );
+    int64_t uniset_timespec_to_nanosec( const uniset3::Timespec& ts );
 
     /*! Разбивка строки по указанному символу */
     IDList split_by_id( const std::string& str, char sep = ',' );

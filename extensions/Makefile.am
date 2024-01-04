@@ -12,6 +12,7 @@ SUBDIRS = lib include SharedMemory SharedMemory/tests IOControl IOControl/tests 
 	tests ModbusMaster/tests ModbusSlave/tests LogDB LogDB/tests \
 	Backend-OpenTSDB URepository URepository/tests UWebSocketGate UWebSocketGate/tests \
 	OPCUAServer OPCUAServer/tests OPCUAExchange OPCUAExchange/tests \
+	Backend-ClickHouse Backend-ClickHouse/tests \
 	HttpAPIGateway HttpAPIGateway/tests
 
 

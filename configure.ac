@@ -186,6 +186,29 @@ fi
 AM_CONDITIONAL(DISABLE_OPENTSDB, test ${buildtsdb} = false)
 AM_CONDITIONAL(ENABLE_OPENTSDB, test ${buildtsdb} = true)
 
+#check clickhouse support
+AC_MSG_CHECKING([clickhouse support])
+buildclickhouse=true
+AC_ARG_ENABLE(clickhouse, AC_HELP_STRING([--disable-clickhouse], [disable ClickHouse support]),
+[ if test $enableval = yes; then buildclickhouse=true; else buildclickhouse=false; fi],[ buildclickhouse=true; ])
+
+CLICKHOUSE_LIBS=
+CLICKHOUSE_CFLAGS=
+if test ${buildclickhouse} = true; then
+	AC_MSG_RESULT([enabled])
+	#CPPFLAGS="${CPPFLAGS} -I/usr/include/clickhouse-cpp"
+	AC_CHECK_HEADER(/usr/include/clickhouse-cpp/client.h,,exit)
+	CLICKHOUSE_LIBS="-lclickhouse-cpp"
+	CLICKHOUSE_CFLAGS="-I/usr/include/clickhouse-cpp"
+else
+	AC_MSG_RESULT([disabled])
+fi
+
+AM_CONDITIONAL(DISABLE_CLICKHOUSE, test ${buildclickhouse} = false)
+AM_CONDITIONAL(ENABLE_CLICKHOUSE, test ${buildclickhouse} = true)
+AC_SUBST(CLICKHOUSE_LIBS)
+AC_SUBST(CLICKHOUSE_CFLAGS)
+
 #check opc-ua support
 AC_MSG_CHECKING([opc-ua support])
 buildopcua=true
@@ -445,6 +468,7 @@ if test ${buildtests} = true; then
 	AC_CONFIG_TESTDIR(extensions/SharedMemory/tests)
 	AC_CONFIG_TESTDIR(extensions/IOControl/tests)
 	AC_CONFIG_TESTDIR(extensions/LogDB/tests)
+        AC_CONFIG_TESTDIR(extensions/Backend-ClickHouse/tests)
 	AC_CONFIG_TESTDIR(extensions/URepository/tests)
 	AC_CONFIG_TESTDIR(extensions/HttpAPIGateway/tests)
 	AC_CONFIG_TESTDIR(extensions/UWebSocketGate/tests)
@@ -612,6 +636,10 @@ AC_CONFIG_FILES([Makefile
 				 extensions/MQTTPublisher/libUniSet3MQTTPublisher.pc
 				 extensions/Backend-OpenTSDB/Makefile
 				 extensions/Backend-OpenTSDB/libUniSet3BackendOpenTSDB.pc
+				 extensions/Backend-ClickHouse/Makefile
+				 extensions/Backend-ClickHouse/uniset3-clickhouse-admin
+				 extensions/Backend-ClickHouse/libUniSet3BackendClickHouse.pc
+				 extensions/Backend-ClickHouse/tests/Makefile
 				 extensions/tests/Makefile
 				 extensions/tests/MQPerfTest/Makefile
 				 extensions/LogDB/Makefile

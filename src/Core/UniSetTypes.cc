@@ -915,6 +915,16 @@ uniset3::Timespec uniset3::now_to_uniset_timespec()
     return to_uniset_timespec(d);
 }
 // -------------------------------------------------------------------------
+int64_t uniset3::timespec_to_nanosec( const struct timespec& tm )
+{
+    return static_cast<int64_t>(tm.tv_sec) * 1000000000LL + static_cast<int64_t>(tm.tv_nsec);
+}
+// -------------------------------------------------------------------------
+int64_t uniset3::uniset_timespec_to_nanosec( const uniset3::Timespec& tm )
+{
+    return static_cast<int64_t>(tm.sec()) * 1000000000LL + static_cast<int64_t>(tm.nsec());
+}
+// -------------------------------------------------------------------------
 bool uniset3::equal(const uniset3::Timespec& ts1, const uniset3::Timespec& ts2) noexcept
 {
     try
