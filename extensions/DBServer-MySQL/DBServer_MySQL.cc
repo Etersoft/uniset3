@@ -402,8 +402,7 @@ std::shared_ptr<DBServer_MySQL> DBServer_MySQL::init_dbserver( int argc, const c
 
     if( !name.empty() )
     {
-        ObjectId ID = conf->getServiceID(name);
-
+        ID = conf->getServiceID(name);
         if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(DBServer_MySQL): Unknown ServiceID for '" << name << endl;
