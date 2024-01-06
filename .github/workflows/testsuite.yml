@@ -25,7 +25,7 @@ jobs:
             git-core ccache gcc-c++ etersoft-build-utils \
             libcomedi-devel libmariadb-devel libpqxx-devel libsqlite3-devel \
             libxml2-devel libsigc++2-devel libpoco-devel libev-devel libprotobuf-devel grpc-plugins libgrpc++-devel \
-            libmosquitto-devel libprotobuf-devel \
+            libmosquitto-devel \
             libopen62541-devel libopen62541pp-devel \
             libclickhouse-cpp-devel  \
             xsltproc python3-dev python-module-distribute swig iputils
