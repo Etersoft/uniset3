@@ -19,16 +19,11 @@
  *  \author Pavel Vainerman
 */
 // --------------------------------------------------------------------------
-#include <sys/time.h>
 #include <sstream>
-#include <iomanip>
 #include <cmath>
 
 #include "unisetstd.h"
 #include "DBServer_SQLite.h"
-#include "Configuration.h"
-#include "Debug.h"
-#include "UniXML.h"
 #include "DBLogSugar.h"
 // --------------------------------------------------------------------------
 using namespace uniset3;
@@ -306,37 +301,8 @@ void DBServer_SQLite::initDBServer()
         connect_ok = true;
         askTimer(DBServer_SQLite::ReconnectTimer, 0);
         askTimer(DBServer_SQLite::PingTimer, PingTime);
-        //        createTables(db);
         initDB(db);
         flushBuffer();
-    }
-}
-//--------------------------------------------------------------------------------------------
-void DBServer_SQLite::createTables( SQLiteInterface* db )
-{
-    auto conf = uniset_conf();
-    UniXML::iterator it( conf->getNode("Tables") );
-
-    if(!it)
-    {
-        dbcrit << myname << ": section <Tables> not found.." << endl;
-        throw Exception();
-    }
-
-    if( !it.goChildren() )
-        return;
-
-    for( ; it; it.goNext() )
-    {
-        if( it.getName() != "comment" )
-        {
-            dbinfo <<  myname  << "(createTables): create " << it.getName() << endl;
-            ostringstream query;
-            query << "CREATE TABLE " << conf->getProp(it, "name") << "(" << conf->getProp(it, "create") << ")";
-
-            if( !db->query(query.str()) )
-                dbcrit << myname << "(createTables): error: \t\t" << db->error() << endl;
-        }
     }
 }
 //--------------------------------------------------------------------------------------------
@@ -402,7 +368,7 @@ std::shared_ptr<DBServer_SQLite> DBServer_SQLite::init_dbserver( int argc, const
 
     if( !name.empty() )
     {
-        ObjectId ID = conf->getServiceID(name);
+        ID = conf->getServiceID(name);
 
         if( ID == uniset3::DefaultObjectId )
         {

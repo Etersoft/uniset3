@@ -173,8 +173,6 @@ namespace uniset3
             }
 
         protected:
-            typedef std::unordered_map<int, std::string> DBTableMap;
-
             virtual void initDBServer() override;
             virtual void initDB( const std::unique_ptr<SQLiteInterface>& db ) {};
 
@@ -186,7 +184,6 @@ namespace uniset3
             virtual std::string getMonitInfo( const std::string& params ) override;
 
             bool writeToBase( const std::string& query );
-            void createTables( SQLiteInterface* db );
 
             enum Timers
             {

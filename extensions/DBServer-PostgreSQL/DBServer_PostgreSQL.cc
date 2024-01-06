@@ -489,8 +489,7 @@ std::shared_ptr<DBServer_PostgreSQL> DBServer_PostgreSQL::init_dbserver( int arg
 
     if( !name.empty() )
     {
-        ObjectId ID = conf->getServiceID(name);
-
+        ID = conf->getServiceID(name);
         if( ID == uniset3::DefaultObjectId )
         {
             cerr << "(DBServer_PostgreSQL): Unknown ServiceID for '" << name << endl;
