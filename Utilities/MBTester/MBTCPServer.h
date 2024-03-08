@@ -2,6 +2,7 @@
 #define MBTCPServer_H_
 // -------------------------------------------------------------------------
 #include <unordered_set>
+#include <unordered_map>
 #include <string>
 #include <random>
 #include "modbus/ModbusTCPServerSlot.h"
@@ -101,6 +102,7 @@ class MBTCPServer
 
         bool verbose = { false };
         long replyVal = { -1 };
+        std::unordered_map<uint16_t, uint16_t> reglist = {};
         std::random_device rnd;
         std::unique_ptr<std::mt19937> gen = { nullptr };
         std::unique_ptr<std::uniform_int_distribution<>> rndgen = { nullptr };
