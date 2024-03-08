@@ -55,6 +55,7 @@ int main( int argc, char** argv )
     int min = 0;
     int max = 65535;
     bool random = false;
+    std::unordered_map<uint16_t, uint16_t> reglist = {};
 
     try
     {
@@ -117,6 +118,32 @@ int main( int argc, char** argv )
                     }
 
                     break;
+
+                case 'z':
+                {
+                    auto str = uniset3::split_sv(optarg, ',');
+
+                    if( str.size() < 1 )
+                    {
+                        cerr << "Unknown reg or value. Use -z reg1=value1,reg2=value" << endl;
+                        return 1;
+                    }
+
+                    for (const auto& s : str)
+                    {
+                        auto tmp = uniset3::split_sv(s, '=');
+
+                        if( tmp.size() < 2 )
+                        {
+                            cerr << "Error in \"" << s << "\". Use -z reg1=value1,reg2=value" << endl;
+                            return 1;
+                        }
+
+                        reglist[uniset3::uni_atoi_sv(tmp[0])] = uniset3::uni_atoi_sv(tmp[1]);
+                    }
+                }
+
+                break;
 
                 case '?':
                 default:

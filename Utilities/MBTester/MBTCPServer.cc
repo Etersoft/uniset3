@@ -100,39 +100,31 @@ ModbusRTU::mbErrCode MBTCPServer::readCoilStatus( ReadCoilMessage& query,
     d.b[4] = 1;
     d.b[6] = 1;
 
-    if( query.count <= 1 )
-    {
-        if( rndgen )
-            reply.addData((*rndgen.get())(*gen.get()));
-        else if( replyVal != -1 )
-            reply.addData(replyVal);
-        else
-            reply.addData(d);
+    if ( replyVal != -1 )
+        d = ModbusRTU::DataBits(replyVal);
 
-        return ModbusRTU::erNoError;
-    }
-
-    // Фомирование ответа:
-    int num = 0; // добавленное количество данных
+    size_t nbit = 0;
     ModbusData reg = query.start;
 
-    for( ; num < query.count; num++, reg++ )
+    for( ; nbit < query.count; nbit++, reg++ )
     {
-        if( rndgen )
-            reply.addData((*rndgen.get())(*gen.get()));
-        else if( replyVal != -1 )
-            reply.addData(replyVal);
+        if( auto search = reglist.find(reg); search != reglist.end() )
+            reply.setByBitNum(nbit, search->second);
+        else if( rndgen )
+            reply.setByBitNum(nbit, (*rndgen.get())(*gen.get()));
         else
-            reply.addData(d);
+            reply.setByBitNum(nbit, d.b[reg % ModbusRTU::BitsPerByte]);
+
+        if( verbose )
+        {
+            bool st = false;
+            reply.getByBitNum(nbit, st);
+            cout << "reg(" << (int) reg << ")=" << st << endl;
+        }
     }
 
-    // Если мы в начале проверили, что запрос входит в разрешёный диапазон
-    // то теоретически этой ситуации возникнуть не может...
-    if( reply.bcnt < query.count )
-    {
-        cerr << "(readCoilStatus): Получили меньше чем ожидали. "
-             << " Запросили " << query.count << " получили " << reply.bcnt << endl;
-    }
+    if( verbose )
+        cout << "(readCoilStatus): reply: " << reply << endl;
 
     return ModbusRTU::erNoError;
 }
@@ -148,34 +140,31 @@ ModbusRTU::mbErrCode MBTCPServer::readInputStatus( ReadInputStatusMessage& query
     d.b[3] = 1;
     d.b[7] = 1;
 
-    if( replyVal == -1 )
+    if ( replyVal != -1 )
+        d = ModbusRTU::DataBits(replyVal);
+
+    size_t nbit = 0;
+    ModbusData reg = query.start;
+
+    for( ; nbit < query.count; nbit++, reg++ )
     {
-        size_t bnum = 0;
-        size_t i = 0;
+        if( auto search = reglist.find(reg); search != reglist.end() )
+            reply.setByBitNum(nbit, search->second);
+        else if( rndgen )
+            reply.setByBitNum(nbit, (*rndgen.get())(*gen.get()));
+        else
+            reply.setByBitNum(nbit, d.b[reg % ModbusRTU::BitsPerByte]);
 
-        while( i < query.count )
+        if( verbose )
         {
-            reply.addData(0);
-
-            for( size_t nbit = 0; nbit < BitsPerByte && i < query.count; nbit++, i++ )
-                reply.setBit(bnum, nbit, d.b[nbit]);
-
-            bnum++;
+            bool st = false;
+            reply.getByBitNum(nbit, st);
+            cout << "reg(" << (int) reg << ")=" << st << endl;
         }
     }
-    else
-    {
 
-        size_t bcnt = ModbusRTU::numBytes(query.count);
-
-        for( size_t i = 0; i < bcnt; i++ )
-        {
-            if( rndgen )
-                reply.addData((*rndgen.get())(*gen.get()));
-            else
-                reply.addData(replyVal);
-        }
-    }
+    if( verbose )
+        cout << "(readInputStatus): reply: " << reply << endl;
 
     return ModbusRTU::erNoError;
 }
@@ -185,18 +174,6 @@ mbErrCode MBTCPServer::readInputRegisters( ReadInputMessage& query,
 {
     if( verbose )
         cout << "(readInputRegisters): " << query << endl;
-
-    if( query.count <= 1 )
-    {
-        if( rndgen )
-            reply.addData((*rndgen.get())(*gen.get()));
-        else if( replyVal != -1 )
-            reply.addData(replyVal);
-        else
-            reply.addData(query.start);
-
-        return ModbusRTU::erNoError;
-    }
 
     // Фомирование ответа:
     int num = 0; // добавленное количество данных
@@ -223,6 +200,9 @@ mbErrCode MBTCPServer::readInputRegisters( ReadInputMessage& query,
              << " Запросили " << query.count << " получили " << reply.count << endl;
     }
 
+    if( verbose )
+        cout << "(readInputRegisters): reply: " << reply << endl;
+
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
@@ -232,19 +212,6 @@ ModbusRTU::mbErrCode MBTCPServer::readOutputRegisters(
     if( verbose )
         cout << "(readOutputRegisters): " << query << endl;
 
-    if( query.count <= 1 )
-    {
-        if( rndgen )
-            reply.addData((*rndgen.get())(*gen.get()));
-        else if( replyVal != -1 )
-            reply.addData(replyVal);
-        else
-            reply.addData(query.start);
-
-        return ModbusRTU::erNoError;
-    }
-
-    // Фомирование ответа:
     int num = 0; // добавленное количество данных
     ModbusData reg = query.start;
 
@@ -266,6 +233,9 @@ ModbusRTU::mbErrCode MBTCPServer::readOutputRegisters(
              << " Запросили " << query.count << " получили " << reply.count << endl;
     }
 
+    if( verbose )
+        cout << "(readOutputRegisters): reply: " << reply << endl;
+
     return ModbusRTU::erNoError;
 }
 
@@ -278,6 +248,10 @@ ModbusRTU::mbErrCode MBTCPServer::forceMultipleCoils( ModbusRTU::ForceCoilsMessa
 
     ModbusRTU::mbErrCode ret = ModbusRTU::erNoError;
     reply.set(query.start, query.quant);
+
+    if( verbose )
+        cout << "(forceMultipleCoils): reply: " << reply << endl;
+
     return ret;
 }
 // -------------------------------------------------------------------------
@@ -289,6 +263,10 @@ ModbusRTU::mbErrCode MBTCPServer::writeOutputRegisters( ModbusRTU::WriteOutputMe
 
     ModbusRTU::mbErrCode ret = ModbusRTU::erNoError;
     reply.set(query.start, query.quant);
+
+    if( verbose )
+        cout << "(writeOutputRegisters): reply: " << reply << endl;
+
     return ret;
 }
 
@@ -301,6 +279,10 @@ ModbusRTU::mbErrCode MBTCPServer::writeOutputSingleRegister( ModbusRTU::WriteSin
 
     ModbusRTU::mbErrCode ret = ModbusRTU::erNoError;
     reply.set(query.start, query.data);
+
+    if( verbose )
+        cout << "(writeOutputSingleRegisters): reply: " << reply << endl;
+
     return ret;
 }
 // -------------------------------------------------------------------------
@@ -312,6 +294,10 @@ ModbusRTU::mbErrCode MBTCPServer::forceSingleCoil( ModbusRTU::ForceSingleCoilMes
 
     ModbusRTU::mbErrCode ret = ModbusRTU::erNoError;
     reply.set(query.start, query.cmd());
+
+    if( verbose )
+        cout << "(forceSingleCoil): reply: " << reply << endl;
+
     return ret;
 }
 

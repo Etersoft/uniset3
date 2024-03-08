@@ -343,8 +343,8 @@ namespace uniset3
     {
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         memcpy(&mm.data, &ecode, sizeof(ecode));
 
@@ -390,8 +390,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(count) };
@@ -433,6 +433,10 @@ namespace uniset3
         // переворачиваем слова
         start = SWAPSHORT(start);
         count = SWAPSHORT(count);
+
+        if( count > MAXPDULEN * BitsPerByte )
+            throw mbException(erPacketTooLong);
+
     }
 
     // -------------------------------------------------------------------------
@@ -580,6 +584,97 @@ namespace uniset3
         return os << (*d);
     }
     // -------------------------------------------------------------------------
+    BitsBuffer::BitsBuffer()
+    {
+        clear();
+    }
+    // -------------------------------------------------------------------------
+    bool BitsBuffer::setBit( uint8_t dnum, uint8_t bnum, bool state )
+    {
+        if( dnum < bcnt && bnum < BitsPerByte )
+        {
+            DataBits d(data[dnum]);
+            d.b[bnum] = state;
+            data[dnum] = d;
+            return true;
+        }
+
+        return false;
+    }
+    // -------------------------------------------------------------------------
+    bool BitsBuffer::setByBitNum( uint16_t num, bool state )
+    {
+        uint8_t dnum = num / BitsPerByte;
+
+        if( dnum >= sizeof(data) )
+            return false;
+
+        uint8_t bnum = num % BitsPerByte;
+        DataBits d(data[dnum]);
+        d.b[bnum] = state;
+        data[dnum] = d;
+
+        if( bcnt <= dnum )
+            bcnt = dnum + 1;
+
+        return true;
+    }
+    // -------------------------------------------------------------------------
+    bool BitsBuffer::addData( DataBits d )
+    {
+        if( isFull() )
+            return false;
+
+        data[bcnt++] = d.mbyte();
+        return true;
+    }
+    // -------------------------------------------------------------------------
+    bool BitsBuffer::getData( uint8_t dnum, DataBits& d ) const
+    {
+        if( dnum < bcnt )
+        {
+            d = data[dnum];
+            return true;
+        }
+
+        return false;
+    }
+    // -------------------------------------------------------------------------
+    bool BitsBuffer::getByBitNum( uint16_t num, bool& state ) const
+    {
+        uint8_t dnum = num / BitsPerByte;
+        uint8_t bnum = num % BitsPerByte;
+        return getBit(dnum, bnum, state);
+    }
+    // -------------------------------------------------------------------------
+    bool BitsBuffer::getBit( uint8_t dnum, uint8_t bnum, bool& state ) const
+    {
+        if( dnum < bcnt && bnum < BitsPerByte )
+        {
+            DataBits d(data[dnum]);
+            state = d.b[bnum];
+            return true;
+        }
+
+        return false;
+    }
+    // -------------------------------------------------------------------------
+    void BitsBuffer::clear()
+    {
+        memset(data, 0, sizeof(data));
+        bcnt = 0;
+    }
+    // -------------------------------------------------------------------------
+    std::ostream& ModbusRTU::operator<<(std::ostream& os, BitsBuffer& m )
+    {
+        return mbPrintMessage(os, (ModbusByte*)(&m.data), m.bcnt );
+    }
+
+    std::ostream& ModbusRTU::operator<<(std::ostream& os, BitsBuffer* m )
+    {
+        return os << (*m);
+    }
+    // -------------------------------------------------------------------------
     ReadCoilRetMessage::ReadCoilRetMessage( const ModbusMessage& m )
     {
         init(m);
@@ -598,7 +693,6 @@ namespace uniset3
         memset(this, 0, sizeof(*this));
         addr = m.pduhead.addr;
         func = m.pduhead.func;
-
         bcnt = m.data[0];
 
         if( bcnt > MAXPDULEN )
@@ -616,51 +710,16 @@ namespace uniset3
         return m.data[0];
     }
     // -------------------------------------------------------------------------
-    ReadCoilRetMessage::ReadCoilRetMessage( ModbusAddr _addr ):
-        bcnt(0)
+    ReadCoilRetMessage::ReadCoilRetMessage( ModbusAddr _addr )
     {
         addr = _addr;
         func = fnReadCoilStatus;
-        memset(data, 0, sizeof(data));
     }
     // -------------------------------------------------------------------------
-    bool ReadCoilRetMessage::setBit( uint8_t dnum, uint8_t bnum, bool state )
+    size_t ReadCoilRetMessage::szData() const
     {
-        if( dnum < bcnt && bnum < BitsPerByte )
-        {
-            DataBits d(data[dnum]);
-            d.b[bnum] = state;
-            data[dnum] = d;
-            return true;
-        }
-
-        return false;
-    }
-    // -------------------------------------------------------------------------
-    bool ReadCoilRetMessage::addData( DataBits d )
-    {
-        if( isFull() )
-            return false;
-
-        data[bcnt++] = d.mbyte();
-        return true;
-    }
-    // -------------------------------------------------------------------------
-    bool ReadCoilRetMessage::getData( uint8_t dnum, DataBits& d ) const
-    {
-        if( dnum < bcnt )
-        {
-            d = data[dnum];
-            return true;
-        }
-
-        return false;
-    }
-    // -------------------------------------------------------------------------
-    void ReadCoilRetMessage::clear()
-    {
-        memset(data, 0, sizeof(data));
-        bcnt    = 0;
+        // фактическое число данных + контрольная сумма
+        return sizeof(bcnt) + bcnt + szCRC;
     }
     // -------------------------------------------------------------------------
     ModbusMessage ReadCoilRetMessage::transport_msg()
@@ -669,11 +728,10 @@ namespace uniset3
         //    assert(sizeof(ModbusMessage)>=sizeof(ReadCoilRetMessage));
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
-        memcpy(&mm.data, &bcnt, sizeof(bcnt));
-        size_t ind = sizeof(bcnt);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+        mm.data[0] = bcnt;
+        size_t ind = 1;
 
         // копируем данные
         memcpy(&(mm.data[ind]), data, bcnt);
@@ -689,12 +747,6 @@ namespace uniset3
         // длина сообщения...
         mm.dlen = ind;
         return mm;
-    }
-    // -------------------------------------------------------------------------
-    size_t ReadCoilRetMessage::szData() const
-    {
-        // фактическое число данных + контрольная сумма
-        return sizeof(bcnt) + bcnt + szCRC;
     }
     // -------------------------------------------------------------------------
     std::ostream& ModbusRTU::operator<<(std::ostream& os, ReadCoilRetMessage& m )
@@ -721,8 +773,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(count) };
@@ -765,7 +817,7 @@ namespace uniset3
         start = SWAPSHORT(start);
         count = SWAPSHORT(count);
 
-        if( count > MAXDATALEN )
+        if( count > MAXPDULEN * BitsPerByte )
             throw mbException(erPacketTooLong);
     }
 
@@ -800,7 +852,6 @@ namespace uniset3
         //memset(this, 0, sizeof(*this));
         addr = m.pduhead.addr;
         func = m.pduhead.func;
-
         bcnt = m.data[0];
 
         if( bcnt > MAXPDULEN )
@@ -818,51 +869,16 @@ namespace uniset3
         return m.data[0];
     }
     // -------------------------------------------------------------------------
-    ReadInputStatusRetMessage::ReadInputStatusRetMessage( const ModbusAddr _addr ):
-        bcnt(0)
+    ReadInputStatusRetMessage::ReadInputStatusRetMessage( const ModbusAddr _addr )
     {
         addr = _addr;
         func = fnReadInputStatus;
-        memset(data, 0, sizeof(data));
     }
     // -------------------------------------------------------------------------
-    bool ReadInputStatusRetMessage::setBit( uint8_t dnum, uint8_t bnum, bool state )
+    size_t ReadInputStatusRetMessage::szData() const
     {
-        if( dnum < bcnt && bnum < BitsPerByte )
-        {
-            DataBits d(data[dnum]);
-            d.b[bnum] = state;
-            data[dnum] = d;
-            return true;
-        }
-
-        return false;
-    }
-    // -------------------------------------------------------------------------
-    bool ReadInputStatusRetMessage::addData( DataBits d )
-    {
-        if( isFull() )
-            return false;
-
-        data[bcnt++] = d.mbyte();
-        return true;
-    }
-    // -------------------------------------------------------------------------
-    bool ReadInputStatusRetMessage::getData( uint8_t dnum, DataBits& d ) const
-    {
-        if( dnum < bcnt )
-        {
-            d = data[dnum];
-            return true;
-        }
-
-        return false;
-    }
-    // -------------------------------------------------------------------------
-    void ReadInputStatusRetMessage::clear()
-    {
-        memset(data, 0, sizeof(data));
-        bcnt    = 0;
+        // фактическое число данных + контрольная сумма
+        return sizeof(bcnt) + bcnt + szCRC;
     }
     // -------------------------------------------------------------------------
     ModbusMessage ReadInputStatusRetMessage::transport_msg()
@@ -871,11 +887,10 @@ namespace uniset3
         //    assert(sizeof(ModbusMessage)>=sizeof(ReadCoilRetMessage));
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
-        memcpy(&mm.data, &bcnt, sizeof(bcnt));
-        size_t ind = sizeof(bcnt);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+        mm.data[0] = bcnt;
+        size_t ind = 1;
 
         // копируем данные
         memcpy(&(mm.data[ind]), data, bcnt);
@@ -891,12 +906,6 @@ namespace uniset3
         // длина сообщения...
         mm.dlen = ind;
         return mm;
-    }
-    // -------------------------------------------------------------------------
-    size_t ReadInputStatusRetMessage::szData() const
-    {
-        // фактическое число данных + контрольная сумма
-        return sizeof(bcnt) + bcnt + szCRC;
     }
     // -------------------------------------------------------------------------
     std::ostream& ModbusRTU::operator<<(std::ostream& os, ReadInputStatusRetMessage& m )
@@ -925,8 +934,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(count) };
@@ -1065,15 +1074,10 @@ namespace uniset3
         //    assert(sizeof(ModbusMessage)>=sizeof(ReadOutputRetMessage));
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
-        size_t ind = 0;
-        bcnt    = count * sizeof(ModbusData);
-
-        // copy bcnt
-        memcpy(&mm.data, &bcnt, sizeof(bcnt));
-        ind += sizeof(bcnt);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+        mm.data[0] = bcnt;
+        size_t ind = 1;
 
         // копируем данные
         if( count > 0 )
@@ -1135,9 +1139,8 @@ namespace uniset3
         assert(sizeof(ModbusMessage) >= sizeof(ReadInputMessage));
 
         ModbusMessage mm;
-
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(count) };
@@ -1173,8 +1176,10 @@ namespace uniset3
     void ReadInputMessage::init( const ModbusMessage& m )
     {
         assert( m.pduhead.func == fnReadInputRegisters );
-        //  memset(this, 0, sizeof(*this));
-        memcpy(this, &m.pduhead, sizeof(m.pduhead));
+
+        addr = m.pduhead.addr;
+        func = m.pduhead.func;
+
         memcpy(&start, m.data, szData()); // -V512
 
         // переворачиваем слова
@@ -1280,15 +1285,10 @@ namespace uniset3
         ModbusMessage mm;
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
-        size_t ind = 0;
-        bcnt    = count * sizeof(ModbusData);
-
-        // copy bcnt
-        memcpy(&mm.data, &bcnt, sizeof(bcnt));
-        ind += sizeof(bcnt);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+        mm.data[0] = bcnt;
+        size_t ind = 1;
 
         if( count > 0 )
         {
@@ -1407,8 +1407,8 @@ namespace uniset3
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         size_t ind = 0;
 
@@ -1580,8 +1580,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(quant) };
@@ -1642,9 +1642,8 @@ namespace uniset3
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
         size_t ind = 0;
 
         // данные (переворачиваем байты)
@@ -1839,8 +1838,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(quant) };
@@ -1881,7 +1880,9 @@ namespace uniset3
         assert(sizeof(ModbusMessage) >= sizeof(ForceSingleCoilMessage));
 
         ModbusMessage mm;
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(data) };
         size_t last = sizeof(d); // индекс в массиве данных ( байтовый массив!!! )
         memcpy(mm.data, &d, last); // -V512
@@ -2006,8 +2007,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(data) };
@@ -2052,7 +2053,8 @@ namespace uniset3
         assert(sizeof(ModbusMessage) >= sizeof(WriteSingleOutputMessage));
 
         ModbusMessage mm;
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(data) };
         size_t last = sizeof(d); // индекс в массиве данных ( байтовый массив!!! )
         memcpy(mm.data, &d, last); // -V512
@@ -2184,8 +2186,8 @@ namespace uniset3
 
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(start), SWAPSHORT(data) };
@@ -2359,8 +2361,8 @@ namespace uniset3
         //    assert(sizeof(ModbusMessage)>=sizeof(DiagnosticMessage));
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         size_t ind = 0;
         // copy bcnt
@@ -2473,8 +2475,8 @@ namespace uniset3
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
         mm.data[0] = type;
         mm.data[1] = devID;
         mm.data[2] = objID;
@@ -2695,9 +2697,8 @@ namespace uniset3
         ModbusMessage mm;
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
         mm.data[0] = type;
         mm.data[1] = devID;
         mm.data[2] = conformity;
@@ -2857,15 +2858,10 @@ namespace uniset3
         //    assert(sizeof(ModbusMessage)>=sizeof(ReadOutputRetMessage));
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
-        size_t ind = 0;
-        bcnt    = count * sizeof(ModbusData);
-
-        // copy bcnt
-        memcpy(&mm.data, &bcnt, sizeof(bcnt));
-        ind += sizeof(bcnt);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+        mm.data[0] = bcnt;
+        size_t ind = 1;
 
         // --------------------
         // копируем данные
@@ -3119,8 +3115,9 @@ namespace uniset3
         ModbusMessage mm;
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+
         /*
             mm.data[0] = hour;
             mm.data[1] = min;
@@ -3193,9 +3190,8 @@ namespace uniset3
         ModbusMessage mm;
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
         size_t bcnt = 7;
         mm.data[0] = hour;
         mm.data[1] = min;
@@ -3308,15 +3304,10 @@ namespace uniset3
         ModbusMessage mm;
         assert( sizeof(ModbusMessage) >= szModbusHeader + szData() );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
-
-        size_t ind = 0;
-        bcnt    = count * sizeof(ModbusByte);
-
-        // copy bcnt
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
         mm.data[0] = bcnt;
-        ind += sizeof(bcnt);
+        size_t ind = 1;
 
         // --------------------
         // копируем данные
@@ -3421,8 +3412,8 @@ namespace uniset3
     {
         ModbusMessage mm;
 
-        // копируем заголовок
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
 
         // копируем данные (переворачиваем байты)
         ModbusData d[2] = { SWAPSHORT(numfile), SWAPSHORT(numpacket) };
@@ -3563,8 +3554,9 @@ namespace uniset3
         ModbusMessage mm;
         assert( sizeof(ModbusMessage) >= (szModbusHeader + szData()) );
 
-        // копируем заголовок и данные
-        memcpy(&mm.pduhead, this, szModbusHeader);
+        mm.pduhead.addr = addr;
+        mm.pduhead.func = func;
+        mm.data[0] = bcnt;
 
         size_t ind = 0;
         bcnt = szData() - szCRC - 1; // -1 - это сам байт содержащий количество байт (bcnt)...

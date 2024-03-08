@@ -1737,7 +1737,7 @@ namespace uniset3
         }
 
         // Фомирование ответа:
-        ModbusRTU::mbErrCode ret = much_real_read(regmap->second, query.start, buf, query.count, query.func);
+        ModbusRTU::mbErrCode ret = much_read(regmap->second, query.start, buf, query.count, query.func);
 
         if( ret == ModbusRTU::erNoError )
         {
@@ -1764,7 +1764,7 @@ namespace uniset3
 
         // Формирование ответа:
         int fn = getOptimizeWriteFunction(query.func);
-        ModbusRTU::mbErrCode ret = much_real_write(regmap->second, query.start, query.data, query.quant, fn);
+        ModbusRTU::mbErrCode ret = much_write(regmap->second, query.start, query.data, query.quant, fn);
 
         if( ret == ModbusRTU::erNoError )
             reply.set(query.start, query.quant);
@@ -1794,10 +1794,10 @@ namespace uniset3
         return ret;
     }
     // -------------------------------------------------------------------------
-    ModbusRTU::mbErrCode MBSlave::much_real_write( RegMap& rmap, const ModbusRTU::ModbusData reg, ModbusRTU::ModbusData* dat,
+    ModbusRTU::mbErrCode MBSlave::much_write( RegMap& rmap, const ModbusRTU::ModbusData reg, ModbusRTU::ModbusData* dat,
             size_t count, const int fn )
     {
-        mbinfo << myname << "(much_real_write): write mbID="
+        mbinfo << myname << "(much_write): write mbID="
                << ModbusRTU::dat2str(reg) << "(" << (int)reg << ")" << " count=" << count << " fn=" << fn << endl;
 
         size_t i = 0;
@@ -2237,10 +2237,10 @@ namespace uniset3
     }
 #endif
     // -------------------------------------------------------------------------
-    ModbusRTU::mbErrCode MBSlave::much_real_read(RegMap& rmap, const ModbusRTU::ModbusData reg, ModbusRTU::ModbusData* dat,
-            size_t count, const int fn )
+    ModbusRTU::mbErrCode MBSlave::much_read(RegMap& rmap, const ModbusRTU::ModbusData reg, ModbusRTU::ModbusData* dat,
+                                            size_t count, const int fn )
     {
-        mbinfo << myname << "(much_real_read): read mbID="
+        mbinfo << myname << "(much_read): read mbID="
                << ModbusRTU::dat2str(reg) << "(" << (int)reg << ") " << " count=" << count
                << " mbfunc=" << fn << endl;
 
@@ -2290,6 +2290,65 @@ namespace uniset3
         {
             for( ; i < count; i++ )
                 dat[i] = 0;
+        }
+
+        return ModbusRTU::erNoError;
+    }
+    // -------------------------------------------------------------------------
+    ModbusRTU::mbErrCode MBSlave::bits_read( RegMap& rmap, const ModbusRTU::ModbusData reg,
+            ModbusRTU::BitsBuffer* dat,
+            size_t count, const int fn )
+    {
+        mbinfo << myname << "(bits_read): read mbID="
+               << ModbusRTU::dat2str(reg) << "(" << (int)reg << ") " << " count=" << count
+               << " mbfunc=" << fn << endl;
+
+        auto it = rmap.end();
+        size_t i = 0;
+
+        int mbfunc = checkMBFunc ? fn : default_mbfunc;
+        ModbusRTU::RegID regID = genRegID(reg, mbfunc);
+
+        // ищем первый регистр из запроса... пропуская несуществующие..
+        // ведь запросить могут начиная с "несуществующего регистра"
+        for( ; i < count; i++ )
+        {
+            it = rmap.find(regID + i);
+
+            if( it != rmap.end() )
+            {
+                regID += i;
+                break;
+            }
+
+            dat->setByBitNum(i, false);
+        }
+
+        if( it == rmap.end() )
+            return ModbusRTU::erBadDataAddress;
+
+        ModbusRTU::ModbusData val = 0;
+
+        for( ; (it != rmap.end()) && (i < count); i++, regID++ )
+        {
+            val = 0;
+
+            // если регистры идут не подряд, то просто вернём ноль
+            if( it->first == regID )
+            {
+                real_read_it(rmap, it, val);
+                ++it;
+            }
+
+            dat->setByBitNum(i, val != 0 );
+        }
+
+        // добиваем нулями "ответ"
+        // чтобы он был такой длинны, которую запрашивали
+        if( i < count )
+        {
+            for( ; i < count; i++ )
+                dat->setByBitNum(i, false);
         }
 
         return ModbusRTU::erNoError;
@@ -2519,7 +2578,7 @@ namespace uniset3
         }
 
         // Фомирование ответа:
-        ModbusRTU::mbErrCode ret = much_real_read(regmap->second, query.start, buf, query.count, query.func);
+        ModbusRTU::mbErrCode ret = much_read(regmap->second, query.start, buf, query.count, query.func);
 
         if( ret == ModbusRTU::erNoError )
         {
@@ -2593,22 +2652,12 @@ namespace uniset3
                 return ret;
             }
 
-            much_real_read(regmap->second, query.start, buf, query.count, query.func);
-            size_t bnum = 0;
-            size_t i = 0;
+            auto err = bits_read(regmap->second, query.start, &reply, query.count, query.func);
 
-            while( i < query.count )
-            {
-                reply.addData(0);
+            if( err == ModbusRTU::erNoError )
+                smPingOK = true;
 
-                for( size_t nbit = 0; nbit < BitsPerByte && i < query.count; nbit++, i++ )
-                    reply.setBit(bnum, nbit, (bool)(buf[i]));
-
-                bnum++;
-            }
-
-            smPingOK = true;
-            return ModbusRTU::erNoError;
+            return err;
         }
         catch( uniset3::NameNotFound& ex )
         {
@@ -2666,22 +2715,12 @@ namespace uniset3
                 return ret;
             }
 
-            much_real_read(regmap->second, query.start, buf, query.count, query.func);
-            size_t bnum = 0;
-            size_t i = 0;
+            auto err = bits_read(regmap->second, query.start, &reply, query.count, query.func);
 
-            while( i < query.count )
-            {
-                reply.addData(0);
+            if( err == ModbusRTU::erNoError )
+                smPingOK = true;
 
-                for( size_t nbit = 0; nbit < BitsPerByte && i < query.count; nbit++, i++ )
-                    reply.setBit(bnum, nbit, (bool)(buf[i]));
-
-                bnum++;
-            }
-
-            smPingOK = true;
-            return ModbusRTU::erNoError;
+            return err;
         }
         catch( uniset3::NameNotFound& ex )
         {
