@@ -48,7 +48,7 @@ using namespace uniset3;
 static bool pushMessage( UMessageQueue& mq, long id )
 {
     umessage::SensorMessage sm = makeSensorMessage(id, id, uniset3::AI);
-    sm.mutable_header()->set_consumer(id); // чтобы хоть как-то идентифицировать сообщений, используем поле consumer
+    sm.mutable_header()->set_consumer(id); // чтобы хоть как-то идентифицировать сообщения, используем поле consumer
     auto tm = make_shared<umessage::TransportMessage>(to_transport<umessage::SensorMessage>(sm));
     return mq.push(tm);
 }

@@ -199,8 +199,7 @@ namespace uniset3
                 // то посылаем
                 if( res < erInternalErrorCode )
                 {
-                    ErrorRetMessage em( buf.addr(), buf.func(), res );
-                    buf = em.transport_msg();
+                    ErrorRetMessage::make_to( buf.addr(), buf.func(), res, buf );
                     send(buf);
                     printProcessingTime();
                 }
