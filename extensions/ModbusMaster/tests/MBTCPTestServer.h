@@ -134,59 +134,58 @@ class MBTCPTestServer
         void sigterm( int signo );
 
         /*! обработка 0x01 */
-        uniset3::ModbusRTU::mbErrCode readCoilStatus( uniset3::ModbusRTU::ReadCoilMessage& query,
+        uniset3::ModbusRTU::mbErrCode readCoilStatus( const uniset3::ModbusRTU::ReadCoilMessage& query,
                 uniset3::ModbusRTU::ReadCoilRetMessage& reply );
         /*! обработка 0x02 */
-        uniset3::ModbusRTU::mbErrCode readInputStatus( uniset3::ModbusRTU::ReadInputStatusMessage& query,
+        uniset3::ModbusRTU::mbErrCode readInputStatus( const uniset3::ModbusRTU::ReadInputStatusMessage& query,
                 uniset3::ModbusRTU::ReadInputStatusRetMessage& reply );
 
         /*! обработка 0x03 */
-        uniset3::ModbusRTU::mbErrCode readOutputRegisters( uniset3::ModbusRTU::ReadOutputMessage& query,
+        uniset3::ModbusRTU::mbErrCode readOutputRegisters( const uniset3::ModbusRTU::ReadOutputMessage& query,
                 uniset3::ModbusRTU::ReadOutputRetMessage& reply );
 
         /*! обработка 0x04 */
-        uniset3::ModbusRTU::mbErrCode readInputRegisters( uniset3::ModbusRTU::ReadInputMessage& query,
+        uniset3::ModbusRTU::mbErrCode readInputRegisters( const uniset3::ModbusRTU::ReadInputMessage& query,
                 uniset3::ModbusRTU::ReadInputRetMessage& reply );
 
         /*! обработка 0x05 */
-        uniset3::ModbusRTU::mbErrCode forceSingleCoil( uniset3::ModbusRTU::ForceSingleCoilMessage& query,
+        uniset3::ModbusRTU::mbErrCode forceSingleCoil( const uniset3::ModbusRTU::ForceSingleCoilMessage& query,
                 uniset3::ModbusRTU::ForceSingleCoilRetMessage& reply );
 
         /*! обработка 0x0F */
-        uniset3::ModbusRTU::mbErrCode forceMultipleCoils( uniset3::ModbusRTU::ForceCoilsMessage& query,
+        uniset3::ModbusRTU::mbErrCode forceMultipleCoils( const uniset3::ModbusRTU::ForceCoilsMessage& query,
                 uniset3::ModbusRTU::ForceCoilsRetMessage& reply );
 
 
         /*! обработка 0x10 */
-        uniset3::ModbusRTU::mbErrCode writeOutputRegisters( uniset3::ModbusRTU::WriteOutputMessage& query,
+        uniset3::ModbusRTU::mbErrCode writeOutputRegisters( const uniset3::ModbusRTU::WriteOutputMessage& query,
                 uniset3::ModbusRTU::WriteOutputRetMessage& reply );
 
         /*! обработка 0x06 */
-        uniset3::ModbusRTU::mbErrCode writeOutputSingleRegister( uniset3::ModbusRTU::WriteSingleOutputMessage& query,
+        uniset3::ModbusRTU::mbErrCode writeOutputSingleRegister( const uniset3::ModbusRTU::WriteSingleOutputMessage& query,
                 uniset3::ModbusRTU::WriteSingleOutputRetMessage& reply );
 
 
-        uniset3::ModbusRTU::mbErrCode diagnostics( uniset3::ModbusRTU::DiagnosticMessage& query,
+        uniset3::ModbusRTU::mbErrCode diagnostics( const uniset3::ModbusRTU::DiagnosticMessage& query,
                 uniset3::ModbusRTU::DiagnosticRetMessage& reply );
 
-        uniset3::ModbusRTU::mbErrCode read4314( uniset3::ModbusRTU::MEIMessageRDI& query,
-                                                uniset3::ModbusRTU::MEIMessageRetRDI& reply );
+        uniset3::ModbusRTU::mbErrCode read4314( const uniset3::ModbusRTU::MEIMessageRDI& query,
+                                               uniset3::ModbusRTU::MEIMessageRetRDI& reply );
 
         /*! обработка запросов на чтение ошибок */
-        uniset3::ModbusRTU::mbErrCode journalCommand( uniset3::ModbusRTU::JournalCommandMessage& query,
+        uniset3::ModbusRTU::mbErrCode journalCommand( const uniset3::ModbusRTU::JournalCommandMessage& query,
                 uniset3::ModbusRTU::JournalCommandRetMessage& reply );
 
         /*! обработка запроса на установку времени */
-        uniset3::ModbusRTU::mbErrCode setDateTime( uniset3::ModbusRTU::SetDateTimeMessage& query,
+        uniset3::ModbusRTU::mbErrCode setDateTime( const uniset3::ModbusRTU::SetDateTimeMessage& query,
                 uniset3::ModbusRTU::SetDateTimeRetMessage& reply );
 
         /*! обработка запроса удалённого сервиса */
-        uniset3::ModbusRTU::mbErrCode remoteService( uniset3::ModbusRTU::RemoteServiceMessage& query,
+        uniset3::ModbusRTU::mbErrCode remoteService( const uniset3::ModbusRTU::RemoteServiceMessage& query,
                 uniset3::ModbusRTU::RemoteServiceRetMessage& reply );
 
-        uniset3::ModbusRTU::mbErrCode fileTransfer( uniset3::ModbusRTU::FileTransferMessage& query,
+        uniset3::ModbusRTU::mbErrCode fileTransfer( const uniset3::ModbusRTU::FileTransferMessage& query,
                 uniset3::ModbusRTU::FileTransferRetMessage& reply );
-
 
         /*! интерфейс ModbusSlave для обмена по RS */
         uniset3::ModbusTCPServerSlot* sslot;
