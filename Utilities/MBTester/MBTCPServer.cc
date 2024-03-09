@@ -88,7 +88,7 @@ void MBTCPServer::sigterm( int signo )
 {
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::readCoilStatus( ReadCoilMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::readCoilStatus( const ReadCoilMessage& query,
         ReadCoilRetMessage& reply )
 {
     if( verbose )
@@ -129,7 +129,7 @@ ModbusRTU::mbErrCode MBTCPServer::readCoilStatus( ReadCoilMessage& query,
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::readInputStatus( ReadInputStatusMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::readInputStatus( const ReadInputStatusMessage& query,
         ReadInputStatusRetMessage& reply )
 {
     if( verbose )
@@ -169,7 +169,7 @@ ModbusRTU::mbErrCode MBTCPServer::readInputStatus( ReadInputStatusMessage& query
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
-mbErrCode MBTCPServer::readInputRegisters( ReadInputMessage& query,
+mbErrCode MBTCPServer::readInputRegisters( const ReadInputMessage& query,
         ReadInputRetMessage& reply )
 {
     if( verbose )
@@ -207,7 +207,7 @@ mbErrCode MBTCPServer::readInputRegisters( ReadInputMessage& query,
 }
 // -------------------------------------------------------------------------
 ModbusRTU::mbErrCode MBTCPServer::readOutputRegisters(
-    ModbusRTU::ReadOutputMessage& query, ModbusRTU::ReadOutputRetMessage& reply )
+    const ModbusRTU::ReadOutputMessage& query, ModbusRTU::ReadOutputRetMessage& reply )
 {
     if( verbose )
         cout << "(readOutputRegisters): " << query << endl;
@@ -240,7 +240,7 @@ ModbusRTU::mbErrCode MBTCPServer::readOutputRegisters(
 }
 
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::forceMultipleCoils( ModbusRTU::ForceCoilsMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::forceMultipleCoils( const ModbusRTU::ForceCoilsMessage& query,
         ModbusRTU::ForceCoilsRetMessage& reply )
 {
     if( verbose )
@@ -255,7 +255,7 @@ ModbusRTU::mbErrCode MBTCPServer::forceMultipleCoils( ModbusRTU::ForceCoilsMessa
     return ret;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::writeOutputRegisters( ModbusRTU::WriteOutputMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::writeOutputRegisters( const ModbusRTU::WriteOutputMessage& query,
         ModbusRTU::WriteOutputRetMessage& reply )
 {
     if( verbose )
@@ -271,7 +271,7 @@ ModbusRTU::mbErrCode MBTCPServer::writeOutputRegisters( ModbusRTU::WriteOutputMe
 }
 
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::writeOutputSingleRegister( ModbusRTU::WriteSingleOutputMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::writeOutputSingleRegister( const ModbusRTU::WriteSingleOutputMessage& query,
         ModbusRTU::WriteSingleOutputRetMessage& reply )
 {
     if( verbose )
@@ -286,7 +286,7 @@ ModbusRTU::mbErrCode MBTCPServer::writeOutputSingleRegister( ModbusRTU::WriteSin
     return ret;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::forceSingleCoil( ModbusRTU::ForceSingleCoilMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::forceSingleCoil( const ModbusRTU::ForceSingleCoilMessage& query,
         ModbusRTU::ForceSingleCoilRetMessage& reply )
 {
     if( verbose )
@@ -302,7 +302,7 @@ ModbusRTU::mbErrCode MBTCPServer::forceSingleCoil( ModbusRTU::ForceSingleCoilMes
 }
 
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::journalCommand( ModbusRTU::JournalCommandMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::journalCommand( const ModbusRTU::JournalCommandMessage& query,
         ModbusRTU::JournalCommandRetMessage& reply )
 {
     if( verbose )
@@ -339,7 +339,7 @@ ModbusRTU::mbErrCode MBTCPServer::journalCommand( ModbusRTU::JournalCommandMessa
     return ModbusRTU::erTimeOut;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::setDateTime( ModbusRTU::SetDateTimeMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::setDateTime( const ModbusRTU::SetDateTimeMessage& query,
         ModbusRTU::SetDateTimeRetMessage& reply )
 {
     if( verbose )
@@ -351,14 +351,14 @@ ModbusRTU::mbErrCode MBTCPServer::setDateTime( ModbusRTU::SetDateTimeMessage& qu
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::remoteService( ModbusRTU::RemoteServiceMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::remoteService( const ModbusRTU::RemoteServiceMessage& query,
         ModbusRTU::RemoteServiceRetMessage& reply )
 {
     cerr << "(remoteService): " << query << endl;
     return ModbusRTU::erOperationFailed;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::fileTransfer( ModbusRTU::FileTransferMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::fileTransfer( const ModbusRTU::FileTransferMessage& query,
         ModbusRTU::FileTransferRetMessage& reply )
 {
     if( verbose )
@@ -439,7 +439,7 @@ ModbusRTU::mbErrCode MBTCPServer::fileTransfer( ModbusRTU::FileTransferMessage& 
 
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::diagnostics( ModbusRTU::DiagnosticMessage& query,
+ModbusRTU::mbErrCode MBTCPServer::diagnostics( const ModbusRTU::DiagnosticMessage& query,
         ModbusRTU::DiagnosticRetMessage& reply )
 {
     if( query.subf == ModbusRTU::subEcho )
@@ -478,7 +478,7 @@ ModbusRTU::mbErrCode MBTCPServer::diagnostics( ModbusRTU::DiagnosticMessage& que
     return ModbusRTU::erOperationFailed;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBTCPServer::read4314( ModbusRTU::MEIMessageRDI& query,
+ModbusRTU::mbErrCode MBTCPServer::read4314( const ModbusRTU::MEIMessageRDI& query,
         ModbusRTU::MEIMessageRetRDI& reply )
 {
     if( verbose )

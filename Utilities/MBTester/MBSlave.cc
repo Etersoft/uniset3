@@ -114,7 +114,7 @@ void MBSlave::sigterm( int signo )
 {
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::readCoilStatus( ReadCoilMessage& query,
+ModbusRTU::mbErrCode MBSlave::readCoilStatus( const ReadCoilMessage& query,
         ReadCoilRetMessage& reply )
 {
     if( verbose )
@@ -142,7 +142,7 @@ ModbusRTU::mbErrCode MBSlave::readCoilStatus( ReadCoilMessage& query,
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::readInputStatus( ReadInputStatusMessage& query,
+ModbusRTU::mbErrCode MBSlave::readInputStatus( const ReadInputStatusMessage& query,
         ReadInputStatusRetMessage& reply )
 {
     if( verbose )
@@ -195,7 +195,7 @@ ModbusRTU::mbErrCode MBSlave::readInputStatus( ReadInputStatusMessage& query,
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
-mbErrCode MBSlave::readInputRegisters( ReadInputMessage& query,
+mbErrCode MBSlave::readInputRegisters( const ReadInputMessage& query,
                                        ReadInputRetMessage& reply )
 {
     if( verbose )
@@ -246,7 +246,7 @@ mbErrCode MBSlave::readInputRegisters( ReadInputMessage& query,
 }
 // -------------------------------------------------------------------------
 ModbusRTU::mbErrCode MBSlave::readOutputRegisters(
-    ModbusRTU::ReadOutputMessage& query, ModbusRTU::ReadOutputRetMessage& reply )
+    const ModbusRTU::ReadOutputMessage& query, ModbusRTU::ReadOutputRetMessage& reply )
 {
     if( verbose )
         cout << "(readOutputRegisters): " << query << endl;
@@ -296,7 +296,7 @@ ModbusRTU::mbErrCode MBSlave::readOutputRegisters(
 }
 
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::forceMultipleCoils( ModbusRTU::ForceCoilsMessage& query,
+ModbusRTU::mbErrCode MBSlave::forceMultipleCoils( const ModbusRTU::ForceCoilsMessage& query,
         ModbusRTU::ForceCoilsRetMessage& reply )
 {
     if( verbose )
@@ -307,7 +307,7 @@ ModbusRTU::mbErrCode MBSlave::forceMultipleCoils( ModbusRTU::ForceCoilsMessage& 
     return ret;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::writeOutputRegisters( ModbusRTU::WriteOutputMessage& query,
+ModbusRTU::mbErrCode MBSlave::writeOutputRegisters( const ModbusRTU::WriteOutputMessage& query,
         ModbusRTU::WriteOutputRetMessage& reply )
 {
     if( verbose )
@@ -319,7 +319,7 @@ ModbusRTU::mbErrCode MBSlave::writeOutputRegisters( ModbusRTU::WriteOutputMessag
 }
 
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::writeOutputSingleRegister( ModbusRTU::WriteSingleOutputMessage& query,
+ModbusRTU::mbErrCode MBSlave::writeOutputSingleRegister( const ModbusRTU::WriteSingleOutputMessage& query,
         ModbusRTU::WriteSingleOutputRetMessage& reply )
 {
     if( verbose )
@@ -330,7 +330,7 @@ ModbusRTU::mbErrCode MBSlave::writeOutputSingleRegister( ModbusRTU::WriteSingleO
     return ret;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::forceSingleCoil( ModbusRTU::ForceSingleCoilMessage& query,
+ModbusRTU::mbErrCode MBSlave::forceSingleCoil( const ModbusRTU::ForceSingleCoilMessage& query,
         ModbusRTU::ForceSingleCoilRetMessage& reply )
 {
     if( verbose )
@@ -342,7 +342,7 @@ ModbusRTU::mbErrCode MBSlave::forceSingleCoil( ModbusRTU::ForceSingleCoilMessage
 }
 
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::journalCommand( ModbusRTU::JournalCommandMessage& query,
+ModbusRTU::mbErrCode MBSlave::journalCommand( const ModbusRTU::JournalCommandMessage& query,
         ModbusRTU::JournalCommandRetMessage& reply )
 {
     if( verbose )
@@ -379,7 +379,7 @@ ModbusRTU::mbErrCode MBSlave::journalCommand( ModbusRTU::JournalCommandMessage& 
     return ModbusRTU::erTimeOut;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::setDateTime( ModbusRTU::SetDateTimeMessage& query,
+ModbusRTU::mbErrCode MBSlave::setDateTime( const ModbusRTU::SetDateTimeMessage& query,
         ModbusRTU::SetDateTimeRetMessage& reply )
 {
     if( verbose )
@@ -391,14 +391,14 @@ ModbusRTU::mbErrCode MBSlave::setDateTime( ModbusRTU::SetDateTimeMessage& query,
     return ModbusRTU::erNoError;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::remoteService( ModbusRTU::RemoteServiceMessage& query,
+ModbusRTU::mbErrCode MBSlave::remoteService( const ModbusRTU::RemoteServiceMessage& query,
         ModbusRTU::RemoteServiceRetMessage& reply )
 {
     cerr << "(remoteService): " << query << endl;
     return ModbusRTU::erOperationFailed;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::fileTransfer( ModbusRTU::FileTransferMessage& query,
+ModbusRTU::mbErrCode MBSlave::fileTransfer( const ModbusRTU::FileTransferMessage& query,
         ModbusRTU::FileTransferRetMessage& reply )
 {
     if( verbose )
@@ -479,7 +479,7 @@ ModbusRTU::mbErrCode MBSlave::fileTransfer( ModbusRTU::FileTransferMessage& quer
 
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::diagnostics( ModbusRTU::DiagnosticMessage& query,
+ModbusRTU::mbErrCode MBSlave::diagnostics( const ModbusRTU::DiagnosticMessage& query,
         ModbusRTU::DiagnosticRetMessage& reply )
 {
     if( verbose )
@@ -521,7 +521,7 @@ ModbusRTU::mbErrCode MBSlave::diagnostics( ModbusRTU::DiagnosticMessage& query,
     return ModbusRTU::erOperationFailed;
 }
 // -------------------------------------------------------------------------
-ModbusRTU::mbErrCode MBSlave::read4314( ModbusRTU::MEIMessageRDI& query,
+ModbusRTU::mbErrCode MBSlave::read4314( const ModbusRTU::MEIMessageRDI& query,
                                         ModbusRTU::MEIMessageRetRDI& reply )
 {
     if( verbose )
