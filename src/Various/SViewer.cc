@@ -84,7 +84,6 @@ void SViewer::readSection( const string& section, const string& secRoot )
     {
         chan = grpc::CreateChannel(uniset_conf()->repositoryAddr(), grpc::InsecureChannelCredentials());
         std::unique_ptr<URepository_i::Stub> stub(URepository_i::NewStub(chan));
-
         auto status = stub->list(&ctx, sec, &lst);
 
         if( !status.ok() )
