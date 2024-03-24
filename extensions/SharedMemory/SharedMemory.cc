@@ -868,12 +868,12 @@ namespace uniset3
            << " size=" << h.size
            << " filter=" << h.filter << endl;
 
-        for( SharedMemory::HistoryList::const_iterator it = h.hlst.begin(); it != h.hlst.end(); ++it )
+        for( const auto& it : h.hlst )
         {
-            os << "    id=" << it->id << "[";
+            os << "    id=" << it.id << "[";
 
-            for( SharedMemory::HBuffer::const_iterator i = it->buf.begin(); i != it->buf.end(); ++i )
-                os << " " << (*i);
+            for( const auto& i : it.buf )
+                os << " " << i;
 
             os << " ]" << endl;
         }
