@@ -97,15 +97,15 @@ namespace uniset3
     {
         os << "size: " << omap.size() << endl;
 
-        for( auto it = omap.begin(); it != omap.end(); ++it )
+        for( const auto& it: omap )
         {
-            if( it->second.repName.empty() )
+            if( it.second.repName.empty() )
                 continue;
 
-            os  << setw(5) << it->second.id << "  "
+            os  << setw(5) << it.second.id << "  "
                 //            << setw(45) << ORepHelpers::getShortName(it->repName,'/')
-                << setw(45) << it->second.repName
-                << "  " << it->second.textName << endl;
+                << setw(45) << it.second.repName
+                << "  " << it.second.textName << endl;
         }
 
         return os;

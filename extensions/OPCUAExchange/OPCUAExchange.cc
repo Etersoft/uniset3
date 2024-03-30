@@ -458,7 +458,7 @@ namespace uniset3
 
         if( writeOn && exchangeMode != emReadOnly )
         {
-            for( auto&& v : ch->writeValues )
+            for( const auto& v : ch->writeValues )
             {
                 if (v.first == 0 || tick % v.first == 0)
                 {
@@ -476,7 +476,7 @@ namespace uniset3
 
         if( exchangeMode != emWriteOnly )
         {
-            for( auto&& v : ch->readValues )
+            for( const auto& v : ch->readValues )
             {
                 if (v.first == 0 || tick % v.first == 0)
                 {

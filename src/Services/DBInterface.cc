@@ -131,7 +131,7 @@ namespace uniset3
     // ----------------------------------------------------------------------------
     std::string DBResult::getColName( int index )
     {
-        for( auto&& c : colname )
+        for( const auto& c : colname )
         {
             if( c.second == index )
                 return c.first;
