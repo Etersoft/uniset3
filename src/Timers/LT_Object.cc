@@ -203,12 +203,12 @@ timeout_t LT_Object::askTimer( uniset3::TimerId timerid, timeout_t timeMS, clock
             // поищем а может уж такой есть
             if( !tlst.empty() )
             {
-                for( auto li = tlst.begin(); li != tlst.end(); ++li )
+                for( auto&& li: tlst )
                 {
-                    if( li->id == timerid )
+                    if( li.id == timerid )
                     {
-                        li->curTick = ticks;
-                        li->tmr.setTiming(timeMS);
+                        li.curTick = ticks;
+                        li.tmr.setTiming(timeMS);
 
                         if( ulog()->debugging(loglevel) )
                             ulog()->debug(loglevel) << "(LT_askTimer): заказ на таймер ["

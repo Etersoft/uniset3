@@ -34,7 +34,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getValue(context, request, response);
 
@@ -50,7 +50,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->setValue(context, request, response);
 
@@ -66,7 +66,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->freezeValue(context, request, response);
 
@@ -82,7 +82,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getIOType(context, request, response);
 
@@ -98,7 +98,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getRawValue(context, request, response);
 
@@ -115,7 +115,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->calibrate(context, request, response);
 
@@ -132,7 +132,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getCalibrateInfo(context, request, response);
 
@@ -148,7 +148,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getSensorsMap(context, request, response);
 
@@ -165,7 +165,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getSensorIOInfo(context, request, response);
 
@@ -182,7 +182,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getSensorSeq(context, request, response);
 
@@ -199,7 +199,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->setOutputSeq(context, request, response);
 
@@ -216,7 +216,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getTimeChange(context, request, response);
 
@@ -233,7 +233,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->getSensors(context, request, response);
 

@@ -106,7 +106,7 @@ namespace uniset3
 
         auto lst = la->getLogList();
 
-        for( auto&& l : lst )
+        for( const auto& l : lst )
         {
             auto c = conmap.find(l.log);
 
@@ -235,11 +235,11 @@ namespace uniset3
         });
 
         // сперва выводим просто логи
-        for( auto&& l : lst )
+        for( const auto& l : lst )
             os << s_tab << setw(tab_width) << std::right << l->getLogName() << std::left << " [ " << Debug::str(l->level()) << " ]" << endl;
 
         // потом дочерние агрегаторы
-        for( auto&& ag : lstA )
+        for( const auto& ag : lstA )
             ag->printTree(os, s_tab);
 
         return os;

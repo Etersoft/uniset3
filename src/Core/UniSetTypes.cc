@@ -203,9 +203,9 @@ uniset3::IDList::~IDList()
 
 void uniset3::IDList::add( ObjectId id )
 {
-    for( auto it = lst.begin(); it != lst.end(); ++it )
+    for( const auto& it: lst)
     {
-        if( (*it) == id )
+        if( it == id )
             return;
     }
 

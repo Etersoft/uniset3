@@ -33,7 +33,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->askSensor(context, request, response);
 
@@ -49,7 +49,7 @@ namespace uniset3
     {
         grpc::Status status;
 
-        for( auto&& o : olist )
+        for( const auto& o : olist )
         {
             status = o.second->askSensorsSeq(context, request, response);
 

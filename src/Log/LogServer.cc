@@ -506,7 +506,7 @@ namespace uniset3
         {
             uniset3::uniset_rwmutex_rlock lock(mutSList);
 
-            for( auto&& r : slist )
+            for( const auto& r : slist )
                 r->term();
 
             slist.clear();
@@ -607,7 +607,7 @@ namespace uniset3
             else
                 lst = alog->getLogList(logname);
 
-            for( auto&& l : lst )
+            for( const auto& l : lst )
                 defaultLogLevels[l.log.get()] = l.log->level();
         }
         else if( elog )
@@ -628,7 +628,7 @@ namespace uniset3
             else
                 lst = alog->getLogList(logname);
 
-            for( auto&& l : lst )
+            for( const auto& l : lst )
             {
                 auto d = defaultLogLevels.find(l.log.get());
 

@@ -88,7 +88,7 @@ bool UHandlerList::call( const std::string& path, Poco::Net::HTTPServerRequest& 
     UHttpContext ctx;
     UHttpContext::Keys keys;
 
-    for( auto&& h : handlers )
+    for( const auto& h : handlers )
     {
         if( h.path.compare(path, keys) )
         {

@@ -94,14 +94,14 @@ std::ostream& ObjectIndex_idXML::printMap( std::ostream& os ) const noexcept
 {
     os << "size: " << omap.size() << endl;
 
-    for( auto it = omap.begin(); it != omap.end(); ++it )
+    for( const auto& it: omap )
     {
-        if( it->second.repName.empty() )
+        if( it.second.repName.empty() )
             continue;
 
-        os  << setw(5) << it->second.id << "  "
-            << setw(45) << it->second.name
-            << "  " << it->second.textName << endl;
+        os  << setw(5) << it.second.id << "  "
+            << setw(45) << it.second.name
+            << "  " << it.second.textName << endl;
     }
 
     return os;

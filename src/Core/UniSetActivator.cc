@@ -151,7 +151,7 @@ namespace uniset3
         grpc::ServerContext ctx;
         google::protobuf::Empty reply;
 
-        for( auto&& o : objects )
+        for( const auto& o : objects )
         {
             try
             {
@@ -207,7 +207,7 @@ namespace uniset3
         builder.RegisterService(static_cast<configurator::Configurator_i::Service*>(&cproxy));
 
         // INIT
-        for( auto&& o : objects )
+        for( const auto& o : objects )
             o.second->initBeforeRunServer(builder);
 
         server = builder.BuildAndStart();
@@ -219,7 +219,7 @@ namespace uniset3
             tmp << grpcHost << ":" << grpcPort;
             const string realAddr = tmp.str();
 
-            for( auto&& o : objects )
+            for( const auto& o : objects )
                 o.second->initAfterRunServer(builder, realAddr);
         }
 
@@ -230,10 +230,10 @@ namespace uniset3
         uinfo << myname << "(run): activate objects.." << endl;
         active = true;
 
-        for( auto&& o : objects )
+        for( const auto& o : objects )
             o.second->activate();
 
-        for( auto&& o : objects )
+        for( const auto& o : objects )
             o.second->postActivateObjects();
 
         startup();
@@ -273,7 +273,7 @@ namespace uniset3
 
         ulogsys << myname << "(shutdown): deactivate...  " << endl;
 
-        for( auto&& o : objects )
+        for( const auto& o : objects )
             o.second->deactivate();
 
         ulogsys << myname << "(shutdown): deactivate ok.  " << endl;
@@ -288,7 +288,7 @@ namespace uniset3
 
         ulogsys << myname << "(shutdown): deactivate after stop server...  " << endl;
 
-        for( auto&& o : objects )
+        for( const auto& o : objects )
         {
             try
             {
