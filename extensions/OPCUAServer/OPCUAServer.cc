@@ -78,8 +78,8 @@ OPCUAServer::OPCUAServer(uniset3::ObjectId objId, xmlNode* cnode, uniset3::Objec
     opcServer->setLogger([this](auto level, auto category, auto msg)
     {
         mylog->level5() << myname
-                        << "[" << opcua::getLogLevelName(level) << "] "
-                        << "[" << opcua::getLogCategoryName(category) << "] "
+                        << "[" << getLogLevelName(level) << "] "
+                        << "[" << getLogCategoryName(category) << "] "
                         << msg << std::endl;
     });
 
@@ -144,7 +144,7 @@ OPCUAServer::OPCUAServer(uniset3::ObjectId objId, xmlNode* cnode, uniset3::Objec
         catch( const std::regex_error& e )
         {
             ostringstream err;
-            err << myname << "(init): 'filter-value-re' regular expression error: " << e.what();
+            err << myname << "(init): '--" + argprefix + "filter-value-re' regular expression error: " << e.what();
             throw uniset3::SystemError(err.str());
         }
     }
@@ -432,7 +432,7 @@ bool OPCUAServer::initVariable( UniXML::iterator& it )
 
         UA_StatusCode result = UA_Server_addMethodNode(opcServer->handle(),
                                *methodNodeId.handle(), //requestedNewNodeId
-                               *node->node.getNodeId().handle(),//parentNodeId
+                               *node->node.id().handle(),//parentNodeId
                                UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),//referenceTypeId
                                methodBrowseName,
                                attr,
@@ -463,7 +463,11 @@ bool OPCUAServer::initVariable( UniXML::iterator& it )
         return true;
     }
 
-    auto vnode = node->node.addVariable(opcua::NodeId(0, sname), sname);
+    // s=xxx or ns=xxx
+    if( sname[1] != '=' && sname[2] != '=' )
+        sname = "s=" + sname;
+
+    auto vnode = node->node.addVariable(UA_NODEID(sname.c_str()), sname);
     vnode.writeDataType(opctype);
     vnode.writeAccessLevel(UA_ACCESSLEVELMASK_READ);
 
